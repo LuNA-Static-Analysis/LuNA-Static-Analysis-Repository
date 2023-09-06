@@ -1,0 +1,21 @@
+import printfl(real) as printFloat;
+import c_init_float(real, name) as initFloat;
+
+sub main(){
+        df a, b, c;
+
+        foo(a);
+
+        initFloat(1, b);
+	printFloat(b);
+
+        foo(c);
+
+}
+
+sub foo(name d){
+        initFloat(2, d);
+	printFloat(d);
+}
+
+

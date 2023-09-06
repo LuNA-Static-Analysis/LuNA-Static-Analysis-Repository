@@ -1,0 +1,21 @@
+import printfl(real) as printFloat;
+
+import c_init_int(int, name) as initInt;
+import c_init_float(real, name) as initFloat;
+
+sub main(){
+
+        df a, b, result;
+
+        sum(a, b, result);
+
+        initInt(1, a);
+        initInt(2, b);
+
+        printFloat(result);
+
+}
+
+sub sum(name left, name right, name res){
+        initFloat(left + right, res);
+}
