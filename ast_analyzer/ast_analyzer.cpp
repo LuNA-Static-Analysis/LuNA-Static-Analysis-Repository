@@ -1,11 +1,12 @@
-#include "ast_analyzer.hpp"
+#include "../parser/ast.hpp"
 #include "error_reporter.hpp"
+#include "ast_analyzer.hpp"
+
 #include <iterator>
 #include <set>
 #include <map>
 #include <assert.h>
 #include <regex>
-
 
 extern error_reporter reporter;
 extern std::string line;
@@ -24,12 +25,17 @@ bool ast_analyzer::have_such_code_id(std::map<std::string, std::string>& map,
 bool ast_analyzer::analyze() {
     assert(ast_->get_program()->sub_defs != nullptr);
     bool has_errors;
-
+    std::cerr << "1\n";
     has_errors = analyze_shadow_import();
+    std::cerr << "1\n";
     has_errors = analyze_df_redeclaration();
+    std::cerr << "1\n";
     has_errors = analyze_existance_main_cf();
+    std::cerr << "1\n";
     has_errors = analyze_cf_redeclaration();
+    std::cerr << "1\n";
     has_errors = analyze_calling_undeclarated_func();
+    std::cerr << "1\n";
     return has_errors;
 }
 

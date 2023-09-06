@@ -1,6 +1,6 @@
 %{
 
-#include "ast.hpp"
+#include "../parser/ast.hpp"
 #include "grammar.tab.hpp"
 #include "error_reporter.hpp"
 
