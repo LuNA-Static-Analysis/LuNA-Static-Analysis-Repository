@@ -8,7 +8,7 @@
 // 3.2. use _fileno() instead, as it is Windows (did not try though)
 // Also implemented small convenience-related/natural language changes
 
-#include "ast.hpp"
+#include "ast1.hpp"
 #include "grammar.tab.hpp"
 //#include "ast_analyzer.hpp"
 //#include "error_reporter.hpp"

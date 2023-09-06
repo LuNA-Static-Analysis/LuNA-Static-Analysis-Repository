@@ -1,7 +1,7 @@
 %{
 
 #include "error_reporter.hpp"
-#include "ast.hpp"
+#include "ast1.hpp"
 
 #include <iostream>
 #include <fstream>
