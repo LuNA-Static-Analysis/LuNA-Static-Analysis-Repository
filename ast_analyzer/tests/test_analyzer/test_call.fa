@@ -1,0 +1,13 @@
+import a() as a;
+import a() as a2;
+
+sub main() {
+    df x;
+    init(a);
+}
+
+sub main1() {
+    df x;
+    init(a);
+}
+

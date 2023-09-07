@@ -1,0 +1,13 @@
+import c_init(int, name) as init;
+import c_init(int, name) as init1;
+
+
+sub m1(int a) {
+    df x;
+    init(1, x);
+}
+
+sub main() {
+    df a;
+    init(1, a);
+}

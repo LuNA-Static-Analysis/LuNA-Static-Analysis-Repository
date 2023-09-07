@@ -1,0 +1,5 @@
+
+import c_func(int, real) as func;
+
+
+S

@@ -1,0 +1,4 @@
+import c_func(int, real, string, value, name) as func;
+import c_func(int, int, real, string, int, name, int, value) as func;
+import c_func(real, real, real, string, int, name, int, real) as func;
+import c_func(name, int, name, value, name, value) as func;

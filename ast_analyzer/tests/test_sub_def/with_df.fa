@@ -1,0 +1,8 @@
+sub main() {
+    df x, y, z, hello, qwerty;
+    init(x);
+    init1(y);
+    init2(z);
+    init3(hello);
+    init4(qwerty);
+}

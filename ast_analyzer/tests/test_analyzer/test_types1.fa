@@ -1,0 +1,11 @@
+import a(int, int) as a;
+import c_init(int, string, name) as init;
+
+sub main() {
+    df x, y;
+    init(1, x);
+    init(1, "hello", y);
+    a(1, x + y);
+    m();
+}
+

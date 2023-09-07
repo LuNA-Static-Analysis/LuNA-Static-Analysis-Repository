@@ -1,0 +1,16 @@
+
+rts:2700 terminated with signal 6 at PC=7efdd451aa7c SP=7efdcd839870.  Backtrace:
+/lib/x86_64-linux-gnu/libc.so.6(pthread_kill+0x12c)[0x7efdd451aa7c]
+/lib/x86_64-linux-gnu/libc.so.6(raise+0x16)[0x7efdd44c6476]
+/lib/x86_64-linux-gnu/libc.so.6(abort+0xd3)[0x7efdd44ac7f3]
+/lib/x86_64-linux-gnu/libstdc++.so.6(+0xa2bbe)[0x7efdd476ebbe]
+/lib/x86_64-linux-gnu/libstdc++.so.6(+0xae24c)[0x7efdd477a24c]
+/lib/x86_64-linux-gnu/libstdc++.so.6(+0xae2b7)[0x7efdd477a2b7]
+/lib/x86_64-linux-gnu/libstdc++.so.6(+0xae518)[0x7efdd477a518]
+/home/ub/Desktop/luna/scripts/../lib/librts.so(+0xf6b0)[0x7efdd6f1b6b0]
+/home/ub/Desktop/luna/scripts/../build/programs/home/ub/Desktop/luna-static-anayzer/tests/test_for_report/redecls.fa/libucodes.so(_Z7block_5R2CF+0xf6)[0x7efdd3f4d7a6]
+/home/ub/Desktop/luna/scripts/../lib/librts.so(+0x2a1b3)[0x7efdd6f361b3]
+/home/ub/Desktop/luna/scripts/../lib/librts.so(_ZN10ThreadPool7routineEv+0x17d)[0x7efdd6f3de6d]
+/lib/x86_64-linux-gnu/libstdc++.so.6(+0xdc2b3)[0x7efdd47a82b3]
+/lib/x86_64-linux-gnu/libc.so.6(+0x94b43)[0x7efdd4518b43]
+/lib/x86_64-linux-gnu/libc.so.6(+0x126a00)[0x7efdd45aaa00]

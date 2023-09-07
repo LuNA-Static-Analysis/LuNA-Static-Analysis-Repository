@@ -1,0 +1,9 @@
+import c_func(in) as func;
+import c_func(rea) as func;
+import c_func(a b c) as func;
+import c_func(int, a b c, real) as func;
+import c_func(int) as func;
+import c_func(int, a b c) as func;
+import c_func(real) as func;
+import c_func(a b c, int , real, string) as func;
+import c_func(a b c, a, b, c) as func;

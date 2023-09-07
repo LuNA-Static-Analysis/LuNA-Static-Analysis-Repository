@@ -2,6 +2,38 @@
 #include <map>
 #include <set>
 
+// std::string to_string() const {
+//     std::string p;
+//     switch (t) {
+//         case INT: return "int";
+//         case REAL: return "real";
+//         case STRING : return "string";
+//         case ERROR_TYPE: return "error_type";
+//         case UNDEFINED: return "undefined";
+//     }
+// }
+
+enum luna_type {
+    INT,
+    REAL,
+    STRING,
+    NAME,
+    VALUE,
+    UNDEFINED,
+    ERROR_TYPE,
+
+};
+
+static std::string print_type(luna_type type) {
+    switch (type) {
+        case INT:  return "int"; 
+        case REAL:  return "real"; 
+        case STRING:  return "string"; 
+        case ERROR_TYPE: return "error_type"; 
+        case UNDEFINED: return "undefined"; 
+    }
+}
+
 class ast_analyzer {
 public:
     ast_analyzer(ast* ast, FILE* file) : ast_(ast), file_(file) {}
@@ -10,6 +42,34 @@ public:
 
     bool analyze();
 
+    // // класс хранит название ФК на LuNA и его параметры
+    // class cf_info {
+    // public:
+
+    //     cf_info(luna_string* alias, std::vector<luna_type>* params) : alias_(alias), params_(params) {}
+    //     ~cf_info() {}
+
+    //     luna_string* alias_;
+    //     std::vector<luna_type>* params_;
+
+    //     std::string to_string() const {
+    //         std::string p;
+    //         for (auto i : *params_) {
+    //             std::string s;
+    //             switch (i) {
+    //                 case (INT): { p += "int, "; }
+    //                 case (REAL): { p += "real, "; }
+    //                 case (STRING): { p += "string,"; }
+    //                 case (UNDEFINED): { p += "undefined, "; }
+    //             }
+    //         }
+    //         if (p != "") p.pop_back();
+    //         return alias_->to_string() + "(" + p + ")";
+    //     }
+    // };
+
+
+    // класс хранит название ФК на LuNA и его параметры
     template <typename T>
     class cf_info {
     public:
@@ -32,8 +92,34 @@ public:
             if (p != "") p.pop_back();
             return alias_->to_string() + "(" + p + ")";
         }
-
     };
+
+    template <typename T = luna_type>
+    class cf_info {
+    public:
+        cf_info(luna_string* alias, std::vector<T>* params) : alias_(alias), params_(params) {}
+        ~cf_info() {}
+
+        luna_string* alias_;
+        std::vector<T>* params_;
+
+        std::string to_string() const {
+            std::string p;
+            for (auto i : *params_) {
+                switch (t) {
+                    case INT: return p += "int, ";
+                    case REAL: return p += "real, ";
+                    case STRING : return p += "string, ";
+                    case ERROR_TYPE: return p += "error_type, ";
+                    case UNDEFINED: return p += "undefined, ";
+                }
+            }
+            if (p != "") p.pop_back();
+            return alias_->to_string() + "(" + p + ")";
+        }
+    };
+
+
 
 private:
     static const int FSEEK_ERROR = -1;
@@ -49,7 +135,10 @@ private:
     bool analyze_df_redeclaration();
     bool has_df_redeclaration(std::vector<luna_string *> prev_values, block* block_);
     bool analyze_calling_undeclarated_func();
-    std::vector<cf_info<expr *> *> get_all_calling(block* block);
+
+    std::vector<cf_info<luna_type>*>* get_types_from_calling(std::vector<cf_info<expr *>*>* cur_cfs );
+    std::vector<luna_type>* params_to_types(std::vector<expr *>* params);
+    std::multimap<std::string, std::vector<expr*>*> get_all_calling(block* block);
 
     std::vector<luna_string *> get_block_values(block* block_);
     std::map<std::string, std::set<uint>> find_redecls(std::vector<luna_string* > values);

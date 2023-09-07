@@ -1,0 +1,14 @@
+import a(int, real) as a;
+import b(int) as a;
+
+sub main(int a, real t) {
+    df a;
+    a = 1;
+    cf a : init(a);
+
+    if a != 1 {
+        df a;
+        init(a);
+    }
+}
+

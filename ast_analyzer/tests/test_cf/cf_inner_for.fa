@@ -1,0 +1,33 @@
+sub main() {
+    for i=1..10 {
+        cf a : init();
+    }
+
+    for i=1..N {
+        cf a : init();
+    }
+
+    for i=M..N {
+        cf a : init();
+    }
+
+    for i=M..10 {
+        cf a : init();
+    }
+
+    for i=1..10 {
+        init();
+    }
+
+    for i=1..N {
+        init();
+    }
+
+    for i=M..N {
+        init();
+    }
+
+    for i=M..10 {
+        init();
+    }
+}

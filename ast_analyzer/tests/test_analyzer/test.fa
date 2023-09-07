@@ -1,0 +1,10 @@
+import c_print(value) as print;
+import c_init(int, name) as init;
+
+sub main() {
+    df x, y;
+    init(1, x);
+    init(x, y);
+//    print(x);
+//    print(x);
+}

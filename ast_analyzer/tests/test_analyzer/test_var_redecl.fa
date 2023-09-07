@@ -1,0 +1,19 @@
+import c_init(int , name) as init;
+
+sub main() {
+    df x, z;
+
+    cf y : init(1, x);
+
+    cf y : init(1, z);
+
+    if x != 1 {
+        df x1, y1;
+        cf x : init(1, x1);
+    }
+
+    for x=1..10  {
+        df x2;
+        cf x : init(1, x2);
+    }
+}

@@ -1,0 +1,16 @@
+import c_funcint) as func;
+import c_func(int as func;
+
+import c_funcreal) as func;
+import c_func(real as func;
+
+import c_func real as func;
+
+import c_func string) as func;
+import c_func string as func;
+import c_func (string) as func;
+
+import c_func name as func;
+import c_func value as func;
+
+import c_func (value) as func;

@@ -1,0 +1,15 @@
+import a(int) as a;
+
+sub main() {
+    df x;
+    main(1);
+    main(1.0);
+    main("hello");
+    main(1, 1.0, "hello");
+    main(1, 1.0, int(1.0), "hello");
+    main(1, string(1.0), int(1.0), x < y, real("hello"));
+    main(x > y, x < y, x >=y, x <=y, x == y, x !=y, x % y);
+    main((1.0));
+    a(1);
+}
+

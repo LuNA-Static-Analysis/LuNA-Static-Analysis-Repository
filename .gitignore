@@ -1,0 +1,4 @@
+ast_analyzer/a.out
+ast_analyzer/grammar.tab.cpp
+ast_analyzer/lex.yy.cpp
+ast_analyzer/grammar.tab.hpp

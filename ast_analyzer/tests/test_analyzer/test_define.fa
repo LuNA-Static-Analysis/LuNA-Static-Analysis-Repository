@@ -1,0 +1,17 @@
+import c_print_int(int) as print_int;
+
+sub main() { 
+    print_int(10);
+    foo(1);
+}
+
+sub foo() {
+    print_int(2);
+}
+
+sub foo(int r) {
+    df a;
+    print_int(1);
+}
+
+

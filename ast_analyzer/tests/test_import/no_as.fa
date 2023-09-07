@@ -1,0 +1,5 @@
+import c_func(int)  func;
+import c_func(real) as func;
+import c_func(string) func;
+import c_func(name)  func;
+import c_func(value)  func;
