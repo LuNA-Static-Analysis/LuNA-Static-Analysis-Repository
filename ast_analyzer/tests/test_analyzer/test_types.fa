@@ -1,4 +1,9 @@
 import a(int) as a;
+import a(real) as a;
+
+sub main1(string x) {
+    init();
+}
 
 sub main() {
     df x;
@@ -7,9 +12,11 @@ sub main() {
     main("hello");
     main(1, 1.0, "hello");
     main(1, 1.0, int(1.0), "hello");
+
     main(1, string(1.0), int(1.0), x < y, real("hello"));
     main(x > y, x < y, x >=y, x <=y, x == y, x !=y, x % y);
-    main((1.0));
+    
+    main1(string(1.0));
     a(1);
 }
 

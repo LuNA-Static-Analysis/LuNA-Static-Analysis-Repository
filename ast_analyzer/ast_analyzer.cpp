@@ -39,8 +39,8 @@ bool ast_analyzer::analyze() {
     return has_errors;
 }
 
-std::multimap<std::string, std::vector<expr*>*> ast_analyzer::get_all_calling(block* block) {
-    std::multimap<std::string, std::vector<expr*>*> cfs;
+std::multimap<luna_string, std::vector<expr*>*> ast_analyzer::get_all_calling(block* block) {
+    std::multimap<luna_string, std::vector<expr*>*> cfs;
 
     for (auto i : *(block->statement_seq_->statements_)) {
         if (i == nullptr) continue;
@@ -51,27 +51,27 @@ std::multimap<std::string, std::vector<expr*>*> ast_analyzer::get_all_calling(bl
                                         ? new std::vector<expr*>() 
                                         : cur_cf->opt_exprs_->exprs_seq_->expr_);
 
-            cfs.insert(std::pair<std::string , std::vector<expr *> *>(cur_cf->code_id_->to_string(), c));
+            cfs.insert(std::pair<luna_string , std::vector<expr *> *>(*(cur_cf->code_id_), c));
             continue;
         }
 
         if_statement* cur_if = dynamic_cast<if_statement*> (i);
         if (cur_if != nullptr) {
-            std::multimap<std::string, std::vector<expr*>*> inner_cfs = get_all_calling(cur_if->block_);
+            std::multimap<luna_string, std::vector<expr*>*> inner_cfs = get_all_calling(cur_if->block_);
             cfs.insert(inner_cfs.begin(), inner_cfs.end());
             continue;
         }
 
         while_statement* cur_while = dynamic_cast<while_statement*> (i);
         if (cur_while != nullptr) {
-            std::multimap<std::string, std::vector<expr*>*> inner_cfs = get_all_calling(cur_while->block_);
+            std::multimap<luna_string, std::vector<expr*>*> inner_cfs = get_all_calling(cur_while->block_);
             cfs.insert(inner_cfs.begin(), inner_cfs.end());
             continue;
         }
 
         for_statement* cur_for = dynamic_cast<for_statement*> (i);
         if (cur_for != nullptr) {
-            std::multimap<std::string, std::vector<expr*>*> inner_cfs = get_all_calling(cur_for->block_);
+            std::multimap<luna_string, std::vector<expr*>*> inner_cfs = get_all_calling(cur_for->block_);
             cfs.insert(inner_cfs.begin(), inner_cfs.end());
             continue;
         }
@@ -93,21 +93,21 @@ bool is_string(std::string s) {
 }
 
 luna_type get_type(expr* expr) {
-    if (is_int(expr->to_string())) return INT;
+    if (is_int(expr->to_string())) return LUNA_INT;
 
-    if (is_real(expr->to_string())) return REAL;
+    if (is_real(expr->to_string())) return LUNA_REAL;
 
-    if (is_string(expr->to_string())) return STRING;
+    if (is_string(expr->to_string())) return LUNA_STRING;
 
     to_int* to_int_ = dynamic_cast<to_int*>(expr);
     if (to_int_ != nullptr) {
         luna_type t = get_type(to_int_->expr_);
         switch (t) {
-            case INT: return INT;
-            case REAL: return INT;
-            case STRING : return ERROR_TYPE;
-            case ERROR_TYPE: return ERROR_TYPE;
-            case UNDEFINED: return UNDEFINED;
+            case LUNA_INT: return LUNA_INT;
+            case LUNA_REAL: return LUNA_INT;
+            case LUNA_STRING : return LUNA_ERROR_TYPE;
+            case LUNA_ERROR_TYPE: return LUNA_ERROR_TYPE;
+            case LUNA_UNDEFINED: return LUNA_UNDEFINED;
         }
         throw new std::runtime_error("unexpected type");
     }
@@ -116,11 +116,11 @@ luna_type get_type(expr* expr) {
     if (to_real_ != nullptr) {
         luna_type t = get_type(to_real_->expr_);
         switch (t) {
-            case INT: return REAL;
-            case REAL: return REAL;
-            case STRING: return ERROR_TYPE;
-            case ERROR_TYPE: return ERROR_TYPE;
-            case UNDEFINED: return UNDEFINED;
+            case LUNA_INT: return LUNA_REAL;
+            case LUNA_REAL: return LUNA_REAL;
+            case LUNA_STRING: return LUNA_ERROR_TYPE;
+            case LUNA_ERROR_TYPE: return LUNA_ERROR_TYPE;
+            case LUNA_UNDEFINED: return LUNA_UNDEFINED;
         }
         throw new std::runtime_error("unexpected type");
     }
@@ -129,11 +129,11 @@ luna_type get_type(expr* expr) {
     if (to_str_ != nullptr) {
         luna_type t = get_type(to_str_->expr_);
         switch (t) {
-            case INT: return STRING;
-            case REAL: return ERROR_TYPE;
-            case STRING: return STRING;
-            case ERROR_TYPE: return ERROR_TYPE;
-            case UNDEFINED: return UNDEFINED;
+            case LUNA_INT: return LUNA_STRING;
+            case LUNA_REAL: return LUNA_ERROR_TYPE;
+            case LUNA_STRING: return LUNA_STRING;
+            case LUNA_ERROR_TYPE: return LUNA_ERROR_TYPE;
+            case LUNA_UNDEFINED: return LUNA_UNDEFINED;
         }
         throw new std::runtime_error("unexpected type");
     }
@@ -143,45 +143,50 @@ luna_type get_type(expr* expr) {
         luna_type left_type = get_type(bin_op_->left_);
         luna_type right_type = get_type(bin_op_->right_);
 
-        if (left_type == ERROR_TYPE || right_type == ERROR_TYPE) return ERROR_TYPE;
-        if (left_type == UNDEFINED || right_type == UNDEFINED) return UNDEFINED;
+        if (left_type == LUNA_ERROR_TYPE || right_type == LUNA_ERROR_TYPE) return LUNA_ERROR_TYPE;
+        if (left_type == LUNA_UNDEFINED || right_type == LUNA_UNDEFINED) {
+            return LUNA_INT;
+        }
 
-        if (left_type == INT && (right_type == INT && right_type == REAL)) return right_type;
-        if (left_type == INT && right_type == STRING) return ERROR_TYPE;
+        if (left_type == LUNA_INT && (right_type == LUNA_INT && right_type == LUNA_REAL)) return right_type;
+        if (left_type == LUNA_INT && right_type == LUNA_STRING) return LUNA_ERROR_TYPE;
 
-        if (right_type == INT && (left_type == INT && left_type == REAL)) return left_type;
-        if (right_type == INT && left_type == STRING) return ERROR_TYPE;
+        if (right_type == LUNA_INT && (left_type == LUNA_INT && left_type == LUNA_REAL)) return left_type;
+        if (right_type == LUNA_INT && left_type == LUNA_STRING) return LUNA_ERROR_TYPE;
 
-        if (right_type == STRING && left_type == STRING) return INT; // todo
+        if (right_type == LUNA_STRING && left_type == LUNA_STRING) return LUNA_INT; // todo
 
         throw new std::runtime_error("unexpected type");
     }
+    return LUNA_UNDEFINED;
 }
 
 
 ERROR_LEVEL is_valid_convert(luna_type from, luna_type to) {
     bool is_valid = true;
 
-    if (from == INT && to == INT) return ERROR_LEVEL::NO_ERROR; 
-    if (from == INT && to == REAL) return ERROR_LEVEL::WARNING; 
-    if (from == REAL && to == INT) return ERROR_LEVEL::WARNING; 
-    if (from == REAL && to == REAL) return ERROR_LEVEL::NO_ERROR;  
-    if (from == INT && to == STRING) return ERROR_LEVEL::WARNING; 
-    if (from == REAL && to == STRING) return ERROR_LEVEL::ERROR;  
-    if (from == STRING && to == STRING) return ERROR_LEVEL::NO_ERROR; 
-    if (from == STRING && to == INT) return ERROR_LEVEL::ERROR;  
-    if (from == STRING && to == REAL) return ERROR_LEVEL::ERROR; 
+    if (from == LUNA_INT && to == LUNA_INT) return ERROR_LEVEL::NO_ERROR; 
+    if (from == LUNA_INT && to == LUNA_REAL) return ERROR_LEVEL::WARNING; 
+    if (from == LUNA_REAL && to == LUNA_INT) return ERROR_LEVEL::WARNING; 
+    if (from == LUNA_REAL && to == LUNA_REAL) return ERROR_LEVEL::NO_ERROR;  
+    if (from == LUNA_INT && to == LUNA_STRING) return ERROR_LEVEL::WARNING; 
+    if (from == LUNA_REAL && to == LUNA_STRING) return ERROR_LEVEL::ERROR;  
+    if (from == LUNA_STRING && to == LUNA_STRING) return ERROR_LEVEL::NO_ERROR; 
+    if (from == LUNA_STRING && to == LUNA_INT) return ERROR_LEVEL::ERROR;  
+    if (from == LUNA_STRING && to == LUNA_REAL) return ERROR_LEVEL::ERROR; 
 
-    if (from == INT && to == VALUE) return ERROR_LEVEL::ERROR; 
-    if (from == REAL && to == VALUE) return ERROR_LEVEL::ERROR; 
-    if (from == STRING && to == VALUE) return ERROR_LEVEL::ERROR; 
+    if (from == LUNA_INT && to == LUNA_VALUE) return ERROR_LEVEL::ERROR; 
+    if (from == LUNA_REAL && to == LUNA_VALUE) return ERROR_LEVEL::ERROR; 
+    if (from == LUNA_STRING && to == LUNA_VALUE) return ERROR_LEVEL::ERROR; 
 
-    if (from == INT && to == NAME) return ERROR_LEVEL::ERROR; 
-    if (from == REAL && to == NAME) return ERROR_LEVEL::ERROR; 
-    if (from == STRING && to == NAME) return ERROR_LEVEL::ERROR; 
+    if (from == LUNA_INT && to == LUNA_NAME) return ERROR_LEVEL::ERROR; 
+    if (from == LUNA_REAL && to == LUNA_NAME) return ERROR_LEVEL::ERROR; 
+    if (from == LUNA_STRING && to == LUNA_NAME) return ERROR_LEVEL::ERROR; 
 
-    if (from == UNDEFINED) return ERROR_LEVEL::NO_ERROR;
-    if (from == ERROR_TYPE) return ERROR_LEVEL::ERROR;
+    if (from == LUNA_UNDEFINED) return ERROR_LEVEL::NO_ERROR;
+    if (from == LUNA_ERROR_TYPE) return ERROR_LEVEL::ERROR;
+
+    throw new std::runtime_error("unexpected type");
 }
 
 std::vector<luna_type>* ast_analyzer::params_to_types(std::vector<expr *>* params) {
@@ -192,14 +197,14 @@ std::vector<luna_type>* ast_analyzer::params_to_types(std::vector<expr *>* param
     return types;
 }
 
-std::multimap<std::string , std::vector<luna_type> *>* ast_analyzer::get_types_from_calling(std::multimap<std::string , std::vector<expr*> *>* cur_cfs ) {
-    std::multimap<std::string , std::vector<luna_type> *>* calls = new std::multimap<std::string , std::vector<luna_type> *>();
+std::multimap<luna_string , std::vector<luna_type> *>* ast_analyzer::get_types_from_calling(std::multimap<luna_string , std::vector<expr*> *>* cur_cfs ) {
+    std::multimap<luna_string , std::vector<luna_type> *>* calls = new std::multimap<luna_string , std::vector<luna_type> *>();
 
     for (auto cur_cf : *cur_cfs) {
-        std::vector<luna_type>* types = new std::vector<luna_type>();
-        types = params_to_types(cur_cf.second);
-        calls->insert(std::pair<std::string , std::vector<luna_type> *>(cur_cf.first, types))
+        std::vector<luna_type>* types = params_to_types(cur_cf.second);
+        calls->insert(std::pair<luna_string , std::vector<luna_type> *>(cur_cf.first, types));
     }
+
     return calls;
 }
 
@@ -207,9 +212,9 @@ bool ast_analyzer::analyze_calling_undeclarated_func() {
     bool has_errors = false;
 
     std::vector<sub_def *> sub_defs = *(ast_->get_program()->sub_defs);
-    std::map<std::string , std::vector<luna_type> *> cf_decls;
-    std::multimap<std::string , std::vector<luna_type> *> calls;
-    // std::vector<cf_info<luna_type>*>* calls;
+
+    std::map<luna_string , std::vector<luna_type> *> cf_decls;
+    std::multimap<luna_string , std::vector<luna_type> *>* calls;
 
     for (auto i : sub_defs) {
         if (i == nullptr) continue;
@@ -218,73 +223,83 @@ bool ast_analyzer::analyze_calling_undeclarated_func() {
         // собираем все import декларации и иx параметры
         import* import_decl = dynamic_cast<import *> (i); 
         if (import_decl != nullptr) { 
-
+            std::cerr << "is import\n";
             std::vector<luna_type>* params = new std::vector<luna_type>();
             
             if (import_decl->params_->seq_ != nullptr) {
                 for (auto param : *(import_decl->params_->seq_->params_)) {
-                    params->push_back(param->type_);
+                    params->push_back(param->get_type());
                 }
             }
-            cf_decls.insert(std::pair<std::string , std::vector<luna_type> *>(import_decl->luna_code_id_->to_string(), params));
+            cf_decls.erase(*(import_decl->luna_code_id_));
+            cf_decls.insert(std::make_pair(*(import_decl->luna_code_id_), params));
         }
 
         luna_sub_def* luna_sub_def_decl = dynamic_cast<luna_sub_def *> (i); 
         if (luna_sub_def_decl != nullptr) {
+            std::cerr << "is luna sub def\n";
             std::vector<luna_type>* params = new std::vector<luna_type>();
 
             if (luna_sub_def_decl->params_->param_seq_ != nullptr) {
                 for (auto param : *(luna_sub_def_decl->params_->param_seq_->params_)) {
-                    params->push_back(param->type_);
+                    params->push_back(param->get_type());
                 }
             }
-            cf_decls.insert(std::pair<std::string , std::vector<luna_type> *>(import_decl->luna_code_id_->to_string(), params));
 
-            std::cerr << "before luna sub def decl: get all calling\n";
+            cf_decls.erase(*(luna_sub_def_decl->code_id_));
+            cf_decls.insert(std::pair<luna_string , std::vector<luna_type> *>(*(luna_sub_def_decl->code_id_), params));
 
-            std::multimap<std::string , std::vector<expr *> *> cur_cfs = get_all_calling(luna_sub_def_decl->block_);
-            std::cerr << "after luna sub def decl: get all calling\n";
-
+            std::multimap<luna_string, std::vector<expr *> *> cur_cfs = get_all_calling(luna_sub_def_decl->block_);
             calls = get_types_from_calling(&cur_cfs);
         }
     }
 
-    // std::cerr << "------- cf_decls --------\n";
-    // for (auto i : cf_decls) {
-    //     std::cerr << i->to_string() << std::endl;
-    // }
+    std::cerr << "------- cf_decls --------\n";
+    for (auto i : cf_decls) {
+        std::cerr << i.first.to_string() << " : " ;
+        for (auto j : *(i.second)) {
+            std::cerr << j << ", ";
+        }
+        std::cerr << std::endl;
+    }
 
-    // std::cerr << "------- calls --------\n";
-    // for (auto i : *calls) {
-    //     std::cerr << i->to_string() << std::endl;
-    // }
+    std::cerr << "------- calls --------\n";
+    for (auto i : *calls) {
+        std::cerr << i.first.to_string() << " : " ;
+        for (auto j : *(i.second)) {
+            std::cerr << j << ", ";
+        }
+        std::cerr << std::endl;
+    }
 
     for (auto call : *calls) {
-        luna_string* alias = call->alias_;
+        luna_string alias = call.first;
+
         bool has_such_cf = false;
 
         for (auto func_decl : cf_decls) {
+
             // не та функция
-            if (*(func_decl->alias_->get_value()) != *(alias->get_value())) {
+            if (func_decl.first.to_string() != alias.to_string()) {
                 continue;
             } 
 
             has_such_cf = true;
 
-            if (func_decl->params_->size() != call->params_->size()) {
+            if (func_decl.second->size() != call.second->size()) {
                 reporter.report(ERROR_LEVEL::ERROR,
                     "The number of parameters in call and declaration doesn't match",
-                    "\tLine " + std::to_string(call->alias_->line_) + ": " + get_line_from_file(call->alias_->line_) + " // declaration\n" \
-                    + "\tLine " + std::to_string(func_decl->alias_->line_)+ ": " + get_line_from_file(func_decl->alias_->line_) + " // calling \n",
+                    "\tLine " + std::to_string(call.first.line_) + ": " + get_line_from_file(call.first.line_) + " // declaration\n" \
+                    + "\tLine " + std::to_string(func_decl.first.line_)+ ": " + get_line_from_file(func_decl.first.line_) + " // calling \n",
                     0
                 );
                 break;
             }
 
-            for (int k = 0; k < func_decl->params_->size(); k++) {
+            for (int k = 0; k < func_decl.second->size(); k++) {
 
-                luna_type cur_call_param_type = call->params_->at(k);
-                luna_type cur_func_delc_call_param_type = func_decl->params_->at(k);
+                luna_type cur_call_param_type = call.second->at(k);
+                luna_type cur_func_delc_call_param_type = func_decl.second->at(k);
 
                 ERROR_LEVEL level = is_valid_convert(cur_call_param_type, cur_func_delc_call_param_type);
 
@@ -292,8 +307,8 @@ bool ast_analyzer::analyze_calling_undeclarated_func() {
 
                 reporter.report(level,
                     "Invalid " + std::to_string(k + 1) + "'th parameter type: \"" + print_type(cur_call_param_type) + "\"",
-                    get_line_from_file(call->alias_->line_),
-                    call->alias_->line_,
+                    get_line_from_file(call.first.line_),
+                    call.first.line_,
                     print_type(cur_func_delc_call_param_type)
                 );
             }
@@ -301,19 +316,22 @@ bool ast_analyzer::analyze_calling_undeclarated_func() {
 
         if (!has_such_cf) {
             reporter.report(ERROR_LEVEL::ERROR,
-                "Undefined reference: \"" + *(call->alias_->get_value()) + "\"",
-                get_line_from_file(call->alias_->line_),
-                call->alias_->line_
+                "Undefined reference: \"" + call.first.to_string() + "\"",
+                get_line_from_file(call.first.line_),
+                call.first.line_
             );
         }
     }
 
     // for (auto i : cf_decls) {
-        // delete i;
+    //     delete i.second;
     // }
-    // for (auto i : calls) {
-        // delete i;
+    
+    // for (auto i : *calls) {
+    //     if (i.second->size() == 0) delete i.second;
     // }
+
+    // delete calls;
 
     return true;
 }
