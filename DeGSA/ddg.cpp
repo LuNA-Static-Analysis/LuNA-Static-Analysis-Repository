@@ -25,7 +25,7 @@ enum UseDef {
 
 // this class represents a vertice in a DDG
 // vertice is a computational fragment (VF), so it could require some (or none) VFs to be ran before, and also allow other VFs to run
-// also vertice can contain 
+// also vertice can containt VFs inside; that is, vertice is basically a set of it's child vertices and nothing
 class Vertice {
 
     private:
