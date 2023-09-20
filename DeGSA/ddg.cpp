@@ -1,4 +1,4 @@
-#include "ast1.hpp"
+#include "../parser/ast.hpp"
 //#include <vector> // already included in ast.hpp
 #include <map>
 #include <set>

@@ -1,17 +1,15 @@
 
-// All credit for this program goes to Maxim Kurbatov; version of 28.04.2023
+// All credit for this program goes to Maxim Kurbatov; version of 21.05.2023 (as of 20.09.2023)
 // My modifications:
 // 1. ast.hpp in headers zone
-// 2. ast_analyzer.cpp, 290 line
+// 2. ast_analyzer.cpp, 290 line (20.09.2023: this is obsolete, perhaps?)
 // 3. for "no fileno" problem:
 // 3.1. use g++ -std=gnu++0x lex.yy.c grammar.tab.cpp main.cpp ast_analyzer.cpp -o a.out (g++11 does not work for some reason)
 // 3.2. use _fileno() instead, as it is Windows (did not try though)
 // Also implemented small convenience-related/natural language changes
 
-#include "ast1.hpp"
+#include "../parser/ast.hpp"
 #include "grammar.tab.hpp"
-//#include "ast_analyzer.hpp"
-//#include "error_reporter.hpp"
 #include <fstream>
 #include "ddg.cpp"
 
@@ -21,7 +19,6 @@ extern int yyparse();
 extern FILE *yyin;
 int line_num = 1;
 std::string line, prev_line;
-//extern error_reporter reporter;
 
 ast* ast_ = new ast();
 

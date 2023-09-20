@@ -1,6 +1,14 @@
 #ifndef LUNA_AST
 #define LUNA_AST
 
+//MODIFICATIONS
+#define uint unsigned int // VSCode on Windows could not see uint before for some reason
+typedef int ssize_t;
+
+//also this must be added to the class ast: friend class DDG;
+
+//END
+
 #include <iostream>
 #include <vector>
 #include <cstring>
@@ -1146,6 +1154,8 @@ public:
 private:
     program* program_;
     std::vector<std::string*>* tokens_;
+
+    friend class DDG;
 };
 
 #endif
