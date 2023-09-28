@@ -4,18 +4,22 @@ import c_init_float(real, name) as initFloat;
 sub main(){
         df a, b, c;
 
-        foo(a);
+        foo1(a, b);
 
-        initFloat(1, b);
-	printFloat(b);
-
-        foo(c);
+        initFloat(3, c);
+	printFloat(c);
 
 }
 
-sub foo(name d){
-        initFloat(2, d);
-	printFloat(d);
+sub foo1(name foo1in, name foo2in){
+        initFloat(1, foo1in);
+        printFloat(foo1in);
+        foo2(foo2in);
+}
+
+sub foo2(name f){
+        initFloat(2, f);
+	printFloat(f);
 }
 
 
