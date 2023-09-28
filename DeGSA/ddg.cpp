@@ -12,7 +12,7 @@
 //std::cout << blockobj->opt_dfdecls_->dfdecls_->name_seq_ << std::endl;
 //std::cout << blockobj->opt_dfdecls_->dfdecls_->name_seq_->names_ << std::endl; // all of this just to fix null pointer error
 
-enum VerticeType {
+enum VertexType {
 
     forVF = 1,
     ifVF = 2,
@@ -31,31 +31,31 @@ enum UseDef {
 
 };
 
-// this class represents a vertice in a DDG
-// vertice is a computational fragment (VF), so it could require some (or none) VFs to be ran before, and also allow other VFs to run
-// also vertice can containt VFs inside; that is, vertice is basically a set of it's child vertices and nothing
-class Vertice {
+// this class represents a vertex in a DDG
+// vertex is a computational fragment (VF), so it could require some (or none) VFs to be ran before, and also allow other VFs to run
+// also vertex can contain VFs inside; that is, vertex is basically a set of it's child vertices and nothing
+class Vertex {
 
     private:
 
-        std::set<Vertice*> in; // vertices that must be ran directly before current
-        std::set<Vertice*> out; // vertices that require directly current vertice to be ran
-        std::set<Vertice*> inside; // vertices that are inside the body of a current vertice
+        std::set<Vertex*> in; // vertices that must be ran directly before current
+        std::set<Vertex*> out; // vertices that require directly current vertex to be ran
+        std::set<Vertex*> inside; // vertices that are inside the body of a current vertex
 
-        std::set<std::string> use; // list of DFs that are used in this vertice
-        std::set<std::string> def; // list of DFs that are defined in this vertice
+        std::set<std::string> use; // list of DFs that are used in this vertex
+        std::set<std::string> def; // list of DFs that are defined in this vertex
 
-        VerticeType verticeType; // type of a vertice
+        VertexType vertexType; // type of a vertex (VF type)
 
         std::string name; // name of an import/sub
 
-        int depth; // amount of blocks that this vertice is in
+        int depth; // amount of blocks that this vertex is in
 
         int line; //TODO line in code that this operator is in
 
     public:
 
-        Vertice(VerticeType verticeType, std::set<std::string> useDFs, std::set<std::string> defDFs, std::set<Vertice*> inside, std::string name, int depth){
+        Vertex(VertexType vertexType, std::set<std::string> useDFs, std::set<std::string> defDFs, std::set<Vertex*> inside, std::string name, int depth){
 
             this->in = {};
             this->out = {};
@@ -64,7 +64,7 @@ class Vertice {
             this->use = useDFs;
             this->def = defDFs;
 
-            this->verticeType = verticeType;
+            this->vertexType = vertexType;
 
             this->name = name;
 
@@ -75,27 +75,27 @@ class Vertice {
         }
 
         // copy constructor //TODO do I need it?
-        /*Vertice(Vertice* vertice){
+        /*Vertex(Vertex* vertex){
 
-            std::cout << "Copy constructor for Vertice is called" << std::endl;
+            std::cout << "Copy constructor for Vertex is called" << std::endl;
 
-            this->verticeType = vertice->verticeType;
+            this->vertexType = vertex->vertexType;
 
-            this->use = vertice->use;
-            this->def = vertice->def;
-            this->inside = vertice->inside;
+            this->use = vertex->use;
+            this->def = vertex->def;
+            this->inside = vertex->inside;
 
-            this->in = vertice->in;
-            this->out = vertice->out;
+            this->in = vertex->in;
+            this->out = vertex->out;
 
-            this->name = vertice->name;
+            this->name = vertex->name;
 
-            this->depth = vertice->depth;
+            this->depth = vertex->depth;
 
         }*/
 
-        VerticeType getVerticeType(){
-            return verticeType;
+        VertexType getVertexType(){
+            return vertexType;
         }
 
         std::set<std::string> getUseSet(){
@@ -106,15 +106,15 @@ class Vertice {
             return def;
         }
 
-        std::set<Vertice*> getInsideSet(){
+        std::set<Vertex*> getInsideSet(){
             return inside;
         }
 
-        std::set<Vertice*> getInSet(){
+        std::set<Vertex*> getInSet(){
             return in;
         }
 
-        std::set<Vertice*> getOutSet(){
+        std::set<Vertex*> getOutSet(){
             return out;
         }
 
@@ -126,26 +126,26 @@ class Vertice {
             return depth;
         }
 
-        void addIn(Vertice* vertice){
-            auto temp = this->in.find(vertice);
+        void addIn(Vertex* vertex){
+            auto temp = this->in.find(vertex);
             if (temp == this->in.end()){
-                this->in.insert(vertice);
+                this->in.insert(vertex);
             }
         }
 
-        void addOut(Vertice* vertice){
-            auto temp = this->out.find(vertice);
+        void addOut(Vertex* vertex){
+            auto temp = this->out.find(vertex);
             if (temp == this->out.end()){
-                this->out.insert(vertice);
+                this->out.insert(vertex);
             }
         }
 
         void printInfo(){
 
-            std::cout << "Vertice address: " << this << std::endl;
-            std::cout << "Vertice type: ";
-            std::cout << this->getVerticeType() << " ";
-            switch (this->getVerticeType()){
+            std::cout << "Vertex address: " << this << std::endl;
+            std::cout << "Vertex type: ";
+            std::cout << this->getVertexType() << " ";
+            switch (this->getVertexType()){
                 case forVF:
                     std::cout << "(for)" << std::endl;
                     break;
@@ -169,7 +169,7 @@ class Vertice {
                     break;
             }
 
-            std::cout << "Vertice depth: " << this->getDepth() << std::endl;
+            std::cout << "Vertex depth: " << this->getDepth() << std::endl;
 
             std::cout << "Use DFs:";
             for (std::string i: this->getUseSet()){
@@ -205,12 +205,13 @@ class Vertice {
         
 };
 
-// this class is being used as output for enterVF function and helps to initialize Vertice
-// std::set<Vertice*> inside;
+// this class is being used as output for enterVF function and helps to initialize Vertex
+// std::set<Vertex*> inside;
 // std::map<int, UseDef> DFPositionToUseDef;
-struct VerticeTransferObject {
+// TODO refactor this
+struct VertexTransferObject {
 
-    std::set<Vertice*> inside;
+    std::set<Vertex*> inside;
 
     //std::set<int> usePosition;
     //std::set<int> defPosition;
@@ -244,9 +245,9 @@ class DDG {
 
         std::map<std::string, block*> structuredCFBlocks; // list of structured CFs
 
-        std::map<int, Vertice> layerOne; // list of vertices that require no DFs to be started -- bind
-        std::map<int, Vertice> vertices; // list of all vertices; vertice numeration starts from one
-        int verticeCount; // count of vertices
+        std::map<int, Vertex> layerOne; // list of vertices that require no DFs to be started -- bind
+        std::map<int, Vertex> vertices; // list of all vertices; vertex numeration starts from one
+        int vertexCount; // count of vertices
 
         std::set<std::string> imports; // names of imported functions from C++ (ucodes.cpp)
 
@@ -537,7 +538,7 @@ class DDG {
         // enterVF is a recursive function, which starts scanning at main(). It returns map of which DFs are used in current VF, and which are defined in it
         // It takes a set of current declared DFs, so in the case of a (for example) "for" or "while" operators,
         // we can detect name duplicates
-        VerticeTransferObject enterVF(std::vector<std::string> currentNamespaceDFs, block* currentBlock, int currentDepth){
+        VertexTransferObject enterVF(std::vector<std::string> currentNamespaceDFs, block* currentBlock, int currentDepth){
             
             std::cout << "Entering block " << currentBlock << std::endl;
 
@@ -556,7 +557,7 @@ class DDG {
             //std::set<std::string> currentSubUseDFs = {};
             //std::set<std::string> currentSubDefDFs = {};
             
-            VerticeTransferObject vto;
+            VertexTransferObject vto;
             vto.inside = {};
             //vto.usePosition = {};
             //vto.defPosition = {};
@@ -573,7 +574,7 @@ class DDG {
                     // "for" allows DF declarations
 
                     std::cout << "for statement:" << std::endl;
-                    VerticeTransferObject vto = enterVF(currentSubDFs, forCF->block_); //TODO perhaps send struct/union that has info about header (for i in range ...)?
+                    VertexTransferObject vto = enterVF(currentSubDFs, forCF->block_); //TODO perhaps send struct/union that has info about header (for i in range ...)?
                     //std::map<int, UseDef> positionToUseDef = enterVF(currentSubDFs, forCF->block_);
 
                     std::set<std::string> useDFs = {};
@@ -582,8 +583,8 @@ class DDG {
 
                     }
 
-                    (this->verticeCount)++; // first increment, then create a vertice! vertice numeration starts from
-                    (this->vertices)[this->verticeCount] = Vertice(forVF, vto.use, vto.def, vto.inside); //create a vertice
+                    (this->vertexCount)++; // first increment, then create a vertex! vertex numeration starts from
+                    (this->vertex)[this->vertexCount] = Vertex(forVF, vto.use, vto.def, vto.inside); //create a vertex
 
                     continue;
 
@@ -595,11 +596,11 @@ class DDG {
                     // "if" allows DF declarations
 
                     std::cout << "if statement:" << std::endl;
-                    VerticeTransferObject vto = enterVF(currentSubDFs, ifCF->block_); //TODO perhaps send struct/union that has info about header (if a != b ..)?
+                    VertexTransferObject vto = enterVF(currentSubDFs, ifCF->block_); //TODO perhaps send struct/union that has info about header (if a != b ..)?
 
-                    Vertice vertice = Vertice(ifVF, vto.use, vto.def, vto.inside); //create a vertice
-                    (this->verticeCount)++;
-                    (this->vertices)[this->verticeCount] = vertice;
+                    Vertiex vertex = Vertex(ifVF, vto.use, vto.def, vto.inside); //create a vertex
+                    (this->vertexCount)++;
+                    (this->vertices)[this->vertexCount] = vertex;
 
                     continue;
 
@@ -610,11 +611,11 @@ class DDG {
                     // "while" allows DF declarations
 
                     std::cout << "while statement:" << std::endl;
-                    VerticeTransferObject vto = enterVF(currentSubDFs, whileCF->block_); //TODO perhaps send struct/union that has info about header (while a != b ..)?
+                    VertexTransferObject vto = enterVF(currentSubDFs, whileCF->block_); //TODO perhaps send struct/union that has info about header (while a != b ..)?
 
-                    Vertice vertice = Vertice(whileVF, vto.use, vto.def, vto.inside); //create a vertice
-                    (this->verticeCount)++;
-                    (this->vertices)[this->verticeCount] = vertice;
+                    Vertex vertex = Vertex(whileVF, vto.use, vto.def, vto.inside); //create a vertex
+                    (this->vertexCount)++;
+                    (this->vertices)[this->vertexCount] = vertex;
 
                     continue;
                 }*/
@@ -629,7 +630,7 @@ class DDG {
                 }*/
 
                 /*
-                VerticeTransferObject vto;
+                VertexTransferObject vto;
                 vto.inside = {};
                 vto.DFPositionToUseDef = {};*/
 
@@ -652,7 +653,7 @@ class DDG {
                         
                         std::cout << "DFNameToUseDef size: " << DFNameToUseDef.size() << std::endl;
 
-                        std::set<std::string> useDFs = {}; // for creating a vertice for current cf operator
+                        std::set<std::string> useDFs = {}; // for creating a vertex for current cf operator
                         std::set<std::string> defDFs = {};
                         for (auto i: DFNameToUseDef){
                             if (i.second == use) {
@@ -670,12 +671,12 @@ class DDG {
                             }
                         }
 
-                        (this->verticeCount)++; // first increment, then create a vertice! vertice numeration starts from 1
-                        (this->vertices).insert(std::make_pair(this->verticeCount, Vertice(importVF, useDFs, defDFs, {}, subName, currentDepth)));;
-                        vto.inside.insert(&(this->vertices).find(this->verticeCount)->second); // add it to the list so it could be sent into inside of another Vertice
-                        std::cout << "Created a vertice number " << this->verticeCount
-                                  << " with a type " << (this->vertices).find(this->verticeCount)->second.getVerticeType()
-                                  << " and an address of " << &((this->vertices).find(this->verticeCount)->second) << std::endl;
+                        (this->vertexCount)++; // first increment, then create a vertex! vertex numeration starts from 1
+                        (this->vertices).insert(std::make_pair(this->vertexCount, Vertex(importVF, useDFs, defDFs, {}, subName, currentDepth)));;
+                        vto.inside.insert(&(this->vertices).find(this->vertexCount)->second); // add it to the list so it could be sent into inside of another Vertex
+                        std::cout << "Created a vertex number " << this->vertexCount
+                                  << " with a type " << (this->vertices).find(this->vertexCount)->second.getVertexType()
+                                  << " and an address of " << &((this->vertices).find(this->vertexCount)->second) << std::endl;
 
                         // update vto //TODO wrong! we're in a loop here, check for previous vto containments
                         for (int i = 1; i <= DFExpressions.size(); i++){
@@ -699,7 +700,7 @@ class DDG {
 
                         //localVto is used in parsing arguments
                         //TODO currentSubDFs must be args of this sub (but not expressions in a call) (what?)
-                        VerticeTransferObject localVto = enterVF(currentSubDFs, cfBlock, currentDepth + 1);
+                        VertexTransferObject localVto = enterVF(currentSubDFs, cfBlock, currentDepth + 1);
 
                         std::cout << "DEBUG: localVto check" << std::endl;
                         std::cout << subName << std::endl;
@@ -736,12 +737,12 @@ class DDG {
                             }
                         }
 
-                        (this->verticeCount)++; // first increment, then create a vertice! vertice numeration starts from 1
-                        (this->vertices).insert(std::make_pair(this->verticeCount, Vertice(subVF, useDFs, defDFs, localVto.inside, subName, currentDepth)));
-                        vto.inside.insert(&(this->vertices).find(this->verticeCount)->second); // add it to the list so it could be sent into inside of another Vertice
-                        std::cout << "Created a vertice number " << this->verticeCount
-                                  << " with a type " << (this->vertices).find(this->verticeCount)->second.getVerticeType()
-                                  << " and an address of " << &((this->vertices).find(this->verticeCount)->second) << std::endl;
+                        (this->vertexCount)++; // first increment, then create a vertex! vertex numeration starts from 1
+                        (this->vertices).insert(std::make_pair(this->vertexCount, Vertex(subVF, useDFs, defDFs, localVto.inside, subName, currentDepth)));
+                        vto.inside.insert(&(this->vertices).find(this->vertexCount)->second); // add it to the list so it could be sent into inside of another Vertex
+                        std::cout << "Created a vertex number " << this->vertexCount
+                                  << " with a type " << (this->vertices).find(this->vertexCount)->second.getVertexType()
+                                  << " and an address of " << &((this->vertices).find(this->vertexCount)->second) << std::endl;
 
                         // update vto //TODO
                         /*for (int i = 1; i <= DFExpressions.size(); i++){
@@ -770,32 +771,32 @@ class DDG {
 
         }
 
-        // this function binds vertices to each other; it is initially called for "main" vertice and uses its "inside" field to call itself recursively on new vertices
-        // function initializes "in" and "out" of every vertice
-        //TODO modify Vertice so that the link will contain what DF is used/initialized; this is needed for analysis
-        void bind(Vertice* currentVertice){
+        // this function binds vertices to each other; it is initially called for "main" vertex and uses its "inside" field to call itself recursively on new vertices
+        // function initializes "in" and "out" of every vertex
+        //TODO modify Vertex so that the link will contain what DF is used/initialized; this is needed for analysis
+        void bind(Vertex* currentVertex){
 
             class DFCoordinates { //TODO convert to singleton
 
                 private:
-                std::map<std::string, std::vector<Vertice*>> map;
+                std::map<std::string, std::vector<Vertex*>> map;
                 
                 public:
                 DFCoordinates(){
                     map = {};
                 }
 
-                void addDFUse(std::string DFName, Vertice* currentVertice){
+                void addDFUse(std::string DFName, Vertex* currentVertex){
                     auto finding = map.find(DFName);
                     if (finding != map.end()){ // found this DF being used already, append to existing vector
-                        finding->second.push_back(currentVertice);
+                        finding->second.push_back(currentVertex);
                     } else { // did not found this DF, create new vector
-                        std::vector<Vertice*> temp = {currentVertice};
+                        std::vector<Vertex*> temp = {currentVertex};
                         map.insert(std::make_pair(DFName, temp));
                     }
                 }
 
-                std::vector<Vertice*>* getDFUses(std::string DFName){
+                std::vector<Vertex*>* getDFUses(std::string DFName){
                     auto finding = map.find(DFName);
                     if (finding != map.end()){
                         return &(finding->second);
@@ -807,28 +808,28 @@ class DDG {
             };
 
             DFCoordinates coordinates = DFCoordinates();
-            for (Vertice* internalVertice: currentVertice->getInsideSet()){
+            for (Vertex* internalVertex: currentVertex->getInsideSet()){
 
-                for (std::string DFName: internalVertice->getUseSet()){ // adding every use of every DF
-                    coordinates.addDFUse(DFName, internalVertice);
+                for (std::string DFName: internalVertex->getUseSet()){ // adding every use of every DF
+                    coordinates.addDFUse(DFName, internalVertex);
                     std::cout << "bind: added " + DFName + " to use-coordinates" << std::endl;
                 }
 
-                if (internalVertice->getVerticeType() != importVF) { // vertice has a block, use recursion
-                    bind(internalVertice);
+                if (internalVertex->getVertexType() != importVF) { // vertex has a block, use recursion
+                    bind(internalVertex);
                 }
 
             }
 
-            for (Vertice* internalVertice: currentVertice->getInsideSet()){
+            for (Vertex* internalVertex: currentVertex->getInsideSet()){
 
-                for (std::string DFName: internalVertice->getDefSet()){ // now find what defined DFs are used, and where exactly
-                    std::vector<Vertice*>* maybeUses = coordinates.getDFUses(DFName);
+                for (std::string DFName: internalVertex->getDefSet()){ // now find what defined DFs are used, and where exactly
+                    std::vector<Vertex*>* maybeUses = coordinates.getDFUses(DFName);
                     if (maybeUses != NULL){
                         std::cout << "bind: found used DF: " + DFName << std::endl;
-                        for (Vertice* it: *maybeUses){ // bind current Vertice to all that uses its result
-                            internalVertice->addOut(it);
-                            it->addIn(internalVertice);
+                        for (Vertex* it: *maybeUses){ // bind current Vertex to all that uses its result
+                            internalVertex->addOut(it);
+                            it->addIn(internalVertex);
                         }
                     } else {
                         //TODO throw exception
@@ -842,7 +843,7 @@ class DDG {
 
         DDG(ast* astObjectIn){
             
-            this->verticeCount = 0;
+            this->vertexCount = 0;
             //imports = new std::set<std::string>; //TODO
             this->imports = {};
             this->vertices = {};
@@ -874,26 +875,26 @@ class DDG {
 
             // 2. create all the vertices
 
-            VerticeTransferObject vto = enterVF({}, (this->structuredCFBlocks)["main"], 1);
+            VertexTransferObject vto = enterVF({}, (this->structuredCFBlocks)["main"], 1);
 
-            (this->verticeCount)++; // first increment, then create a vertice! vertice numeration starts from ?
-            (this->vertices).insert(std::make_pair(this->verticeCount, Vertice(subVF, {}, {}, vto.inside, "main", 0)));
-            //vto.inside.insert(&(this->vertices).find(this->verticeCount)->second); // add it to the list so it could be sent into inside of another Vertice TODO why here?
+            (this->vertexCount)++; // first increment, then create a vertex! vertex numeration starts from ?
+            (this->vertices).insert(std::make_pair(this->vertexCount, Vertex(subVF, {}, {}, vto.inside, "main", 0)));
+            //vto.inside.insert(&(this->vertices).find(this->vertexCount)->second); // add it to the list so it could be sent into inside of another Vertex TODO why here?
 
-            std::cout << "Created a [MAIN] vertice number " << this->verticeCount
-                      << " with a type " << (this->vertices).find(this->verticeCount)->second.getVerticeType()
-                      << " and an address of " << &((this->vertices).find(this->verticeCount)->second) << std::endl;
+            std::cout << "Created a [MAIN] vertex number " << this->vertexCount
+                      << " with a type " << (this->vertices).find(this->vertexCount)->second.getVertexType()
+                      << " and an address of " << &((this->vertices).find(this->vertexCount)->second) << std::endl;
 
-            Vertice mainVertice = (this->vertices).find(this->verticeCount)->second;
+            Vertex mainVertex = (this->vertices).find(this->vertexCount)->second;
 
             // 3. bind vertices to eachother
-            bind(&mainVertice);
+            bind(&mainVertex);
 
-            std::cout << "Total vertices: " << verticeCount << std::endl << std::endl; 
-            for (int i = 1; i <= verticeCount; i++){
+            std::cout << "Total vertices: " << vertexCount << std::endl << std::endl; 
+            for (int i = 1; i <= vertexCount; i++){
 
-                //Vertice currentVertice = Vertice(vertices.find(i)->second); //TODO fails; copy constructor is not finished
-                std::cout << "Vertice number: " << i << std::endl;
+                //Vertex currentVertex = Vertex(vertices.find(i)->second); //TODO fails; copy constructor is not finished
+                std::cout << "Vertex number: " << i << std::endl;
                 vertices.find(i)->second.printInfo();
                 std::cout << std::endl;
 
