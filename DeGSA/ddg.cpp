@@ -421,6 +421,8 @@ class DDG {
                 return result;
             }
 
+            return {}; //TODO add exception
+
         }
 
         class ParsedArguments {
