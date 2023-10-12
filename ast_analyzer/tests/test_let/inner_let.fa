@@ -1,0 +1,14 @@
+sub main() {
+    let x=y[k][l], message="Success" { 
+        df x;
+        init();
+        let x=y[k1][l1], message="Success1" { 
+            df x1;
+            init1();
+            let x=y[k2][l2], message="Success2" { 
+                df x2;
+                init2();
+            }
+        }
+    }
+}

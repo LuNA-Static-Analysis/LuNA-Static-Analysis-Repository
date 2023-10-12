@@ -1,0 +1,3 @@
+im c_func() as func;
+i c_func(int) as func;
+ c_func(real) as func;

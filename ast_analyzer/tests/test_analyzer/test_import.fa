@@ -1,0 +1,2 @@
+import c_foo(int) as a;
+import c_bar(int) as a;

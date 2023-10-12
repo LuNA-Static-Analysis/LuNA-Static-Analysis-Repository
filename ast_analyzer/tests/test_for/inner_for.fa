@@ -1,0 +1,15 @@
+sub main() {
+    for i=1..10 {
+        init();
+        for i=1..N {
+            init();
+            for i=M..N {
+                init();
+                for i=M..10 {
+                    init();
+                }
+            }
+        }
+    }
+}
+

@@ -1,0 +1,59 @@
+import c_print(value) as print;
+import c_int_to_real(real) as int_to_real;
+import c_real_to_int(int) as real_to_int;
+
+import c_int_to_string(string) as int_to_string;
+import c_real_to_string(string) as real_to_string;
+
+import c_string_to_real(real) as string_to_real;
+import c_string_to_int(int) as string_to_int;
+
+
+import c_init_int(int, name) as init_int;
+import c_init_real(real, name) as init_real;
+import c_init_string(string, name) as init_string;
+
+
+import c_real_to_value(value) as real_to_value;
+import c_int_to_value(value) as int_to_value;
+import c_string_to_value(value) as string_to_value;
+
+
+import c_value_to_int(int) as value_to_int;
+import c_value_to_real(real) as value_to_real;
+import c_value_to_string(string) as value_to_string;
+
+sub main() {
+    df int_x, real_x, string_x;
+    // int_to_real(1); // ok (cast)
+    // real_to_int(2.6); // ok (cast)
+    // int_to_string(5000); // ok 
+    // real_to_string(10.3); // error
+    // string_to_real(" "); // error
+    // string_to_int("hello"); // ???
+
+    // init_int(1, int_x);
+    // init_real(1.2, real_x);
+    // init_string("hello", string_x);
+
+    // int_to_value(20); // error
+    // real_to_value(20.12); // error
+    // string_to_value("hello"); //error
+
+    // value_to_int(int_x); // ok
+    // value_to_int(real_x); // error
+
+    // value_to_real(int_x); // error
+    // value_to_real(real_x); // ok
+
+    // value_to_string(int_x); // ok
+    // value_to_string(real_x); // ok
+
+    //int_to_real(real (1)); // ok (cast)
+
+    // string_to_int(int ("hello")); // ??
+    // string_to_real(real ("hello")); // error
+
+    // int_to_string(1); // error 
+    // real_to_string(string(2.9)); // error
+}

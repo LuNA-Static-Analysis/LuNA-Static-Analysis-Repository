@@ -1,0 +1,6 @@
+import c_func() as func : CUDA, NOCPU;
+import c_func(int) as func : CUDA, NOCPU;
+import c_func(real) as func : CUDA, NOCPU;
+import c_func(string) as func : CUDA, NOCPU;
+import c_func(name) as func : CUDA, NOCPU;
+import c_func(value) as func : CUDA, NOCPU;

@@ -1,0 +1,10 @@
+sub main1(int a) {
+    df a, b, c, a, b;
+
+    if a == 1 {
+        df b;
+        init(b);
+    }
+
+    init(a);
+}

@@ -1,0 +1,13 @@
+import c_func(int, name) as func;
+
+sub foo() {
+    df x;
+    func();
+}
+
+sub main() {
+    df x;
+    func();
+    func(1, x, x);
+    foo(x);
+}

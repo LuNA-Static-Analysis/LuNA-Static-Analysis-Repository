@@ -1,0 +1,23 @@
+sub main() {
+    df x;
+    init(x) ;
+    
+    if x == 1 {
+        df y;
+        if y != 1 {
+            df z;
+            if z >= 1 {
+                df k;
+                if k <= 1 {
+                    df m;
+                    if m < 1 {
+                        df r;
+                        if r > 1 {
+                            hello();
+                        }
+                    }
+                }
+            }
+        } 
+    }
+}

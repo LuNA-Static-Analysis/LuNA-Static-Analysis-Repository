@@ -1,8 +1,9 @@
 #include "../parser/ast.hpp"
 #include "grammar.tab.hpp"
-#include "ast_analyzer.hpp"
-#include "error_reporter.hpp"
-#include "ast_tester.hpp"
+#include "undecl_names_analyzer.hpp"
+#include "unused_names_analyzer.hpp"
+#include "shadow_import_analyzer.hpp"
+
 #include <fstream>
 
 const int EXIT_ERROR = 1;
@@ -17,7 +18,6 @@ ast* ast_ = new ast();
 
 int main(int argc, char** argv) {
     struct timespec start_parse, end_parse, start_analyze, end_analyze, start_all, end_all;
-    clock_gettime(CLOCK_MONOTONIC_RAW, &start_all);
 
     if (argc != 2) {
         std::cerr << "Bad number of args. Usage: ./a.out test.fa" << std::endl;
@@ -30,37 +30,36 @@ int main(int argc, char** argv) {
         std::cerr << "Couldn'e open file" << std::endl;
         return EXIT_ERROR;
     }
-    
 
     std::cerr << "parse\n";
 
-
-    clock_gettime(CLOCK_MONOTONIC_RAW, &start_parse);
     yyparse();
-    clock_gettime(CLOCK_MONOTONIC_RAW, &end_parse);
 
-    // std::cerr << ast_->to_string() << std::endl;
+    base_analyzer* analyzer = new undeclarated_names_analyzer(ast_, yyin, &reporter);
 
-    // std::cerr << compare(yyin, ast_) << std::endl;
+    base_analyzer* analyzer1 = new unused_names_analyzer(ast_, yyin, &reporter);
 
-    ast_analyzer analyzer = ast_analyzer(ast_, yyin);
-
-    // std::cerr << "analyze\n";
-
-    clock_gettime(CLOCK_MONOTONIC_RAW, &start_analyze);
-    analyzer.analyze();
-    clock_gettime(CLOCK_MONOTONIC_RAW, &end_analyze);
+    base_analyzer* analyzer2 = new shadow_import_analyzer(ast_, yyin, &reporter);
 
 
-    std::cerr << "Всего токенов: "<< tokens << std::endl;
-    std::cerr << "Токенов в AST: " << ast_->get_tokens_count() << std::endl;
+
+
+    std::cerr << "\n--------undeclarated_names_analyzer------------\n\n";
+    analyzer->analyze();
+
+    std::cerr << "\n-------------unused_names_analyzer-------------\n\n" ;
+    analyzer1->analyze();
+
+    std::cerr << "\n--------shadow_import_analyzer----------\n\n";
+    analyzer2->analyze();
+
+
+
+    delete analyzer1;
+    delete analyzer2;
+    delete analyzer;
 
     delete ast_;
     fclose(yyin);
-
-    clock_gettime(CLOCK_MONOTONIC_RAW, &end_all);
-    printf("Program time: %lf sec.\n", end_all.tv_sec-start_all.tv_sec + 0.000000001*(end_all.tv_nsec-start_all.tv_nsec));
-    printf("Analyze time: %lf sec.\n", end_analyze.tv_sec-start_analyze.tv_sec + 0.000000001*(end_analyze.tv_nsec-start_analyze.tv_nsec));
-    printf("Parse time: %lf sec.\n", end_parse.tv_sec-start_parse.tv_sec + 0.000000001*(end_parse.tv_nsec-start_parse.tv_nsec));
     return EXIT_SUCCESS;
 }

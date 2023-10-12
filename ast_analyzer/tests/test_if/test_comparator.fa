@@ -1,0 +1,111 @@
+sub main() {
+    df x;
+    
+    if x == 1 {
+        Foo();
+    }
+
+    if x!= 1 {
+        Foo()
+    }
+
+    if x >= 1 {
+        Foo();
+    }
+
+    if x <= 1 {
+        Foo() ;
+    }
+
+    if x > 1 {
+        Foo() ;
+    }
+
+    if x < 1 {
+        Foo();
+    }
+}
+
+sub main() {
+    df x, y;
+    
+    if x == y {
+        Foo();
+    }
+
+    if x!= y {
+        Foo()
+    }
+
+    if x >= y {
+        Foo();
+    }
+
+    if x <= y {
+        Foo() ;
+    }
+
+    if x > y {
+        Foo() ;
+    }
+
+    if x < y {
+        Foo();
+    }
+}
+
+sub main() {
+    df x;
+    
+    if x == "HELLO" {
+        Foo();
+    }
+
+    if x!= "HELLO" {
+        Foo()
+    }
+
+    if x >= "HELLO" {
+        Foo();
+    }
+
+    if x <= "HELLO"{
+        Foo() ;
+    }
+
+    if x > "HELLO"{
+        Foo() ;
+    }
+
+    if x < "HELLO" {
+        Foo();
+    }
+}
+
+sub main() {
+    df x;
+    
+    if x == 1.0 {
+        Foo();
+    }
+
+    if x!= 2.0 {
+        Foo()
+    }
+
+    if x >= 10000.0 {
+        Foo();
+    }
+
+    if x <= 10231.0 {
+        Foo() ;
+    }
+
+    if x > 1230.0 {
+        Foo() ;
+    }
+
+    if x < 3213421.0 {
+        Foo();
+    }
+}

@@ -1,5 +1,4 @@
-#ifndef LUNA_ERROR_REPORTER
-#define LUNA_ERROR_REPORTER
+#pragma once
 
 #include <cstring>
 #include <iostream>
@@ -54,5 +53,3 @@ private:
     unsigned int errors_number = 0;
     const int LIMIT_ERRORS = 1000;
 };
-
-#endif

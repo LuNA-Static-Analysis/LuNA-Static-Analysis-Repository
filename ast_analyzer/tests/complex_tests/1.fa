@@ -1,0 +1,44 @@
+import c_a() as a;
+import c_func(int) as a;
+import c_func(int, real) as a;
+import c_func(int, real, string) as a;
+
+
+sub main() {
+    df x, y, z;
+
+    cf X : init(x);
+    cf Y : init(y);
+    cf Z : init(z);
+
+    copy(x[i], y[i]);
+    copy(x[1], z[i]);
+    copy(y[i], y[100]);
+    copy(x[i], y[100]);
+    copy(x[i], y[j]);
+
+    copy(x[i][j], y[100][i]);
+    copy(z[i][1], y[100][i]);
+    copy(x[0][0], y[j][i]);
+    copy(x[i][j], y[0][i]);
+
+    if x == 1 {
+        df a, b, c;
+
+        for j = 1..N {
+            df a, b ,c;
+
+            cf a : init(a);
+            cf b : init(b);
+            cf c : init(c);
+        }
+    }
+
+    copy(x[i][j][k], y[0][i][100]);
+    copy(x[i][j][0], y[0][i][k]);
+    copy(x[1][j][k], y[i][1][j]);
+
+    copy(x[i], y[0][i][100]);
+    copy(x[i][j][0], y[0]);
+    copy(x, y[i][j]);
+}

@@ -1,0 +1,11 @@
+import c_func(int, real, name, value, string) as func;
+import c_func1(int, real, name, value, string) as func;
+import c_init(int, name) as init;
+
+sub main() {
+    df x, x;
+    init(1, x);	
+
+    func(1, 1.0, y, x, "hello");
+}
+

@@ -1,0 +1,13 @@
+import c_func(int, real) as func;
+
+sub foo(int i) {
+    func(i);
+}
+
+sub main() {
+    df x, y;
+
+    func(1, "hello"); // error
+    foo(x); // no error
+
+}

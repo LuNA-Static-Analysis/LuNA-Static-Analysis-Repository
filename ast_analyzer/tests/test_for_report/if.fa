@@ -1,0 +1,9 @@
+sub main() {
+    df x;
+    init(x);
+
+    if x == 1 {
+        df y;
+        init(y);
+    }
+}

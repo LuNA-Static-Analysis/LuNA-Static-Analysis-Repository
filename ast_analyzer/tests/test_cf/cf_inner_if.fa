@@ -1,0 +1,11 @@
+sub main() {
+    if x == 1 {
+        df x;
+        cf a : init();
+    }
+
+    if x <= 1 {
+        df x;
+        cf a : init();
+    }
+}

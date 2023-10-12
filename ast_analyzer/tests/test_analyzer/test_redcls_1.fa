@@ -1,0 +1,5 @@
+sub main(int a) {
+
+    df a;
+    init();
+}

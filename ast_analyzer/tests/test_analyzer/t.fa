@@ -1,0 +1,15 @@
+import c_init(int, name) as init;
+import c_print(value) as print;
+
+sub main() {
+    df a;
+    init(0, a);
+    print(a);
+    
+    if a == 1 {
+        df a;
+        init(1, a);
+        print(a);
+    }
+}
+
