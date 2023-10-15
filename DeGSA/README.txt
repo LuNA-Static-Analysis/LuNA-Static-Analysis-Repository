@@ -1,0 +1,1 @@
+In order for DeGSA to work, PATH envvar should have a path to Python and g++, so the launch.bat script could run.
