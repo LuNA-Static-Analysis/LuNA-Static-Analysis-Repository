@@ -1,13 +1,9 @@
-
-sub main(int u) {
-    df e;
-
-    if (a == b) {
-        df y;
-        cf c : init(x);
+sub main() {
+    df x;
+    
+    while (x[i] < 0 ) , i = 0 .. out N {
+        init(t[i]);
     }
 
-    for i=1..N {
-        init(e);
-    }
+    init1(a[i]);
 }

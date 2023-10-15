@@ -35,11 +35,13 @@ int main(int argc, char** argv) {
 
     yyparse();
 
+    // std::cerr << ast_->to_string();
+
     base_analyzer* analyzer = new undeclarated_names_analyzer(ast_, yyin, &reporter);
 
-    base_analyzer* analyzer1 = new unused_names_analyzer(ast_, yyin, &reporter);
+    // base_analyzer* analyzer1 = new unused_names_analyzer(ast_, yyin, &reporter);
 
-    base_analyzer* analyzer2 = new shadow_import_analyzer(ast_, yyin, &reporter);
+    // base_analyzer* analyzer2 = new shadow_import_analyzer(ast_, yyin, &reporter);
 
 
 
@@ -47,16 +49,16 @@ int main(int argc, char** argv) {
     std::cerr << "\n--------undeclarated_names_analyzer------------\n\n";
     analyzer->analyze();
 
-    std::cerr << "\n-------------unused_names_analyzer-------------\n\n" ;
-    analyzer1->analyze();
+    // std::cerr << "\n-------------unused_names_analyzer-------------\n\n" ;
+    // analyzer1->analyze();
 
-    std::cerr << "\n--------shadow_import_analyzer----------\n\n";
-    analyzer2->analyze();
+    // std::cerr << "\n--------shadow_import_analyzer----------\n\n";
+    // analyzer2->analyze();
 
 
 
-    delete analyzer1;
-    delete analyzer2;
+    // delete analyzer1;
+    // delete analyzer2;
     delete analyzer;
 
     delete ast_;

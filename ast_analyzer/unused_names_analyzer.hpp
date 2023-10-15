@@ -110,9 +110,10 @@ public:
                     }
                 }
 
-                if (cur_cf->opt_label_->id_ != nullptr) {
-                    cur_variables->push_back(cur_cf->opt_label_->id_);
-                }
+                // // todo: проверка, что simple id
+                // if (cur_cf->opt_label_->id_ != nullptr) {
+                //     cur_variables->push_back(cur_cf->opt_label_->id_);
+                // }
                 continue;
             }
 

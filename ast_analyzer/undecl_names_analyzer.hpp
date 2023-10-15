@@ -66,6 +66,23 @@ public:
             return cur_vars;
         }
 
+        simple_id* simple_id_ = dynamic_cast<simple_id*>(expr);
+
+        if (simple_id_ != nullptr) {
+            cur_vars.push_back(simple_id_->value_);
+            return cur_vars;
+        }
+
+        complex_id* complex_id_ = dynamic_cast<complex_id*>(expr);
+        if (complex_id_ != nullptr) {
+            auto inner_vars1 = get_vars_from_expr(complex_id_->id_);
+            cur_vars.insert(cur_vars.end(), inner_vars1.begin(), inner_vars1.end());
+
+            auto inner_vars = get_vars_from_expr(complex_id_->expr_);
+            cur_vars.insert(cur_vars.end(), inner_vars.begin(), inner_vars.end());
+            return cur_vars;
+        }
+
         bin_op* bin_op_ = dynamic_cast<bin_op*>(expr);
         if (bin_op_ != nullptr) {
             std::vector<luna_string *> inner_left_vars = get_vars_from_expr(bin_op_->left_);
@@ -104,7 +121,8 @@ public:
 
             cf_statement* cur_cf = dynamic_cast<cf_statement*> (stat);
 
-            if (cur_cf != nullptr ) {
+            if (cur_cf != nullptr) {
+
                 if (cur_cf->opt_exprs_->exprs_seq_ != nullptr) {
                     std::vector<luna_string *>* vars = get_vars(cur_cf->opt_exprs_->exprs_seq_->expr_);
 
@@ -144,7 +162,6 @@ public:
                     }
                 }
 
-                scope->push_back(cur_variables);
                 check_unused(scope, cur_if->block_);
                 scope->pop_back();
                 continue;
@@ -152,15 +169,20 @@ public:
 
             while_statement* cur_while = dynamic_cast<while_statement*> (stat);
             if (cur_while != nullptr) {
+                std::vector<luna_string*> inner_scope;
+                inner_scope.push_back(cur_while->left_);
+                std::cerr << cur_while->left_->to_string() << std::endl;
+                scope->push_back(&inner_scope);
+
                 std::vector<expr *> v;
-                v.push_back(cur_while->left_);
-                // v.push_back(cur_while->right_);
+                v.push_back(cur_while->expr_);
+                v.push_back(cur_while->right_);
+                v.push_back(cur_while->id_);
 
                 std::vector<luna_string*>* while_vars = get_vars(&v);
 
                 for (auto i : *while_vars) {
                     if (!is_define_in_scope(i, scope)) {
-                        std::cerr << i->to_string();
                         reporter_->report(ERROR_LEVEL::ERROR,
                             "Name \"" + i->to_string() + "\" is used, but not defined",
                             get_line_from_file(i->line_),
@@ -169,8 +191,8 @@ public:
                     }
                 }
 
-                scope->push_back(cur_variables);
                 check_unused(scope, cur_while->block_);
+                scope->pop_back();
                 scope->pop_back();
                 continue;
             }
@@ -192,7 +214,6 @@ public:
                     }
                 }
 
-                scope->push_back(cur_variables);
                 check_unused(scope, cur_for->block_);
                 scope->pop_back();
                 continue;
