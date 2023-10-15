@@ -1,5 +1,5 @@
 sub main() {
-    while ( x[i] < 0 ) , i = 0 .. out N {
+    while (x[i] < 0) , i = 0 .. out N {
         init();
     }
 }
