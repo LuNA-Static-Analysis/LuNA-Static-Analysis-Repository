@@ -15,7 +15,6 @@ public:
         line_ = line;
     }
 
-
     virtual std::string to_string() const { return std::string("this class has no to_string method");}
     virtual ~virtual_token() {}
 };
@@ -47,14 +46,20 @@ public:
     }
 };
     
-class id : public luna_string {
+class id : public expr {
 public:
-    id(std::string* id_) {
-        delete value_;
-        value_ = id_;
-    }
+    // luna_string* value_;
 
-    id() : luna_string() {}
+    // id (luna_string* str) {
+    //     value_ = str;
+    // }
+
+    // id(std::string* id_) {
+    //     delete value_;
+    //     value_ = id_;
+    // }
+
+    // id() : luna_string() {}
 
     ~id() {
         // std::cerr << *value_ << std::endl;
@@ -285,12 +290,10 @@ class complex_id : public id {
     public:
         id *id_;
         expr *expr_;
-        complex_id(id *id, expr *expr) : id_(id), expr_(expr) {
-            delete value_;
-        }
-        complex_id() : id_(new id()), expr_(new expr()) {
-            delete value_;
-        }
+
+        complex_id(id *id, expr *expr) : id_(id), expr_(expr) {} 
+
+        complex_id() : id_(new id()), expr_(new expr()) {}
 
         ~complex_id() {
             delete id_;
@@ -1100,9 +1103,14 @@ class opt_expr : public virtual_token {
 
 class simple_id : public id {
     public:
-        simple_id(std::string * name) {
-            delete value_;
+        luna_string* value_;
+        simple_id(luna_string* name) {
+            // delete value_;
             value_ = name;
+        }
+
+        std::string to_string() const override {
+            return value_->to_string();
         }
 };
 

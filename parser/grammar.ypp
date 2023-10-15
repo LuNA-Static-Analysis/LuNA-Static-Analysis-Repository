@@ -481,14 +481,14 @@ opt_label:
 
 id:
 	NAME { 
-        $$ = new simple_id($1->value_);
+        $$ = new simple_id($1);
         $$->set_position(@1.first_line);
-        delete $1;
-     }
-
+        $1->set_position(@1.first_line);
+    }
 
 	| id LSB expr RSB {
         $$ = new complex_id($1, $3);
+        $$->set_position(@1.first_line);
     }
 	;
 

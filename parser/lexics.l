@@ -24,7 +24,9 @@ extern ast* ast_;
 bool is_end_of_define = false;
 
 #define SAVE_TOKEN std::string* token = new std::string(yytext); \
-				yylval.string_ = new luna_string(token); \
+				luna_string* l = new luna_string(token); \
+				l->set_position(cur_position_in_line); \
+				yylval.string_ = l; \
 				ast_->push_token(token)
 				
 
