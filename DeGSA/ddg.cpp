@@ -31,6 +31,12 @@ enum UseDef {
 
 };
 
+enum Error {
+
+    multipleDFInitialization = 1
+
+};
+
 // this class represents a vertex in a DDG
 // vertex is a computational fragment (VF), so it could require some (or none) VFs to be ran before, and also allow other VFs to run
 // also vertex can contain VFs inside; that is, vertex is basically a set of it's child vertices and nothing
@@ -253,7 +259,7 @@ class DDG {
 
         std::set<std::string> imports; // names of imported functions from C++ (ucodes.cpp)
 
-    public:
+    //public:
 
         void findSubs(ast* astobj){
 
@@ -605,6 +611,31 @@ class DDG {
 
         }
 
+        void walkThrough(){ //TODO
+
+        }
+
+    public:
+
+        // this function accepts list of errors to find and tries to find them in the created graph
+        // list consists of Error enums
+        void findErrors(){
+            
+
+
+        }
+
+        // this function recursively goes through DDG and on every namespace checks if any of the DFs
+        // are initialized more than once
+        //TODO perhaps create a "walkthrough" function to recursively go through a graph and return required information
+        //TODO function must return a list of errors in a JSON or whatever
+        //TODO modify bindVertices so it also saves what DF exactly is required/created for a vertex
+        void checkMultipleDFInitialization(){
+
+            
+
+        }
+
         DDG(ast* astObjectIn){
             
             this->vertexCount = 0;
@@ -663,6 +694,8 @@ class DDG {
 
             // 4. search for errors
             //TODO search for errors
+
+            checkMultipleDFInitialization();
 
         }
 

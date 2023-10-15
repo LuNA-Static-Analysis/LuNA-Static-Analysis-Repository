@@ -128,7 +128,7 @@ extern int yydebug;
 typedef union YYSTYPE
 {
 /* Line 2058 of yacc.c  */
-#line 34 "grammar.ypp"
+#line 34 "..\\parser\\grammar.ypp"
 
     program *program_;
     sub_def *sub_def_;
