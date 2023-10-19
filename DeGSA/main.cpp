@@ -19,6 +19,7 @@ extern int yyparse();
 extern FILE *yyin;
 int line_num = 1;
 std::string line, prev_line;
+uint tokens = 0;
 
 ast* ast_ = new ast();
 

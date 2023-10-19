@@ -366,22 +366,8 @@ class DDG {
 
         }
 
-        // this is for proper arg parsing; "regex" header required
-        static bool isInt(std::string s) {
-            return std::regex_match(s, std::regex("[0-9]+"));
-        }
-
-        static bool isReal(std::string s) {
-            return std::regex_match(s, std::regex("[0-9]+.[0-9]+"));
-        }
-
-        static bool isString(std::string s) { //TODO rename to isDF
-            //return std::regex_match(s, std::regex("\"[^\"]*\""));
-            return std::regex_match(s, std::regex("[a-zA-Z][a-zA-Z0-9]*"));
-        }
-
         // this function gets an expression, recursively goes through it and returns a set of DFs that are used in this expression
-        static std::set<std::string> getDFsFromExpression(expr* expression){ //TODO check if this works
+        static std::set<std::string> getDFsFromExpression(expr* expression){ //TODO fails? see id, complex_id, simple_id; regex does not work anymore perhaps
 
             std::cout << "> getDFsFromExpression called\n\n";
 
@@ -389,44 +375,65 @@ class DDG {
 
             luna_string* lunaString = dynamic_cast<luna_string*>(expression);
             if (lunaString != NULL){
-
-                //std::cout << "found luna string: " << *(lunaString->value_) << std::endl;
-
-                if (isString(*(lunaString->value_))){ // DF is a luna_string, just as integer or real (for some reason); 
-                    // this regex demands luna_string to be a DF name
-                    result.insert(*(lunaString->value_));
-                    //std::cout << "and it is a DF" << std::endl;
-                } else {
-                    //std::cout << "but it is not a DF" << std::endl;
-                }
-
-                std::cout << "> getDFsFromExpression finished\n\n";
+                std::cout << "> getDFsFromExpression finished (non-DF string found)\n\n";
                 return result;
-
             }
 
             // ignore all this as we are looking only for DFs
             integer* lunaInteger = dynamic_cast<integer*>(expression);
-            if (lunaInteger != NULL) return result;
+            if (lunaInteger != NULL) {
+                std::cout << "> getDFsFromExpression finished (integer ignored)\n\n";
+                return result;
+            }
             real* lunaReal = dynamic_cast<real*>(expression);
-            if (lunaReal != NULL) return result;
+            if (lunaReal != NULL) {
+                std::cout << "> getDFsFromExpression finished (real ignored)\n\n";
+                return result;
+            }
 
             luna_cast* lunaCast = dynamic_cast<luna_cast*>(expression);
             if (lunaCast != NULL){ // DFs could be inside the cast
                 expr* nextExpr = lunaCast->expr_;
+                std::cout << "> getDFsFromExpression calling recursively for a luna_cast\n\n";
                 result = getDFsFromExpression(nextExpr);
+                std::cout << "> getDFsFromExpression finished after luna_cast recursion\n\n";
                 return result;
             }
 
             bin_op* lunaBinOp = dynamic_cast<bin_op*>(expression);
             if (lunaBinOp != NULL){ // DFs could be inside one of the operands
+                std::cout << "> getDFsFromExpression calling recursively for a bin_op (left)\n\n";
                 std::set<std::string> leftResult = getDFsFromExpression(lunaBinOp->left_);
                 for (auto j : leftResult) result.insert(j);
+                std::cout << "> getDFsFromExpression calling recursively for a bin_op (right)\n\n";
                 std::set<std::string> rightResult = getDFsFromExpression(lunaBinOp->right_);
                 for (auto j : rightResult) result.insert(j);
+                std::cout << "> getDFsFromExpression finished after bin_op recursion\n\n";
                 return result;
             }
 
+            id* df = dynamic_cast<id*>(expression);
+            if (df != NULL){
+
+                simple_id* simpleDF = dynamic_cast<simple_id*>(expression);
+                if (simpleDF != NULL){
+                    result.insert(*(simpleDF->value_->value_));
+                    return result;
+                }
+
+                complex_id* complexDF = dynamic_cast<complex_id*>(expression);
+                if (complexDF != NULL){
+                    //TODO exception
+                    std::cout << "complex DF found; these are not supported yet" << std::endl;
+                    return result;
+                }
+
+                std::cout << "error in dynamic_cast to id" << std::endl;
+                //TODO exception
+
+            }
+
+            std::cout << "> getDFsFromExpression finished (default)\n\n";
             return {}; //TODO add exception
 
         }
@@ -695,7 +702,7 @@ class DDG {
             // 4. search for errors
             //TODO search for errors
 
-            checkMultipleDFInitialization();
+            //checkMultipleDFInitialization();
 
         }
 
