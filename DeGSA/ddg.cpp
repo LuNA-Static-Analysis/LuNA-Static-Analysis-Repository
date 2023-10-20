@@ -440,6 +440,8 @@ class DDG {
 
         class ParsedArguments {
             private:
+                // maps position to set of DFs being on this position
+                // set is required as expressions, being a single argument, may contain multiple DFs
                 std::map<int, std::set<std::string>> map; // starts from 1 //TODO redo to 0
             
             public:
@@ -458,7 +460,10 @@ class DDG {
 
         };
 
-        //TODO documentation
+        // enterVF must be called on a vertex' block (initially main's vertex). It recursively goes through each operator in the block,
+        // creating a corresponding vertex for each and keeping track of what DFs are use and defined and where exactly, and storing
+        // this information in Use and Def sets of a vertice (this is later used in bindVertices() to fully create a graph)
+        //TODO create a function that checks for using undeclared DFs instead of checking here?
         Vertex* enterVF(std::vector<std::string> currentNamespaceDFs, std::map<int, std::set<std::string>> callArgs,
                         block* currentBlock, int currentDepth, VertexType vertexType, std::string name){
             std::cout << "> enterVF called\n\n";
@@ -498,7 +503,24 @@ class DDG {
                     //iterate through statements, collect vertices and their use-defs, initialize currentVertex' use-defs and return it
                     int statementNumber = 0;
 
-                    //TODO find DF declarations
+                    //find DF declarations: use vector and check for duplicates (i.e.: df a, b, b;)
+                    std::vector<std::string> declaredDFsVector = scanForDFDecls(currentBlock);
+                    std::set<std::string> declaredDFsSet = {};
+                    for (auto s: currentNamespaceDFs){ // assuming that currentNamespaceDFs has no duplicates (TODO but what if we do?)
+                        if (declaredDFsSet.find(s) != declaredDFsSet.end()) {
+                            //std::cout << "ERROR: found DF duplicate!"
+                        } else {
+                            declaredDFsSet.insert(s);
+                        }
+                    }
+                    // now add new-declared DFs to already existing DFs from current namespace
+                    for (auto s: declaredDFsVector){
+                        if (declaredDFsSet.find(s) != declaredDFsSet.end()) {
+                            std::cout << "ERROR: declared DF duplicate: " + s << std::endl;
+                        } else {
+                            declaredDFsSet.insert(s);
+                        }
+                    }
                     
                     for (statement* innerStatement: *(currentBlock->statement_seq_->statements_)){
                         statementNumber++;
@@ -508,12 +530,31 @@ class DDG {
                             std::string subName = *(innerStatementFunctionVF->code_id_->value_);
                             std::vector<expr*> DFExpressions = *(innerStatementFunctionVF->opt_exprs_->exprs_seq_->expr_); // vector of call args (expressions; need to parse)
                             Vertex* tempVertex;
+
+                            // check if this DFs are declared at all
+                            auto parsedArguments = ParsedArguments(DFExpressions).getMap();
+                            for (auto i: parsedArguments){
+                                for (auto j: i.second){
+                                    if (declaredDFsSet.find(j) == declaredDFsSet.end()){
+                                        std::cout << "ERROR: found undeclared DF: " + j << std::endl;
+                                    }
+                                }
+                            }
+
                             if (imports.find(subName) != imports.end()){ // import VF
                                 std::cout << "import" << std::endl;
-                                tempVertex = enterVF({}, ParsedArguments(DFExpressions).getMap(), nullptr, currentDepth + 1, importVF, subName);
+                                tempVertex = enterVF({}, parsedArguments, nullptr, currentDepth + 1, importVF, subName);
                             } else { // subVF
                                 std::cout << "sub" << std::endl;
-                                tempVertex = enterVF({}, ParsedArguments(DFExpressions).getMap(), (this->structuredCFBlocks)[subName], currentDepth + 1, subVF, subName);
+                                // find what DFs to send as "current namespace DFs" to enterVF
+                                std::vector<std::string> nextNamespaceDFs = {};
+                                auto m = structuredCFArgs.find(subName);
+                                if (m != structuredCFArgs.end()){
+                                    for (auto s: *(m->second)){
+                                        nextNamespaceDFs.push_back(*(s->name_->value_));
+                                    }
+                                }
+                                tempVertex = enterVF(nextNamespaceDFs, parsedArguments, (this->structuredCFBlocks)[subName], currentDepth + 1, subVF, subName);
                             }
                             //for (every df in definedArgs) if (this df is used/defined in tempVertex, then add call arg of current operator that matches this defined arg)
                             if (structuredCFArgs[name] != nullptr){
