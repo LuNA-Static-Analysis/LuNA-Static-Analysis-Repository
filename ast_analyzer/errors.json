@@ -1,0 +1,113 @@
+[
+    {
+        "_comment": "Отсутствие Main",
+        "error_code": "LuNAxxxx",
+        "error_msg": "",
+        "line": "Отсутсвтует",
+        "details": {}
+    },
+    {
+        "_comment": "Неиспользованная переменная",
+        "error_code": "LuNAxxxx",
+        "error_msg": "",
+        "line": "_",
+        "details": {
+            "name": "x"
+        }
+    },
+    {
+        "_comment": "Необьявленная переменная",
+        "error_code": "LuNAxxxx",
+        "line": "_",
+        "details": {
+            "name": "x"
+        }
+    },
+    {
+        "_comment": "Перекрытие функций при импорте",
+        "error_code": "LuNAxxxx",
+        "error_msg": "",
+        "line": "",
+        "details": {
+            "name": "init",
+            "imports": [
+                {
+                    "line_num": "1",
+                    "line": "import c_init() as init;"
+                },
+                {
+                    "line_num": "2",
+                    "line": "import c_init1() as init;"
+                }
+            ]
+        }
+    },
+    {
+        "_comment": "Вызов несуществующего фрагмента кода",
+        "error_code": "LuNAxxxx",
+        "error_msg": "",
+        "line": "_",
+        "details": {
+            "call": "main(\"hello\")"
+        }
+    },
+    {
+        "_comment": "Вызов фрагмента кода с неверными параметрами",
+        "error_code": "LuNAxxxx",
+        "error_msg": "",
+        "line": "a",
+        "details": {
+            "call": "main(\"hello\")",
+            "decl": "sub main(int a)",
+            "expected_type": "int",
+            "got_type": "string"
+        }
+    },
+    {
+        "_comment": "Редкларация ФД",
+        "error_code": "LuNAxxxx",
+        "error_msg": "",
+        "line": "Отсутствует",
+        "details": {
+            "name": "x",
+            "decls": [
+                {
+                    "line_num": "1",
+                    "line": "sub main(int x) {"
+                },
+                {
+                    "line_num": "2",
+                    "line": "df x;"
+                }
+            ]
+        }
+    },
+    {
+        "_comment": "Редкларация ФК",
+        "error_code": "LuNAxxxx",
+        "error_msg": "",
+        "line": "Отсутствует",
+        "details": {
+            "name": "main",
+            "decls": [
+                {
+                    "line_num": "1",
+                    "line": "sub main(int x) {"
+                },
+                {
+                    "line_num": "2",
+                    "line": "sub main(string x) {"
+                }
+            ]
+        }
+    },
+    {
+        "_comment": "Импорт несуществующей С/C++ функции",
+        "error_code": "LuNAxxxx",
+        "error_msg": "",
+        "line": "",
+        "details": {
+            "name": "c_init"
+        }
+    }
+]
