@@ -1,2 +1,5 @@
 .vscode
 DeGSA/__pycache__
+parser/__pycache__
+DeGSA/source.fa
+DeGSA/ucodes.cpp

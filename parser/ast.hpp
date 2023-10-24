@@ -2,7 +2,7 @@
 #define LUNA_AST
 
 //MODIFICATIONS
-#define uint unsigned int // VSCode on Windows could not see uint before for some reason
+//#define uint unsigned int // VSCode on Windows could not see uint before for some reason
 //typedef int ssize_t; // while using MSYS2 offered compilator, I found that this is a conflicting definition;
 // everything works on my laptop with this commented, later will check if this works on the desktop
 
