@@ -1,16 +1,6 @@
 #include "../parser/ast.hpp"
-//#include <vector> // already included in ast.hpp
 #include <map>
 #include <set>
-#include <regex>
-
-//TODO use "parser" folder!
-
-//std::cout << blockobj << std::endl;
-//std::cout << blockobj->opt_dfdecls_ << std::endl;
-//std::cout << blockobj->opt_dfdecls_->dfdecls_ << std::endl;
-//std::cout << blockobj->opt_dfdecls_->dfdecls_->name_seq_ << std::endl;
-//std::cout << blockobj->opt_dfdecls_->dfdecls_->name_seq_->names_ << std::endl; // all of this just to fix null pointer error
 
 enum VertexType {
 
@@ -39,13 +29,48 @@ enum Error {
 
 // this class represents a vertex in a DDG
 // vertex is a computational fragment (VF), so it could require some (or none) VFs to be ran before, and also allow other VFs to run
-// also vertex can contain VFs inside; that is, vertex is basically a set of it's child vertices and nothing
+// also vertex can contain VFs inside, if its operator allows to have blocks (i.e subprogram, but not an import)
 class Vertex {
+
+    // this struct serves as a binding between vertices of the same level
+    // it has a pointer to a vertice and a name of a DF used or defined
+    struct Binding {
 
     private:
 
-        std::set<Vertex*> in; // vertices that must be ran directly before current
-        std::set<Vertex*> out; // vertices that require directly current vertex to be ran
+        std::string name;
+        Vertex* pointerTo;
+
+    public:
+
+        Binding(Vertex* pointerTo, std::string name){
+            this->name = name;
+            this->pointerTo = pointerTo;
+        }
+
+        std::string getName(){
+            return this->name;
+        }
+
+        Vertex* getPointerTo(){
+            return this->pointerTo;
+        }
+
+        bool operator<(const Binding b) const {//TODO optimize + check (this is utterly retarded)
+            if ((long)(this->pointerTo) < (long)b.pointerTo){
+                return true;
+            } else if (this->name.compare(b.name) > 0){
+                return true;
+            } else {
+                return false;
+            }
+        }
+    };
+
+    private:
+
+        std::set<Binding> in; // vertices that must be ran directly before current
+        std::set<Binding> out; // vertices that require directly current vertex to be ran
         std::set<Vertex*> inside; // vertices that are inside the body of a current vertex
 
         std::set<std::string> use; // list of DFs that are used in this vertex
@@ -59,9 +84,11 @@ class Vertex {
 
         int line; //TODO line in code that this operator is in
 
+        int number; // unique number of a vertice
+
     public:
 
-        Vertex(VertexType vertexType, std::set<std::string> useDFs, std::set<std::string> defDFs, std::set<Vertex*> inside, std::string name, int depth){
+        Vertex(VertexType vertexType, std::set<std::string> useDFs, std::set<std::string> defDFs, std::set<Vertex*> inside, std::string name, int depth, int number){
 
             this->in = {};
             this->out = {};
@@ -76,6 +103,8 @@ class Vertex {
 
             this->depth = depth;
 
+            this->number = number;
+
             //this->line = line; // TODO
 
         }
@@ -83,10 +112,10 @@ class Vertex {
         // copy constructor //TODO does it work properly?
         Vertex(Vertex* vertex){
 
-            std::cout << "Copy constructor for Vertex is called" << std::endl;
+            std::cout << "> Copy constructor for Vertex is called" << std::endl;
 
-            this->in = vertex->in;
-            this->out = vertex->out;
+            this->in = vertex->in; //TODO this does not work perhaps
+            this->out = vertex->out; //TODO this also does not work perhaps
             this->inside = vertex->inside;
 
             this->use = vertex->use;
@@ -97,6 +126,8 @@ class Vertex {
             this->name = vertex->name;
 
             this->depth = vertex->depth;
+
+            this->number = vertex->number;
 
         }
 
@@ -116,11 +147,11 @@ class Vertex {
             return inside;
         }
 
-        std::set<Vertex*> getInSet(){
+        std::set<Binding> getInSet(){
             return in;
         }
 
-        std::set<Vertex*> getOutSet(){
+        std::set<Binding> getOutSet(){
             return out;
         }
 
@@ -132,18 +163,16 @@ class Vertex {
             return depth;
         }
 
-        void addIn(Vertex* vertex){
-            auto temp = this->in.find(vertex);
-            if (temp == this->in.end()){
-                this->in.insert(vertex);
-            }
+        int getNumber(){
+            return number;
         }
 
-        void addOut(Vertex* vertex){
-            auto temp = this->out.find(vertex);
-            if (temp == this->out.end()){
-                this->out.insert(vertex);
-            }
+        void addIn(Vertex* vertex, std::string dfName){
+            this->in.insert(Binding(vertex, dfName)); //TODO this should not allow duplicates; does it allow it here?
+        }
+
+        void addOut(Vertex* vertex, std::string dfName){
+            this->out.insert(Binding(vertex, dfName)); //TODO this should not allow duplicates; does it allow it here?
         }
 
         void addInside(Vertex* vertex){
@@ -169,6 +198,7 @@ class Vertex {
 
         void printInfo(){
 
+            std::cout << "Vertex number: " << this->getNumber() << std::endl;
             std::cout << "Vertex address: " << this << std::endl;
             std::cout << "Vertex type: ";
             std::cout << this->getVertexType() << " ";
@@ -218,13 +248,13 @@ class Vertex {
 
             std::cout << "Vertices before (\"in\"):";
             for (auto i: this->getInSet()){
-                std::cout << " " << i;
+                std::cout << " " << i.getPointerTo() << " [" << i.getPointerTo()->getNumber() << "] (" << i.getName() << ")";
             }
             std::cout << std::endl;
 
             std::cout << "Vertices after (\"out\"):";
             for (auto i: this->getOutSet()){
-                std::cout << " " << i;
+                std::cout << " " << i.getPointerTo() << " [" << i.getPointerTo()->getNumber() << "] (" << i.getName() << ")";
             }
             std::cout << std::endl;
 
@@ -246,20 +276,16 @@ class DDG {
         // positions start with 1;
         std::map<std::string, std::map<int, UseDef>> importAndPositionToUseDef;
 
-
         bool mainExists; // for checking if program is correct
         block* mainBlock; // needed to start analysis from main
 
         std::map<std::string, block*> structuredCFBlocks; // list of structured CFs
         std::map<std::string, std::vector<param*>*> structuredCFArgs; // list of args of subprograms; vector starts from 0
 
-        std::map<int, Vertex> layerOne; // list of vertices that require no DFs to be started -- bindVertices
         std::map<int, Vertex> vertices; // list of all vertices; vertex numeration starts from one
         int vertexCount; // count of vertices
 
         std::set<std::string> imports; // names of imported functions from C++ (ucodes.cpp)
-
-    //public:
 
         void findSubs(ast* astobj){
 
@@ -332,23 +358,18 @@ class DDG {
             std::cout << "> findSubs finished\n\n";
         }
 
-        // TODO: uncertain: use already existing block->opt_dfdecls_->dfdecls_->name_seq_, or scan manually?
         // scanForDFDecls is a function, that for each CF scans for DF declaration (if CF's nature allows it)
         // DFs, according to LuNA rules, must be declared on the very first line, and no other declarations shall follow
         static std::vector<std::string> scanForDFDecls(block* blockobj){
             
-            std::cout << "> scanForDFDecls called\n\n";
+            std::cout << "> scanForDFDecls called\n";
             std::vector<std::string> DFDecls = {};
 
             if (blockobj->opt_dfdecls_->dfdecls_ != NULL) { // found some DF declarations
 
-                std::vector<luna_string*> DFNames = *(blockobj->opt_dfdecls_->dfdecls_->name_seq_->names_);
+                std::vector<luna_string*> DFNames = *(blockobj->opt_dfdecls_->dfdecls_->name_seq_->names_); // get names of declared DFs
                 for (luna_string* currentDFName: DFNames){
                     DFDecls.push_back(*(currentDFName->value_));
-                }
-
-                if (DFDecls.size() != DFNames.size()){//TODO
-                    std::cout << "ERROR: Duplicates in DF declaration" << std::endl;
                 }
 
                 std::cout << "DFs in block " << blockobj << ":";
@@ -367,7 +388,7 @@ class DDG {
         }
 
         // this function gets an expression, recursively goes through it and returns a set of DFs that are used in this expression
-        static std::set<std::string> getDFsFromExpression(expr* expression){ //TODO fails? see id, complex_id, simple_id; regex does not work anymore perhaps
+        static std::set<std::string> getDFsFromExpression(expr* expression){
 
             std::cout << "> getDFsFromExpression called\n\n";
 
@@ -470,7 +491,7 @@ class DDG {
             std::cout << "Entering block " << currentBlock << "; name: " + name << std::endl;
 
             vertexCount++;
-            vertices.insert(std::make_pair(vertexCount, Vertex(vertexType, {}, {}, {}, name, currentDepth)));
+            vertices.insert(std::make_pair(vertexCount, Vertex(vertexType, {}, {}, {}, name, currentDepth, vertexCount)));
             Vertex* currentVertex = &(vertices.find(vertexCount)->second);
 
             switch(vertexType){
@@ -648,8 +669,8 @@ class DDG {
                     if (maybeUses != NULL){
                         std::cout << "bindVertices: found used DF: " + DFName << std::endl;
                         for (Vertex* it: *maybeUses){ // bindVertices current Vertex to all that uses its result
-                            internalVertex->addOut(it);
-                            it->addIn(internalVertex);
+                            internalVertex->addOut(it, DFName);
+                            it->addIn(internalVertex, DFName);
                         }
                     } else {
                         //TODO throw exception
@@ -689,15 +710,12 @@ class DDG {
         DDG(ast* astObjectIn){
             
             this->vertexCount = 0;
-            //imports = new std::set<std::string>; //TODO
             this->imports = {};
             this->vertices = {};
 
             this->astobj = astObjectIn;
 
             this->mainExists = false;
-
-            this->layerOne = {};
 
             this->importAndPositionToUseDef = {};
 
@@ -733,8 +751,6 @@ class DDG {
             std::cout << "Total vertices: " << vertexCount << std::endl << std::endl; 
             for (int i = 1; i <= vertexCount; i++){
 
-                //Vertex currentVertex = Vertex(vertices.find(i)->second); //TODO fails; copy constructor is not finished
-                std::cout << "Vertex number: " << i << std::endl;
                 vertices.find(i)->second.printInfo();
                 std::cout << std::endl;
 
@@ -743,7 +759,6 @@ class DDG {
             std::cout << "============ Created DDG =============" << std::endl;
 
             // 4. search for errors
-            //TODO search for errors
 
             //checkMultipleDFInitialization();
 

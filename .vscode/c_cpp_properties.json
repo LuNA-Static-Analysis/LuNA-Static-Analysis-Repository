@@ -4,14 +4,16 @@
             "name": "Win32",
             "includePath": [
                 "D:\\Inthroughder cargo\\University Studying Materials\\4 year\\Pr\\1 semester\\LuNA-error-analyzer",
-                "D:\\Inthroughder cargo\\University Studying Materials\\4 year\\Pr\\1 semester\\LuNA-error-analyzer\\parser"
+                "D:\\Inthroughder cargo\\University Studying Materials\\4 year\\Pr\\1 semester\\LuNA-error-analyzer\\parser",
+                "/usr/include/x86_64-linux-gnu/c++/11",
+                "/usr/include/x86_64-linux-gnu"
             ],
             "defines": [
                 "_DEBUG",
                 "UNICODE",
                 "_UNICODE"
             ],
-            "compilerPath": "E:\\MinGW\\bin\\gcc.exe",
+            "compilerPath": "/usr/bin/g++",
             "cStandard": "c11",
             "cppStandard": "gnu++14",
             "intelliSenseMode": "windows-gcc-x86"

@@ -1,12 +1,6 @@
-
-// All credit for this program goes to Maxim Kurbatov; version of 21.05.2023 (as of 20.09.2023)
-// My modifications:
-// 1. ast.hpp in headers zone
-// 2. ast_analyzer.cpp, 290 line (20.09.2023: this is obsolete, perhaps?)
-// 3. for "no fileno" problem:
-// 3.1. use g++ -std=gnu++0x lex.yy.c grammar.tab.cpp main.cpp ast_analyzer.cpp -o a.out (g++11 does not work for some reason)
-// 3.2. use _fileno() instead, as it is Windows (did not try though)
-// Also implemented small convenience-related/natural language changes
+// for "no fileno" problem (this problem was on Windows at least):
+// 1. use g++ -std=gnu++0x lex.yy.c grammar.tab.cpp main.cpp ast_analyzer.cpp -o a.out (g++11 does not work for some reason)
+// 2. use _fileno() instead for Windows (did not try though)
 
 #include "../parser/ast.hpp"
 #include "grammar.tab.hpp"
@@ -43,18 +37,7 @@ int main(int argc, char** argv) {
 
     std::cout << "================= Done ===============\n";
 
-    //std::cerr << ast_->to_string() << std::endl;
-    //std::cout << ast_->to_string() << std::endl;
-
-    //ast_->printTokens();
-
-    //ast_analyzer analyzer = ast_analyzer(ast_, yyin);
-
-    //std::cout << "analyze\n";
-    //analyzer.analyze();
-
     DDG ddg(ast_);
-    //std::cout << cfg->to_string() << std::endl;
     std::cout << std::flush;
 
     delete ast_;
