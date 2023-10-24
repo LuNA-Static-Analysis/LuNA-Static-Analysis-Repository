@@ -1,6 +1,6 @@
-win_flex_bison\win_bison.exe -d ..\parser\grammar.ypp
-win_flex_bison\win_flex.exe ..\parser\lexics.l
-py pp.py source.fa -o prepr.fa
+bison -d ..\parser\grammar.ypp
+flex ..\parser\lexics.l
+py ..\parse\pp.py source.fa -o prepr.fa
 g++ -std=gnu++0x lex.yy.c grammar.tab.cpp main.cpp -o a.out
 del grammar.tab.cpp
 ::del grammar.tab.hpp

@@ -625,6 +625,8 @@ class DDG {
 
             };
 
+            std::cout << "> bindVertices called\n" << std::endl;
+
             DFCoordinates coordinates = DFCoordinates();
             for (Vertex* internalVertex: currentVertex->getInsideSet()){
 
