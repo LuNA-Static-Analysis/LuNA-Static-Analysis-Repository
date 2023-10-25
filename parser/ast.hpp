@@ -5,6 +5,16 @@
 #include <vector>
 #include <cstring>
 
+enum luna_type {
+    LUNA_INT,
+    LUNA_REAL,
+    LUNA_STRING,
+    LUNA_NAME,
+    LUNA_VALUE,
+    LUNA_UNDEFINED,
+    LUNA_ERROR_TYPE,
+};
+
 class block;
 
 class virtual_token {
@@ -44,28 +54,22 @@ public:
     std::string to_string() const override {
         return *value_;
     }
+
+    bool operator==(const luna_string& other) const {
+        return *(this->value_) == *(other.value_);
+    }
+
+    bool operator<(const luna_string& other) const {
+        return *(this->value_) < *(other.value_);
+    }
+
+    bool operator>(const luna_string& other) const {
+        return *(this->value_) > *(other.value_);
+    }
+
 };
     
-class id : public expr {
-public:
-    // luna_string* value_;
-
-    // id (luna_string* str) {
-    //     value_ = str;
-    // }
-
-    // id(std::string* id_) {
-    //     delete value_;
-    //     value_ = id_;
-    // }
-
-    // id() : luna_string() {}
-
-    ~id() {
-        // std::cerr << *value_ << std::endl;
-        // std::cerr << "id dtor\n";
-    }
-};
+class id : public expr {};
 
 class param : public virtual_token {
     public:    
@@ -79,6 +83,16 @@ class param : public virtual_token {
 
             type_ = nullptr;
             name_ = nullptr;
+        }
+
+        luna_type get_type() {
+            if (type_ == nullptr) return luna_type::LUNA_ERROR_TYPE;
+            if (type_->to_string() == std::string("int")) return luna_type::LUNA_INT;
+            if (type_->to_string() == std::string("real")) return luna_type::LUNA_REAL;
+            if (type_->to_string() == std::string("string")) return luna_type::LUNA_STRING;
+            if (type_->to_string() == std::string("value")) return luna_type::LUNA_VALUE;
+            if (type_->to_string() == std::string("name")) return luna_type::LUNA_NAME;
+            return luna_type::LUNA_ERROR_TYPE;
         }
 
         std::string to_string() const override {
@@ -371,10 +385,18 @@ class code_df_param : public virtual_token {
         code_df_param(luna_string* type, luna_string* df) : type_(type), code_df_(df) {}
 
         ~code_df_param() {
-            // // // std::cerr << "code param dtor: type_\n";
             delete type_;
-            // // // std::cerr << "code param dtor: code_df\n";
             delete code_df_;
+        }
+
+        luna_type get_type() {
+            if (type_ == nullptr) return luna_type::LUNA_ERROR_TYPE;
+            if (type_->to_string() == std::string("int")) return luna_type::LUNA_INT;
+            if (type_->to_string() == std::string("real")) return luna_type::LUNA_REAL;
+            if (type_->to_string() == std::string("string")) return luna_type::LUNA_STRING;
+            if (type_->to_string() == std::string("value")) return luna_type::LUNA_VALUE;
+            if (type_->to_string() == std::string("name")) return luna_type::LUNA_NAME;
+            return luna_type::LUNA_ERROR_TYPE;
         }
 
         std::string to_string() const override {
