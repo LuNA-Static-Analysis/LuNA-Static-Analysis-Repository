@@ -7,6 +7,7 @@ sub main(){
         foo1(a, b);
 
         initFloat(3, c);
+        initFloat(4, c);
 	printFloat(c);
 
 }
