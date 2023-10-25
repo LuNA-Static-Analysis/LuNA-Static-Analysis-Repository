@@ -387,6 +387,13 @@ statement:
 /* cf a : init(); */
 cf_statement: opt_label code_id opt_exprs opt_setdf_rules opt_rules opt_behavior SCOLON {
         $$ = new cf_statement($1, $2, $3, $4, $5, $6);
+
+        if ($1->line_ != 0) {
+            $$->set_position($1->line_);
+        }
+        else {
+            $$->set_position($2->line_);
+        }
     }
 	;
 
@@ -440,18 +447,22 @@ id_seq:
 
 let_statement: KW_LET assign_seq block {
     $$ = new let_statement($2, $3);
+    $$->set_position(@1.first_line);
 }
 
 for_statement: KW_FOR control_pragma NAME EQ expr DIAP expr block {
     $$ = new for_statement($2, $3, $5, $7, $8);
+    $$->set_position(@1.first_line);
 }
 
 while_statement: KW_WHILE control_pragma expr COMMA NAME EQ expr DIAP KW_OUT id block {
     $$ = new while_statement($2, $3, $5, $7, $10, $11);
+    $$->set_position(@1.first_line);
 }
 
 if_statement: KW_IF expr block %prec IFX {
     $$ = new if_statement($2, $3);
+    $$->set_position(@1.first_line);
 }
 
 /*	| KW_IF expr block KW_ELSE block */
@@ -472,7 +483,10 @@ assign:
 	;
 
 opt_label:
-	KW_CF id COLON { $$ = new opt_label($2); }
+	KW_CF id COLON { 
+        $$ = new opt_label($2); 
+        $$->set_position(@1.first_line);
+    }
 	|   
     {
         $$ = new opt_label(nullptr);
