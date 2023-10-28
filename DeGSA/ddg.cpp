@@ -289,9 +289,12 @@ class Vertex {
         
 };
 
+// this class collects information from checkers and creates JSONs
 class ErrorCollector {
 
+    void collect(){
 
+    }
 
 };
 
@@ -719,35 +722,31 @@ class DDG {
 
         }
 
-        void walkThrough(){ //TODO
-
-        }
-
     public:
 
         // this function recursively goes through DDG and on every namespace checks if any of the DFs
         // are initialized more than once
         // map: name of a DF -> line in code
-        //TODO perhaps create a "walkthrough" function to recursively go through a graph and return required information
         //TODO function must return a list of errors in a JSON or whatever
-        void checkMultipleDFInitialization(Vertex* vertex, std::map<std::string, int> initializedDFs){
+        void checkMultipleDFInitialization(Vertex* vertex, std::map<std::string, std::vector<int>> initializedDFs){
 
             std::vector<Vertex*> stack = {};
 
             for (auto v: vertex->getInsideSet()){
 
-                if (v->getInsideSet().size() > 0){ 
-                    // add to stack to analyze them recursively later
+                if (v->getInsideSet().size() > 0){ // add vertices inside to stack to analyze them recursively later
                     stack.push_back(v);
                 }
 
                 for (auto d: v->getDefSet()){
-                    if (initializedDFs.find(d) != initializedDFs.end()){
-                        //TODO error found, throw exception
-                        //ErrorCollector.collect(vertex, v, );
-                        std::cout << "Multiple DF initialization: " << d << std::endl;
-                    } else { // update a map of initialized DFs and their positions
-                        initializedDFs.insert(std::make_pair(d, -1));
+                    auto it = initializedDFs.find(d);
+                    if (it != initializedDFs.end()){
+                        it->second.push_back(v->getLine());
+                    } else {
+                        // no error , first initialization of a DF found;
+                        // simply update a map of initialized DFs and their positions
+                        std::vector<int> lines = {v->getLine()};
+                        initializedDFs.insert(std::make_pair(d, lines));
                     }
                 }
 
@@ -758,6 +757,16 @@ class DDG {
                     checkMultipleDFInitialization(v, {});
                 } else { // this vertice sees DFs outside (for, if, while, let)
                     checkMultipleDFInitialization(v, initializedDFs);
+                }
+            }
+
+            // return errors info
+            for (auto it: initializedDFs) {
+                if (it.second.size() > 1){
+                    std::cout << "Multiple DF initialization -- df " << it.first << " initialized:" << std::endl;
+                    for (auto d: it.second){
+                        std::cout << "at line " << d << std::endl;
+                    }
                 }
             }
 
@@ -823,6 +832,8 @@ class DDG {
             std::cout << "============ Created DDG =============" << std::endl;
 
             // 4. search for errors
+
+            std::cout << "============ Found errors ============" << std::endl;
 
             findErrors(mainVertex);
 

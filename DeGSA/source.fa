@@ -8,6 +8,7 @@ sub main(){
 
         initFloat(3, c);
         initFloat(4, c);
+        initFloat(5, c);
 	printFloat(c);
 
 }
