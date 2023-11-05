@@ -1,1 +1,1 @@
-This is the master branch, where evntually working product will be. Merging mindlessly is prohibited.
+Мастер-ветка, где в какой-то момент появится готовая версия продукта. Сливать сюда код бездумно запрещается.
