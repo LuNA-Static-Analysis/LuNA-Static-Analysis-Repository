@@ -1,27 +1,22 @@
-import printfl(real) as printFloat;
-import c_init_float(real, name) as initFloat;
+import printint(int) as printint;
+import c_init_float(real, name) as init;
+
+sub foo(int foo1){
+        init(1, foo1);
+        printint(foo1);
+}
 
 sub main(){
-        df a, b, c, c;
+        df a, b, c, d;
 
-        foo1(a, b);
+        init(1, a);
+        printint(a);
 
-        initFloat(3, c);
-        initFloat(4, c);
-        initFloat(5, c);
-	printFloat(c);
-
+        for i=1..2 {
+                df d;
+                printint(i);
+                init(1, d);
+                printint(d);
+                foo(d);
+        }
 }
-
-sub foo1(name foo1in, name foo2in){
-        initFloat(1, foo1in);
-        printFloat(foo1in);
-        foo2(foo2in);
-}
-
-sub foo2(name f){
-        initFloat(2, f);
-	printFloat(f);
-}
-
-

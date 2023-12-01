@@ -1,295 +1,7 @@
-#include "../parser/ast.hpp"
-#include <map>
-#include <set>
-
-enum VertexType {
-
-    forVF = 1,
-    ifVF = 2,
-    whileVF = 3,
-    letVF = 4,
-    importVF = 5,
-    subVF = 6
-
-};
-
-enum UseDef {
-
-    use = 1,
-    def = 2,
-    useAndDef = 3
-
-};
-
-// this class represents a vertex in a DDG
-// vertex is a computational fragment (VF), so it could require some (or none) VFs to be ran before, and also allow other VFs to run
-// also vertex can contain VFs inside, if its operator allows to have blocks (i.e subprogram, but not an import)
-class Vertex {
-
-    // this struct serves as a binding between vertices of the same level
-    // it has a pointer to a vertice and a name of a DF used or defined
-    struct Binding {
-
-    private:
-
-        std::string name;
-        Vertex* pointerTo;
-
-    public:
-
-        Binding(Vertex* pointerTo, std::string name){
-            this->name = name;
-            this->pointerTo = pointerTo;
-        }
-
-        std::string getName(){
-            return this->name;
-        }
-
-        Vertex* getPointerTo(){
-            return this->pointerTo;
-        }
-
-        bool operator<(const Binding b) const {//TODO optimize + check (this is utterly retarded)
-            if ((long)(this->pointerTo) < (long)b.pointerTo){
-                return true;
-            } else if (this->name.compare(b.name) > 0){
-                return true;
-            } else {
-                return false;
-            }
-        }
-    };
-
-    private:
-
-        std::set<Binding> in; // vertices that must be ran directly before current
-        std::set<Binding> out; // vertices that require directly current vertex to be ran
-        std::set<Vertex*> inside; // vertices that are inside the body of a current vertex
-
-        std::vector<std::string> currentNamespaceDFs; // DFs that are visible inside current block (i.e. "for" can see what's outside)
-        std::vector<std::string> declaredDFs; // DFs that are declared in current block; they must be included in currentNamespaceDFs
-        // also both vectors allow for duplicates, which indicates for errors; checking for errors happens later
-
-        std::set<std::string> use; // list of DFs that are used in this vertex
-        std::set<std::string> def; // list of DFs that are defined in this vertex
-
-        VertexType vertexType; // type of a vertex (VF type)
-        std::string name; // name of an import/sub
-        int depth; // amount of blocks that this vertex is in
-        int number; // unique number of a vertice
-        int line; // line in code that this operator is in
-
-    public:
-
-        Vertex(VertexType vertexType, std::set<std::string> useDFs, std::set<std::string> defDFs, std::set<Vertex*> inside, std::string name, int depth, int number,
-        std::vector<std::string> currentNamespaceDFs, std::vector<std::string> declaredDFs, int line){
-
-            this->in = {};
-            this->out = {};
-            this->inside = inside;
-
-            this->currentNamespaceDFs = currentNamespaceDFs;
-            this->declaredDFs = declaredDFs;
-
-            this->use = useDFs;
-            this->def = defDFs;
-
-            this->vertexType = vertexType;
-            this->name = name;
-            this->depth = depth;
-            this->number = number;
-            this->line = line;
-
-        }
-
-        // copy constructor //TODO does it work properly?
-        Vertex(Vertex* vertex){
-
-            std::cout << "> Copy constructor for Vertex is called" << std::endl;
-
-            this->in = vertex->in; //TODO this does not work perhaps
-            this->out = vertex->out; //TODO this also does not work perhaps
-            this->inside = vertex->inside;
-
-            //TODO vectors of current and declared
-
-            this->use = vertex->use;
-            this->def = vertex->def;
-
-            this->vertexType = vertex->vertexType;
-
-            this->name = vertex->name;
-
-            this->depth = vertex->depth;
-
-            this->number = vertex->number;
-
-        }
-
-        VertexType getVertexType(){
-            return vertexType;
-        }
-
-        std::set<std::string> getUseSet(){
-            return use;
-        }
-
-        std::set<std::string> getDefSet(){
-            return def;
-        }
-
-        std::set<Vertex*> getInsideSet(){
-            return inside;
-        }
-
-        std::set<Binding> getInSet(){
-            return in;
-        }
-
-        std::set<Binding> getOutSet(){
-            return out;
-        }
-
-        std::vector<std::string> getDeclaredDFs(){
-            return declaredDFs;
-        }
-
-        std::vector<std::string> getCurrentNamespaceDFs(){
-            return currentNamespaceDFs;
-        }
-
-        std::string getName(){
-            return name;
-        }
-
-        int getDepth(){
-            return depth;
-        }
-
-        int getNumber(){
-            return number;
-        }
-
-        int getLine(){
-            return line;
-        }
-
-        void addIn(Vertex* vertex, std::string dfName){
-            this->in.insert(Binding(vertex, dfName)); //TODO this should not allow duplicates; does it allow it here?
-        }
-
-        void addOut(Vertex* vertex, std::string dfName){
-            this->out.insert(Binding(vertex, dfName)); //TODO this should not allow duplicates; does it allow it here?
-        }
-
-        void addInside(Vertex* vertex){
-            auto temp = this->inside.find(vertex);
-            if (temp == this->inside.end()){
-                this->inside.insert(vertex);
-            }
-        }
-
-        void addUse(std::string name){
-            auto temp = this->use.find(name);
-            if (temp == this->use.end()){
-                this->use.insert(name);
-            }
-        }
-
-        void addDef(std::string name){
-            auto temp = this->def.find(name);
-            if (temp == this->def.end()){
-                this->def.insert(name);
-            }
-        }
-
-        void setDeclaredDFs(std::vector<std::string> declaredDFs){
-            this->declaredDFs = declaredDFs;
-            for (auto d: declaredDFs){
-                this->currentNamespaceDFs.push_back(d);
-            }
-        }
-
-        void printInfo(){
-
-            std::cout << "Vertex number: " << this->getNumber() << std::endl;
-            std::cout << "Vertex address: " << this << std::endl;
-            std::cout << "Vertex type: ";
-            std::cout << this->getVertexType() << " ";
-            switch (this->getVertexType()){
-                case forVF:
-                    std::cout << "(for)" << std::endl;
-                    break;
-                case ifVF:
-                    std::cout << "(if)" << std::endl;
-                    break;
-                case whileVF:
-                    std::cout << "(while)" << std::endl;
-                    break;
-                case letVF:
-                    std::cout << "(let)" << std::endl;
-                    break;
-                case importVF:
-                    std::cout << "(atomic CF); name: " << this->getName() << std::endl;
-                    break;
-                case subVF:
-                    std::cout << "(structured CF);  name: " << this->getName() << std::endl;
-                    break;
-                default:
-                    std::cout << "(unknown)" << std::endl;
-                    break;
-            }
-            std::cout << "Vertex line: " << this->getLine() << std::endl;
-            std::cout << "Vertex depth: " << this->getDepth() << std::endl;
-
-            std::cout << "Current namespace DFs:";
-            for (std::string i: this->getCurrentNamespaceDFs()){
-                std::cout << " " << i;
-            }
-            std::cout << std::endl;
-
-            std::cout << "Declared DFs:";
-            for (std::string i: this->getDeclaredDFs()){
-                std::cout << " " << i;
-            }
-            std::cout << std::endl;
-
-            std::cout << "Use DFs:";
-            for (std::string i: this->getUseSet()){
-                std::cout << " " << i;
-            }
-            std::cout << std::endl;
-
-            std::cout << "Def DFs:";
-            for (std::string i: this->getDefSet()){
-                std::cout << " " << i;
-            }
-            std::cout << std::endl;
-
-            std::cout << "Vertices inside:";
-            for (auto i: this->getInsideSet()){
-                std::cout << " " << i;
-            }
-            std::cout << std::endl;
-
-            std::cout << "Vertices before (\"in\"):";
-            for (auto i: this->getInSet()){
-                std::cout << " " << i.getPointerTo() << " [" << i.getPointerTo()->getNumber() << "] (" << i.getName() << ")";
-            }
-            std::cout << std::endl;
-
-            std::cout << "Vertices after (\"out\"):";
-            for (auto i: this->getOutSet()){
-                std::cout << " " << i.getPointerTo() << " [" << i.getPointerTo()->getNumber() << "] (" << i.getName() << ")";
-            }
-            std::cout << std::endl;
-
-        }
-        
-};
+#include "vertices.cpp"
 
 // this class collects information from checkers and creates JSONs
+// TODO
 class ErrorCollector {
 
     void collect(){
@@ -319,7 +31,7 @@ class DDG {
         std::map<std::string, block*> structuredCFBlocks; // list of structured CFs
         std::map<std::string, std::vector<param*>*> structuredCFArgs; // list of args of subprograms; vector starts from 0
 
-        std::map<int, Vertex> vertices; // list of all vertices; vertex numeration starts from one
+        std::map<int, Vertex*> vertices; // list of all vertices; vertex numeration starts from one
         int vertexCount; // count of vertices
 
         std::set<std::string> imports; // names of imported functions from C++ (ucodes.cpp)
@@ -402,8 +114,11 @@ class DDG {
             
             std::cout << "> scanForDFDecls called\n";
             std::vector<std::string> DFDecls = {};
+            std::cout << blockobj << std::endl;
+            std::cout << blockobj->opt_dfdecls_ << std::endl;
+            std::cout << blockobj->opt_dfdecls_->dfdecls_ << std::endl;
 
-            if (blockobj->opt_dfdecls_->dfdecls_ != NULL) { // found some DF declarations
+            if ((blockobj->opt_dfdecls_ != NULL) && (blockobj->opt_dfdecls_->dfdecls_ != NULL)) { // found some DF declarations
 
                 std::vector<luna_string*> DFNames = *(blockobj->opt_dfdecls_->dfdecls_->name_seq_->names_); // get names of declared DFs
                 for (luna_string* currentDFName: DFNames){
@@ -519,129 +234,244 @@ class DDG {
 
         };
 
+        // enterBlock must be called inside enterVF whenever enterVF encounters a block
+        // this function exists to avoid code duplication while parsing for, while, sub and other operators with blocks
+        // however, one-for-all function is still not great (for example, some arguments are used exclusively with "for" block)
+        //TODO what to do with this?
+        Vertex* enterBlock(VertexType VertexType, block* currentBlock, Vertex* currentVertex, std::vector<std::string> declaredOutsideDFsVector,
+            int currentDepth, std::map<int, std::set<std::string>> callArgs, std::string name,
+            /*for ForVertex*/ std::string iteratorName, std::string leftBorder, std::string rightBorder){
+
+            /* iterate through statements, collect vertices and their use-defs by calling enterVF on each,
+            initialize currentVertex' use-defs and return it */
+            int statementNumber = 0; // for logging
+
+            /* find DF declarations in current block; we can declare DF once in every block!
+            use vector and check for duplicates (i.e.: df a, b, b;) */
+            auto declaredInsideDFsVector = scanForDFDecls(currentBlock);
+
+            std::vector<std::string> declaredBothDFsVector = {};
+
+            std::set<std::string> declaredBothDFsSet = {};
+
+            /* we have 4 DF containers:
+            1. declaredOutsideDFsVector -- 
+                has duplicates; example: (aa, bb, bb);
+                needed for creation of 3., comes as an argument of an enterBlock(), is empty for imports and subs
+            2. declaredInsideDFsVector -- 
+                has duplicates; example: df a, b, c, c; -> (a, b, c, c);
+                needed for creation of 3., comes from checking "df" statement in current block
+            3. declaredBothDFsVector -- 
+                has duplicates; example: (aa, bb, bb, a, b, c, c);
+                needed for error checking later; made as concatenation of 1. and 2.
+            4. declaredBothDFsSet --
+                set of 3.: example: (aa, bb, a, b, c);
+                needed for creating bindings properly*/
+            //TODO what to do with iterator? what DF it is?
+            //TODO maybe use term "name" instead of a DF?
+
+            // firstly go through outside DFs
+            for (auto d: declaredOutsideDFsVector){
+                declaredBothDFsVector.push_back(d);
+                if (declaredBothDFsSet.find(d) != declaredBothDFsSet.end())
+                    std::cout << "ERROR: found DF duplicate in an outside vector -- " + d << std::endl;
+                else
+                    declaredBothDFsSet.insert(d);
+            }
+
+            // secondly go through inside DFs
+            for (auto d: declaredInsideDFsVector){
+                declaredBothDFsVector.push_back(d);
+                if (declaredBothDFsSet.find(d) != declaredBothDFsSet.end())
+                    std::cout << "ERROR: found DF duplicate in an inside vector -- " + d << std::endl;
+                else
+                    declaredBothDFsSet.insert(d);
+            }
+
+            // initialize 4 containers:
+            currentVertex->setDeclaredInsideDFsVector(declaredInsideDFsVector);
+            currentVertex->setDeclaredOutsideDFsVector(declaredOutsideDFsVector);
+            currentVertex->setDeclaredBothDFsVector(declaredBothDFsVector);
+            currentVertex->setDeclaredBothDFsSet(declaredBothDFsSet);
+
+            Vertex* tempVertex; // this will be used to store Vertex to return from enterVF()
+
+            // now iterate through current block's statements
+            for (statement* innerStatement: *(currentBlock->statement_seq_->statements_)){
+                statementNumber++;
+                std::cout << "Statement number " << statementNumber << ": " << std::endl;
+
+                // ---- handling cf
+                cf_statement* innerStatementFunctionVF = dynamic_cast<cf_statement*>(innerStatement);
+                if (innerStatementFunctionVF != NULL){
+                    std::string subName = *(innerStatementFunctionVF->code_id_->value_);
+
+                    // vector of call args (expressions; need to parse)
+                    std::vector<expr*> DFExpressions = *(innerStatementFunctionVF->opt_exprs_->exprs_seq_->expr_);
+                    auto parsedArguments = ParsedArguments(DFExpressions).getMap();
+
+                    // check if this DFs are declared at all
+                    for (auto i: parsedArguments)
+                        for (auto j: i.second)
+                            if (declaredBothDFsSet.find(j) == declaredBothDFsSet.end())
+                                std::cout << "ERROR: found undeclared DF: " + j << std::endl;
+
+                    if (imports.find(subName) != imports.end()){ // import VF
+                        std::cout << "import" << std::endl;
+
+                        tempVertex = enterVF({}, parsedArguments, nullptr, currentDepth + 1,
+                            importVF, subName, innerStatement->line_,
+                            "", "", "");
+                        
+                    } else { // subVF TODO what if no such function exists?
+                        std::cout << "sub" << std::endl;
+
+                        /* find what DFs to send as "current namespace DFs" to enterVF
+                        these DFs are just arguments visible from inside this new sub*/
+                        std::vector<std::string> nextNamespaceDFs = {};
+                        auto m = structuredCFArgs.find(subName);
+                        if (m != structuredCFArgs.end()){
+                            for (auto s: *(m->second)){
+                                nextNamespaceDFs.push_back(*(s->name_->value_));
+                            }
+                        }
+
+                        for (auto t: nextNamespaceDFs){
+                            std::cout << "AHAHAHAHA " + t << std::endl;
+                        }
+                        tempVertex = enterVF(nextNamespaceDFs, parsedArguments, (this->structuredCFBlocks)[subName], currentDepth + 1,
+                            subVF, subName, innerStatement->line_,
+                            "", "", "");
+                    }
+
+                    //================== USE DEF ====================== (for sub, not for import; import is initizliaed in enterVF)
+                    
+                    /* for (every df in definedArgs) 
+                    if (this df is used/defined in tempVertex, 
+                    then add call arg of current operator that matches this defined arg)
+                    i.e. initialize current Vertex' use and def sets by looking what call
+                    DFs were actually used in that vertex that we are currently handling*/
+                    if (structuredCFArgs[name] != nullptr){
+                        std::cout << "initializing Vertex for sub: " + name << std::endl;
+                        auto definedArgs = *structuredCFArgs[name];
+                        for (int i = 0; i < definedArgs.size(); i++){ // defined args
+                            std::string definedArg = *(definedArgs[i]->name_->get_value());
+
+                            auto tempUseSet = tempVertex->getUseSet();
+                            if (tempUseSet.find(definedArg) != tempUseSet.end())
+                                for (auto j: callArgs[i + 1]) currentVertex->addUse(j);
+
+                            auto tempDefSet = tempVertex->getDefSet();
+                            if (tempDefSet.find(definedArg) != tempDefSet.end())
+                                for (auto j: callArgs[i + 1]) currentVertex->addDef(j);
+                        }
+                    }
+
+                    currentVertex->addInside(tempVertex);
+                    continue;
+                }
+
+                // ---- handling for
+                for_statement* innerStatementForVF = dynamic_cast<for_statement*>(innerStatement);
+                if (innerStatementForVF != NULL){
+
+                    std::cout << "KEKW: ";
+                    std::cout << declaredOutsideDFsVector.size() << std::endl;
+                    
+                    tempVertex = enterVF(declaredBothDFsVector, {}, innerStatementForVF->block_, currentDepth + 1, 
+                        forVF, "for", innerStatement->line_, innerStatementForVF->name_->to_string(),
+                        innerStatementForVF->expr_1_->to_string(), innerStatementForVF->expr_2_->to_string());
+
+                    //================== USE DEF ======================
+
+                    std::cout << "initializing Vertex for \"for\": " + name << std::endl;
+                    
+                    auto tempUseSet = tempVertex->getUseSet();
+                    for (auto d: tempUseSet){
+                        if (declaredBothDFsSet.find(d) != declaredBothDFsSet.end())
+                            currentVertex->addUse(d);
+                    }
+                    auto tempDefSet = tempVertex->getDefSet();
+                    for (auto d: tempDefSet){
+                        if (declaredBothDFsSet.find(d) != declaredBothDFsSet.end())
+                            currentVertex->addDef(d);
+                    }
+                    // other stuff from parsing sub is not needed as we don't have to go though arguments of a call
+                    // same thing with while, if and else
+
+                    currentVertex->addInside(tempVertex);
+                    continue;
+                }
+
+                //TODO --- handling other VFs
+            }
+            std::cout << "> enterVF finished\n\n";
+            return currentVertex;
+
+        }
+
         // enterVF must be called on a vertex' block (initially main's vertex). It recursively goes through each operator in the block,
         // creating a corresponding vertex for each and keeping track of what DFs are use and defined and where exactly, and storing
         // this information in Use and Def sets of a vertice (this is later used in bindVertices() to fully create a graph)
-        //TODO create a function that checks for using undeclared DFs instead of checking here?
-        Vertex* enterVF(std::vector<std::string> currentNamespaceDFs, std::map<int, std::set<std::string>> callArgs,
-                        block* currentBlock, int currentDepth, VertexType vertexType, std::string name, int line){
+        Vertex* enterVF(std::vector<std::string> declaredOutsideDFsVector, std::map<int, std::set<std::string>> callArgs,
+                        block* currentBlock, int currentDepth, VertexType vertexType, std::string name, int line,
+                        /*for ForVertice:*/ std::string iteratorName, std::string leftBorder, std::string rightBorder){
+
             std::cout << "> enterVF called\n\n";
             std::cout << "Entering block " << currentBlock << "; name: " + name << std::endl;
 
-            vertexCount++;
-            vertices.insert(std::make_pair(vertexCount, Vertex(vertexType, {}, {}, {}, name, currentDepth, vertexCount, 
-            currentNamespaceDFs, {}, line)));
-            Vertex* currentVertex = &(vertices.find(vertexCount)->second);
+            Vertex* currentVertex;
+            vertexCount++; // we will create a Vertex itself later in a switch
 
             switch(vertexType){
+
                 case importVF: {
+
+                    vertices.insert(std::make_pair(vertexCount, new CFVertex(currentDepth, vertexCount, line,
+                        name, importVF)));
+                    currentVertex = vertices.find(vertexCount)->second;
+
                     std::cout << "Import entered" << std::endl;
                     for (int i = 1; i <= callArgs.size(); i++){
                         switch(importAndPositionToUseDef[name][i]){
                             case use:
-                                for (auto df: callArgs[i]){
-                                    currentVertex->addUse(df);
-                                }
-                                break;
+                                for (auto df: callArgs[i]) currentVertex->addUse(df); break;
                             case def:
-                                for (auto df: callArgs[i]){
-                                    currentVertex->addDef(df);
-                                }
-                                break;
-                            case useAndDef:
-                                std::cout << "enterVF -- import: found useAndDef DF!" << std::endl;
-                                break;
+                                for (auto df: callArgs[i]) currentVertex->addDef(df); break;
                             default:
-                                std::cout << "enterVF -- import: found DF with unknown UseDef!" << std::endl;
+                                std::cout << "enterVF -- import: found DF with unexpected UseDef!" << std::endl;
                         }
                     }
                     std::cout << "> enterVF finished\n\n";
                     return currentVertex;
                 }
+
                 case subVF: {
-                    std::cout << "Sub entered" << std::endl;
-                    //iterate through statements, collect vertices and their use-defs, initialize currentVertex' use-defs and return it
-                    int statementNumber = 0;
-
-                    //find DF declarations: use vector and check for duplicates (i.e.: df a, b, b;)
-                    auto declaredDFsVector = scanForDFDecls(currentBlock);
-                    currentVertex->setDeclaredDFs(declaredDFsVector);
-                    std::set<std::string> declaredDFsSet = {};
-                    for (auto s: currentNamespaceDFs){ // assuming that currentNamespaceDFs has no duplicates (TODO but what if we do?)
-                        if (declaredDFsSet.find(s) != declaredDFsSet.end()) {
-                            //std::cout << "ERROR: found DF duplicate!"
-                        } else {
-                            declaredDFsSet.insert(s);
-                        }
-                    }
-                    // now add new-declared DFs to already existing DFs from current namespace
-                    for (auto s: declaredDFsVector){
-                        if (declaredDFsSet.find(s) != declaredDFsSet.end()) {
-                            std::cout << "ERROR: declared DF duplicate: " + s << std::endl;
-                        } else {
-                            declaredDFsSet.insert(s);
-                        }
-                    }
                     
-                    for (statement* innerStatement: *(currentBlock->statement_seq_->statements_)){
-                        statementNumber++;
-                        std::cout << "Statement number " << statementNumber << ": ";
-                        cf_statement* innerStatementFunctionVF = dynamic_cast<cf_statement*>(innerStatement);
-                        if (innerStatementFunctionVF != NULL){
-                            std::string subName = *(innerStatementFunctionVF->code_id_->value_);
-                            std::vector<expr*> DFExpressions = *(innerStatementFunctionVF->opt_exprs_->exprs_seq_->expr_); // vector of call args (expressions; need to parse)
-                            Vertex* tempVertex;
-
-                            // check if this DFs are declared at all
-                            auto parsedArguments = ParsedArguments(DFExpressions).getMap();
-                            for (auto i: parsedArguments){
-                                for (auto j: i.second){
-                                    if (declaredDFsSet.find(j) == declaredDFsSet.end()){
-                                        std::cout << "ERROR: found undeclared DF: " + j << std::endl;
-                                    }
-                                }
-                            }
-
-                            if (imports.find(subName) != imports.end()){ // import VF
-                                std::cout << "import" << std::endl;
-                                tempVertex = enterVF({}, parsedArguments, nullptr, currentDepth + 1, importVF, subName, innerStatement->line_);
-                            } else { // subVF
-                                std::cout << "sub" << std::endl;
-                                // find what DFs to send as "current namespace DFs" to enterVF
-                                std::vector<std::string> nextNamespaceDFs = {};
-                                auto m = structuredCFArgs.find(subName);
-                                if (m != structuredCFArgs.end()){
-                                    for (auto s: *(m->second)){
-                                        nextNamespaceDFs.push_back(*(s->name_->value_));
-                                    }
-                                }
-                                tempVertex = enterVF(nextNamespaceDFs, parsedArguments, (this->structuredCFBlocks)[subName], currentDepth + 1, subVF, subName, innerStatement->line_);
-                            }
-                            //for (every df in definedArgs) if (this df is used/defined in tempVertex, then add call arg of current operator that matches this defined arg)
-                            if (structuredCFArgs[name] != nullptr){
-                                std::cout << "initializing Vertex for sub: " + name << std::endl;
-                                auto definedArgs = *structuredCFArgs[name];
-                                for (int i = 0; i < definedArgs.size(); i++){ // defined args
-                                    std::string definedArg = *(definedArgs[i]->name_->get_value());
-                                    auto tempUseSet = tempVertex->getUseSet();
-                                    if (tempUseSet.find(definedArg) != tempUseSet.end()){
-                                        for (auto j: callArgs[i + 1]) currentVertex->addUse(j);
-                                    }
-                                    auto tempDefSet = tempVertex->getDefSet();
-                                    if (tempDefSet.find(definedArg) != tempDefSet.end()){
-                                        for (auto j: callArgs[i + 1]) currentVertex->addDef(j);
-                                    }
-                                }
-                            }
-
-                            currentVertex->addInside(tempVertex);
-                        }
-                        //TODO other VFs
-                    }
-                    std::cout << "> enterVF finished\n\n";
-                    return currentVertex;
-
+                    vertices.insert(std::make_pair(vertexCount, new CFVertex(currentDepth, vertexCount, line,
+                        name, subVF)));
+                    currentVertex = vertices.find(vertexCount)->second;
+                    
+                    std::cout << "Sub entered" << std::endl;
+                    return enterBlock(subVF, currentBlock, currentVertex, declaredOutsideDFsVector,
+                        currentDepth, callArgs, name,
+                        "", "", "");
                 }
+
+                case forVF: {
+
+                    vertices.insert(std::make_pair(vertexCount, new ForVertex(currentDepth, vertexCount, line,
+                        iteratorName, leftBorder, rightBorder)));
+                    currentVertex = vertices.find(vertexCount)->second;
+
+                    std::cout << "For entered" << std::endl;
+                    return enterBlock(forVF, currentBlock, currentVertex, declaredOutsideDFsVector,
+                        currentDepth, {}, "for",
+                        iteratorName, leftBorder, rightBorder);
+                }
+
+                //TODO other VFs
+
                 default: {
                     std::cout << "enterVF: unsupported operator found" << std::endl;
                     std::cout << "> enterVF finished\n\n";
@@ -654,7 +484,6 @@ class DDG {
 
         // this function binds vertices to each other; it is initially called for "main" vertex and uses its "inside" field to call itself recursively on new vertices
         // function initializes "in" and "out" of every vertex
-        //TODO modify Vertex so that the link will contain what DF is used/initialized; this is needed for analysis
         //TODO add depth check to avoid ignoring namespace
         void bindVertices(Vertex* currentVertex){
 
@@ -728,6 +557,8 @@ class DDG {
         // are initialized more than once
         // map: name of a DF -> line in code
         //TODO function must return a list of errors in a JSON or whatever
+
+        //todo redo this (using 4 new containers) maybe
         void checkMultipleDFInitialization(Vertex* vertex, std::map<std::string, std::vector<int>> initializedDFs){
 
             std::vector<Vertex*> stack = {};
@@ -772,11 +603,83 @@ class DDG {
 
         }
 
+        void checkNonDefinedDFUsage(){//todo redo this (using 4 new containers)
+        //problem: launch and see -- foo1 is considered undeclared
+        //multiple init works however lol
+
+            for (auto v: vertices) { // check every vertice
+                auto useSet = v.second->getUseSet();
+                auto inSet = v.second->getInSet();
+                for (auto d: useSet){ // for every vertice every used DF must exist in some binding (inSet)
+                    bool found = false;
+                    for (auto b: inSet){
+                        if (b.getName() == d){
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found){
+                        std::cout << "Usage of a non-defined DF -- df " << d << " at line " << v.second->getLine() << std::endl;
+                    }
+                } 
+
+            }
+
+        }
+
+        void checkUnusedDF(Vertex* currentVertex, std::set<std::string>* currentNamespaceUnusedDFs){
+
+            std::vector<Vertex*> stack = {};
+
+            // refresh current unused DFs
+            for (auto d: currentVertex->getDeclaredInsideDFsVector()){
+                currentNamespaceUnusedDFs->insert(d);
+            }
+
+            for (auto v: currentVertex->getInsideSet()){
+                if (v->getInsideSet().size() > 0){ // add vertices inside to stack to analyze them recursively later
+                    stack.push_back(v);
+                }
+
+                // now check what DFs are actually used; the 
+                auto DFset = v->getUseSet();
+                for (auto d: DFset){
+                    if (currentNamespaceUnusedDFs->find(d) != currentNamespaceUnusedDFs->end()){
+                        currentNamespaceUnusedDFs->erase(d);
+                    }
+                }
+
+            }
+
+            for (auto v: stack){
+                if ((v->getVertexType() != subVF) && (v->getVertexType() != importVF)) { // has block
+                    checkUnusedDF(v, currentNamespaceUnusedDFs);
+                } else { // has no block
+                    std::set<std::string> temp = {};
+                    checkUnusedDF(v, &temp);
+                }
+            }
+
+            // if after all the checks some DFs are unused -- report it
+            if (currentNamespaceUnusedDFs->size() != 0){
+                for (auto d: *currentNamespaceUnusedDFs){
+                    std::cout << "Found unused DF " << d << " in vertex number " << currentVertex->getNumber() << " in line " <<
+                    currentVertex->getLine() << std::endl;
+                }
+            }
+
+        }
+
         // this function accepts list of errors to find and tries to find them in the created graph
         // list consists of Error enums
         void findErrors(Vertex* mainVertex){
             
             checkMultipleDFInitialization(mainVertex, {});
+
+            checkNonDefinedDFUsage();
+
+            std::set<std::string> currentNamespaceUnusedDFs = {};
+            checkUnusedDF(mainVertex, &currentNamespaceUnusedDFs);
 
         }
 
@@ -812,10 +715,10 @@ class DDG {
 
             // 2. create all the vertices
 
-            Vertex* mainVertex = enterVF({}, {}, (this->structuredCFBlocks)["main"], 1, subVF, "main", mainLine);
+            Vertex* mainVertex = enterVF({}, {}, (this->structuredCFBlocks)["main"], 1, subVF, "main", mainLine, "", "", "");
 
             std::cout << "Created a [MAIN] vertex number " << this->vertexCount
-                      << " with a type " << (this->vertices).find(1)->second.getVertexType()
+                      << " with a type " << (this->vertices).find(1)->second->getVertexType()
                       << " and an address of " << &((this->vertices).find(1)->second) << std::endl;
 
             // 3. bindVertices vertices to eachother
@@ -824,7 +727,7 @@ class DDG {
             std::cout << "Total vertices: " << vertexCount << std::endl << std::endl; 
             for (int i = 1; i <= vertexCount; i++){
 
-                vertices.find(i)->second.printInfo();
+                vertices.find(i)->second->printInfo();
                 std::cout << std::endl;
 
             }

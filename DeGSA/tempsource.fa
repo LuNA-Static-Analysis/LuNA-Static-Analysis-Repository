@@ -1,0 +1,7 @@
+import printfl(real) as print;
+import printint(int) as printint;
+import c_init_float(real, name) as init;
+sub main(){
+        df a;
+        printint(a);
+}
