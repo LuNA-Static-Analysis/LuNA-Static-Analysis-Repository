@@ -6,7 +6,8 @@
 
 enum ERROR_LEVEL {
    ERROR,
-   WARNING
+   WARNING,
+   NO_ERROR
 };
 
 class error_reporter {

@@ -8,12 +8,15 @@
 #include <assert.h>
 
 class undeclarated_names_analyzer : public base_analyzer {
-
 public:
     undeclarated_names_analyzer(ast* ast_, FILE* yyin, error_reporter* reporter) {
         this->ast_ = ast_;
         this->file_ = yyin;
         this->reporter_ = reporter;
+    }
+
+    std::string get_name() override {
+        return "undeclarated_names_analyzer";
     }
 
     bool analyze() override {
@@ -171,7 +174,7 @@ public:
             if (cur_while != nullptr) {
                 std::vector<luna_string*> inner_scope;
                 inner_scope.push_back(cur_while->left_);
-                std::cerr << cur_while->left_->to_string() << std::endl;
+                // std::cerr << cur_while->left_->to_string() << std::endl;
                 scope->push_back(&inner_scope);
 
                 std::vector<expr *> v;

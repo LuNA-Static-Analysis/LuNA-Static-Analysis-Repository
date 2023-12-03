@@ -11,6 +11,10 @@ public:
         return analyze_unused_variables();
     }
 
+    std::string get_name() override {
+        return "unused_names_analyzer";
+    }
+
     bool analyze_unused_variables() {
         std::vector<std::vector<luna_string*>*>* scope = new std::vector<std::vector<luna_string*>*>();
 
