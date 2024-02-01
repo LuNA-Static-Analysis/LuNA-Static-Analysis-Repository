@@ -1,0 +1,14 @@
+import printfl(real) as print;
+import c_init_float(real, name) as init;
+sub main(){
+        df a, b;
+        foo(a);
+        init(3, b);
+        print(b);
+}
+sub foo(int foo1in){
+        init(1, foo1in); // две инициализации
+        init(2, foo1in); // одного ФД!
+        print(foo1in);
+}
+
