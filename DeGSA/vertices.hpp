@@ -20,14 +20,14 @@ class Vertex {
 
     private:
 
-        Id* id;
+        BaseDFName* id;
         Vertex* pointerTo;
 
     public:
 
-        Binding(Vertex* pointerTo, Id* id);
+        Binding(Vertex* pointerTo, BaseDFName* id);
 
-        Id* getId();
+        BaseDFName* getId();
 
         Vertex* getPointerTo();
 
@@ -41,23 +41,19 @@ class Vertex {
         std::set<Vertex*> inside; // vertices that are inside the body of a current vertex
 
         /* DFs that are visible inside (and declared outside) the block of this vertice, but not including ones that are declared in this block;
-            has duplicates*/
-        std::vector<Id*> declaredOutsideDFsVector;
+            has no duplicates*/
+        std::map<std::string, Identifier*> declaredOutsideIdsMap;
 
         /* DFs that are declared in current block;
-            has duplicates */
-        std::vector<Id*> declaredInsideDFsVector;
-
-        /* concatenation of previous two containers;
-            has duplicates */
-        std::vector<Id*> declaredBothDFsVector;
-
-        /* set of previous container;
             has no duplicates */
-        std::set<Id*> declaredBothDFsSet;
+        std::map<std::string, Identifier*> declaredInsideIdsMap;
 
-        std::set<Id*> use; // list of DFs that are used in this vertex
-        std::set<Id*> def; // list of DFs that are defined in this vertex
+        /* sum of previous two containers;
+            has no duplicates */
+        std::map<std::string, Identifier*> declaredBothIdsMap;
+
+        std::set<BaseDFName*> use; // list of DFs that are used in this vertex
+        std::set<BaseDFName*> def; // list of DFs that are defined in this vertex
 
         VertexType vertexType; // type of a vertex (VF type)
         int depth; // amount of blocks that this vertex is in
@@ -67,13 +63,13 @@ class Vertex {
     public:
         Vertex();
 
-        //virtual ~Vertex();
+        virtual ~Vertex();
 
         VertexType getVertexType();
 
-        std::set<Id*> getUseSet();
+        std::set<BaseDFName*> getUseSet();
 
-        std::set<Id*> getDefSet();
+        std::set<BaseDFName*> getDefSet();
 
         std::set<Vertex*> getInsideSet();
 
@@ -87,31 +83,27 @@ class Vertex {
 
         int getLine();
 
-        void addIn(Vertex* vertex, Id* id);
+        void addIn(Vertex* vertex, BaseDFName* id);
 
-        void addOut(Vertex* vertex, Id* id);
+        void addOut(Vertex* vertex, BaseDFName* id);
 
         void addInside(Vertex* vertex);
 
-        void addUse(Id* id);
+        void addUse(BaseDFName* id);
 
-        void addDef(Id* id);
+        void addDef(BaseDFName* id);
 
-        std::vector<Id*> getDeclaredInsideDFsVector();
+        std::map<std::string, Identifier*> getDeclaredInsideIdsMap();
 
-        std::vector<Id*> getDeclaredOutsideDFsVector();
+        std::map<std::string, Identifier*> getDeclaredOutsideIdsMap();
 
-        std::vector<Id*> getDeclaredBothDFsVector();
+        std::map<std::string, Identifier*> getDeclaredBothIdsMap();
 
-        std::set<Id*> getDeclaredBothDFsSet();
+        void setDeclaredInsideIdsMap(std::map<std::string, Identifier*> declaredInsideIdsMap);
 
-        void setDeclaredInsideDFsVector(std::vector<Id*> declaredInsideDFsVector);
+        void setDeclaredOutsideIdsMap(std::map<std::string, Identifier*> declaredOutsideIdsMap);
 
-        void setDeclaredOutsideDFsVector(std::vector<Id*> declaredOutsideDFsVector);
-
-        void setDeclaredBothDFsVector(std::vector<Id*> declaredBothDFsVector);
-
-        void setDeclaredBothDFsSet(std::set<Id*> declaredBothDFsSet);
+        void setDeclaredBothIdsMap(std::map<std::string, Identifier*> declaredBothIdsMap);
 
         virtual void printInfo();
 
@@ -140,7 +132,7 @@ class ForVertex: public Vertex {
 
     private:
 
-        Id* iterator;
+        ForId* iterator;
         expr* leftBorder;
         expr* rightBorder;
 
@@ -150,9 +142,9 @@ class ForVertex: public Vertex {
 
         //todo check if this works
         ForVertex(int depth, int number, int line,
-            Id* iterator, expr* leftBorder, expr* rightBorder);
+            ForId* iterator, expr* leftBorder, expr* rightBorder);
 
-        Id* getIterator();
+        ForId* getIterator();
 
         expr* getLeftBorder();
 

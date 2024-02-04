@@ -1,12 +1,12 @@
 #include "enums.hpp"
 #include "vertices.hpp"
 
-Vertex::Binding::Binding(Vertex* pointerTo, Id* id){
+Vertex::Binding::Binding(Vertex* pointerTo, BaseDFName* id){
     this->id = id;
     this->pointerTo = pointerTo;
 }
 
-Id* Vertex::Binding::getId(){
+BaseDFName* Vertex::Binding::getId(){
     return this->id;
 }
 
@@ -27,17 +27,17 @@ bool Vertex::Binding::operator<(const Binding b) const {//TODO
 
 Vertex::Vertex(){};
 
-//virtual ~Vertex();
+Vertex::~Vertex(){};
 
 VertexType Vertex::getVertexType(){
     return vertexType;
 }
 
-std::set<Id*> Vertex::getUseSet(){
+std::set<BaseDFName*> Vertex::getUseSet(){
     return use;
 }
 
-std::set<Id*> Vertex::getDefSet(){
+std::set<BaseDFName*> Vertex::getDefSet(){
     return def;
 }
 
@@ -65,11 +65,13 @@ int Vertex::getLine(){
     return line;
 }
 
-void Vertex::addIn(Vertex* vertex, Id* id){
+//todo DFR redo this
+void Vertex::addIn(Vertex* vertex, BaseDFName* id){
     this->in.insert(Binding(vertex, id)); //TODO this should not allow duplicates; does it allow it here?
 }
 
-void Vertex::addOut(Vertex* vertex, Id* id){
+//todo DFR redo this
+void Vertex::addOut(Vertex* vertex, BaseDFName* id){
     this->out.insert(Binding(vertex, id)); //TODO this should not allow duplicates; does it allow it here?
 }
 
@@ -80,50 +82,42 @@ void Vertex::addInside(Vertex* vertex){
     }
 }
 
-void Vertex::addUse(Id* id){
+void Vertex::addUse(BaseDFName* id){
     auto temp = this->use.find(id);
     if (temp == this->use.end()){
         this->use.insert(id);
     }
 }
 
-void Vertex::addDef(Id* id){
+void Vertex::addDef(BaseDFName* id){
     auto temp = this->def.find(id);
     if (temp == this->def.end()){
         this->def.insert(id);
     }
 }
 
-std::vector<Id*> Vertex::getDeclaredInsideDFsVector(){
-    return declaredInsideDFsVector;
+std::map<std::string, Identifier*> Vertex::getDeclaredInsideIdsMap(){
+    return declaredInsideIdsMap;
 }
 
-std::vector<Id*> Vertex::getDeclaredOutsideDFsVector(){
-    return declaredOutsideDFsVector;
+std::map<std::string, Identifier*> Vertex::getDeclaredOutsideIdsMap(){
+    return declaredOutsideIdsMap;
 }
 
-std::vector<Id*> Vertex::getDeclaredBothDFsVector(){
-    return declaredBothDFsVector;
+std::map<std::string, Identifier*> Vertex::getDeclaredBothIdsMap(){
+    return declaredBothIdsMap;
 }
 
-std::set<Id*> Vertex::getDeclaredBothDFsSet(){
-    return declaredBothDFsSet;
+void Vertex::setDeclaredInsideIdsMap(std::map<std::string, Identifier*> declaredInsideIdsMap){
+    this->declaredInsideIdsMap = declaredInsideIdsMap;
 }
 
-void Vertex::setDeclaredInsideDFsVector(std::vector<Id*> declaredInsideDFsVector){
-    this->declaredInsideDFsVector = declaredInsideDFsVector;
+void Vertex::setDeclaredOutsideIdsMap(std::map<std::string, Identifier*> declaredOutsideIdsMap){
+    this->declaredOutsideIdsMap = declaredOutsideIdsMap;
 }
 
-void Vertex::setDeclaredOutsideDFsVector(std::vector<Id*> declaredOutsideDFsVector){
-    this->declaredOutsideDFsVector = declaredOutsideDFsVector;
-}
-
-void Vertex::setDeclaredBothDFsVector(std::vector<Id*> declaredBothDFsVector){
-    this->declaredBothDFsVector = declaredBothDFsVector;
-}
-
-void Vertex::setDeclaredBothDFsSet(std::set<Id*> declaredBothDFsSet){
-    this->declaredBothDFsSet = declaredBothDFsSet;
+void Vertex::setDeclaredBothIdsMap(std::map<std::string, Identifier*> declaredBothIdsMap){
+    this->declaredBothIdsMap = declaredBothIdsMap;
 }
 
 void Vertex::printInfo(){ // virtual?
@@ -168,25 +162,25 @@ void CFVertex::printInfo() {
     std::cout << "Vertex depth: " << this->getDepth() << std::endl;
 
     std::cout << "Declared outside DFs:";
-    for (Id* i: this->getDeclaredOutsideDFsVector()){//TODO
-        std::cout << " " << i;
+    for (auto i: this->getDeclaredOutsideIdsMap()){//TODO
+        std::cout << " " << i.first;
     }
     std::cout << std::endl;
 
     std::cout << "Declared inside DFs:";
-    for (Id* i: this->getDeclaredInsideDFsVector()){//TODO
-        std::cout << " " << i;
+    for (auto i: this->getDeclaredInsideIdsMap()){//TODO
+        std::cout << " " << i.first;
     }
     std::cout << std::endl;
 
     std::cout << "Use DFs:";
-    for (Id* i: this->getUseSet()){//TODO
+    for (Identifier* i: this->getUseSet()){//TODO
         std::cout << " " << i;
     }
     std::cout << std::endl;
 
     std::cout << "Def DFs:";
-    for (Id* i: this->getDefSet()){//TODO
+    for (Identifier* i: this->getDefSet()){//TODO
         std::cout << " " << i;
     }
     std::cout << std::endl;
@@ -213,7 +207,7 @@ void CFVertex::printInfo() {
 
 //todo check if this works
 ForVertex::ForVertex(int depth, int number, int line,
-    Id* iterator, expr* leftBorder, expr* rightBorder){
+    ForId* iterator, expr* leftBorder, expr* rightBorder){
 
     this->vertexType = forVF;
 
@@ -226,7 +220,7 @@ ForVertex::ForVertex(int depth, int number, int line,
     this->rightBorder = rightBorder;
 }
 
-Id* ForVertex::getIterator(){
+ForId* ForVertex::getIterator(){
     return iterator;
 }
 
@@ -252,25 +246,25 @@ void ForVertex::printInfo(){
     std::cout << "Right border: " + this->getRightBorder()->to_string() << std::endl;
 
     std::cout << "Declared outside DFs:";
-    for (Id* i: this->getDeclaredOutsideDFsVector()){
-        std::cout << " " << i;
+    for (auto i: this->getDeclaredOutsideIdsMap()){
+        std::cout << " " << i.first;
     }
     std::cout << std::endl;
 
     std::cout << "Declared inside DFs:";
-    for (Id* i: this->getDeclaredInsideDFsVector()){
-        std::cout << " " << i;
+    for (auto i: this->getDeclaredInsideIdsMap()){
+        std::cout << " " << i.first;
     }
     std::cout << std::endl;
 
     std::cout << "Use DFs:";
-    for (Id* i: this->getUseSet()){
+    for (Identifier* i: this->getUseSet()){
         std::cout << " " << i;
     }
     std::cout << std::endl;
 
     std::cout << "Def DFs:";
-    for (Id* i: this->getDefSet()){
+    for (Identifier* i: this->getDefSet()){
         std::cout << " " << i;
     }
     std::cout << std::endl;

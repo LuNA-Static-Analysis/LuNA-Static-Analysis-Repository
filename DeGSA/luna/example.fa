@@ -11,4 +11,3 @@ sub foo(int foo1in){
         init(2, foo1in); // одного ФД!
         print(foo1in);
 }
-

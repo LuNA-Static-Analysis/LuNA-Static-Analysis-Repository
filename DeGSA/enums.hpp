@@ -1,13 +1,14 @@
 #pragma once
 
-enum IdType {
+enum IdentifierType {
 
-    baseDFId = 1,
-    indexedDFId = 2,
-    forId = 3,
-    whileId = 4,
-    valueId = 5,
-    letId = 6
+    subArgName = 1,
+    baseDFName = 2,
+    indexedDFName = 3,
+    forId = 4, //todo rename
+    whileId = 5, //todo rename
+    valueId = 6, //todo rename
+    letId = 7 //todo rename
 
 };
 
