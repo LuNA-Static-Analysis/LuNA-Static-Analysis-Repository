@@ -2,5 +2,6 @@ import printfl(real) as print;
 import c_init_float(real, name) as init;
 sub main(){
         df a;
-        init(3, a[222][11][0]);
+        init(3, a[1]);
+        print(a[1]);
 }

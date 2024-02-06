@@ -29,7 +29,7 @@ public:
     // ForIds, WhileIds are ignored -- we do not care if they were used or not
     // method is used to initialize use/defs of all BaseDFNames
     //todo improve readability
-    std::map<BaseDFName*, std::set<int>> getRoots();
+    virtual std::set<std::pair<Identifier*, int>> getRoots() = 0;//todo understand what the hell is it
 
     Identifier();
 
@@ -49,6 +49,8 @@ private:
 public:
 
     std::set<Identifier*> getNameReferenceSet();
+
+    std::set<std::pair<Identifier*, int>> getRoots();
 
     SubArgName(std::string name, std::set<Identifier*> nameReferenceSet);
 
@@ -77,6 +79,8 @@ public:
 
     std::map<int, std::pair<std::vector<Vertex*>*, std::vector<Vertex*>*>> getMap();
 
+    std::set<std::pair<Identifier*, int>> getRoots();
+
     BaseDFName(std::string name);
 
     ~BaseDFName();
@@ -101,6 +105,10 @@ public:
 
     Identifier* getBase();
 
+    std::set<std::pair<Identifier*, int>> getRoots();
+
+    std::vector<expr*> getExpressionsVector();
+
     IndexedDFName(std::string name, Identifier* base, std::vector<expr*> expressionsVector);
 
     ~IndexedDFName();
@@ -118,6 +126,8 @@ private:
 
 public:
 
+    std::set<std::pair<Identifier*, int>> getRoots();
+
     ForId(std::string name, expr* leftBorder, expr* rightBorder);
 
     ~ForId();
@@ -131,12 +141,20 @@ private:
 
     Vertex* whileVertex;
 
+public:
+
+    std::set<std::pair<Identifier*, int>> getRoots();
+
 };
 
 //TODO
 class ValueId: public Identifier {//todo rename this
 
 private:
+
+public:
+
+    std::set<std::pair<Identifier*, int>> getRoots();
 
 };
 
@@ -146,5 +164,9 @@ class LetId: public Identifier {//todo rename this
 private:
 
     Vertex* letVertex;
+
+public:
+
+    std::set<std::pair<Identifier*, int>> getRoots();
 
 };

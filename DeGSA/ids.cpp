@@ -8,9 +8,9 @@ IdentifierType Identifier::getType(){
     return this->type;
 }
 
-std::map<BaseDFName*, std::set<int>> Identifier::getRoots(){//todo DFR
+/*std::set<std::pair<Identifier*, int>> getRoots(){//todo DFR
     return {};
-}
+}*/
 
 Identifier::Identifier(){}
 
@@ -18,6 +18,17 @@ Identifier::~Identifier(){}
 
 std::set<Identifier*> SubArgName::getNameReferenceSet(){
     return this->nameReferenceSet;
+}
+
+std::set<std::pair<Identifier*, int>> SubArgName::getRoots(){
+    std::set<std::pair<Identifier*, int>> result = {};
+    for (auto i: this->getNameReferenceSet()){
+        auto temp = i->getRoots();
+        for (auto j: temp){
+            result.insert(j);
+        }
+    }
+    return result;
 }
 
 SubArgName::SubArgName(std::string name, std::set<Identifier*> nameReferenceSet){
@@ -45,7 +56,7 @@ void BaseDFName::addUse(int size, Vertex* vertex){
     }
 }
 
-// I do now know if objects' condition changes or not
+// I do not know if objects' condition changes or not
 void BaseDFName::addDef(int size, Vertex* vertex){
     auto maybePair = this->sizeToUseDefVectors.find(size);
     if (maybePair != this->sizeToUseDefVectors.end()){ // found this IDF being used or defined already
@@ -65,6 +76,12 @@ void BaseDFName::addDef(int size, Vertex* vertex){
 
 std::map<int, std::pair<std::vector<Vertex*>*, std::vector<Vertex*>*>> BaseDFName::getMap(){
     return this->sizeToUseDefVectors;
+}
+
+std::set<std::pair<Identifier*, int>> BaseDFName::getRoots(){
+    std::set<std::pair<Identifier*, int>> result = {};
+    result.insert(std::make_pair(this, 0));
+    return result;
 }
 
 BaseDFName::BaseDFName(std::string name){
@@ -87,10 +104,26 @@ IndexedDFName::IndexedDFName(std::string name, Identifier* base, std::vector<exp
     this->expressionsVector = expressionsVector;
 }
 
-IndexedDFName::~IndexedDFName(){}
-
 Identifier* IndexedDFName::getBase(){
     return this->base;
+}
+
+std::set<std::pair<Identifier*, int>> IndexedDFName::getRoots(){
+    std::set<std::pair<Identifier*, int>> result = {};
+    result.insert(std::make_pair(this->base, this->expressionsVector.size()));
+    return result;
+}
+
+std::vector<expr*> IndexedDFName::getExpressionsVector(){
+    return this->expressionsVector;
+}
+
+IndexedDFName::~IndexedDFName(){}
+
+std::set<std::pair<Identifier*, int>> ForId::getRoots(){
+    std::set<std::pair<Identifier*, int>> result = {};
+    result.insert(std::make_pair(this, 0));
+    return result;
 }
 
 ForId::ForId(std::string iteratorName, expr* leftBorder, expr* rightBorder){

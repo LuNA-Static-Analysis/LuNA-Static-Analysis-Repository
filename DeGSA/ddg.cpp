@@ -57,7 +57,7 @@ class DDG {
 
                     // save args of this CF to use it in enterVF
                     if (subDecl->params_->param_seq_ == nullptr){
-                        (this->subNameToArgsVector)[subName] = nullptr; // no args
+                        (this->subNameToArgsVector)[subName] = new std::vector<param*>(); // no args
                     } else {
                         (this->subNameToArgsVector)[subName] = subDecl->params_->param_seq_->params_;
                     }
@@ -199,6 +199,9 @@ class DDG {
                     if (base != nameTable.end()){
                         result.insert(new IndexedDFName(simpleDFName, base->second, {}));
                     }
+
+                    std::cout << "result.size() == " << result.size() << std::endl;
+                    std::cout << "> getNamesFromExpression finished (simple DF)\n\n";
                     return result;
                 }
 
@@ -231,6 +234,8 @@ class DDG {
                         result.insert(new IndexedDFName(baseName, base->second, expressionsVector));
                     }
 
+                    std::cout << "result.size() == " << result.size() << std::endl;
+                    std::cout << "> getNamesFromExpression finished (indexed DF)\n\n";
                     return result;
                 }
 
@@ -280,6 +285,9 @@ class DDG {
             int currentDepth, std::vector<expr*> callArgs, std::string currentCFName,
             /*for ForVertex*/ Identifier* iterator, expr* leftBorder, expr* rightBorder){
 
+            std::cout << "> enterBlock called\n" << std::endl;
+            std::cout << "Entering block " << currentBlock << "; name: " + currentCFName << std::endl;
+
             /* iterate through statements, collect vertices and their use-defs by calling enterVF on each,
             initialize currentVertex' use-defs and return it */
             int statementNumber = 0; // for logging
@@ -321,7 +329,6 @@ class DDG {
             }
 
             // in case of a "sub": add args as an inside Ids
-            //TODO segfault here
             if (VertexType = subVF){
                 // find if this sub is even declared
                 auto temp = subNameToArgsVector.find(currentCFName);
@@ -420,7 +427,7 @@ class DDG {
                     if (imports.find(nextCFName) != imports.end()){ // import VF
                         std::cout << "import" << std::endl;
 
-                        tempVertex = enterVF({}, rawArguments, nullptr, currentDepth + 1,
+                        tempVertex = enterVF(declaredBothIdsMap, rawArguments, nullptr, currentDepth + 1,
                             importVF, nextCFName, innerStatement->line_,
                             nullptr, nullptr, nullptr);
                         
@@ -429,7 +436,7 @@ class DDG {
 
                         auto m = subNameToArgsVector.find(nextCFName);
                         if (m != subNameToArgsVector.end()){
-                            tempVertex = enterVF({}, rawArguments, (this->subNameToBlock)[nextCFName], currentDepth + 1,
+                            tempVertex = enterVF(declaredBothIdsMap, rawArguments, (this->subNameToBlock)[nextCFName], currentDepth + 1,
                                 subVF, nextCFName, innerStatement->line_,
                                 nullptr, nullptr, nullptr);
                         } else {
@@ -509,7 +516,7 @@ class DDG {
 
                 //TODO ---- handling other VFs
             }
-            std::cout << "> enterVF finished\n\n";
+            std::cout << "> enterBlock finished\n" << std::endl;
             return currentVertex;
 
         }
@@ -522,7 +529,6 @@ class DDG {
                         /*for ForVertice:*/ Identifier* iterator, expr* leftBorder, expr* rightBorder){
 
             std::cout << "> enterVF called\n\n";
-            std::cout << "Entering block " << currentBlock << "; name: " + name << std::endl;
 
             Vertex* currentVertex;
             vertexCount++; // we will create a Vertex itself later in a switch
@@ -537,31 +543,39 @@ class DDG {
                     currentVertex = vertices.find(vertexCount)->second;
 
                     std::cout << "Import entered" << std::endl;
-                    for (int i = 1; i <= callArgs.size(); i++){
-                        // callNames -- set of Identifiers used in an import call
+                    for (int i = 0; i < callArgs.size(); i++){
+                        // callNames -- set of Identifiers used in the current argument of an import call
                         std::set<Identifier*> callNames = getNamesFromExpression(callArgs[i], declaredOutsideIdsMap);
-                        switch(importAndPositionToUseDef[name][i]){
+                        std::cout << "declaredOutsideIdsMap.size() == " << declaredOutsideIdsMap.size() << std::endl;
+                        std::cout << "callArgs[i]: " << callArgs[i] << std::endl;
+                        std::cout << "callNames size: " << callNames.size() << std::endl;
+                        for (auto t: callNames){
+                            std::cout << t->getName() << " " << t->getType() << std::endl;
+                        }
+                        switch(importAndPositionToUseDef[name][i + 1]){ // i + 1 because map's indices start from 1
+                            // initialize all BaseDFNames uses and defs that are participating in this import
                             case use:
                                 for (auto i: callNames) {
-                                    std::map<BaseDFName*, std::set<int>> roots = i->getRoots();
+                                    std::set<std::pair<Identifier*, int>> roots = i->getRoots();
                                     for (auto r: roots){
-                                        for (int size: r.second)
-                                            // r.first is a BaseDFName, r.second is a set of sizes (amounts of [])
-                                            r.first->addUse(size, currentVertex);
+                                        if (r.first->getType() == baseDFName){
+                                            std::cout << "indices count: " << r.second << std::endl;
+                                            std::cout << "added use to baseName " << r.first->getName() << " in a vertex " << currentVertex << std::endl;
+                                            (dynamic_cast<BaseDFName*>(r.first))->addUse(r.second, currentVertex);
+                                        }
                                     }
                                 }
                                 break;
                             case def:
                                 for (auto i: callNames) {
-                                    std::map<BaseDFName*, std::set<int>> roots = i->getRoots();
-
                                     //todo DFR check if roots.size > 1 or (roots[x].size > 1 and roots.size == 1),
                                     // because it is an error
-
+                                    std::set<std::pair<Identifier*, int>> roots = i->getRoots();
                                     for (auto r: roots){
-                                        for (int size: r.second)
-                                            // r.first is a BaseDFName, r.second is a set of sizes (amounts of [])
-                                            r.first->addDef(size, currentVertex);
+                                        if (r.first->getType() == baseDFName){
+                                            std::cout << "added def to baseName " << r.first->getName() << " in a vertex " << currentVertex << std::endl;
+                                            (dynamic_cast<BaseDFName*>(r.first))->addDef(r.second, currentVertex);
+                                        }
                                     }
                                 }
                                 break;
@@ -580,6 +594,7 @@ class DDG {
                     currentVertex = vertices.find(vertexCount)->second;
                     
                     std::cout << "Sub entered" << std::endl;
+                    std::cout << "> enterVF finished\n\n";
                     return enterBlock(subVF, currentBlock, currentVertex, {},
                         currentDepth, callArgs, name,
                         nullptr, nullptr, nullptr);
@@ -592,6 +607,7 @@ class DDG {
                     currentVertex = vertices.find(vertexCount)->second;
 
                     std::cout << "For entered" << std::endl;
+                    std::cout << "> enterVF finished\n\n";
                     return enterBlock(forVF, currentBlock, currentVertex, declaredOutsideIdsMap,
                         currentDepth, {}, "for",
                         iterator, leftBorder, rightBorder);
@@ -648,8 +664,8 @@ class DDG {
                 for (auto entry: map){
                     for (auto use: *(entry.second.first)){
                         for (auto def: *(entry.second.second)){
-                            use->addOut(def, baseName);
-                            def->addIn(use, baseName);
+                            use->addIn(def, baseName);
+                            def->addOut(use, baseName);
                         }
                     }
                 }
@@ -838,6 +854,27 @@ class DDG {
                 vertices.find(i)->second->printInfo();
                 std::cout << std::endl;
 
+            }
+
+            std::cout << "BaseDFNames:" << std::endl;
+            for (auto bn: baseNameSet){
+                std::cout << std::endl;
+                std::cout << bn->getName() << std::endl;
+                auto map = bn->getMap(); // 1 = use, 2 = def
+                for (auto m: map){
+                    std::cout << "size: " << m.first << std::endl;
+                    std::pair<std::vector<Vertex*>*, std::vector<Vertex*>*> pair = m.second;
+                    std::cout << "use: ";
+                    for (auto u: *(pair.first)){
+                        std::cout << u << " ";
+                    }
+                    std::cout << std::endl;
+                    std::cout << "def: ";
+                    for (auto d: *(pair.second)){
+                        std::cout << d << " ";
+                    }
+                    std::cout << std::endl;
+                }
             }
 
             std::cout << "============ Created DDG =============" << std::endl;
