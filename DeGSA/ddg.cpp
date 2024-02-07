@@ -758,8 +758,9 @@ class DDG {
 
         }
 
-        void checkUnusedDF(Vertex* currentVertex, std::set<std::string>* currentNamespaceUnusedDFSet){
+        void checkUnusedDF(/*Vertex* currentVertex, std::set<std::string>* currentNamespaceUnusedDFSet*/){
 
+            // old version:
             /*std::vector<Vertex*> stack = {};
 
             // refresh current unused DFs
@@ -799,6 +800,18 @@ class DDG {
                 }
             }*/
 
+            // new version:
+            for (BaseDFName* bn: baseNameSet){
+                auto bnMap = bn->getMap();
+                for (auto sizeAndUseDefs: bnMap){
+                    int size = sizeAndUseDefs.first;
+                    std::vector<Vertex*> uses = *(sizeAndUseDefs.second.first);
+                    if (uses.size() == 0){
+                        std::cout << "ERROR: unused DF " << bn->getName() << " with " << size << " indices" << std::endl;
+                    }
+                }
+            }
+
         }
 
         // this function accepts list of errors to find and tries to find them in the created graph
@@ -809,8 +822,8 @@ class DDG {
 
             checkNonDefinedDFUsage();
 
-            std::set<std::string> currentNamespaceUnusedDFs = {};
-            checkUnusedDF(mainVertex, &currentNamespaceUnusedDFs);
+            //std::set<std::string> currentNamespaceUnusedDFs = {};
+            checkUnusedDF(/*mainVertex, &currentNamespaceUnusedDFs*/);
 
         }
 

@@ -3,10 +3,12 @@ import c_init_float(real, name) as init;
 sub main(){
         df a;
         init(1, a);
+        init(1, a[1]);
+        init(1, a[1][1]);
         for i=1..2 {
                 df d;
                 print(d);
-                init(i, a);
+                init(a[a[1][1]], a);
                 init(a, d);
                 init(a, d);
         }
