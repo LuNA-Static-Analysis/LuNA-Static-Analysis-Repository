@@ -2,6 +2,12 @@ import printfl(real) as print;
 import c_init_float(real, name) as init;
 sub main(){
         df a;
-        init(3, a[1]);
-        print(a[1]);
+        init(1, a[1][1]);
+        foo(a[1][1]);
 }
+sub foo(real f){
+        init(1, f);
+        print(f);
+}
+//todo init(a[b][1], a[1]) --> b must be marked as "used"
+//todo a of size 4 must be marked as "used" and "defined"

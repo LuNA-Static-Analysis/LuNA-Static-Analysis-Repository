@@ -20,7 +20,7 @@ std::set<Identifier*> SubArgName::getNameReferenceSet(){
     return this->nameReferenceSet;
 }
 
-std::set<std::pair<Identifier*, int>> SubArgName::getRoots(){
+std::set<std::pair<Identifier*, int>> SubArgName::getRoots(){//TODO DFR IS NOT CALLED???
     std::set<std::pair<Identifier*, int>> result = {};
     for (auto i: this->getNameReferenceSet()){
         auto temp = i->getRoots();
@@ -28,6 +28,12 @@ std::set<std::pair<Identifier*, int>> SubArgName::getRoots(){
             result.insert(j);
         }
     }
+    
+    std::cout << "DEBUG: result of getRoots of subArgName" << std::endl;
+    for (auto i: result){
+        std::cout << i.first->getName() << std::endl;
+    }
+
     return result;
 }
 
@@ -110,7 +116,10 @@ Identifier* IndexedDFName::getBase(){
 
 std::set<std::pair<Identifier*, int>> IndexedDFName::getRoots(){
     std::set<std::pair<Identifier*, int>> result = {};
-    result.insert(std::make_pair(this->base, this->expressionsVector.size()));
+    std::set<std::pair<Identifier*, int>> baseRoots = this->base->getRoots();
+    for (auto br: baseRoots){
+        result.insert(std::make_pair(br.first, br.second + this->expressionsVector.size()));
+    }
     return result;
 }
 
