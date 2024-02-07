@@ -138,12 +138,11 @@ class DDG {
         // returns a set of Ids that are used in this expression
         // nameTable stores information about what Ids are visible currently, and we can
         // find the Id object by its name
-        // if there is none, then it's an error TODO DFR 3 report an error here!
+        // if there is none, then it's an error
         static std::set<Identifier*> getNamesFromExpression(expr* expression, std::map<std::string, Identifier*> nameTable){
 
             std::cout << "> getNamesFromExpression called\n\n";
 
-            //TODO DFR 1: make a comparator for Id objects to avoid duplications in a set!
             std::set<Identifier*> result = {};
 
             // ignore all this as we are looking only for DFs
@@ -187,9 +186,6 @@ class DDG {
             }
 
             // name found
-            // TODO check if id class includes every name (i.e. for counters, let variables etc)
-            // perhaps it is required to parse luna_string?
-            //TODO DFR ERROR HERE
             id* df = dynamic_cast<id*>(expression);
             if (df != NULL){
 
@@ -199,6 +195,8 @@ class DDG {
                     auto base = nameTable.find(simpleDFName);
                     if (base != nameTable.end()){
                         result.insert(new IndexedDFName(simpleDFName, base->second, {}));
+                    } else {
+                        std::cout << "ERROR: no name \"" << simpleDFName << "\" found!" << std::endl;
                     }
 
                     std::cout << "> getNamesFromExpression finished (simple DF)\n\n";
@@ -221,7 +219,7 @@ class DDG {
                         }
                     }
 
-                    // now create an IndexedDFName and initialize it TODO DFR redo this use push_front?
+                    // now create an IndexedDFName and initialize it
                     std::vector<expr*> expressionsVector(indices);
                     complexDF = dynamic_cast<complex_id*>(expression);
                     for (int i = 0; i < indices; i++){
@@ -233,6 +231,8 @@ class DDG {
                     if (base != nameTable.end()){
                         IndexedDFName* temp = new IndexedDFName(baseName, base->second, expressionsVector);
                         result.insert(temp);
+                    } else {
+                        std::cout << "ERROR: no name \"" << baseName << "\" found!" << std::endl;
                     }
 
                     std::cout << "> getNamesFromExpression finished (indexed DF)\n\n";
@@ -240,12 +240,10 @@ class DDG {
                 }
 
                 std::cout << "error in dynamic_cast to id" << std::endl;
-                //TODO exception
-
             }
 
-            std::cout << "> getNamesFromExpression finished (default)\n\n";
-            return {}; //TODO add exception
+            std::cout << "> getNamesFromExpression finished with errors\n\n";
+            return {};
 
         }
 
@@ -578,7 +576,6 @@ class DDG {
                     currentVertex = vertices.find(vertexCount)->second;
                     
                     std::cout << "Sub entered" << std::endl;
-                    //todo DFR add mapping callArgs to SubArgNames here
                     std::vector<SubArgName*> declaredArgs = {};
                     // in case of a "sub": add args as an inside Ids and map them to call args
                     // find if this sub is even declared
@@ -644,39 +641,9 @@ class DDG {
 
         }
 
-        // this function binds vertices to each other; it is initially called for "main" vertex and uses its
-        // "inside" field to call itself recursively on new vertices
-        // function initializes "in" and "out" of every vertex
-        //TODO DFR: use baseNameSet to bind vertices
+        // this function binds vertices to each other
+        // currently function initializes "in" and "out" of imports using baseNameSet
         void bindVertices(Vertex* currentVertex){
-
-            // old version:
-            /*std::cout << "> bindVertices called\n" << std::endl;
-            for (Vertex* internalVertex: currentVertex->getInsideSet()){
-
-                for (BaseDFName* DFName: internalVertex->getUseSet()) // adding every use of every DF
-                    //todo
-                
-                if (internalVertex->getVertexType() != importVF) // vertex has a block, use recursion
-                    bindVertices(internalVertex);
-
-            }
-
-            for (Vertex* internalVertex: currentVertex->getInsideSet()){
-
-                for (std::string DFName: internalVertex->getDefSet()){ // now find what defined DFs are used, and where exactly
-                    std::vector<Vertex*>* maybeUses = coordinates.getDFUses(DFName);
-                    if (maybeUses != NULL){ // found used DF
-                        for (Vertex* it: *maybeUses){ // bindVertices current Vertex to all that uses its result
-                            internalVertex->addOut(it, DFName);
-                            it->addIn(internalVertex, DFName);
-                        }
-                    } // else DF is unused (this will be checked for later anyway)
-                }
-
-            }*/
-
-            // new version:
             // go through all basenames and bind imports depending on what info baseNameSet has
             for (BaseDFName* baseName: baseNameSet){
                 std::map<int, std::pair<std::vector<Vertex*>*, std::vector<Vertex*>*>> map = baseName->getMap();
@@ -876,19 +843,20 @@ class DDG {
             }
 
             std::cout << "BaseDFNames:" << std::endl;
-            for (auto bn: baseNameSet){
+            for (BaseDFName* bn: baseNameSet){
                 std::cout << std::endl;
-                std::cout << bn->getName() << std::endl;
+                std::cout << "Name: " << bn->getName() << std::endl;
+                //std::cout << "Declared: " << bn-> << std::endl; //TODO create declaration stack for BaseDFName
                 auto map = bn->getMap(); // 1 = use, 2 = def
                 for (auto m: map){
-                    std::cout << "size: " << m.first << std::endl;
+                    std::cout << "Size: " << m.first << std::endl;
                     std::pair<std::vector<Vertex*>*, std::vector<Vertex*>*> pair = m.second;
-                    std::cout << "use: ";
+                    std::cout << "Uses: ";
                     for (auto u: *(pair.first)){
                         std::cout << u << " ";
                     }
                     std::cout << std::endl;
-                    std::cout << "def: ";
+                    std::cout << "Defs: ";
                     for (auto d: *(pair.second)){
                         std::cout << d << " ";
                     }

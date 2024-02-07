@@ -8,10 +8,6 @@ IdentifierType Identifier::getType(){
     return this->type;
 }
 
-/*std::set<std::pair<Identifier*, int>> getRoots(){//todo DFR
-    return {};
-}*/
-
 Identifier::Identifier(){}
 
 Identifier::~Identifier(){}
@@ -20,7 +16,7 @@ std::set<Identifier*> SubArgName::getNameReferenceSet(){
     return this->nameReferenceSet;
 }
 
-std::set<std::pair<Identifier*, int>> SubArgName::getRoots(){//TODO DFR IS NOT CALLED???
+std::set<std::pair<Identifier*, int>> SubArgName::getRoots(){
     std::set<std::pair<Identifier*, int>> result = {};
     for (auto i: this->getNameReferenceSet()){
         auto temp = i->getRoots();
@@ -57,7 +53,7 @@ void BaseDFName::addUse(int size, Vertex* vertex){
     }
 }
 
-// I do not know if objects' condition changes or not
+// I do not know if objects' condition changes or not :)
 void BaseDFName::addDef(int size, Vertex* vertex){
     auto maybePair = this->sizeToUseDefVectors.find(size);
     if (maybePair != this->sizeToUseDefVectors.end()){ // found this IDF being used or defined already
