@@ -30,6 +30,8 @@ class DDG {
 
         std::set<BaseDFName*> baseNameSet; // all names declared after the keyword "df"
 
+        std::vector<std::string> errorReports = {};
+
         void findSubs(ast* astobj){
 
             std::cout << "> findSubs called\n\n";
@@ -90,7 +92,10 @@ class DDG {
                         
                     }
 
-                } else std::cout << "ERROR: Unknown CF found" << std::endl;
+                } else {
+                    errorReports.push_back("ERROR: unknown CF of name " + subDef->to_string() 
+                    + " found.\nFunction: findSubs()\n");
+                }
                     
             }
 
@@ -99,7 +104,7 @@ class DDG {
 
         // scanForDFDecls is a function that scans block for DF declarations
         // DFs, according to LuNA rules, must be declared on the very first line, and no other declarations shall follow
-        static std::map<std::string, Identifier*> scanForDFDecls(block* blockobj){
+        std::map<std::string, Identifier*> scanForDFDecls(block* blockobj){
             
             std::cout << "> scanForDFDecls called\n";
             std::map<std::string, Identifier*> DFDecls = {};
@@ -114,8 +119,9 @@ class DDG {
                     if (DFDecls.find(dfName) == DFDecls.end()){
                         DFDecls.insert(std::make_pair(dfName, new BaseDFName(dfName)));
                     } else {
-                        std::cout << "ERROR: found duplicate name in df declaration in block " << blockobj <<
-                        ": " << dfName << std::endl;
+                        std::string report = "ERROR: found duplicate name in df declaration in block " + std::to_string((long long)blockobj) +
+                        ": " + dfName + "\n";
+                        this->errorReports.push_back(report);
                     }
                 }
 
@@ -139,7 +145,7 @@ class DDG {
         // nameTable stores information about what Ids are visible currently, and we can
         // find the Id object by its name
         // if there is none, then it's an error
-        static std::set<Identifier*> getNamesFromExpression(expr* expression, std::map<std::string, Identifier*> nameTable){
+        std::set<Identifier*> getNamesFromExpression(expr* expression, std::map<std::string, Identifier*> nameTable, int line){
 
             std::cout << "> getNamesFromExpression called\n\n";
 
@@ -167,7 +173,7 @@ class DDG {
             if (lunaCast != NULL){
                 expr* nextExpr = lunaCast->expr_;
                 std::cout << "> getNamesFromExpression calling recursively for a luna_cast\n\n";
-                result = getNamesFromExpression(nextExpr, nameTable);
+                result = getNamesFromExpression(nextExpr, nameTable, line);
                 std::cout << "> getNamesFromExpression finished after luna_cast recursion\n\n";
                 return result;
             }
@@ -176,10 +182,10 @@ class DDG {
             bin_op* lunaBinOp = dynamic_cast<bin_op*>(expression);
             if (lunaBinOp != NULL){
                 std::cout << "> getNamesFromExpression calling recursively for a bin_op (left)\n\n";
-                std::set<Identifier*> leftResult = getNamesFromExpression(lunaBinOp->left_, nameTable);
+                std::set<Identifier*> leftResult = getNamesFromExpression(lunaBinOp->left_, nameTable, line);
                 for (auto j : leftResult) result.insert(j);
                 std::cout << "> getNamesFromExpression calling recursively for a bin_op (right)\n\n";
-                std::set<Identifier*> rightResult = getNamesFromExpression(lunaBinOp->right_, nameTable);
+                std::set<Identifier*> rightResult = getNamesFromExpression(lunaBinOp->right_, nameTable, line);
                 for (auto j : rightResult) result.insert(j);
                 std::cout << "> getNamesFromExpression finished after bin_op recursion\n\n";
                 return result;
@@ -196,7 +202,8 @@ class DDG {
                     if (base != nameTable.end()){
                         result.insert(new IndexedDFName(simpleDFName, base->second, {}));
                     } else {
-                        std::cout << "ERROR: no name \"" << simpleDFName << "\" found!" << std::endl;
+                        std::string report = "ERROR: no name \"" + simpleDFName + "\" found!" + "\n";
+                        errorReports.push_back(report);
                     }
 
                     std::cout << "> getNamesFromExpression finished (simple DF)\n\n";
@@ -232,14 +239,16 @@ class DDG {
                         IndexedDFName* temp = new IndexedDFName(baseName, base->second, expressionsVector);
                         result.insert(temp);
                     } else {
-                        std::cout << "ERROR: no name \"" << baseName << "\" found!" << std::endl;
+                        std::string report = "ERROR: no name \"" + baseName + "\" found at line " + std::to_string(line) + "\n";
+                        errorReports.push_back(report);
                     }
 
                     std::cout << "> getNamesFromExpression finished (indexed DF)\n\n";
                     return result;
                 }
 
-                std::cout << "error in dynamic_cast to id" << std::endl;
+                std::string report = "ERROR: dynamic_cast to id at line " + std::to_string(line) + "\n";
+                errorReports.push_back(report);
             }
 
             std::cout << "> getNamesFromExpression finished with errors\n\n";
@@ -258,11 +267,11 @@ class DDG {
                 std::map<int, std::set<Identifier*>> positionToIdSet; // starts from 1 //TODO redo to 0
             
             public:
-                ParsedArguments(std::vector<expr*> rawCallArgs, std::map<std::string, Identifier*> nameTable){
+                ParsedArguments(std::vector<expr*> rawCallArgs, std::map<std::string, Identifier*> nameTable, DDG &ddg, int line){
                     positionToIdSet = {};
                     int current = 1;
                     for (auto expression: rawCallArgs){
-                        positionToIdSet.insert(std::make_pair(current, getNamesFromExpression(expression, nameTable)));
+                        positionToIdSet.insert(std::make_pair(current, ddg.getNamesFromExpression(expression, nameTable, line)));
                         current++;
                     }
                 }
@@ -322,7 +331,8 @@ class DDG {
                     );
                     this->baseNameSet.insert(identifier);
                 } else {
-                    std::cout << "ERROR: duplicate name declared at " << currentCFName << ": " << identifierName << std::endl;
+                    std::string report = "ERROR: duplicate name declared at " + currentCFName + ": " + identifierName + "\n";
+                    errorReports.push_back(report);
                 }
             }
 
@@ -358,7 +368,8 @@ class DDG {
                         forId)
                     );
                 } else {
-                    std::cout << "ERROR: duplicate name declared at for: " << iteratorName << std::endl;
+                    std::string report = "ERROR: duplicate name declared at for: " + iteratorName + "\n";
+                    errorReports.push_back(report);
                 }
             }
             // same with let variables TODO
@@ -386,7 +397,7 @@ class DDG {
 
                     // vector of call args (expressions; need to parse)
                     std::vector<expr*> rawArguments = *(innerStatementFunctionVF->opt_exprs_->exprs_seq_->expr_);
-                    auto parsedArguments = ParsedArguments(rawArguments, declaredBothIdsMap).getMap();
+                    auto parsedArguments = ParsedArguments(rawArguments, declaredBothIdsMap, *this, innerStatementFunctionVF->line_).getMap();
 
                     // check if names inside every argument are declared
                     for (int i = 1; i <= parsedArguments.size(); i++){ // parsed arguments start from 1
@@ -396,8 +407,10 @@ class DDG {
                             std::string identifierName = (identifier->getType() == indexedDFName) ?
                                 (dynamic_cast<IndexedDFName*>(identifier))->getBase()->getName() :
                                 identifier->getName();
-                            if (declaredBothIdsMap.find(identifierName) == declaredBothIdsMap.end())
-                                std::cout << "ERROR: found undeclared name " + identifierName + " in a " + nextCFName + " call" << std::endl;
+                            if (declaredBothIdsMap.find(identifierName) == declaredBothIdsMap.end()){
+                                std::string report = "ERROR: found undeclared name " + identifierName + " in a " + nextCFName + " call\n";
+                                errorReports.push_back(report);
+                            }
                         }
                     }
 
@@ -417,19 +430,20 @@ class DDG {
                                 subVF, nextCFName, innerStatement->line_,
                                 nullptr, nullptr, nullptr);
                         } else {
-                            std::cout << "ERROR: could not find sub with a name " << nextCFName << std::endl;
+                            std::string report = "ERROR: could not find sub with a name " + nextCFName + "\n";
+                            errorReports.push_back(report);
                             currentVertex->addInside(tempVertex);
                             continue;
                         }
 
                         // remember that every DF inside [] is considered as being "used"
                         for (int i = 0; i < callArgs.size(); i++){
-                            std::set<Identifier*> callNames = getNamesFromExpression(callArgs[i], declaredOutsideIdsMap);
+                            std::set<Identifier*> callNames = getNamesFromExpression(callArgs[i], declaredOutsideIdsMap, innerStatementFunctionVF->line_);
                             for (auto callName: callNames){
                                 if (callName->getType() == indexedDFName){
                                     IndexedDFName* idfn = dynamic_cast<IndexedDFName*>(callName);
                                     for (expr* expressionInsideIndices: idfn->getExpressionsVector()){
-                                        std::set<Identifier*> usedNames = getNamesFromExpression(expressionInsideIndices, declaredOutsideIdsMap);
+                                        std::set<Identifier*> usedNames = getNamesFromExpression(expressionInsideIndices, declaredOutsideIdsMap, innerStatementFunctionVF->line_);
                                         for (auto usedName: usedNames){
                                             auto roots = usedName->getRoots();
                                             for (auto rootAndSize: roots){
@@ -498,7 +512,7 @@ class DDG {
                         // callNames -- set of Identifiers used in the current argument of an import call
                         // example: init(a + b[1], b[2]);
                         // callNames of first argument: IndexedDFName* a, IndexedDFName* b[1]
-                        std::set<Identifier*> callNames = getNamesFromExpression(callArgs[i], declaredOutsideIdsMap);
+                        std::set<Identifier*> callNames = getNamesFromExpression(callArgs[i], declaredOutsideIdsMap, line);
 
                         switch(importAndPositionToUseDef[name][i + 1]){ // i + 1 because map's indices start from 1
                             // initialize all BaseDFNames uses and defs that are participating in this import
@@ -516,7 +530,7 @@ class DDG {
                                     if (i->getType() == indexedDFName){
                                         IndexedDFName* idfn = dynamic_cast<IndexedDFName*>(i);
                                         for (expr* expressionInsideIndices: idfn->getExpressionsVector()){
-                                            std::set<Identifier*> usedNames = getNamesFromExpression(expressionInsideIndices, declaredOutsideIdsMap);
+                                            std::set<Identifier*> usedNames = getNamesFromExpression(expressionInsideIndices, declaredOutsideIdsMap, line);
                                             for (auto usedName: usedNames){
                                                 auto roots = usedName->getRoots();
                                                 for (auto rootAndSize: roots){
@@ -538,7 +552,8 @@ class DDG {
                                     // 2. roots.size() must be <= 1
                                     // 3. TODO DFR also must be applied to constants, not only identifiers
                                     if (roots.size() > 1 || callNames.size() > 1){
-                                        std::cout << "ERROR: trying to define an unsuitable expression!" << std::endl;
+                                        std::string report = "ERROR: trying to define an unsuitable expression!\n";
+                                        errorReports.push_back(report);
                                         continue;
                                     }
 
@@ -553,7 +568,7 @@ class DDG {
                                     if (i->getType() == indexedDFName){
                                         IndexedDFName* idfn = dynamic_cast<IndexedDFName*>(i);
                                         for (expr* expressionInsideIndices: idfn->getExpressionsVector()){
-                                            std::set<Identifier*> usedNames = getNamesFromExpression(expressionInsideIndices, declaredOutsideIdsMap);
+                                            std::set<Identifier*> usedNames = getNamesFromExpression(expressionInsideIndices, declaredOutsideIdsMap, line);
                                             for (auto usedName: usedNames){
                                                 auto roots = usedName->getRoots();
                                                 for (auto rootAndSize: roots){
@@ -601,15 +616,16 @@ class DDG {
                                 // used in a call of a current sub
                                 expr* arg = callArgs[i];
                                 // now parse expr and find every its name inside declaredBothIdsMap
-                                auto nameReferenceSet = getNamesFromExpression(arg, declaredOutsideIdsMap);
+                                auto nameReferenceSet = getNamesFromExpression(arg, declaredOutsideIdsMap, line);
                                 SubArgName* subArgName = new SubArgName(identifierName, nameReferenceSet);
                                 declaredArgs.push_back(subArgName);
                             } else {
-                                std::cout << "ERROR: duplicate name of a sub arg at " << name << ": " << identifierName << std::endl;
+                                std::string report = "ERROR: duplicate name of a sub arg at " + name + ": " + identifierName + "\n";
+                                errorReports.push_back(report);
                             }
                         }
                     } else {
-                        std::cout << "ERROR: could not find sub with a name " << name << std::endl;
+                        //std::cout << "ERROR: could not find sub with a name " << name << std::endl;
                         // this is actually redundant, as check happens below already
                     }
 
@@ -677,11 +693,12 @@ class DDG {
                     if (size == 0){
                         std::vector<Vertex*> defs = *(sizeAndUseDefs.second.second);
                         if (defs.size() > 1){
-                            std::cout << "ERROR: multiple initialization of a DF " << bn->getName() << " in lines:" << std::endl;
+                            std::string report = "ERROR: multiple initialization of a DF " + bn->getName() + " in lines:\n";
                             for (auto def: defs){
-                                std::cout << def->getLine() << " ";
+                                report += (std::to_string(def->getLine()) + " ");
                             }
-                            std::cout << std::endl;
+                            report += "\n";
+                            errorReports.push_back(report);
                         }
                     } else {
                         //TODO add warnings?
@@ -698,7 +715,8 @@ class DDG {
                     int size = sizeAndUseDefs.first;
                     std::vector<Vertex*> uses = *(sizeAndUseDefs.second.first);
                     if (uses.size() == 0){
-                        std::cout << "ERROR: unused DF " << bn->getName() << " with " << size << " indices" << std::endl;
+                        std::string report = "ERROR: unused DF " + bn->getName() + " with " + std::to_string(size) + " indices\n";
+                        errorReports.push_back(report);
                     }
                 }
             }
@@ -741,7 +759,7 @@ class DDG {
 
             if (!(this->mainExists)){
                 std::cout << "ERROR: No main found" << std::endl;
-                // TODO throw exception/use error reporter/whatever else
+                return;
             }
 
             std::set<std::string> emptySet = {};
@@ -794,6 +812,10 @@ class DDG {
             std::cout << "======== Searching for errors ========" << std::endl;
 
             findErrors();
+
+            for (auto r: errorReports){
+                std::cout << r << std::endl;
+            }
 
         }
 
