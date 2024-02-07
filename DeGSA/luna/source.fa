@@ -2,7 +2,7 @@ import printfl(real) as print;
 import c_init_float(real, name) as init;
 sub main(){
         df a;
-        init(1, a[1]);
+        init(1, a[1] + a);
         foo(a[1]);
         init(1, a);
         foo(a);

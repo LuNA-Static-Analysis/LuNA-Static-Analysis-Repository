@@ -343,7 +343,7 @@ class DDG {
                 }
             }
 
-            //TODO DFR 9 bounds of "for" also could have DFs inside
+            //TODO DFR bounds of "for" also could have DFs inside
             // in case of a "for": add it as an inside Id
             if (VertexType == forVF){
                 std::string iteratorName = iterator->getName();
@@ -532,9 +532,16 @@ class DDG {
                                 break;
                             case def:
                                 for (auto i: callNames) {
-                                    //todo DFR check if roots.size > 1 or (roots[x].size > 1 and roots.size == 1),
-                                    // because it is an error
                                     std::set<std::pair<Identifier*, int>> roots = i->getRoots();
+                                    // check for not attempting to initialize unsuitable expression:
+                                    // 1. callNames.size() must be <= 1
+                                    // 2. roots.size() must be <= 1
+                                    // 3. TODO DFR also must be applied to constants, not only identifiers
+                                    if (roots.size() > 1 || callNames.size() > 1){
+                                        std::cout << "ERROR: trying to define an unsuitable expression!" << std::endl;
+                                        continue;
+                                    }
+
                                     for (auto r: roots){
                                         if (r.first->getType() == baseDFName){
                                             std::cout << "added def to baseName " << r.first->getName() << " of size " << r.second << " in a vertex " << currentVertex << std::endl;
@@ -595,10 +602,6 @@ class DDG {
                                 expr* arg = callArgs[i];
                                 // now parse expr and find every its name inside declaredBothIdsMap
                                 auto nameReferenceSet = getNamesFromExpression(arg, declaredOutsideIdsMap);
-                                /*std::cout << "nameReferenceSet:" << std::endl;
-                                for (auto i: nameReferenceSet){
-                                    std::cout << i << std::endl;
-                                }*/
                                 SubArgName* subArgName = new SubArgName(identifierName, nameReferenceSet);
                                 declaredArgs.push_back(subArgName);
                             } else {
