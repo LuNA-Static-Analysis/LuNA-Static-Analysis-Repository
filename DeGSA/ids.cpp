@@ -28,11 +28,6 @@ std::set<std::pair<Identifier*, int>> SubArgName::getRoots(){//TODO DFR IS NOT C
             result.insert(j);
         }
     }
-    
-    std::cout << "DEBUG: result of getRoots of subArgName" << std::endl;
-    for (auto i: result){
-        std::cout << i.first->getName() << std::endl;
-    }
 
     return result;
 }
