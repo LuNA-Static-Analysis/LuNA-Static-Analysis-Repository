@@ -330,16 +330,6 @@ class DDG {
 
             // in case of a "sub": add args as an inside Ids
             if (VertexType == subVF){
-
-                std::cout << "DEBUG:" << std::endl;
-                std::cout << "declared args:" << std::endl;
-                for (auto a: declaredArgs){
-                    std::cout << "name: " << a->getName() << std::endl;
-                    for (auto aa: a->getNameReferenceSet()){
-                        std::cout << aa->getName() << " " << std::endl;
-                    }
-                }
-
                 auto temp = subNameToArgsVector.find(currentCFName);
                 if (temp != subNameToArgsVector.end()){
                     for (SubArgName* subArgName: declaredArgs){
@@ -534,36 +524,40 @@ class DDG {
 
                     std::cout << "Import entered" << std::endl;
                     for (int i = 0; i < callArgs.size(); i++){
+
                         // callNames -- set of Identifiers used in the current argument of an import call
-
-                        std::cout << "DEBUG: declaredOutsideIdsMap before getNamesFromExpr in " << name << std::endl;
-                        for (auto d: declaredOutsideIdsMap){
-                            std::cout << d.second->getName() << " of type " << d.second->getType() << std::endl;
-                        }
-
+                        // example: init(a + b[1], b[2]);
+                        // callNames of first argument: IndexedDFName* a, IndexedDFName* b[1]
                         std::set<Identifier*> callNames = getNamesFromExpression(callArgs[i], declaredOutsideIdsMap);
-
-                        std::cout << "DEBUG: callNames as result of getNamesFromExpr " << std::endl;
-                        for (auto d: callNames){
-                            std::cout << d->getName() << " of type " << d->getType() << std::endl;
-                            std::cout << "its base: " << (dynamic_cast<IndexedDFName*>(d))->getBase()->getName() << " of type " << (dynamic_cast<IndexedDFName*>(d))->getBase()->getType() << std::endl;
-                        }
 
                         switch(importAndPositionToUseDef[name][i + 1]){ // i + 1 because map's indices start from 1
                             // initialize all BaseDFNames uses and defs that are participating in this import
+                            // TODO DFR remember that every DF inside [] is considered as being "used"
                             case use:
                                 for (auto i: callNames) {
                                     std::set<std::pair<Identifier*, int>> roots = i->getRoots();
-
-                                    std::cout << "DEBUG: roots of " << i->getName() << " of type " << i->getType() << ":" << std::endl;
-                                    for (auto r: roots){
-                                        std::cout << r.first->getName() << " of type " << r.first->getType() << " having " << r.second << " indices" << std::endl;
-                                    }
-
                                     for (auto r: roots){
                                         if (r.first->getType() == baseDFName){
-                                            std::cout << "added use to baseName " << r.first->getName() << " in a vertex " << currentVertex << std::endl;
+                                            std::cout << "added use to baseName " << r.first->getName() << " of size " << r.second << " in a vertex " << currentVertex << std::endl;
                                             (dynamic_cast<BaseDFName*>(r.first))->addUse(r.second, currentVertex);
+                                        }
+                                    }
+
+                                    // TODO DFR remember that every DF inside [] is considered as being "used"
+                                    if (i->getType() == indexedDFName){
+                                        std::cout << "kekw" << std::endl;
+                                        IndexedDFName* idfn = dynamic_cast<IndexedDFName*>(i);
+                                        for (expr* expressionInsideIndices: idfn->getExpressionsVector()){
+                                            std::set<Identifier*> usedNames = getNamesFromExpression(expressionInsideIndices, declaredOutsideIdsMap);
+                                            for (auto usedName: usedNames){
+                                                auto roots = usedName->getRoots();
+                                                for (auto rootAndSize: roots){
+                                                    if (rootAndSize.first->getType() == baseDFName){
+                                                        BaseDFName* root = dynamic_cast<BaseDFName*>(rootAndSize.first);
+                                                        root->addUse(rootAndSize.second, currentVertex);
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -573,18 +567,30 @@ class DDG {
                                     //todo DFR check if roots.size > 1 or (roots[x].size > 1 and roots.size == 1),
                                     // because it is an error
                                     std::set<std::pair<Identifier*, int>> roots = i->getRoots();
-
-                                    std::cout << "DEBUG: roots of " << i->getName() << " of type " << i->getType() << ":" << std::endl;
-                                    for (auto r: roots){
-                                        std::cout << r.first->getName() << " of type " << r.first->getType() << " having " << r.second << " indices" << std::endl;
-                                    }
-
                                     for (auto r: roots){
                                         if (r.first->getType() == baseDFName){
-                                            std::cout << "added def to baseName " << r.first->getName() << " in a vertex " << currentVertex << std::endl;
+                                            std::cout << "added def to baseName " << r.first->getName() << " of size " << r.second << " in a vertex " << currentVertex << std::endl;
                                             (dynamic_cast<BaseDFName*>(r.first))->addDef(r.second, currentVertex);
                                         }
                                     }
+
+                                    // remember that every DF inside [] is considered as being "used"
+                                    if (i->getType() == indexedDFName){
+                                        IndexedDFName* idfn = dynamic_cast<IndexedDFName*>(i);
+                                        for (expr* expressionInsideIndices: idfn->getExpressionsVector()){
+                                            std::set<Identifier*> usedNames = getNamesFromExpression(expressionInsideIndices, declaredOutsideIdsMap);
+                                            for (auto usedName: usedNames){
+                                                auto roots = usedName->getRoots();
+                                                for (auto rootAndSize: roots){
+                                                    if (rootAndSize.first->getType() == baseDFName){
+                                                        BaseDFName* root = dynamic_cast<BaseDFName*>(rootAndSize.first);
+                                                        root->addUse(rootAndSize.second, currentVertex);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
                                 }
                                 break;
                             default:
@@ -615,7 +621,6 @@ class DDG {
                             auto declaredArg = (*declaredArgsVector)[i];
                             // name of a declared argument
                             std::string identifierName = *(declaredArg->name_->value_);
-                            //std::cout << "ULTRADEBUG: " + identifierName + "\n" << std::endl;
                             // check if this name is already declared or not
                             if (declaredOutsideIdsMap.find(identifierName) == declaredOutsideIdsMap.end()){
                                 // nameReferenceSet shows, what Identifiers are inside an expression
