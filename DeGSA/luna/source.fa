@@ -2,13 +2,12 @@ import printfl(real) as print;
 import c_init_float(real, name) as init;
 sub main(){
         df a;
-        init(1, a[1] + a);
-        foo(a[1]);
         init(1, a);
-        foo(a);
-}
-sub foo(real f){
-        df ff;
-        init(f, ff);
-        print(ff);
+        for i=1..2 {
+                df d;
+                print(d);
+                init(i, a);
+                init(a, d);
+                init(a, d);
+        }
 }

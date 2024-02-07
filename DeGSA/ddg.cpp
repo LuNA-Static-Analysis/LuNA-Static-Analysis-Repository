@@ -670,8 +670,8 @@ class DDG {
         //TODO function must return a list of errors in a JSON
 
         //TODO redo all checkers according to DFR
-        void checkMultipleDFInitialization(Vertex* vertex, std::map<std::string, std::vector<int>> initializedDFs){
-
+        void checkMultipleDFInitialization(/*Vertex* vertex, std::map<std::string, std::vector<int>> initializedDFs*/){
+            // old version:
             /*std::vector<Vertex*> stack = {};
 
             for (auto v: vertex->getInsideSet()){
@@ -711,6 +711,26 @@ class DDG {
                     }
                 }
             }*/
+
+            // new version:
+            for (BaseDFName* bn: baseNameSet){
+                auto bnMap = bn->getMap();
+                for (auto sizeAndUseDefs: bnMap){
+                    int size = sizeAndUseDefs.first;
+                    if (size == 0){
+                        std::vector<Vertex*> defs = *(sizeAndUseDefs.second.second);
+                        if (defs.size() > 1){
+                            std::cout << "ERROR: multiple initialization of a DF " << bn->getName() << " in lines:" << std::endl;
+                            for (auto def: defs){
+                                std::cout << def->getLine() << " ";
+                            }
+                            std::cout << std::endl;
+                        }
+                    } else {
+                        //TODO add warnings?
+                    }
+                }
+            }
 
         }
 
@@ -785,7 +805,7 @@ class DDG {
         // list consists of Error enums
         void findErrors(Vertex* mainVertex){
             
-            checkMultipleDFInitialization(mainVertex, {});
+            checkMultipleDFInitialization(/*mainVertex, {}*/);
 
             checkNonDefinedDFUsage();
 
