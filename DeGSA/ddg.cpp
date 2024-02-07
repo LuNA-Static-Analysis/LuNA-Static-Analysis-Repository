@@ -669,50 +669,7 @@ class DDG {
         // map: name of a DF -> line in code
         //TODO function must return a list of errors in a JSON
 
-        //TODO redo all checkers according to DFR
-        void checkMultipleDFInitialization(/*Vertex* vertex, std::map<std::string, std::vector<int>> initializedDFs*/){
-            // old version:
-            /*std::vector<Vertex*> stack = {};
-
-            for (auto v: vertex->getInsideSet()){
-
-                if (v->getInsideSet().size() > 0){ // add vertices inside to stack to analyze them recursively later
-                    stack.push_back(v);
-                }
-
-                for (auto d: v->getDefSet()){
-                    auto it = initializedDFs.find(d);
-                    if (it != initializedDFs.end()){
-                        it->second.push_back(v->getLine());
-                    } else {
-                        // no error , first initialization of a DF found;
-                        // simply update a map of initialized DFs and their positions
-                        std::vector<int> lines = {v->getLine()};
-                        initializedDFs.insert(std::make_pair(d, lines));
-                    }
-                }
-
-            }
-
-            for (auto v: stack){
-                if (v->getVertexType() == subVF) { // this vertice does not see DFs outside (sub)
-                    checkMultipleDFInitialization(v, {});
-                } else { // this vertice sees DFs outside (for, if, while, let)
-                    checkMultipleDFInitialization(v, initializedDFs);
-                }
-            }
-
-            // return errors info
-            for (auto it: initializedDFs) {
-                if (it.second.size() > 1){
-                    std::cout << "Multiple DF initialization -- df " << it.first << " initialized:" << std::endl;
-                    for (auto d: it.second){
-                        std::cout << "at line " << d << std::endl;
-                    }
-                }
-            }*/
-
-            // new version:
+        void checkMultipleDFInitialization(){
             for (BaseDFName* bn: baseNameSet){
                 auto bnMap = bn->getMap();
                 for (auto sizeAndUseDefs: bnMap){
@@ -734,73 +691,7 @@ class DDG {
 
         }
 
-        void checkNonDefinedDFUsage(){//todo redo this (using 4 new containers)
-        //problem: launch and see -- foo1 is considered undeclared
-        //multiple init works however lol
-
-            /*for (auto v: vertices) { // check every vertice
-                auto useSet = v.second->getUseSet();
-                auto inSet = v.second->getInSet();
-                for (auto d: useSet){ // for every vertice every used DF must exist in some binding (inSet)
-                    bool found = false;
-                    for (auto b: inSet){
-                        if (b.getName() == d){
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (!found){
-                        std::cout << "Usage of a non-defined DF -- df " << d << " at line " << v.second->getLine() << std::endl;
-                    }
-                } 
-
-            }*/
-
-        }
-
-        void checkUnusedDF(/*Vertex* currentVertex, std::set<std::string>* currentNamespaceUnusedDFSet*/){
-
-            // old version:
-            /*std::vector<Vertex*> stack = {};
-
-            // refresh current unused DFs
-            for (auto d: currentVertex->getDeclaredInsideDFsVector()){//TODO iterators are marked as outside :(
-                currentNamespaceUnusedDFSet->insert(d);
-            }
-
-            for (auto v: currentVertex->getInsideSet()){
-                if (v->getInsideSet().size() > 0){ // add vertices inside to stack to analyze them recursively later
-                    stack.push_back(v);
-                }
-
-                // now check what DFs are actually used; the 
-                auto DFset = v->getUseSet();
-                for (auto d: DFset){
-                    if (currentNamespaceUnusedDFSet->find(d) != currentNamespaceUnusedDFSet->end()){
-                        currentNamespaceUnusedDFSet->erase(d);
-                    }
-                }
-
-            }
-
-            for (auto v: stack){
-                if ((v->getVertexType() != subVF) && (v->getVertexType() != importVF)) { // has block
-                    checkUnusedDF(v, currentNamespaceUnusedDFSet);
-                } else { // has no block
-                    std::set<std::string> temp = {};
-                    checkUnusedDF(v, &temp);
-                }
-            }
-
-            // if after all the checks some DFs are unused -- report it
-            if (currentNamespaceUnusedDFSet->size() != 0){
-                for (auto d: *currentNamespaceUnusedDFSet){
-                    std::cout << "Found unused DF " << d << " in vertex number " << currentVertex->getNumber() << " in line " <<
-                    currentVertex->getLine() << std::endl;
-                }
-            }*/
-
-            // new version:
+        void checkUnusedDF(){
             for (BaseDFName* bn: baseNameSet){
                 auto bnMap = bn->getMap();
                 for (auto sizeAndUseDefs: bnMap){
@@ -811,19 +702,15 @@ class DDG {
                     }
                 }
             }
-
         }
 
         // this function accepts list of errors to find and tries to find them in the created graph
         // list consists of Error enums
-        void findErrors(Vertex* mainVertex){
+        void findErrors(){
             
-            checkMultipleDFInitialization(/*mainVertex, {}*/);
+            checkMultipleDFInitialization();
 
-            checkNonDefinedDFUsage();
-
-            //std::set<std::string> currentNamespaceUnusedDFs = {};
-            checkUnusedDF(/*mainVertex, &currentNamespaceUnusedDFs*/);
+            checkUnusedDF();
 
         }
 
@@ -904,9 +791,9 @@ class DDG {
 
             // 4. search for errors
 
-            std::cout << "============ Found errors ============" << std::endl;
+            std::cout << "======== Searching for errors ========" << std::endl;
 
-            findErrors(mainVertex);
+            findErrors();
 
         }
 

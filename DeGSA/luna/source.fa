@@ -1,10 +1,6 @@
 import printfl(real) as print;
 import c_init_float(real, name) as init;
 sub main(){
-        df a;
-        init(1, a);
-        init(1, a[1]);
-        init(1, a[1][1]);
         for i=1..2 {
                 df d;
                 print(d);
@@ -12,4 +8,9 @@ sub main(){
                 init(a, d);
                 init(a, d);
         }
+        foo(b);
+}
+sub foo(int foo1){
+        init(1, foo2);
+        print(foo2);
 }
