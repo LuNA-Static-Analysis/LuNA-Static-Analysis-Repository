@@ -680,11 +680,8 @@ class DDG {
 
     public:
 
-        // this function recursively goes through DDG and on every namespace checks if any of the DFs
-        // are initialized more than once
-        // map: name of a DF -> line in code
+        //TODO docs
         //TODO function must return a list of errors in a JSON
-
         void checkMultipleDFInitialization(){
             for (BaseDFName* bn: baseNameSet){
                 auto bnMap = bn->getMap();
@@ -708,6 +705,7 @@ class DDG {
 
         }
 
+        //TODO docs
         void checkUnusedDF(){
             for (BaseDFName* bn: baseNameSet){
                 auto bnMap = bn->getMap();
@@ -719,6 +717,10 @@ class DDG {
                         errorReports.push_back(report);
                     }
                 }
+                if (bnMap.size() == 0){
+                    std::string report = "ERROR: unused base name DF " + bn->getName() + "\n";
+                    errorReports.push_back(report);
+                }
             }
         }
 
@@ -729,6 +731,10 @@ class DDG {
             checkMultipleDFInitialization();
 
             checkUnusedDF();
+
+            //TODO attempt to use unitinitialized DF
+
+            //TODO cyclic dependence
 
         }
 

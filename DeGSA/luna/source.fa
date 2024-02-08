@@ -1,11 +1,18 @@
 import printfl(real) as print;
 import c_init_float(real, name) as init;
 sub main(){
-        df a;
+        df a, c;
+        init(1, c);
         for i=1..2 {
+                init(1, c);
                 for j=1..2 {
-                        df a;
-                        init(i, a[i]);
+                        //df a;
+                        print(b);
                 }
         }
 }
+sub foo(real f){
+        init(1, f);
+        print(f);
+}
+//todo: a must be marked as unused
