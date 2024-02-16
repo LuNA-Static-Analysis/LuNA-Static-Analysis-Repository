@@ -108,6 +108,10 @@ std::map<std::string, Identifier*> Vertex::getDeclaredBothIdsMap(){
     return declaredBothIdsMap;
 }
 
+Vertex* Vertex::getParent(){
+    return this->parent;
+}
+
 void Vertex::setDeclaredInsideIdsMap(std::map<std::string, Identifier*> declaredInsideIdsMap){
     this->declaredInsideIdsMap = declaredInsideIdsMap;
 }
@@ -124,14 +128,23 @@ void Vertex::printInfo(){ // virtual?
     std::cout << "printInfo() placeholder" << std::endl;
 }
 
+void Vertex::printCallStack(){
+    std::cout << "Address: " << this;
+    std::cout << "; type: " << this->getVertexType();
+    std::cout << "; line: " << this->getLine() << std::endl;
+    if (this->getParent() != nullptr){
+        this->getParent()->printCallStack();
+    }
+}
 
-//todo check if this works
+
 CFVertex::CFVertex(int depth, int number, int line,
-    std::string name, VertexType vertexType){
+    std::string name, VertexType vertexType, Vertex* parent){
 
     this->depth = depth;
     this->number = number;
     this->line = line;
+    this->parent = parent;
 
     this->name = name;
     this->vertexType = vertexType; // import or sub
@@ -207,13 +220,14 @@ void CFVertex::printInfo() {
 
 //todo check if this works
 ForVertex::ForVertex(int depth, int number, int line,
-    ForId* iterator, expr* leftBorder, expr* rightBorder){
+    ForId* iterator, expr* leftBorder, expr* rightBorder, Vertex* parent){
 
     this->vertexType = forVF;
 
     this->depth = depth;
     this->number = number;
     this->line = line;
+    this->parent = parent;
 
     this->iterator = iterator;
     this->leftBorder = leftBorder;

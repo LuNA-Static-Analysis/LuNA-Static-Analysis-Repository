@@ -39,6 +39,7 @@ class Vertex {
         std::set<Binding> in; // vertices that must be ran directly before current
         std::set<Binding> out; // vertices that require directly current vertex to be ran
         std::set<Vertex*> inside; // vertices that are inside the body of a current vertex
+        Vertex* parent; // vertex that has current vertex inside its block
 
         /* DFs that are visible inside (and declared outside) the block of this vertice, but not including ones that are declared in this block;
             has no duplicates*/
@@ -83,6 +84,8 @@ class Vertex {
 
         int getLine();
 
+        Vertex* getParent();
+
         void addIn(Vertex* vertex, BaseDFName* id);
 
         void addOut(Vertex* vertex, BaseDFName* id);
@@ -107,6 +110,8 @@ class Vertex {
 
         virtual void printInfo();
 
+        void printCallStack();
+
 };
 
 class CFVertex: public Vertex {
@@ -120,7 +125,7 @@ class CFVertex: public Vertex {
         //todo copy constructor
 
         CFVertex(int depth, int number, int line,
-            std::string name, VertexType vertexType);
+            std::string name, VertexType vertexType, Vertex* parent);
 
         std::string getName();
 
@@ -142,7 +147,7 @@ class ForVertex: public Vertex {
 
         //todo check if this works
         ForVertex(int depth, int number, int line,
-            ForId* iterator, expr* leftBorder, expr* rightBorder);
+            ForId* iterator, expr* leftBorder, expr* rightBorder, Vertex* parent);
 
         ForId* getIterator();
 
