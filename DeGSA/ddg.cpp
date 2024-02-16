@@ -680,15 +680,28 @@ class DDG {
 
     public:
 
-        //TODO docs
-        //TODO function must return a list of errors in a JSON
-        void checkMultipleDFInitialization(){
+        // TODO
+        // this function uses breadth search to find cycles in DDG, as this indicates cyclic dependencies
+        void checkCyclicDependence(){
+
+        }
+
+        // this function goes through baseNameSet and finds few types of errors:
+        // 1. multiple DF initialization
+        // 2. using uninitialized DFs
+        // 3. unused DF
+        void checkBaseNameSet(){
+
             for (BaseDFName* bn: baseNameSet){
                 auto bnMap = bn->getMap();
                 for (auto sizeAndUseDefs: bnMap){
+
                     int size = sizeAndUseDefs.first;
-                    if (size == 0){
-                        std::vector<Vertex*> defs = *(sizeAndUseDefs.second.second);
+                    std::vector<Vertex*> uses = *(sizeAndUseDefs.second.first);
+                    std::vector<Vertex*> defs = *(sizeAndUseDefs.second.second);
+
+                    // multiple initialization of a DF
+                    if (size == 0){ // simple DFs
                         if (defs.size() > 1){
                             std::string report = "ERROR: multiple initialization of a DF " + bn->getName() + " in lines:\n";
                             for (auto def: defs){
@@ -697,44 +710,47 @@ class DDG {
                             report += "\n";
                             errorReports.push_back(report);
                         }
-                    } else {
+                    } else { // indexed DFs
                         //TODO add warnings?
+                        // proper implementation requires expressions parsing
                     }
-                }
-            }
 
-        }
-
-        //TODO docs
-        void checkUnusedDF(){
-            for (BaseDFName* bn: baseNameSet){
-                auto bnMap = bn->getMap();
-                for (auto sizeAndUseDefs: bnMap){
-                    int size = sizeAndUseDefs.first;
-                    std::vector<Vertex*> uses = *(sizeAndUseDefs.second.first);
+                    // unused DF 1
                     if (uses.size() == 0){
                         std::string report = "ERROR: unused DF " + bn->getName() + " with " + std::to_string(size) + " indices\n";
                         errorReports.push_back(report);
+                    } else {
+                        // using uninitialized DFs
+                        if (defs.size() == 0){
+                            std::string report = "ERROR: using uninitialized DF " + bn->getName() + " with " + std::to_string(size) +
+                            " indices at lines:\n";
+                            for (auto use: uses){
+                                report += (std::to_string(use->getLine()) + " ");
+                            }
+                            report += "\n";
+                            errorReports.push_back(report);
+                        }
                     }
+
                 }
+                // unused DF 2
                 if (bnMap.size() == 0){
                     std::string report = "ERROR: unused base name DF " + bn->getName() + "\n";
                     errorReports.push_back(report);
                 }
             }
+
+
         }
 
-        // this function accepts list of errors to find and tries to find them in the created graph
-        // list consists of Error enums
+        // this function accepts list of errors to find and tries to find them in the created graph and baseNameSet
         void findErrors(){
-            
-            checkMultipleDFInitialization();
 
-            checkUnusedDF();
-
-            //TODO attempt to use unitinitialized DF
+            checkBaseNameSet();
 
             //TODO cyclic dependence
+
+            //TODO attempt to initialize unfitting expression
 
         }
 

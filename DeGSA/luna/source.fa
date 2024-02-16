@@ -6,8 +6,11 @@ sub main(){
         for i=1..2 {
                 init(1, c);
                 for j=1..2 {
-                        //df a;
+                        df a;
                         print(b);
+                        print(c);
+                        print(c[1]);
+                        print(c[2][2]);
                 }
         }
 }
