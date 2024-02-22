@@ -104,20 +104,26 @@ class DDG {
 
         // scanForDFDecls is a function that scans block for DF declarations
         // DFs, according to LuNA rules, must be declared on the very first line, and no other declarations shall follow
-        std::map<std::string, Identifier*> scanForDFDecls(block* blockobj){
+        std::map<std::string, Identifier*> scanForDFDecls(block* blockobj /* todo int line*/){
             
             std::cout << "> scanForDFDecls called\n";
             std::map<std::string, Identifier*> DFDecls = {};
 
             // short-circuit magic for null pointer checking:
             if ((blockobj->opt_dfdecls_ != NULL) && (blockobj->opt_dfdecls_->dfdecls_ != NULL)) { // found some DF declarations
-
+        
                 // get names of declared DFs
+                //TODO check that lines are correct
                 std::vector<luna_string*> DFNames = *(blockobj->opt_dfdecls_->dfdecls_->name_seq_->names_);
                 for (luna_string* currentDFDecl: DFNames){
                     std::string dfName = *(currentDFDecl->value_);
                     if (DFDecls.find(dfName) == DFDecls.end()){
-                        DFDecls.insert(std::make_pair(dfName, new BaseDFName(dfName)));
+                        //std::cout << "lmao" << std ::endl; //TODO :)
+                        // blockobj имеет тип block*
+                        std::cout << blockobj->line_ << std ::endl;
+                        std::cout << blockobj->opt_dfdecls_->line_ << std ::endl;
+                        std::cout << blockobj->opt_dfdecls_->dfdecls_->line_ << std ::endl;
+                        DFDecls.insert(std::make_pair(dfName, new BaseDFName(dfName, blockobj->opt_dfdecls_->dfdecls_->line_)));//TODO :)
                     } else {
                         std::string report = "ERROR: found duplicate name in df declaration in block " + std::to_string((long long)blockobj) +
                         ": " + dfName + "\n";
@@ -200,7 +206,7 @@ class DDG {
                     std::string simpleDFName = *(simpleDF->value_->value_);
                     auto base = nameTable.find(simpleDFName);
                     if (base != nameTable.end()){
-                        result.insert(new IndexedDFName(simpleDFName, base->second, {}));
+                        result.insert(new IndexedDFName(simpleDFName, base->second, {}, line));
                     } else {
                         std::string report = "ERROR: no name \"" + simpleDFName + "\" found!" + "\n";
                         errorReports.push_back(report);
@@ -236,7 +242,7 @@ class DDG {
 
                     auto base = nameTable.find(baseName);
                     if (base != nameTable.end()){
-                        IndexedDFName* temp = new IndexedDFName(baseName, base->second, expressionsVector);
+                        IndexedDFName* temp = new IndexedDFName(baseName, base->second, expressionsVector, line);
                         result.insert(temp);
                     } else {
                         std::string report = "ERROR: no name \"" + baseName + "\" found at line " + std::to_string(line) + "\n";
@@ -644,7 +650,7 @@ class DDG {
                                 expr* arg = callArgs[i];
                                 // now parse expr and find every its name inside declaredBothIdsMap
                                 auto nameReferenceSet = getNamesFromExpression(arg, declaredOutsideIdsMap, line);
-                                SubArgName* subArgName = new SubArgName(identifierName, nameReferenceSet);
+                                SubArgName* subArgName = new SubArgName(identifierName, nameReferenceSet, line);//todo this is wrong
                                 declaredArgs.push_back(subArgName);
                             } else {
                                 std::string report = "ERROR: duplicate name of a sub arg at " + name + ": " + identifierName + "\n";
@@ -840,7 +846,7 @@ class DDG {
             for (BaseDFName* bn: baseNameSet){
                 std::cout << std::endl;
                 std::cout << "Name: " << bn->getName() << std::endl;
-                //std::cout << "Declared: " << bn-> << std::endl; //TODO create declaration stack for BaseDFName
+                std::cout << "Declared at line: " << bn->getLine() << std::endl;
                 auto map = bn->getMap(); // 1 = use, 2 = def
                 for (auto m: map){
                     std::cout << "Size: " << m.first << std::endl;

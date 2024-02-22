@@ -18,12 +18,15 @@ protected:
     // todo ??? name == "" if type == subArgName; else it is valid
     std::string name;
     IdentifierType type;
+    int line;
 
 public:
 
     std::string getName();
 
     IdentifierType getType();
+
+    virtual int getLine() = 0;
 
     // recursive method that returns a map of base names and amount of [] that were included in this identifier
     // ForIds, WhileIds are ignored -- we do not care if they were used or not
@@ -55,7 +58,9 @@ public:
 
     std::set<std::pair<Identifier*, int>> getRoots();
 
-    SubArgName(std::string name, std::set<Identifier*> nameReferenceSet);
+    int getLine();
+
+    SubArgName(std::string name, std::set<Identifier*> nameReferenceSet, int line);
 
     ~SubArgName();
 
@@ -84,7 +89,9 @@ public:
 
     std::set<std::pair<Identifier*, int>> getRoots();
 
-    BaseDFName(std::string name);
+    int getLine();
+
+    BaseDFName(std::string name, int line);
 
     ~BaseDFName();
 
@@ -108,11 +115,13 @@ public:
 
     Identifier* getBase();
 
-    std::set<std::pair<Identifier*, int>> getRoots();
-
     std::vector<expr*> getExpressionsVector();
 
-    IndexedDFName(std::string name, Identifier* base, std::vector<expr*> expressionsVector);
+    std::set<std::pair<Identifier*, int>> getRoots();
+
+    int getLine();
+
+    IndexedDFName(std::string name, Identifier* base, std::vector<expr*> expressionsVector, int line);
 
     ~IndexedDFName();
 
@@ -130,6 +139,8 @@ public:
 
     std::set<std::pair<Identifier*, int>> getRoots();
 
+    int getLine();
+
     ForIteratorName(std::string name, expr* leftBorder, expr* rightBorder);
 
     ~ForIteratorName();
@@ -146,6 +157,8 @@ public:
 
     std::set<std::pair<Identifier*, int>> getRoots();
 
+    int getLine();
+
     WhileIteratorName(std::string name);
 
     ~WhileIteratorName();
@@ -161,6 +174,8 @@ private:
 public:
 
     std::set<std::pair<Identifier*, int>> getRoots();
+
+    int getLine();
 
     WhileOutName(std::string name);
 

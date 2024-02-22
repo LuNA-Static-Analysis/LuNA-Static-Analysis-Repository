@@ -28,10 +28,15 @@ std::set<std::pair<Identifier*, int>> SubArgName::getRoots(){
     return result;
 }
 
-SubArgName::SubArgName(std::string name, std::set<Identifier*> nameReferenceSet){
+int SubArgName::getLine(){
+    return this->line;
+}
+
+SubArgName::SubArgName(std::string name, std::set<Identifier*> nameReferenceSet, int line){
     this->type = subArgName;
     this->name = name;
     this->nameReferenceSet = nameReferenceSet;
+    this->line = line;
 }
 
 SubArgName::~SubArgName(){}
@@ -53,7 +58,6 @@ void BaseDFName::addUse(int size, Vertex* vertex){
     }
 }
 
-// I do not know if objects' condition changes or not :)
 void BaseDFName::addDef(int size, Vertex* vertex){
     auto maybePair = this->sizeToUseDefVectors.find(size);
     if (maybePair != this->sizeToUseDefVectors.end()){ // found this IDF being used or defined already
@@ -81,15 +85,20 @@ std::set<std::pair<Identifier*, int>> BaseDFName::getRoots(){
     return result;
 }
 
-BaseDFName::BaseDFName(std::string name){
+int BaseDFName::getLine(){
+    return this->line;
+}
+
+BaseDFName::BaseDFName(std::string name, int line){
     this->name = name;
     this->type = baseDFName;
     this->sizeToUseDefVectors = {};
+    this->line = line;
 }
 
 BaseDFName::~BaseDFName(){}
 
-IndexedDFName::IndexedDFName(std::string name, Identifier* base, std::vector<expr*> expressionsVector){
+IndexedDFName::IndexedDFName(std::string name, Identifier* base, std::vector<expr*> expressionsVector, int line){
     this->name = name;
     this->type = indexedDFName;
 
@@ -99,10 +108,15 @@ IndexedDFName::IndexedDFName(std::string name, Identifier* base, std::vector<exp
 
     this->base = base;
     this->expressionsVector = expressionsVector;
+    this->line = line;
 }
 
 Identifier* IndexedDFName::getBase(){
     return this->base;
+}
+
+std::vector<expr*> IndexedDFName::getExpressionsVector(){
+    return this->expressionsVector;
 }
 
 std::set<std::pair<Identifier*, int>> IndexedDFName::getRoots(){
@@ -114,8 +128,8 @@ std::set<std::pair<Identifier*, int>> IndexedDFName::getRoots(){
     return result;
 }
 
-std::vector<expr*> IndexedDFName::getExpressionsVector(){
-    return this->expressionsVector;
+int IndexedDFName::getLine(){
+    return this->line;
 }
 
 IndexedDFName::~IndexedDFName(){}
@@ -124,6 +138,10 @@ std::set<std::pair<Identifier*, int>> ForIteratorName::getRoots(){
     std::set<std::pair<Identifier*, int>> result = {};
     result.insert(std::make_pair(this, 0));
     return result;
+}
+
+int ForIteratorName::getLine(){
+    return this->forVertex->getLine();
 }
 
 ForIteratorName::ForIteratorName(std::string iteratorName, expr* leftBorder, expr* rightBorder){
@@ -141,6 +159,10 @@ std::set<std::pair<Identifier*, int>> WhileIteratorName::getRoots(){
     return result;
 }
 
+int WhileIteratorName::getLine(){
+    return this->whileVertex->getLine();
+}
+
 WhileIteratorName::WhileIteratorName(std::string name){
     this->name = name;
 }
@@ -151,6 +173,11 @@ std::set<std::pair<Identifier*, int>> WhileOutName::getRoots(){
     std::set<std::pair<Identifier*, int>> result = {};
     result.insert(std::make_pair(this, 0));
     return result;
+}
+
+//todo this is wrong
+int WhileOutName::getLine(){
+    return this->whileVertex->getLine();
 }
 
 WhileOutName::WhileOutName(std::string name){
