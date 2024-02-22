@@ -15,7 +15,7 @@ class Identifier {
 
 protected:
 
-    // name == "" if type == subArgName; else it is valid
+    // todo ??? name == "" if type == subArgName; else it is valid
     std::string name;
     IdentifierType type;
 
@@ -29,7 +29,9 @@ public:
     // ForIds, WhileIds are ignored -- we do not care if they were used or not
     // method is used to initialize use/defs of all BaseDFNames
     //todo improve readability
-    virtual std::set<std::pair<Identifier*, int>> getRoots() = 0;//todo understand what the hell is it
+
+    // pure ( = 0) virtual method, i.e. it must be initialized in every derived class so they are not abstract
+    virtual std::set<std::pair<Identifier*, int>> getRoots() = 0;
 
     Identifier();
 
@@ -45,6 +47,7 @@ private:
     // has some names
     // if only one name, then might be be initialized or could be used
     // else only used
+    // TODO redo to use Expression
 
 public:
 
@@ -115,8 +118,7 @@ public:
 
 };
 
-//TODO
-class ForId: public Identifier {//todo rename this
+class ForIteratorName: public Identifier {
 
 private:
 
@@ -128,14 +130,13 @@ public:
 
     std::set<std::pair<Identifier*, int>> getRoots();
 
-    ForId(std::string name, expr* leftBorder, expr* rightBorder);
+    ForIteratorName(std::string name, expr* leftBorder, expr* rightBorder);
 
-    ~ForId();
+    ~ForIteratorName();
 
 };
 
-//TODO
-class WhileId: public Identifier {//todo rename this
+class WhileIteratorName: public Identifier {
 
 private:
 
@@ -144,6 +145,26 @@ private:
 public:
 
     std::set<std::pair<Identifier*, int>> getRoots();
+
+    WhileIteratorName(std::string name);
+
+    ~WhileIteratorName();
+
+};
+
+class WhileOutName: public Identifier {
+
+private:
+
+    Vertex* whileVertex;
+
+public:
+
+    std::set<std::pair<Identifier*, int>> getRoots();
+
+    WhileOutName(std::string name);
+
+    ~WhileOutName();
 
 };
 
@@ -154,7 +175,7 @@ private:
 
 public:
 
-    std::set<std::pair<Identifier*, int>> getRoots();
+    //std::set<std::pair<Identifier*, int>> getRoots();
 
 };
 

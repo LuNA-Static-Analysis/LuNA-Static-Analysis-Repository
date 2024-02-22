@@ -137,7 +137,7 @@ class ForVertex: public Vertex {
 
     private:
 
-        ForId* iterator;
+        ForIteratorName* iterator;
         expr* leftBorder;
         expr* rightBorder;
 
@@ -147,9 +147,9 @@ class ForVertex: public Vertex {
 
         //todo check if this works
         ForVertex(int depth, int number, int line,
-            ForId* iterator, expr* leftBorder, expr* rightBorder, Vertex* parent);
+            ForIteratorName* iterator, expr* leftBorder, expr* rightBorder, Vertex* parent);
 
-        ForId* getIterator();
+        ForIteratorName* getIterator();
 
         expr* getLeftBorder();
 

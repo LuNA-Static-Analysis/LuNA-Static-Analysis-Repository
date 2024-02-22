@@ -307,7 +307,7 @@ class DDG {
             2. declaredInsideIdsMap -- 
                 has no duplicates;
                 needed for creation of 3., comes from checking "df" statement in current block, and also
-                has letIds, forId and subArgNames (at least)
+                has letIds, forIteratorName and subArgNames (at least)
                 TODO check if it is redundant or not, as we have Both and Outside already
             3. declaredBothIdsMap -- 
                 has no duplicates;
@@ -358,14 +358,14 @@ class DDG {
             if (VertexType == forVF){
                 std::string iteratorName = iterator->getName();
                 if (declaredBothIdsMap.find(iterator->getName()) == declaredBothIdsMap.end()){
-                    ForId* forId = new ForId(iteratorName, leftBorder, rightBorder);
+                    ForIteratorName* forIteratorName = new ForIteratorName(iteratorName, leftBorder, rightBorder);
                     declaredInsideIdsMap.insert(std::make_pair(
                         iteratorName,
-                        forId)
+                        forIteratorName)
                     );
                     declaredBothIdsMap.insert(std::make_pair(
                         iteratorName,
-                        forId)
+                        forIteratorName)
                     );
                 } else {
                     std::string report = "ERROR: duplicate name declared at for: " + iteratorName + "\n";
@@ -419,7 +419,9 @@ class DDG {
 
                         tempVertex = enterVF(declaredBothIdsMap, rawArguments, nullptr, currentDepth + 1,
                             importVF, nextCFName, innerStatement->line_,
-                            nullptr, nullptr, nullptr, currentVertex);
+                            /* for */ nullptr, nullptr, nullptr,
+                            /* callerVertex */ currentVertex,
+                            /* while */nullptr, nullptr);
                         
                     } else { // subVF
                         std::cout << "sub" << std::endl;
@@ -428,7 +430,9 @@ class DDG {
                         if (m != subNameToArgsVector.end()){
                             tempVertex = enterVF(declaredBothIdsMap, rawArguments, (this->subNameToBlock)[nextCFName], currentDepth + 1,
                                 subVF, nextCFName, innerStatement->line_,
-                                nullptr, nullptr, nullptr, currentVertex);
+                                /* for */ nullptr, nullptr, nullptr,
+                                /* callerVertex */ currentVertex,
+                                /* while */nullptr, nullptr);
                         } else {
                             std::string report = "ERROR: could not find sub with a name " + nextCFName + "\n";
                             errorReports.push_back(report);
@@ -468,11 +472,32 @@ class DDG {
                 for_statement* innerStatementForVF = dynamic_cast<for_statement*>(innerStatement);
                 if (innerStatementForVF != NULL){
                     
-                    ForId* nextIterator = new ForId(innerStatementForVF->name_->to_string(), 
+                    ForIteratorName* nextIterator = new ForIteratorName(innerStatementForVF->name_->to_string(), 
                         innerStatementForVF->expr_1_, innerStatementForVF->expr_2_);
                     tempVertex = enterVF(declaredBothIdsMap, {}, innerStatementForVF->block_, currentDepth + 1, 
-                        forVF, "for", innerStatement->line_, nextIterator,
-                        innerStatementForVF->expr_1_, innerStatementForVF->expr_2_, currentVertex);
+                        forVF, "for", innerStatement->line_,
+                        /* for */ nextIterator, innerStatementForVF->expr_1_, innerStatementForVF->expr_2_,
+                        /* callerVertex */ currentVertex,
+                        /* while */ nullptr, nullptr);
+
+                    currentVertex->addInside(tempVertex);
+                    continue;
+                }
+
+                // ---- handling while TODO
+                // example: while ( x[i] < 0 ) , i = 0 .. out N { /* body */ }
+                while_statement* innerStatementWhileVF = dynamic_cast<while_statement*>(innerStatement);
+                if (innerStatementWhileVF != NULL){
+                    
+                    WhileIteratorName* nextWhileIterator = new WhileIteratorName("temp");//todo
+                    //todo iterator + output DF!
+                    WhileOutName* nextWhileName = new WhileOutName("temp");//todo
+
+                    tempVertex = enterVF(declaredBothIdsMap, {}, innerStatementForVF->block_, currentDepth + 1, 
+                        whileVF, "while", innerStatement->line_, 
+                        /* for */ nullptr, nullptr, nullptr,
+                        /* callerVertex */ currentVertex,
+                        /* while */ innerStatementWhileVF->expr_, nextWhileName);
 
                     currentVertex->addInside(tempVertex);
                     continue;
@@ -490,8 +515,9 @@ class DDG {
         // this information in Use and Def sets of a vertice (this is later used in bindVertices() to fully create a graph)
         Vertex* enterVF(std::map<std::string, Identifier*> declaredOutsideIdsMap, std::vector<expr*> callArgs,
                         block* currentBlock, int currentDepth, VertexType vertexType, std::string name, int line,
-                        /*for ForVertice:*/ Identifier* iterator, expr* leftBorder, expr* rightBorder,
-                        Vertex* callerVertex){
+                        /*for ForVertext:*/ Identifier* iterator, expr* leftBorder, expr* rightBorder,
+                        Vertex* callerVertex,
+                        /*for WhileVertex:*/ expr* condition, Identifier* outputName){
 
             std::cout << "> enterVF called\n\n";
 
@@ -639,7 +665,7 @@ class DDG {
                 case forVF: {
 
                     vertices.insert(std::make_pair(vertexCount, new ForVertex(currentDepth, vertexCount, line,
-                        dynamic_cast<ForId*>(iterator), leftBorder, rightBorder, callerVertex)));
+                        dynamic_cast<ForIteratorName*>(iterator), leftBorder, rightBorder, callerVertex)));
                     currentVertex = vertices.find(vertexCount)->second;
 
                     std::cout << "For entered" << std::endl;
@@ -789,7 +815,11 @@ class DDG {
 
             // 2. create all the vertices
 
-            Vertex* mainVertex = enterVF({}, {}, (this->subNameToBlock)["main"], 1, subVF, "main", mainLine, nullptr, nullptr, nullptr, nullptr);
+            Vertex* mainVertex = enterVF({}, {}, (this->subNameToBlock)["main"], 1,
+                        subVF, "main", mainLine,
+                        /* for */ nullptr, nullptr, nullptr,
+                        /* callerVertex */ nullptr,
+                        /* while */ nullptr, nullptr);
 
             std::cout << "Created a [MAIN] vertex number " << this->vertexCount
                       << " with a type " << (this->vertices).find(1)->second->getVertexType()
@@ -839,8 +869,6 @@ class DDG {
             for (auto r: errorReports){
                 std::cout << r << std::endl;
             }
-
-            vertices.find(7)->second->printCallStack();
 
         }
 

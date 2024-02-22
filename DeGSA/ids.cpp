@@ -93,7 +93,7 @@ IndexedDFName::IndexedDFName(std::string name, Identifier* base, std::vector<exp
     this->name = name;
     this->type = indexedDFName;
 
-    if ((base->getType() != baseDFName) && (base->getType() != letId)){
+    if ((base->getType() != baseDFName) && (base->getType() != letName)){
         //TODO error!
     }
 
@@ -120,17 +120,41 @@ std::vector<expr*> IndexedDFName::getExpressionsVector(){
 
 IndexedDFName::~IndexedDFName(){}
 
-std::set<std::pair<Identifier*, int>> ForId::getRoots(){
+std::set<std::pair<Identifier*, int>> ForIteratorName::getRoots(){
     std::set<std::pair<Identifier*, int>> result = {};
     result.insert(std::make_pair(this, 0));
     return result;
 }
 
-ForId::ForId(std::string iteratorName, expr* leftBorder, expr* rightBorder){
+ForIteratorName::ForIteratorName(std::string iteratorName, expr* leftBorder, expr* rightBorder){
     this->name = iteratorName;
-    this->type = forId;
+    this->type = forIteratorName;
     this->leftBorder = leftBorder;
     this->rightBorder = rightBorder;
 }
 
-ForId::~ForId(){}
+ForIteratorName::~ForIteratorName(){}
+
+std::set<std::pair<Identifier*, int>> WhileIteratorName::getRoots(){
+    std::set<std::pair<Identifier*, int>> result = {};
+    result.insert(std::make_pair(this, 0));
+    return result;
+}
+
+WhileIteratorName::WhileIteratorName(std::string name){
+    this->name = name;
+}
+
+WhileIteratorName::~WhileIteratorName(){}
+
+std::set<std::pair<Identifier*, int>> WhileOutName::getRoots(){
+    std::set<std::pair<Identifier*, int>> result = {};
+    result.insert(std::make_pair(this, 0));
+    return result;
+}
+
+WhileOutName::WhileOutName(std::string name){
+    this->name = name;
+}
+
+WhileOutName::~WhileOutName(){}

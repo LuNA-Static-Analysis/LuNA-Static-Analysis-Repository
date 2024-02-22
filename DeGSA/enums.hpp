@@ -5,10 +5,11 @@ enum IdentifierType {
     subArgName = 1,
     baseDFName = 2,
     indexedDFName = 3,
-    forId = 4, //todo rename
-    whileId = 5, //todo rename
-    valueId = 6, //todo rename
-    letId = 7 //todo rename
+    forIteratorName = 4,
+    whileIteratorName = 5,
+    whileOutName = 6,
+    valueName = 7,
+    letName = 8
 
 };
 

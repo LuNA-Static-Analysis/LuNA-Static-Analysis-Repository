@@ -220,7 +220,7 @@ void CFVertex::printInfo() {
 
 //todo check if this works
 ForVertex::ForVertex(int depth, int number, int line,
-    ForId* iterator, expr* leftBorder, expr* rightBorder, Vertex* parent){
+    ForIteratorName* iterator, expr* leftBorder, expr* rightBorder, Vertex* parent){
 
     this->vertexType = forVF;
 
@@ -234,7 +234,7 @@ ForVertex::ForVertex(int depth, int number, int line,
     this->rightBorder = rightBorder;
 }
 
-ForId* ForVertex::getIterator(){
+ForIteratorName* ForVertex::getIterator(){
     return iterator;
 }
 
