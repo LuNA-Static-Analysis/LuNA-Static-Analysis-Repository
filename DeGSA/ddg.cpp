@@ -395,7 +395,26 @@ class DDG {
                 }
             }
 
-            // in case of a "let": add all new variables as and inside Ids;
+            // in case of a "let": add all new variables as and inside Ids TODO
+            if (VertexType == letVF){
+                LetVertex* currentLetVertex = dynamic_cast<LetVertex*>(currentVertex);
+                for (LetName* letName: *(currentLetVertex->getLetNamesVector())){
+                    std::string letNameString = letName->getName();
+                    if (declaredBothIdsMap.find(letNameString) == declaredBothIdsMap.end()){
+                        declaredInsideIdsMap.insert(std::make_pair(
+                            letNameString,
+                            letName)
+                        );
+                        declaredBothIdsMap.insert(std::make_pair(
+                            letNameString,
+                            letName)
+                        );
+                    } else {
+                        std::string report = "ERROR: duplicate name declared at let: " + letNameString + "\n";
+                        errorReports.push_back(report);
+                    }
+                }
+            }
 
             // initialize 3 containers:
             currentVertex->setDeclaredInsideIdsMap(declaredInsideIdsMap);
@@ -553,14 +572,17 @@ class DDG {
                 }
 
                 // ---- handling let
-                // example: let b=a[1], message="Success" { /* body */ }
+                // example: let b = a[1], message = "Success" { /* body */ }
                 let_statement* innerStatementLetVF = dynamic_cast<let_statement*>(innerStatement);
                 if (innerStatementLetVF != NULL){
                     std::vector<assign*>* assignmentsVector = innerStatementLetVF->assign_seq_->assign_seq_;
                     std::vector<LetName*>* letNamesVector = new std::vector<LetName*>();
                     
                     for (auto assignment: *assignmentsVector){
-                        LetName* letName = new LetName(*(assignment->name_->get_value()), assignment->expr_);
+                        std::set<Identifier*> foundNames = getNamesFromExpression(
+                            assignment->expr_, declaredBothIdsMap, innerStatement->line_
+                        );
+                        LetName* letName = new LetName(*(assignment->name_->get_value()), assignment->expr_, foundNames);
                         letNamesVector->push_back(letName);
                     }
 

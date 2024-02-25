@@ -211,15 +211,23 @@ private:
     Vertex* letVertex;
     expr* assignedExpr;
 
-public:
+    std::set<Identifier*> nameReferenceSet;
+    // has some names
+    // if only one name, then might be be initialized or could be used
+    // else only used
+    // TODO redo to use Expression
 
-    std::set<std::pair<Identifier*, int>> getRoots();
+public:
 
     int getLine();
 
     expr* getAssignedExpr();
 
-    LetName(std::string name, expr* assignedExpression);
+    std::set<Identifier*> getNameReferenceSet();
+
+    std::set<std::pair<Identifier*, int>> getRoots();
+
+    LetName(std::string name, expr* assignedExpression, std::set<Identifier*> nameReferenceSet);
 
     ~LetName();
 

@@ -7,6 +7,8 @@ sub main(){
                         let x = a[i]{
                                 init(1, x);
                                 print(x);
+                                init(1, x[i]);
+                                print(x[i]);
                         }
                 }
         }

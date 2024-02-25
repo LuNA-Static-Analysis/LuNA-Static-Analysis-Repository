@@ -208,10 +208,19 @@ expr* LetName::getAssignedExpr(){
     return this->assignedExpr;
 }
 
+std::set<Identifier*> LetName::getNameReferenceSet(){
+    return this->nameReferenceSet;
+}
+
 std::set<std::pair<Identifier*, int>> LetName::getRoots(){
-    //TODO
     std::set<std::pair<Identifier*, int>> result = {};
-    result.insert(std::make_pair(this, 0));
+    for (auto i: this->getNameReferenceSet()){
+        auto temp = i->getRoots();
+        for (auto j: temp){
+            result.insert(j);
+        }
+    }
+
     return result;
 }
 
@@ -219,10 +228,11 @@ int LetName::getLine(){
     return this->letVertex->getLine();
 }
 
-LetName::LetName(std::string name, expr* assignedExpr){
+LetName::LetName(std::string name, expr* assignedExpr, std::set<Identifier*> nameReferenceSet){
     this->name = name;
     this->type = letName;
     this->assignedExpr = assignedExpr;
+    this->nameReferenceSet = nameReferenceSet;
 }
 
 LetName::~LetName(){}
