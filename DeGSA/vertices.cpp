@@ -396,7 +396,7 @@ IfVertex::IfVertex(int depth, int number, int line,
     expr* conditionExpr,
     Vertex* parent){
 
-    this->vertexType = whileVF;
+    this->vertexType = ifVF;
 
     this->depth = depth;
     this->number = number;
@@ -419,6 +419,80 @@ void IfVertex::printInfo(){
     std::cout << "Vertex depth: " << this->getDepth() << std::endl;
 
     std::cout << "Condition expression: " + this->getConditionExpr()->to_string() << std::endl;
+
+    std::cout << "Declared outside DFs:";
+    for (auto i: this->getDeclaredOutsideIdsMap()){
+        std::cout << " " << i.first;
+    }
+    std::cout << std::endl;
+
+    std::cout << "Declared inside DFs:";
+    for (auto i: this->getDeclaredInsideIdsMap()){
+        std::cout << " " << i.first;
+    }
+    std::cout << std::endl;
+
+    std::cout << "Use DFs:";
+    for (Identifier* i: this->getUseSet()){
+        std::cout << " " << i;
+    }
+    std::cout << std::endl;
+
+    std::cout << "Def DFs:";
+    for (Identifier* i: this->getDefSet()){
+        std::cout << " " << i;
+    }
+    std::cout << std::endl;
+
+    std::cout << "Vertices inside:";
+    for (auto i: this->getInsideSet()){
+        std::cout << " " << i;
+    }
+    std::cout << std::endl;
+
+    std::cout << "Vertices before (\"in\"):";
+    for (auto b: this->getInSet()){
+        std::cout << " " << b.getPointerTo() << " [" << b.getPointerTo()->getNumber() << "] (" << b.getId() << ")";
+    }
+    std::cout << std::endl;
+
+    std::cout << "Vertices after (\"out\"):";
+    for (auto b: this->getOutSet()){
+        std::cout << " " << b.getPointerTo() << " [" << b.getPointerTo()->getNumber() << "] (" << b.getId() << ")";
+    }
+    std::cout << std::endl;
+}
+
+LetVertex::LetVertex(int depth, int number, int line,
+    std::vector<LetName*>* letNamesVector,
+    Vertex* parent){
+
+    this->vertexType = letVF;
+
+    this->depth = depth;
+    this->number = number;
+    this->line = line;
+    this->parent = parent;
+
+    this->letNamesVector = letNamesVector;
+}
+
+std::vector<LetName*>* LetVertex::getLetNamesVector(){
+    return this->letNamesVector;
+}
+
+void LetVertex::printInfo(){
+    std::cout << "Vertex number: " << this->getNumber() << std::endl;
+    std::cout << "Vertex address: " << this << std::endl;
+    std::cout << "Vertex type: ";
+    std::cout << this->getVertexType() << " " << "(let)" << std::endl;
+    std::cout << "Vertex line: " << this->getLine() << std::endl;
+    std::cout << "Vertex depth: " << this->getDepth() << std::endl;
+
+    std::cout << "Assigned expressions and their names: " << std::endl;
+    for (auto assignment: *(this->getLetNamesVector())){
+        std::cout << assignment->getName() << " = " << assignment->getAssignedExpr()->to_string() << std::endl;
+    }
 
     std::cout << "Declared outside DFs:";
     for (auto i: this->getDeclaredOutsideIdsMap()){

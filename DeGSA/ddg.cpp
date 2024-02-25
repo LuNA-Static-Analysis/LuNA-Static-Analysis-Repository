@@ -395,7 +395,7 @@ class DDG {
                 }
             }
 
-            // same with let variables TODO
+            // in case of a "let": add all new variables as and inside Ids;
 
             // initialize 3 containers:
             currentVertex->setDeclaredInsideIdsMap(declaredInsideIdsMap);
@@ -445,7 +445,8 @@ class DDG {
                             /* callerVertex */ currentVertex,
                             /* for */ nullptr,
                             /* while */nullptr, nullptr,
-                            /* if */ nullptr);
+                            /* if */ nullptr,
+                            /* let */ nullptr);
                         
                     } else { // subVF
                         std::cout << "sub" << std::endl;
@@ -457,7 +458,8 @@ class DDG {
                                 /* callerVertex */ currentVertex,
                                 /* for */ nullptr,
                                 /* while */nullptr, nullptr,
-                                /* if */ nullptr);
+                                /* if */ nullptr,
+                                /* let */ nullptr);
                         } else {
                             std::string report = "ERROR: could not find sub with a name " + nextCFName + "\n";
                             errorReports.push_back(report);
@@ -505,7 +507,8 @@ class DDG {
                         /* callerVertex */ currentVertex,
                         /* for */ nextIterator,
                         /* while */ nullptr, nullptr,
-                        /* if */ nullptr);
+                        /* if */ nullptr,
+                        /* let */ nullptr);
 
                     currentVertex->addInside(tempVertex);
                     continue;
@@ -520,18 +523,13 @@ class DDG {
                         innerStatementWhileVF->expr_, innerStatementWhileVF->right_);
                     WhileOutName* nextWhileName = new WhileOutName(innerStatementWhileVF->id_->to_string());
 
-                    //debug
-                    std::cout << innerStatementWhileVF->expr_->to_string() << std::endl; // 128 < 129
-                    std::cout << innerStatementWhileVF->id_->to_string() << std::endl; // N
-                    std::cout << innerStatementWhileVF->left_->to_string() << std::endl; // i
-                    std::cout << innerStatementWhileVF->right_->to_string() << std::endl; // 0
-
                     tempVertex = enterVF(declaredBothIdsMap, {}, innerStatementWhileVF->block_, currentDepth + 1, 
                         whileVF, "while", innerStatement->line_,
                         /* callerVertex */ currentVertex,
                         /* for */ nullptr,
                         /* while */ nextWhileIterator, nextWhileName,
-                        /* if */ nullptr);
+                        /* if */ nullptr,
+                        /* let */ nullptr);
 
                     currentVertex->addInside(tempVertex);
                     continue;
@@ -547,7 +545,32 @@ class DDG {
                         /* callerVertex */ currentVertex,
                         /* for */ nullptr,
                         /* while */ nullptr, nullptr,
-                        /* if */ innerStatementIfVF->expr_);
+                        /* if */ innerStatementIfVF->expr_,
+                        /* let */ nullptr);
+
+                    currentVertex->addInside(tempVertex);
+                    continue;
+                }
+
+                // ---- handling let
+                // example: let b=a[1], message="Success" { /* body */ }
+                let_statement* innerStatementLetVF = dynamic_cast<let_statement*>(innerStatement);
+                if (innerStatementLetVF != NULL){
+                    std::vector<assign*>* assignmentsVector = innerStatementLetVF->assign_seq_->assign_seq_;
+                    std::vector<LetName*>* letNamesVector = new std::vector<LetName*>();
+                    
+                    for (auto assignment: *assignmentsVector){
+                        LetName* letName = new LetName(*(assignment->name_->get_value()), assignment->expr_);
+                        letNamesVector->push_back(letName);
+                    }
+
+                    tempVertex = enterVF(declaredBothIdsMap, {}, innerStatementLetVF->block_, currentDepth + 1, 
+                        letVF, "let", innerStatement->line_,
+                        /* callerVertex */ currentVertex,
+                        /* for */ nullptr,
+                        /* while */ nullptr, nullptr,
+                        /* if */ nullptr,
+                        /* let */ letNamesVector);
 
                     currentVertex->addInside(tempVertex);
                     continue;
@@ -567,9 +590,10 @@ class DDG {
         // Name objects (except for SubArgNames) are being created in enterBlock(), Vertex objects are being created in enterVF()
         Vertex* enterVF(std::map<std::string, Identifier*> declaredOutsideIdsMap, std::vector<expr*> callArgs,
                         block* currentBlock, int currentDepth, VertexType vertexType, std::string name, int line, Vertex* callerVertex,
-                        ForIteratorName* forIterator,
-                        WhileIteratorName* whileIterator, WhileOutName* whileOutName,
-                        /* if */ expr* ifExpr){
+                        /* for */ ForIteratorName* forIterator,
+                        /* while */ WhileIteratorName* whileIterator, WhileOutName* whileOutName,
+                        /* if */ expr* ifExpr,
+                        /* let */ std::vector<LetName*>* letNamesVector){
 
             std::cout << "> enterVF called\n\n";
 
@@ -749,6 +773,18 @@ class DDG {
                         currentDepth, {}, {}, "if");
                 }
 
+                case letVF: {
+
+                    vertices.insert(std::make_pair(vertexCount, new LetVertex(currentDepth, vertexCount, line,
+                        letNamesVector, callerVertex)));
+                    currentVertex = vertices.find(vertexCount)->second;
+
+                    std::cout << "Let entered" << std::endl;
+                    std::cout << "> enterVF finished\n\n";
+                    return enterBlock(letVF, currentBlock, currentVertex, declaredOutsideIdsMap,
+                        currentDepth, {}, {}, "let");
+                }
+
                 //TODO other VFs
 
                 default: {
@@ -894,7 +930,8 @@ class DDG {
                         /* callerVertex */ nullptr,
                         /* for */ nullptr,
                         /* while */ nullptr, nullptr,
-                        /* if */ nullptr);
+                        /* if */ nullptr,
+                        /* let */ nullptr);
 
             std::cout << "Created a [MAIN] vertex number " << this->vertexCount
                       << " with a type " << (this->vertices).find(1)->second->getVertexType()

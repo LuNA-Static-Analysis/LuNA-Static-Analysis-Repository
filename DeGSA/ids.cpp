@@ -203,3 +203,26 @@ WhileOutName::WhileOutName(std::string name){
 }
 
 WhileOutName::~WhileOutName(){}
+
+expr* LetName::getAssignedExpr(){
+    return this->assignedExpr;
+}
+
+std::set<std::pair<Identifier*, int>> LetName::getRoots(){
+    //TODO
+    std::set<std::pair<Identifier*, int>> result = {};
+    result.insert(std::make_pair(this, 0));
+    return result;
+}
+
+int LetName::getLine(){
+    return this->letVertex->getLine();
+}
+
+LetName::LetName(std::string name, expr* assignedExpr){
+    this->name = name;
+    this->type = letName;
+    this->assignedExpr = assignedExpr;
+}
+
+LetName::~LetName(){}

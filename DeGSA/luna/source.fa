@@ -4,8 +4,10 @@ sub main(){
         df a;
         while (128 < 129), i = 0 .. out N {
                 if 1 < 2 {
-                        init(1, a[i]);
-                        print(a[i]);
+                        let x = a[i]{
+                                init(1, x);
+                                print(x);
+                        }
                 }
         }
 }

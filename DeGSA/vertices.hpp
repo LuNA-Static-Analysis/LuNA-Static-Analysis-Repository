@@ -197,3 +197,21 @@ class IfVertex: public Vertex {
         void printInfo();
 
 };
+
+class LetVertex: public Vertex {
+
+    private:
+
+        std::vector<LetName*>* letNamesVector;
+
+    public:
+
+        LetVertex(int depth, int number, int line,
+            std::vector<LetName*>* letNamesVector,
+            Vertex* parent);
+
+        std::vector<LetName*>* getLetNamesVector();
+
+        void printInfo();
+
+};

@@ -98,7 +98,7 @@ public:
 };
 
 // this class' objects are created at finding any DF in an expression
-// it stores information about its base DF, but this DF could be either a BaseDFName or a LetId
+// it stores information about its base DF, but this DF could be either a BaseDFName or a LetName
 class IndexedDFName: public Identifier {
 
 private:
@@ -204,15 +204,23 @@ public:
 
 };
 
-//TODO
-class LetId: public Identifier {//todo rename this
+class LetName: public Identifier {
 
 private:
 
     Vertex* letVertex;
+    expr* assignedExpr;
 
 public:
 
     std::set<std::pair<Identifier*, int>> getRoots();
+
+    int getLine();
+
+    expr* getAssignedExpr();
+
+    LetName(std::string name, expr* assignedExpression);
+
+    ~LetName();
 
 };
