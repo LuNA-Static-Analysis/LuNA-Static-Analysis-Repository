@@ -134,6 +134,14 @@ int IndexedDFName::getLine(){
 
 IndexedDFName::~IndexedDFName(){}
 
+expr* ForIteratorName::getLeftBorder(){
+    return this->leftBorder;
+}
+
+expr* ForIteratorName::getRightBorder(){
+    return this->rightBorder;
+}
+
 std::set<std::pair<Identifier*, int>> ForIteratorName::getRoots(){
     std::set<std::pair<Identifier*, int>> result = {};
     result.insert(std::make_pair(this, 0));
@@ -153,6 +161,14 @@ ForIteratorName::ForIteratorName(std::string iteratorName, expr* leftBorder, exp
 
 ForIteratorName::~ForIteratorName(){}
 
+expr* WhileIteratorName::getConditionExpr(){
+    return this->conditionExpr;
+}
+
+expr* WhileIteratorName::getStartExpr(){
+    return this->startExpr;
+}
+
 std::set<std::pair<Identifier*, int>> WhileIteratorName::getRoots(){
     std::set<std::pair<Identifier*, int>> result = {};
     result.insert(std::make_pair(this, 0));
@@ -163,8 +179,10 @@ int WhileIteratorName::getLine(){
     return this->whileVertex->getLine();
 }
 
-WhileIteratorName::WhileIteratorName(std::string name){
+WhileIteratorName::WhileIteratorName(std::string name, expr* conditionExpr, expr* startExpr){
     this->name = name;
+    this->conditionExpr = conditionExpr;
+    this->startExpr = startExpr;
 }
 
 WhileIteratorName::~WhileIteratorName(){}

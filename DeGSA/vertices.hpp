@@ -122,8 +122,6 @@ class CFVertex: public Vertex {
 
     public:
 
-        //todo copy constructor
-
         CFVertex(int depth, int number, int line,
             std::string name, VertexType vertexType, Vertex* parent);
 
@@ -143,9 +141,6 @@ class ForVertex: public Vertex {
 
     public:
 
-        //todo copy constructor
-
-        //todo check if this works
         ForVertex(int depth, int number, int line,
             ForIteratorName* iterator, expr* leftBorder, expr* rightBorder, Vertex* parent);
 
@@ -156,4 +151,49 @@ class ForVertex: public Vertex {
         expr* getRightBorder();
 
         void printInfo();
+};
+
+class WhileVertex: public Vertex {
+
+    private:
+
+        WhileIteratorName* iterator;
+        WhileOutName* outName;
+        expr* conditionExpr;
+        expr* startExpr;
+
+    public:
+
+        WhileVertex(int depth, int number, int line,
+            WhileIteratorName* iterator, WhileOutName* outName, expr* conditionExpr, expr* startExpr,
+            Vertex* parent);
+
+        WhileIteratorName* getIterator();
+
+        WhileOutName* getOutName();
+
+        expr* getConditionExpr();
+
+        expr* getStartExpr();
+
+        void printInfo();
+
+};
+
+class IfVertex: public Vertex {
+
+    private:
+
+        expr* conditionExpr;
+
+    public:
+
+        IfVertex(int depth, int number, int line,
+            expr* conditionExpr,
+            Vertex* parent);
+
+        expr* getConditionExpr();
+
+        void printInfo();
+
 };

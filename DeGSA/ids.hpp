@@ -141,6 +141,10 @@ public:
 
     int getLine();
 
+    expr* getLeftBorder();
+
+    expr* getRightBorder();
+
     ForIteratorName(std::string name, expr* leftBorder, expr* rightBorder);
 
     ~ForIteratorName();
@@ -152,14 +156,20 @@ class WhileIteratorName: public Identifier {
 private:
 
     Vertex* whileVertex;
+    expr* conditionExpr;
+    expr* startExpr;
 
 public:
+
+    expr* getConditionExpr();
+
+    expr* getStartExpr();
 
     std::set<std::pair<Identifier*, int>> getRoots();
 
     int getLine();
 
-    WhileIteratorName(std::string name);
+    WhileIteratorName(std::string name, expr* conditionExpr, expr* startExpr);
 
     ~WhileIteratorName();
 
