@@ -2,6 +2,10 @@
 #include "vertices.cpp"
 #include "ids.cpp"
 
+#include <chrono>
+
+using ns = std::chrono::nanoseconds;
+
 class DDG {
 
     private:
@@ -118,11 +122,6 @@ class DDG {
                 for (luna_string* currentDFDecl: DFNames){
                     std::string dfName = *(currentDFDecl->value_);
                     if (DFDecls.find(dfName) == DFDecls.end()){
-                        //std::cout << "lmao" << std ::endl; //TODO :)
-                        // blockobj имеет тип block*
-                        std::cout << blockobj->line_ << std ::endl;
-                        std::cout << blockobj->opt_dfdecls_->line_ << std ::endl;
-                        std::cout << blockobj->opt_dfdecls_->dfdecls_->line_ << std ::endl;
                         DFDecls.insert(std::make_pair(dfName, new BaseDFName(dfName, blockobj->opt_dfdecls_->dfdecls_->line_)));//TODO :)
                     } else {
                         std::string report = "ERROR: found duplicate name in df declaration in block " + std::to_string((long long)blockobj) +
@@ -725,6 +724,9 @@ class DDG {
                     std::cout << "Sub entered" << std::endl;
                     std::vector<SubArgName*> declaredArgs = {};
                     // in case of a "sub": add args as an inside Ids and map them to call args
+                    // IMPORTANT EXCEPTION: no mapping done to args of main(); also these names cannot be initialized and
+                    // indexed, so they are pretty special and have a class of their own: MainArgName
+
                     // find if this sub is even declared
                     auto temp = subNameToArgsVector.find(name);
                     if (temp != subNameToArgsVector.end()){
@@ -934,7 +936,9 @@ class DDG {
 
             // 1. find use- and def- atomic CFs
 
-            std::cout << "============ Creating DDG ============" << std::endl;
+            auto graphBuildStart = std::chrono::steady_clock::now();
+
+            std::cout << "\n============ Creating DDG ============" << std::endl;
 
             this->findSubs(astobj);
 
@@ -961,6 +965,10 @@ class DDG {
 
             // 3. bindVertices vertices to eachother
             bindVertices(mainVertex);
+
+            auto graphBuildEnd = std::chrono::steady_clock::now();
+
+            auto graphBuildTotal = std::chrono::duration_cast<ns>(graphBuildEnd - graphBuildStart).count();
 
             std::cout << "Total vertices: " << vertexCount << std::endl << std::endl; 
             for (int i = 1; i <= vertexCount; i++){
@@ -992,17 +1000,26 @@ class DDG {
                 }
             }
 
-            std::cout << "============ Created DDG =============" << std::endl;
+            std::cout << "\nTime to build: " << (double)graphBuildTotal / 1000000000 << " seconds" << std::endl;
+
+            std::cout << "\n============ Created DDG =============" << std::endl;
 
             // 4. search for errors
 
-            std::cout << "======== Searching for errors ========" << std::endl;
+            std::cout << "\n======== Searching for errors ========" << std::endl;
+
+            auto errorsFindStart = std::chrono::steady_clock::now();
 
             findErrors();
+
+            auto errorsFindEnd = std::chrono::steady_clock::now();
+            auto errorsFindTotal = std::chrono::duration_cast<ns>(errorsFindEnd - errorsFindStart).count();
 
             for (auto r: errorReports){
                 std::cout << r << std::endl;
             }
+
+            std::cout << "\nTime to find errors: " << (double)errorsFindTotal / 1000000000 << " seconds" << std::endl;
 
         }
 

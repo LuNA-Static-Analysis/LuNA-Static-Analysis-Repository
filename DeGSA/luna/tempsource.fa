@@ -1,18 +1,19 @@
 import printfl(real) as print;
 import c_init_float(real, name) as init;
 sub main(){
-        df a, c;
-        init(1, c);
-        for i=1..2 {
-                init(1, c);
-                for j=1..2 {
-                        //df a;
-                        print(b);
+        df a;
+        foo(a);
+}
+
+sub foo(real f){
+        while (128 < 129), i = 0 .. out N {
+                if 1 < 2 {
+                        let x = f[i]{
+                                init(1, x);
+                                print(x);
+                                init(1, x[i]);
+                                print(x[i]);
+                        }
                 }
         }
 }
-sub foo(real f){
-        init(1, f);
-        print(f);
-}
-//todo: a must be marked as unused
