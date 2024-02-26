@@ -9,7 +9,8 @@ enum IdentifierType {
     whileIteratorName = 5,
     whileOutName = 6,
     valueName = 7,
-    letName = 8
+    letName = 8,
+    mainArgName = 9
 
 };
 

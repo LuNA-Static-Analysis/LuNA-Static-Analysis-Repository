@@ -236,3 +236,21 @@ LetName::LetName(std::string name, expr* assignedExpr, std::set<Identifier*> nam
 }
 
 LetName::~LetName(){}
+
+std::set<std::pair<Identifier*, int>> MainArgName::getRoots(){
+    std::set<std::pair<Identifier*, int>> result = {};
+    result.insert(std::make_pair(this, 0));
+    return result;
+}
+
+int MainArgName::getLine(){
+    return this->line;
+}
+
+MainArgName::MainArgName(std::string name){
+    this->type = mainArgName;
+    this->name = name;
+    this->line = 0;
+}
+
+MainArgName::~MainArgName(){}

@@ -294,7 +294,7 @@ class DDG {
         // however, one-for-all function is still not great (for example, some arguments are used exclusively with "for" block)
         //TODO what to do with this?
         Vertex* enterBlock(VertexType VertexType, block* currentBlock, Vertex* currentVertex, std::map<std::string, Identifier*> declaredOutsideIdsMap,
-            int currentDepth, std::vector<expr*> callArgs, std::vector<SubArgName*> declaredArgs, std::string currentCFName){
+            int currentDepth, std::vector<expr*> callArgs, std::vector<Identifier*> declaredArgs, std::string currentCFName){
 
             std::cout << "> enterBlock called\n" << std::endl;
             std::cout << "Entering block " << currentBlock << "; name: " + currentCFName << std::endl;
@@ -344,7 +344,7 @@ class DDG {
             if (VertexType == subVF){
                 auto temp = subNameToArgsVector.find(currentCFName);
                 if (temp != subNameToArgsVector.end()){
-                    for (SubArgName* subArgName: declaredArgs){
+                    for (Identifier* subArgName: declaredArgs){
                         declaredInsideIdsMap.insert(std::make_pair(
                             subArgName->getName(),
                             subArgName)
@@ -722,7 +722,7 @@ class DDG {
                     currentVertex = vertices.find(vertexCount)->second;
                     
                     std::cout << "Sub entered" << std::endl;
-                    std::vector<SubArgName*> declaredArgs = {};
+                    std::vector<Identifier*> declaredArgs = {};
                     // in case of a "sub": add args as an inside Ids and map them to call args
                     // IMPORTANT EXCEPTION: no mapping done to args of main(); also these names cannot be initialized and
                     // indexed, so they are pretty special and have a class of their own: MainArgName
@@ -732,20 +732,26 @@ class DDG {
                     if (temp != subNameToArgsVector.end()){
                         // get declared arguments vector
                         auto declaredArgsVector = temp->second;
-                        // iterate through this vector and for every arg create a SubArgName object
+                        
+                        // iterate through this vector and for every arg create a SubArgName or MainArgName object
                         for (int i = 0; i < (*declaredArgsVector).size(); i++){
                             auto declaredArg = (*declaredArgsVector)[i];
                             // name of a declared argument
                             std::string identifierName = *(declaredArg->name_->value_);
                             // check if this name is already declared or not
                             if (declaredOutsideIdsMap.find(identifierName) == declaredOutsideIdsMap.end()){
-                                // nameReferenceSet shows, what Identifiers are inside an expression
-                                // used in a call of a current sub
-                                expr* arg = callArgs[i];
-                                // now parse expr and find every its name inside declaredBothIdsMap
-                                auto nameReferenceSet = getNamesFromExpression(arg, declaredOutsideIdsMap, line);
-                                SubArgName* subArgName = new SubArgName(identifierName, nameReferenceSet, line);//todo this is wrong
-                                declaredArgs.push_back(subArgName);
+                                // nameReferenceSet shows what Identifiers inside an expression
+                                // are used in a call of a current sub
+                                if (name == "main"){
+                                    MainArgName* mainArgName = new MainArgName(identifierName);
+                                    declaredArgs.push_back(mainArgName);
+                                } else {
+                                    expr* arg = callArgs[i];
+                                    // now parse expr and find every its name inside declaredBothIdsMap
+                                    auto nameReferenceSet = getNamesFromExpression(arg, declaredOutsideIdsMap, line);
+                                    SubArgName* subArgName = new SubArgName(identifierName, nameReferenceSet, line);//todo this is wrong
+                                    declaredArgs.push_back(subArgName);
+                                }
                             } else {
                                 std::string report = "ERROR: duplicate name of a sub arg at " + name + ": " + identifierName + "\n";
                                 errorReports.push_back(report);

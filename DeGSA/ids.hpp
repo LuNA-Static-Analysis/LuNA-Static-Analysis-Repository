@@ -232,3 +232,17 @@ public:
     ~LetName();
 
 };
+
+class MainArgName: public Identifier {
+
+public:
+
+    std::set<std::pair<Identifier*, int>> getRoots();
+
+    int getLine();
+
+    MainArgName(std::string name);
+
+    ~MainArgName();
+
+};
