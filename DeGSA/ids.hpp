@@ -5,6 +5,7 @@
 #include "enums.hpp"
 #include "vertices.hpp"
 #include "../parser/ast.hpp"
+#include "expr.hpp"
 
 //todo use smart pointers (shared ones)
 // but there should not be much leaks already
@@ -109,19 +110,19 @@ private:
     // this array shows, at what positions (inside "[]") are what expressions (in "ast.hpp" terms)
     // in this indexed DF
     // if expressionsVector is empty, then it is a simple DF with no indices
-    std::vector<expr*> expressionsVector;
+    std::vector<Expression*> expressionsVector;
 
 public:
 
     Identifier* getBase();
 
-    std::vector<expr*> getExpressionsVector();
+    std::vector<Expression*> getExpressionsVector();
 
     std::set<std::pair<Identifier*, int>> getRoots();
 
     int getLine();
 
-    IndexedDFName(std::string name, Identifier* base, std::vector<expr*> expressionsVector, int line);
+    IndexedDFName(std::string name, Identifier* base, std::vector<Expression*> expressionsVector, int line);
 
     ~IndexedDFName();
 
@@ -172,24 +173,6 @@ public:
     WhileIteratorName(std::string name, expr* conditionExpr, expr* startExpr);
 
     ~WhileIteratorName();
-
-};
-
-class WhileOutName: public Identifier {
-
-private:
-
-    Vertex* whileVertex;
-
-public:
-
-    std::set<std::pair<Identifier*, int>> getRoots();
-
-    int getLine();
-
-    WhileOutName(std::string name);
-
-    ~WhileOutName();
 
 };
 

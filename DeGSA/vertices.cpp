@@ -304,7 +304,7 @@ void ForVertex::printInfo(){
 }
 
 WhileVertex::WhileVertex(int depth, int number, int line,
-    WhileIteratorName* iterator, WhileOutName* outName, expr* conditionExpr, expr* startExpr,
+    WhileIteratorName* iterator, IndexedDFName* outName, expr* conditionExpr, expr* startExpr,
     Vertex* parent){
 
     this->vertexType = whileVF;
@@ -324,7 +324,7 @@ WhileIteratorName* WhileVertex::getIterator(){
     return this->iterator;
 }
 
-WhileOutName* WhileVertex::getOutName(){
+IndexedDFName* WhileVertex::getOutName(){
     return this->outName;
 }
 

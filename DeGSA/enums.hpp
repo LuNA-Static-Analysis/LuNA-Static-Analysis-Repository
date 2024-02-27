@@ -25,6 +25,18 @@ enum VertexType {
 
 };
 
+enum ExpressionType {
+
+    addNode = 1,
+    subtractNode = 2,
+    multiplyNode = 3,
+    divideNode = 4,
+    assignNode = 5,
+    noneNode = 6 //temp TODO
+    //TODO add more
+
+};
+
 enum UseDef {
 
     use = 1,

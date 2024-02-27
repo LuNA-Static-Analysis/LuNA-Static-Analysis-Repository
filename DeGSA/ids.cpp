@@ -98,7 +98,7 @@ BaseDFName::BaseDFName(std::string name, int line){
 
 BaseDFName::~BaseDFName(){}
 
-IndexedDFName::IndexedDFName(std::string name, Identifier* base, std::vector<expr*> expressionsVector, int line){
+IndexedDFName::IndexedDFName(std::string name, Identifier* base, std::vector<Expression*> expressionsVector, int line){
     this->name = name;
     this->type = indexedDFName;
 
@@ -115,7 +115,7 @@ Identifier* IndexedDFName::getBase(){
     return this->base;
 }
 
-std::vector<expr*> IndexedDFName::getExpressionsVector(){
+std::vector<Expression*> IndexedDFName::getExpressionsVector(){
     return this->expressionsVector;
 }
 
@@ -187,24 +187,6 @@ WhileIteratorName::WhileIteratorName(std::string name, expr* conditionExpr, expr
 }
 
 WhileIteratorName::~WhileIteratorName(){}
-
-std::set<std::pair<Identifier*, int>> WhileOutName::getRoots(){
-    std::set<std::pair<Identifier*, int>> result = {};
-    result.insert(std::make_pair(this, 0));
-    return result;
-}
-
-//todo this is wrong
-int WhileOutName::getLine(){
-    return this->whileVertex->getLine();
-}
-
-WhileOutName::WhileOutName(std::string name){
-    this->type = whileOutName;
-    this->name = name;
-}
-
-WhileOutName::~WhileOutName(){}
 
 expr* LetName::getAssignedExpr(){
     return this->assignedExpr;

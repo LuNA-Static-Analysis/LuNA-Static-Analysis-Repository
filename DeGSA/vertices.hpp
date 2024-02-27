@@ -27,7 +27,7 @@ class Vertex {
 
         Binding(Vertex* pointerTo, BaseDFName* id);
 
-        BaseDFName* getId();
+        BaseDFName* getId();//todo add MainArgs, ForIterators or whatever
 
         Vertex* getPointerTo();
 
@@ -158,19 +158,19 @@ class WhileVertex: public Vertex {
     private:
 
         WhileIteratorName* iterator;
-        WhileOutName* outName;
+        IndexedDFName* outName;
         expr* conditionExpr;
         expr* startExpr;
 
     public:
 
         WhileVertex(int depth, int number, int line,
-            WhileIteratorName* iterator, WhileOutName* outName, expr* conditionExpr, expr* startExpr,
+            WhileIteratorName* iterator, IndexedDFName* outName, expr* conditionExpr, expr* startExpr,
             Vertex* parent);
 
         WhileIteratorName* getIterator();
 
-        WhileOutName* getOutName();
+        IndexedDFName* getOutName();
 
         expr* getConditionExpr();
 
