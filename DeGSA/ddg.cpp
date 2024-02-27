@@ -51,7 +51,7 @@ class DDG {
                     std::string subName = *(subDecl->code_id_->get_value());
 
                     if (subName == "main"){ // main found
-                        std::cout << "main() !" << std::endl;
+                        std::cout << "main()!" << std::endl;
                         this->mainExists = true;
                         this->mainLine = subDecl->line_;//TODO this is 0 for some reason; perhaps AST failure
                     } else {
@@ -152,7 +152,7 @@ class DDG {
         // if there is none, then it's an error
         std::set<Identifier*> getNamesFromExpression(expr* expression, std::map<std::string, Identifier*> nameTable, int line){
 
-            std::cout << "> getNamesFromExpression called\n\n";
+            std::cout << "> getNamesFromExpression called; line: " << line << "\n\n";
 
             std::set<Identifier*> result = {};
 
@@ -201,11 +201,19 @@ class DDG {
             if (df != NULL){
 
                 simple_id* simpleDF = dynamic_cast<simple_id*>(expression);
+                // this also has for iterators, and not only them perhaps TODO
                 if (simpleDF != NULL){
                     std::string simpleDFName = *(simpleDF->value_->value_);
                     auto base = nameTable.find(simpleDFName);
                     if (base != nameTable.end()){
-                        result.insert(new IndexedDFName(simpleDFName, base->second, {}, line));
+
+                        switch(base->second->getType()){
+                            case baseDFName://todo also maybe subargname (but not mainargname)
+                                result.insert(new IndexedDFName(simpleDFName, base->second, {}, line));
+                                break;
+                            default://todo check if other types are ok
+                                result.insert(base->second);
+                        }
                     } else {
                         std::string report = "ERROR: no name \"" + simpleDFName + "\" found!" + "\n";
                         errorReports.push_back(report);
@@ -642,10 +650,12 @@ class DDG {
                             // initialize all BaseDFNames uses and defs that are participating in this import
                             case use:
                                 for (auto i: callNames) {
-                                    std::set<std::pair<Identifier*, int>> roots = i->getRoots();
+                                    std::set<std::pair<Identifier*, int>> roots = i->getRoots();//todo returns shit
+
                                     for (auto r: roots){
                                         if (r.first->getType() == baseDFName){
-                                            std::cout << "added use to baseName " << r.first->getName() << " of size " << r.second << " in a vertex " << currentVertex << std::endl;
+                                            std::cout << "added use to baseName " << r.first->getName() << " of size " << r.second
+                                                << " in a vertex " << currentVertex << " at line " << currentVertex->getLine() << std::endl;
                                             (dynamic_cast<BaseDFName*>(r.first))->addUse(r.second, currentVertex);
                                         }
                                     }
@@ -683,7 +693,8 @@ class DDG {
 
                                     for (auto r: roots){
                                         if (r.first->getType() == baseDFName){
-                                            std::cout << "added def to baseName " << r.first->getName() << " of size " << r.second << " in a vertex " << currentVertex << std::endl;
+                                            std::cout << "added def to baseName " << r.first->getName() << " of size " << r.second
+                                                << " in a vertex " << currentVertex << " at line " << currentVertex->getLine() << std::endl;
                                             (dynamic_cast<BaseDFName*>(r.first))->addDef(r.second, currentVertex);
                                         }
                                     }
@@ -722,7 +733,9 @@ class DDG {
                     currentVertex = vertices.find(vertexCount)->second;
                     
                     std::cout << "Sub entered" << std::endl;
-                    std::vector<Identifier*> declaredArgs = {};
+                    std::vector<Identifier*> declaredNamesVector = {};
+                    std::set<std::string> declaredNamesSet = {}; // used to check for duplicate names at declaration
+
                     // in case of a "sub": add args as an inside Ids and map them to call args
                     // IMPORTANT EXCEPTION: no mapping done to args of main(); also these names cannot be initialized and
                     // indexed, so they are pretty special and have a class of their own: MainArgName
@@ -736,24 +749,29 @@ class DDG {
                         // iterate through this vector and for every arg create a SubArgName or MainArgName object
                         for (int i = 0; i < (*declaredArgsVector).size(); i++){
                             auto declaredArg = (*declaredArgsVector)[i];
+
                             // name of a declared argument
-                            std::string identifierName = *(declaredArg->name_->value_);
-                            // check if this name is already declared or not
-                            if (declaredOutsideIdsMap.find(identifierName) == declaredOutsideIdsMap.end()){
-                                // nameReferenceSet shows what Identifiers inside an expression
-                                // are used in a call of a current sub
+                            std::string identifierDeclaredName = *(declaredArg->name_->value_);
+
+                            // check if this name is already declared or not; this is done for every found call of the same sub
+                            // this might be done only once TODO
+                            if (declaredNamesSet.find(identifierDeclaredName) == declaredNamesSet.end()){
+
+                                // nameReferenceSet shows what Identifiers are inside a call arg expression
                                 if (name == "main"){
-                                    MainArgName* mainArgName = new MainArgName(identifierName);
-                                    declaredArgs.push_back(mainArgName);
+                                    MainArgName* mainArgName = new MainArgName(identifierDeclaredName);
+                                    declaredNamesVector.push_back(mainArgName);
+                                    declaredNamesSet.insert(identifierDeclaredName);
                                 } else {
                                     expr* arg = callArgs[i];
                                     // now parse expr and find every its name inside declaredBothIdsMap
                                     auto nameReferenceSet = getNamesFromExpression(arg, declaredOutsideIdsMap, line);
-                                    SubArgName* subArgName = new SubArgName(identifierName, nameReferenceSet, line);//todo this is wrong
-                                    declaredArgs.push_back(subArgName);
+                                    SubArgName* subArgName = new SubArgName(identifierDeclaredName, nameReferenceSet, line);//todo this is wrong
+                                    declaredNamesVector.push_back(subArgName);
+                                    declaredNamesSet.insert(identifierDeclaredName);
                                 }
                             } else {
-                                std::string report = "ERROR: duplicate name of a sub arg at " + name + ": " + identifierName + "\n";
+                                std::string report = "ERROR: duplicate name of a sub arg at " + name + ": " + identifierDeclaredName + "; line: " + std::to_string(line) + "\n";
                                 errorReports.push_back(report);
                             }
                         }
@@ -764,7 +782,7 @@ class DDG {
 
                     std::cout << "> enterVF finished\n\n";
                     return enterBlock(subVF, currentBlock, currentVertex, {},
-                        currentDepth, callArgs, declaredArgs, name);
+                        currentDepth, callArgs, declaredNamesVector, name);
                 }
 
                 case forVF: {

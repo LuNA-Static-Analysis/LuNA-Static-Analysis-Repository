@@ -180,6 +180,7 @@ int WhileIteratorName::getLine(){
 }
 
 WhileIteratorName::WhileIteratorName(std::string name, expr* conditionExpr, expr* startExpr){
+    this->type = whileIteratorName;
     this->name = name;
     this->conditionExpr = conditionExpr;
     this->startExpr = startExpr;
@@ -199,6 +200,7 @@ int WhileOutName::getLine(){
 }
 
 WhileOutName::WhileOutName(std::string name){
+    this->type = whileOutName;
     this->name = name;
 }
 
