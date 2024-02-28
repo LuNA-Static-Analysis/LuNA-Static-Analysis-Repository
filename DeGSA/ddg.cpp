@@ -146,42 +146,6 @@ class DDG {
 
         }
 
-        IndexedDFName* parseIndexedDFExpression(expr* expression, std::map<std::string, Identifier*> nameTable, int line){
-            // expression could be either simple or a complex DF
-            int indices = 0;
-            std::string baseName;
-            expr* complexDF = expression; // but in our terms every DF based on a baseName is complex
-            while(true){
-                indices++;
-                if (dynamic_cast<complex_id*>(complexDF) == nullptr){
-                    baseName = complexDF->to_string();
-                    break;
-                } else {
-                    complexDF = dynamic_cast<complex_id*>(complexDF)->id_;
-                }
-            }
-            indices--;
-            // now create an IndexedDFName and initialize it
-            std::vector<Expression*> expressionsVector(indices);
-            complex_id* newComplexDF = dynamic_cast<complex_id*>(expression);//todo rename
-            for (int i = 0; i < indices; i++){
-                std::cout << "idiot" << indices << std::endl;//debug todo
-                std::cout << newComplexDF->to_string() << std::endl;
-                //TODO isn't it backwards vector now?
-                expressionsVector[i] = new Expression(newComplexDF->expr_);
-                newComplexDF = dynamic_cast<complex_id*>(newComplexDF->id_);
-            }
-            auto base = nameTable.find(baseName);
-            if (base != nameTable.end()){
-                IndexedDFName* temp = new IndexedDFName(baseName, base->second, expressionsVector, line);
-                return temp;
-            } else {
-                std::string report = "ERROR: no name \"" + baseName + "\" found at line " + std::to_string(line) + "\n";
-                errorReports.push_back(report);
-                return nullptr;
-            }
-        }
-
         // this function gets an expression, recursively goes through it and
         // returns a set of Ids that are used in this expression
         // nameTable stores information about what Ids are visible currently, and we can
@@ -266,7 +230,8 @@ class DDG {
                     //TODO redo this with one function that
                     // parses indexed DFs and creates IndexedDFName with Expression objects as indices
 
-                    IndexedDFName* temp = parseIndexedDFExpression(complexDF, nameTable, line);
+                    IndexedDFName* temp = parseIndexedDFExpression(complexDF, nameTable, line,
+                        &errorReports);
                     if (temp != nullptr){
                         result.insert(temp);
                     }
@@ -565,7 +530,8 @@ class DDG {
                     
                     //todo parse innerStatementWhileVF->id_->to_string()
                     //IndexedDFName* nextWhileName = new IndexedDFName(innerStatementWhileVF->id_->to_string());
-                    IndexedDFName* nextWhileName = parseIndexedDFExpression(innerStatementWhileVF->id_, declaredBothIdsMap, innerStatementWhileVF->line_);
+                    IndexedDFName* nextWhileName = parseIndexedDFExpression(innerStatementWhileVF->id_, declaredBothIdsMap, innerStatementWhileVF->line_,
+                        &errorReports);
 
                     tempVertex = enterVF(declaredBothIdsMap, {}, innerStatementWhileVF->block_, currentDepth + 1, 
                         whileVF, "while", innerStatement->line_,
@@ -823,8 +789,9 @@ class DDG {
                         whileIterator, whileOutName, whileIterator->getConditionExpr(), whileIterator->getStartExpr(), callerVertex)));
                     currentVertex = vertices.find(vertexCount)->second;
 
-                    // "while" out name is an IndexedDF that must be initialized TODO also everything inside indices is used as well
+                    // "while" out name is an IndexedDF that must be marked as "def" TODO also everything inside indices is "used" as well
                     (dynamic_cast<BaseDFName*>(whileOutName->getBase()))->addDef(whileOutName->getExpressionsVector().size(), currentVertex);
+                    //todo also everything inside condition and iterator start must be marked as used
 
                     std::cout << "While entered" << std::endl;
                     std::cout << "> enterVF finished\n\n";
@@ -837,6 +804,9 @@ class DDG {
                     vertices.insert(std::make_pair(vertexCount, new IfVertex(currentDepth, vertexCount, line,
                         ifExpr, callerVertex)));
                     currentVertex = vertices.find(vertexCount)->second;
+
+                    // all identifiers inside "if" expression must be marked as "used"
+                    //(dynamic_cast<BaseDFName*>(whileOutName->getBase()))->addDef(whileOutName->getExpressionsVector().size(), currentVertex);
 
                     std::cout << "If entered" << std::endl;
                     std::cout << "> enterVF finished\n\n";

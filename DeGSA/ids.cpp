@@ -238,3 +238,41 @@ MainArgName::MainArgName(std::string name){
 }
 
 MainArgName::~MainArgName(){}
+
+IndexedDFName* parseIndexedDFExpression(expr* expression, std::map<std::string, Identifier*> nameTable, int line,
+    std::vector<std::string>* errorReports){
+    // expression could be either simple or a complex DF
+    int indices = 0;
+    std::string baseName;
+    expr* complexDF = expression; // but in our terms every DF based on a baseName is complex
+    while(true){
+        indices++;
+        if (dynamic_cast<complex_id*>(complexDF) == nullptr){
+            baseName = complexDF->to_string();
+            break;
+        } else {
+            complexDF = dynamic_cast<complex_id*>(complexDF)->id_;
+        }
+    }
+    indices--;
+    // now create an IndexedDFName and initialize it
+    std::vector<Expression*> expressionsVector(indices);
+    complex_id* newComplexDF = dynamic_cast<complex_id*>(expression);//todo rename
+    for (int i = 0; i < indices; i++){
+        std::cout << "idiot" << indices << std::endl;//debug todo
+        std::cout << newComplexDF->to_string() << std::endl;
+        //TODO isn't it backwards vector now?
+        expressionsVector[i] = new Expression(newComplexDF->expr_);
+        newComplexDF = dynamic_cast<complex_id*>(newComplexDF->id_);
+    }
+    auto base = nameTable.find(baseName);
+    if (base != nameTable.end()){
+        //TODO check if indexation is allowed; report if not
+        IndexedDFName* temp = new IndexedDFName(baseName, base->second, expressionsVector, line);
+        return temp;
+    } else {
+        std::string report = "ERROR: no name \"" + baseName + "\" found at line " + std::to_string(line) + "\n";
+        errorReports->push_back(report);
+        return nullptr;
+    }
+}

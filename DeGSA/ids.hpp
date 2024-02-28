@@ -229,3 +229,6 @@ public:
     ~MainArgName();
 
 };
+
+IndexedDFName* parseIndexedDFExpression(expr* expression, std::map<std::string, Identifier*> nameTable, int line,
+            std::vector<std::string>* errorReports);

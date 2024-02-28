@@ -1,17 +1,22 @@
 #pragma once
 
 #include "enums.hpp"
+#include "ids.hpp"
 #include "../parser/ast.hpp"
 
 
 // abstract class that represents nodes in an AST
 // required to store information about expressions in LuNA code
-// TODO currently it is simply a shell for expr class
+// terminals are Identifiers
 class Expression {
 
     private:
 
-        ExpressionType type; // type of a node (i.e. add, subtract, assign, ... )
+        ExpressionType type; // type of a node [operation] (i.e. add, subtract, assign, identifier, ... )
+        Expression* leftExpr; // left operand
+        Expression* rightExpr; // right operand
+        Identifier* identifier; // nullptr if not an identifier (type will also be not "identifierNode")
+        std::string constant; // int, string, real LuNA constant
         expr* ASTexpr;
 
     public:
@@ -20,6 +25,12 @@ class Expression {
 
         expr* getExpr();
 
+        void markAsUse();//todo maybe return string vector of reports?
+
+        void markAsDef();
+
         Expression(expr* ASTexpr);
+
+        Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTable, std::vector<std::string>* errorReports);
 
 };

@@ -32,7 +32,12 @@ enum ExpressionType {
     multiplyNode = 3,
     divideNode = 4,
     assignNode = 5,
-    noneNode = 6 //temp TODO
+    noneNode = 6, //temp TODO
+    identifierNode = 7,
+    stringNode = 8,
+    intNode = 9,
+    realNode = 10,
+    castNode = 11
     //TODO add more
 
 };
