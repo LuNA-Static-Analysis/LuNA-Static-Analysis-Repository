@@ -25,9 +25,9 @@ class Expression {
 
         expr* getExpr();
 
-        void markAsUse();//todo maybe return string vector of reports?
+        void markAsUse(Vertex* currentVertex);//todo maybe return string vector of reports?
 
-        void markAsDef();
+        void markAsDef(Vertex* currentVertex);//todo maybe return string vector of reports?
 
         Expression(expr* ASTexpr);
 

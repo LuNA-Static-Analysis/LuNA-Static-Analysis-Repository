@@ -86,6 +86,9 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
         simple_id* simpleDF = dynamic_cast<simple_id*>(ASTexpr);
         // this also has for iterators, and not only them perhaps TODO
         if (simpleDF != NULL){
+
+            this->type = identifierNode;
+
             std::string simpleDFName = *(simpleDF->value_->value_);
             auto base = nameTable.find(simpleDFName);
             if (base != nameTable.end()){
@@ -115,6 +118,8 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
             IndexedDFName* temp = parseIndexedDFExpression(complexDF, nameTable, ASTexpr->line_, errorReports);
             if (temp != nullptr){
                 //result.insert(temp);
+                this->type = identifierNode;
+                this->identifier = temp;
             }
 
             return;
@@ -128,10 +133,25 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
     return;
 }
 
-void Expression::markAsUse(){//todo maybe return string vector of reports?
-
+//todo implement interval analysis
+void Expression::markAsUse(Vertex* currentVertex){//todo maybe return string vector of reports?
+    switch(type){
+        case addNode: leftExpr->markAsUse(currentVertex); rightExpr->markAsUse(currentVertex); break;
+        case subtractNode: leftExpr->markAsUse(currentVertex); rightExpr->markAsUse(currentVertex); break;
+        case multiplyNode: leftExpr->markAsUse(currentVertex); rightExpr->markAsUse(currentVertex); break;
+        case divideNode: leftExpr->markAsUse(currentVertex); rightExpr->markAsUse(currentVertex); break;
+        case assignNode: /*todo error?*/ break;
+        case noneNode: /* temp todo*/ break;
+        case identifierNode: identifier->markAsUse(currentVertex); break;
+        case stringNode: break;
+        case intNode: break;
+        case realNode: break;
+        case castNode: leftExpr->markAsUse(currentVertex); break;
+        default: break;
+    }
 }
 
-void Expression::markAsDef(){
+//todo implement interval analysis
+void Expression::markAsDef(Vertex* currentVertex){
 
 }

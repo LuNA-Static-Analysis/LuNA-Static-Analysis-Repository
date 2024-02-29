@@ -8,6 +8,14 @@ IdentifierType Identifier::getType(){
     return this->type;
 }
 
+std::set<Vertex*> Identifier::getUseSet(){
+    return useSet;
+}
+
+std::set<Vertex*> Identifier::getDefSet(){
+    return defSet;
+}
+
 Identifier::Identifier(){}
 
 Identifier::~Identifier(){}
@@ -30,6 +38,14 @@ std::set<std::pair<Identifier*, int>> SubArgName::getRoots(){
 
 int SubArgName::getLine(){
     return this->line;
+}
+
+void SubArgName::markAsUse(Vertex* currentVertex){
+    reference->markAsUse(currentVertex);
+}
+
+void SubArgName::markAsDef(Vertex* currentVertex){
+    reference->markAsDef(currentVertex);
 }
 
 SubArgName::SubArgName(std::string name, std::set<Identifier*> nameReferenceSet, int line){
@@ -89,6 +105,14 @@ int BaseDFName::getLine(){
     return this->line;
 }
 
+void BaseDFName::markAsUse(Vertex* currentVertex){
+    //todo
+}
+
+void BaseDFName::markAsDef(Vertex* currentVertex){
+    //todo
+}
+
 BaseDFName::BaseDFName(std::string name, int line){
     this->name = name;
     this->type = baseDFName;
@@ -97,19 +121,6 @@ BaseDFName::BaseDFName(std::string name, int line){
 }
 
 BaseDFName::~BaseDFName(){}
-
-IndexedDFName::IndexedDFName(std::string name, Identifier* base, std::vector<Expression*> expressionsVector, int line){
-    this->name = name;
-    this->type = indexedDFName;
-
-    if ((base->getType() != baseDFName) && (base->getType() != letName)){
-        //TODO error!
-    }
-
-    this->base = base;
-    this->expressionsVector = expressionsVector;
-    this->line = line;
-}
 
 Identifier* IndexedDFName::getBase(){
     return this->base;
@@ -132,6 +143,33 @@ int IndexedDFName::getLine(){
     return this->line;
 }
 
+void IndexedDFName::markAsUse(Vertex* currentVertex){
+    for (auto exp: expressionsVector){
+        exp->markAsUse(currentVertex);
+    }
+    base->markAsUse(currentVertex);//todo
+}
+
+void IndexedDFName::markAsDef(Vertex* currentVertex){
+    for (auto exp: expressionsVector){
+        exp->markAsUse(currentVertex);
+    }
+    base->markAsDef(currentVertex);//todo
+}
+
+IndexedDFName::IndexedDFName(std::string name, Identifier* base, std::vector<Expression*> expressionsVector, int line){
+    this->name = name;
+    this->type = indexedDFName;
+
+    if ((base->getType() != baseDFName) && (base->getType() != letName)){
+        //TODO error!
+    }
+
+    this->base = base;
+    this->expressionsVector = expressionsVector;
+    this->line = line;
+}
+
 IndexedDFName::~IndexedDFName(){}
 
 expr* ForIteratorName::getLeftBorder(){
@@ -150,6 +188,14 @@ std::set<std::pair<Identifier*, int>> ForIteratorName::getRoots(){
 
 int ForIteratorName::getLine(){
     return this->forVertex->getLine();
+}
+
+void ForIteratorName::markAsUse(Vertex* currentVertex){
+    //markAsUse(currentVertex); //todo
+}
+
+void ForIteratorName::markAsDef(Vertex* currentVertex){
+    //todo error (iterator should be marked as defined by ForVertex automatically)
 }
 
 ForIteratorName::ForIteratorName(std::string iteratorName, expr* leftBorder, expr* rightBorder){
@@ -177,6 +223,14 @@ std::set<std::pair<Identifier*, int>> WhileIteratorName::getRoots(){
 
 int WhileIteratorName::getLine(){
     return this->whileVertex->getLine();
+}
+
+void WhileIteratorName::markAsUse(Vertex* currentVertex){
+    //markAsUse(currentVertex); //todo
+}
+
+void WhileIteratorName::markAsDef(Vertex* currentVertex){
+    //todo error (iterator should be marked as defined by WhileVertex automatically)
 }
 
 WhileIteratorName::WhileIteratorName(std::string name, expr* conditionExpr, expr* startExpr){
@@ -212,6 +266,14 @@ int LetName::getLine(){
     return this->letVertex->getLine();
 }
 
+void LetName::markAsUse(Vertex* currentVertex){
+    //markAsUse(currentVertex); //todo
+}
+
+void LetName::markAsDef(Vertex* currentVertex){
+    //todo
+}
+
 LetName::LetName(std::string name, expr* assignedExpr, std::set<Identifier*> nameReferenceSet){
     this->name = name;
     this->type = letName;
@@ -229,6 +291,14 @@ std::set<std::pair<Identifier*, int>> MainArgName::getRoots(){
 
 int MainArgName::getLine(){
     return this->line;
+}
+
+void MainArgName::markAsUse(Vertex* currentVertex){
+    //markAsUse(currentVertex); //todo
+}
+
+void MainArgName::markAsDef(Vertex* currentVertex){
+    //todo error
 }
 
 MainArgName::MainArgName(std::string name){

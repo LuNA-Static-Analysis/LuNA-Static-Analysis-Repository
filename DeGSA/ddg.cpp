@@ -532,6 +532,7 @@ class DDG {
                     //IndexedDFName* nextWhileName = new IndexedDFName(innerStatementWhileVF->id_->to_string());
                     IndexedDFName* nextWhileName = parseIndexedDFExpression(innerStatementWhileVF->id_, declaredBothIdsMap, innerStatementWhileVF->line_,
                         &errorReports);
+                    
 
                     tempVertex = enterVF(declaredBothIdsMap, {}, innerStatementWhileVF->block_, currentDepth + 1, 
                         whileVF, "while", innerStatement->line_,

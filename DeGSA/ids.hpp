@@ -20,12 +20,18 @@ protected:
     std::string name;
     IdentifierType type;
     int line;
+    std::set<Vertex*> useSet;//todo init
+    std::set<Vertex*> defSet;//todo init
 
 public:
 
     std::string getName();
 
     IdentifierType getType();
+
+    std::set<Vertex*> getUseSet();
+
+    std::set<Vertex*> getDefSet();
 
     virtual int getLine() = 0;
 
@@ -36,6 +42,10 @@ public:
 
     // pure ( = 0) virtual method, i.e. it must be initialized in every derived class so they are not abstract
     virtual std::set<std::pair<Identifier*, int>> getRoots() = 0;
+
+    virtual void markAsUse(Vertex* currentVertex) = 0;
+
+    virtual void markAsDef(Vertex* currentVertex) = 0;
 
     Identifier();
 
@@ -52,14 +62,21 @@ private:
     // if only one name, then might be be initialized or could be used
     // else only used
     // TODO redo to use Expression
+    Expression* reference;
 
 public:
 
     std::set<Identifier*> getNameReferenceSet();
 
+    Expression getReference();
+
     std::set<std::pair<Identifier*, int>> getRoots();
 
     int getLine();
+
+    void markAsUse(Vertex* currentVertex);
+
+    void markAsDef(Vertex* currentVertex);
 
     SubArgName(std::string name, std::set<Identifier*> nameReferenceSet, int line);
 
@@ -81,8 +98,9 @@ private:
 public:
 
     //todo check is this method allows duplicates
+    //todo use markAsUse
     void addUse(int size, Vertex* vertex);
-
+    //todo use markAsDef
     //todo check is this method allows duplicates
     void addDef(int size, Vertex* vertex);
 
@@ -91,6 +109,10 @@ public:
     std::set<std::pair<Identifier*, int>> getRoots();
 
     int getLine();
+
+    void markAsUse(Vertex* currentVertex);
+
+    void markAsDef(Vertex* currentVertex);
 
     BaseDFName(std::string name, int line);
 
@@ -122,6 +144,10 @@ public:
 
     int getLine();
 
+    void markAsUse(Vertex* currentVertex);
+
+    void markAsDef(Vertex* currentVertex);
+
     IndexedDFName(std::string name, Identifier* base, std::vector<Expression*> expressionsVector, int line);
 
     ~IndexedDFName();
@@ -146,6 +172,10 @@ public:
 
     expr* getRightBorder();
 
+    void markAsUse(Vertex* currentVertex);
+
+    void markAsDef(Vertex* currentVertex);
+
     ForIteratorName(std::string name, expr* leftBorder, expr* rightBorder);
 
     ~ForIteratorName();
@@ -169,6 +199,10 @@ public:
     std::set<std::pair<Identifier*, int>> getRoots();
 
     int getLine();
+
+    void markAsUse(Vertex* currentVertex);
+
+    void markAsDef(Vertex* currentVertex);
 
     WhileIteratorName(std::string name, expr* conditionExpr, expr* startExpr);
 
@@ -210,6 +244,10 @@ public:
 
     std::set<std::pair<Identifier*, int>> getRoots();
 
+    void markAsUse(Vertex* currentVertex);
+
+    void markAsDef(Vertex* currentVertex);
+
     LetName(std::string name, expr* assignedExpression, std::set<Identifier*> nameReferenceSet);
 
     ~LetName();
@@ -223,6 +261,10 @@ public:
     std::set<std::pair<Identifier*, int>> getRoots();
 
     int getLine();
+
+    void markAsUse(Vertex* currentVertex);
+
+    void markAsDef(Vertex* currentVertex);
 
     MainArgName(std::string name);
 
