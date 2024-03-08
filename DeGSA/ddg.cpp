@@ -655,6 +655,8 @@ class DDG {
         }
 
         DDG(ast* astObjectIn){
+
+            auto graphBuildStart = std::chrono::steady_clock::now();
             
             this->vertexCount = 0;
             this->imports = {};
@@ -674,8 +676,6 @@ class DDG {
             //this->mainBlock
 
             // 1. find use- and def- atomic CFs
-
-            auto graphBuildStart = std::chrono::steady_clock::now();
 
             std::cout << "\n============ Creating DDG ============" << std::endl;
 
@@ -705,6 +705,7 @@ class DDG {
 
             auto graphBuildTotal = std::chrono::duration_cast<ns>(graphBuildEnd - graphBuildStart).count();
 
+            // printing out information does not count towards time to use and build graph
             std::cout << "Total vertices: " << vertexCount << std::endl << std::endl; 
             for (int i = 1; i <= vertexCount; i++){
 
@@ -740,8 +741,6 @@ class DDG {
                 }
             }
 
-            std::cout << "\nTime to build: " << (double)graphBuildTotal / 1000000000 << " seconds" << std::endl;
-
             std::cout << "\n============ Created DDG =============" << std::endl;
 
             // 4. search for errors
@@ -755,11 +754,14 @@ class DDG {
             auto errorsFindEnd = std::chrono::steady_clock::now();
             auto errorsFindTotal = std::chrono::duration_cast<ns>(errorsFindEnd - errorsFindStart).count();
 
+            // printing out information does not count towards time to find errors
             for (auto r: errorReports){
                 std::cout << r << std::endl;
             }
 
             std::cout << "\nTime to find errors: " << (double)errorsFindTotal / 1000000000 << " seconds" << std::endl;
+
+            std::cout << "\nTime to build DDG: " << (double)graphBuildTotal / 1000000000 << " seconds" << std::endl;
 
         }
 

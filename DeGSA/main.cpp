@@ -19,6 +19,8 @@ ast* ast_ = new ast();
 
 int main(int argc, char** argv) {
 
+    auto astBuildStart = std::chrono::steady_clock::now();
+
     if (argc != 2) {
         std::cerr << "Bad number of args. Usage: ./a.out [LuNA program]" << std::endl;
         return EXIT_ERROR;
@@ -31,13 +33,13 @@ int main(int argc, char** argv) {
         return EXIT_ERROR;
     }
 
-    std::cout << "================= Parsing ============\n";
-
     yyparse();
 
-    std::cout << "================= Done ===============\n";
+    auto astBuildEnd = std::chrono::steady_clock::now();
+    auto astBuildTotal = std::chrono::duration_cast<ns>(astBuildEnd - astBuildStart).count();
 
     DDG ddg(ast_);
+    std::cout << "\nTime to build AST: " << (double)astBuildTotal / 1000000000 << " seconds" << std::endl;
     std::cout << std::flush;
 
     delete ast_;
