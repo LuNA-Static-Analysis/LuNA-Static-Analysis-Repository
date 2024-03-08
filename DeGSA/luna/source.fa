@@ -1,7 +1,8 @@
 import printfl(real) as print;
 import c_init_float(real, name) as init;
-sub main(){
+sub main(real mainArg){
         df a;
+        print(mainArg);
         foo(a);
 }
 

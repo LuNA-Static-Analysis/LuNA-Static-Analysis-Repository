@@ -313,7 +313,8 @@ void MainArgName::setVertex(Vertex* currentVertex){
 
 std::vector<std::string> MainArgName::markAsUse(Vertex* currentVertex, int size){
     std::cout << "Main arg name " << this->getName() << " is being marked as used" << std::endl;
-    this->markAsUse(currentVertex, size);
+    //this->markAsUse(currentVertex, size);
+    //todo indices + where to store information about main arg being used?
     return {};
 }
 
