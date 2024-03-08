@@ -17,3 +17,14 @@ sub foo(real f){
                 }
         }
 }
+
+
+====
+
+import c_init_float(real, name) as init;
+import printint(int) as print;
+sub main(){
+        for i = 0..1 {
+                print(i[1]);
+        }
+}

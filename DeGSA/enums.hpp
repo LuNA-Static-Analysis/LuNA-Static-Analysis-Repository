@@ -2,15 +2,14 @@
 
 enum IdentifierType {
 
-    subArgName = 1,
-    baseDFName = 2,
-    indexedDFName = 3,
-    forIteratorName = 4,
-    whileIteratorName = 5,
-    whileOutName = 6,
-    valueName = 7,
-    letName = 8,
-    mainArgName = 9
+    subArgNameType = 1,
+    baseDFNameType = 2,
+    indexedDFNameType = 3,
+    forIteratorNameType = 4,
+    whileIteratorNameType = 5,
+    valueNameType = 6,
+    letNameType = 7,
+    mainArgNameType = 8
 
 };
 
@@ -32,12 +31,13 @@ enum ExpressionType {
     multiplyNode = 3,
     divideNode = 4,
     assignNode = 5,
-    noneNode = 6, //temp TODO
-    identifierNode = 7,
-    stringNode = 8,
-    intNode = 9,
-    realNode = 10,
-    castNode = 11
+    identifierNode = 6,
+    stringNode = 7,
+    intNode = 8,
+    realNode = 9,
+    castNode = 10,
+    greaterNode = 11, // >
+    lesserNode = 12 // <
     //TODO add more
 
 };

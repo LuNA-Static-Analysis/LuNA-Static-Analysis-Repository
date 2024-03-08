@@ -139,12 +139,13 @@ void Vertex::printCallStack(){
 
 
 CFVertex::CFVertex(int depth, int number, int line,
-    std::string name, VertexType vertexType, Vertex* parent){
+    std::string name, VertexType vertexType, Vertex* parent, std::vector<Identifier*> argNames){
 
     this->depth = depth;
     this->number = number;
     this->line = line;
     this->parent = parent;
+    this->argNames = argNames;
 
     this->name = name;
     this->vertexType = vertexType; // import or sub
@@ -219,7 +220,7 @@ void CFVertex::printInfo() {
 }
 
 ForVertex::ForVertex(int depth, int number, int line,
-    ForIteratorName* iterator, expr* leftBorder, expr* rightBorder,
+    ForIteratorName* iterator, Expression* leftBorder, Expression* rightBorder,
     Vertex* parent){
 
     this->vertexType = forVF;
@@ -238,11 +239,11 @@ ForIteratorName* ForVertex::getIterator(){
     return iterator;
 }
 
-expr* ForVertex::getLeftBorder(){
+Expression* ForVertex::getLeftBorder(){
     return leftBorder;
 }
 
-expr* ForVertex::getRightBorder(){
+Expression* ForVertex::getRightBorder(){
     return rightBorder;
 }
 
@@ -256,8 +257,8 @@ void ForVertex::printInfo(){
     std::cout << "Vertex depth: " << this->getDepth() << std::endl;
 
     std::cout << "Iterator: " + this->getIterator()->getName() << std::endl;
-    std::cout << "Left border: " + this->getLeftBorder()->to_string() << std::endl;
-    std::cout << "Right border: " + this->getRightBorder()->to_string() << std::endl;
+    std::cout << "Left border: " + this->getLeftBorder()->getExpr()->to_string() << std::endl;
+    std::cout << "Right border: " + this->getRightBorder()->getExpr()->to_string() << std::endl;
 
     std::cout << "Declared outside DFs:";
     for (auto i: this->getDeclaredOutsideIdsMap()){
@@ -304,7 +305,7 @@ void ForVertex::printInfo(){
 }
 
 WhileVertex::WhileVertex(int depth, int number, int line,
-    WhileIteratorName* iterator, IndexedDFName* outName, expr* conditionExpr, expr* startExpr,
+    WhileIteratorName* iterator, Identifier* outName, Expression* conditionExpr, Expression* startExpr,
     Vertex* parent){
 
     this->vertexType = whileVF;
@@ -324,15 +325,15 @@ WhileIteratorName* WhileVertex::getIterator(){
     return this->iterator;
 }
 
-IndexedDFName* WhileVertex::getOutName(){
+Identifier* WhileVertex::getOutName(){
     return this->outName;
 }
 
-expr* WhileVertex::getConditionExpr(){
+Expression* WhileVertex::getConditionExpr(){
     return this->conditionExpr;
 }
 
-expr* WhileVertex::getStartExpr(){
+Expression* WhileVertex::getStartExpr(){
     return this->startExpr;
 }
 
@@ -346,8 +347,8 @@ void WhileVertex::printInfo(){
 
     std::cout << "Iterator: " + this->getIterator()->getName() << std::endl;
     std::cout << "Out name: " + this->getOutName()->getName() << std::endl;
-    std::cout << "Condition expression: " + this->getConditionExpr()->to_string() << std::endl;
-    std::cout << "Start expression: " + this->getStartExpr()->to_string() << std::endl;
+    std::cout << "Condition expression: " + this->getConditionExpr()->getExpr()->to_string() << std::endl;
+    std::cout << "Start expression: " + this->getStartExpr()->getExpr()->to_string() << std::endl;
 
     std::cout << "Declared outside DFs:";
     for (auto i: this->getDeclaredOutsideIdsMap()){
@@ -393,7 +394,7 @@ void WhileVertex::printInfo(){
 }
 
 IfVertex::IfVertex(int depth, int number, int line,
-    expr* conditionExpr,
+    Expression* conditionExpr,
     Vertex* parent){
 
     this->vertexType = ifVF;
@@ -406,7 +407,7 @@ IfVertex::IfVertex(int depth, int number, int line,
     this->conditionExpr = conditionExpr;
 }
 
-expr* IfVertex::getConditionExpr(){
+Expression* IfVertex::getConditionExpr(){
     return this->conditionExpr;
 }
 
@@ -418,7 +419,7 @@ void IfVertex::printInfo(){
     std::cout << "Vertex line: " << this->getLine() << std::endl;
     std::cout << "Vertex depth: " << this->getDepth() << std::endl;
 
-    std::cout << "Condition expression: " + this->getConditionExpr()->to_string() << std::endl;
+    std::cout << "Condition expression: " + this->getConditionExpr()->getExpr()->to_string() << std::endl;
 
     std::cout << "Declared outside DFs:";
     for (auto i: this->getDeclaredOutsideIdsMap()){
@@ -491,7 +492,7 @@ void LetVertex::printInfo(){
 
     std::cout << "Assigned expressions and their names: " << std::endl;
     for (auto assignment: *(this->getLetNamesVector())){
-        std::cout << assignment->getName() << " = " << assignment->getAssignedExpr()->to_string() << std::endl;
+        std::cout << assignment->getName() << " = " << assignment->getReference()->getExpr()->to_string() << std::endl;
     }
 
     std::cout << "Declared outside DFs:";

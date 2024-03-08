@@ -41,11 +41,12 @@ public:
     //todo improve readability
 
     // pure ( = 0) virtual method, i.e. it must be initialized in every derived class so they are not abstract
-    virtual std::set<std::pair<Identifier*, int>> getRoots() = 0;
+    //TODO this might be redundant, as we have markUse and markDef now
+    //virtual std::set<std::pair<Identifier*, int>> getRoots() = 0;
 
-    virtual void markAsUse(Vertex* currentVertex) = 0;
+    virtual std::vector<std::string> markAsUse(Vertex* currentVertex, int size) = 0;
 
-    virtual void markAsDef(Vertex* currentVertex) = 0;
+    virtual std::vector<std::string> markAsDef(Vertex* currentVertex, int size) = 0;
 
     Identifier();
 
@@ -57,28 +58,20 @@ class SubArgName: public Identifier {
 
 private:
 
-    std::set<Identifier*> nameReferenceSet;
-    // has some names
-    // if only one name, then might be be initialized or could be used
-    // else only used
-    // TODO redo to use Expression
+    // reference is an expression that is used as a call arg mapped to current name inside a sub
     Expression* reference;
 
 public:
 
-    std::set<Identifier*> getNameReferenceSet();
-
-    Expression getReference();
-
-    std::set<std::pair<Identifier*, int>> getRoots();
+    Expression* getReference();
 
     int getLine();
 
-    void markAsUse(Vertex* currentVertex);
+    std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
 
-    void markAsDef(Vertex* currentVertex);
+    std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
 
-    SubArgName(std::string name, std::set<Identifier*> nameReferenceSet, int line);
+    SubArgName(std::string name, Expression* reference, int line);
 
     ~SubArgName();
 
@@ -97,22 +90,13 @@ private:
 
 public:
 
-    //todo check is this method allows duplicates
-    //todo use markAsUse
-    void addUse(int size, Vertex* vertex);
-    //todo use markAsDef
-    //todo check is this method allows duplicates
-    void addDef(int size, Vertex* vertex);
-
     std::map<int, std::pair<std::vector<Vertex*>*, std::vector<Vertex*>*>> getMap();
-
-    std::set<std::pair<Identifier*, int>> getRoots();
 
     int getLine();
 
-    void markAsUse(Vertex* currentVertex);
+    std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
 
-    void markAsDef(Vertex* currentVertex);
+    std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
 
     BaseDFName(std::string name, int line);
 
@@ -130,7 +114,7 @@ private:
     Identifier* base;
 
     // this array shows, at what positions (inside "[]") are what expressions (in "ast.hpp" terms)
-    // in this indexed DF
+    // in this indexed DF (starting from 0)
     // if expressionsVector is empty, then it is a simple DF with no indices
     std::vector<Expression*> expressionsVector;
 
@@ -140,13 +124,11 @@ public:
 
     std::vector<Expression*> getExpressionsVector();
 
-    std::set<std::pair<Identifier*, int>> getRoots();
-
     int getLine();
 
-    void markAsUse(Vertex* currentVertex);
+    std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
 
-    void markAsDef(Vertex* currentVertex);
+    std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
 
     IndexedDFName(std::string name, Identifier* base, std::vector<Expression*> expressionsVector, int line);
 
@@ -159,24 +141,22 @@ class ForIteratorName: public Identifier {
 private:
 
     Vertex* forVertex;
-    expr* leftBorder;
-    expr* rightBorder;
 
 public:
 
-    std::set<std::pair<Identifier*, int>> getRoots();
-
     int getLine();
 
-    expr* getLeftBorder();
+    Expression* getLeftBorder();
 
-    expr* getRightBorder();
+    Expression* getRightBorder();
 
-    void markAsUse(Vertex* currentVertex);
+    void setVertex(Vertex* currentVertex);
 
-    void markAsDef(Vertex* currentVertex);
+    std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
 
-    ForIteratorName(std::string name, expr* leftBorder, expr* rightBorder);
+    std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
+
+    ForIteratorName(std::string name);
 
     ~ForIteratorName();
 
@@ -187,24 +167,22 @@ class WhileIteratorName: public Identifier {
 private:
 
     Vertex* whileVertex;
-    expr* conditionExpr;
-    expr* startExpr;
 
 public:
 
-    expr* getConditionExpr();
+    Expression* getConditionExpr();
 
-    expr* getStartExpr();
-
-    std::set<std::pair<Identifier*, int>> getRoots();
+    Expression* getStartExpr();
 
     int getLine();
 
-    void markAsUse(Vertex* currentVertex);
+    void setVertex(Vertex* currentVertex);
 
-    void markAsDef(Vertex* currentVertex);
+    std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
 
-    WhileIteratorName(std::string name, expr* conditionExpr, expr* startExpr);
+    std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
+
+    WhileIteratorName(std::string name);
 
     ~WhileIteratorName();
 
@@ -217,38 +195,35 @@ private:
 
 public:
 
+    int getLine();
+
     //std::set<std::pair<Identifier*, int>> getRoots();
 
 };
 
+//todo what first -- vertex or letname???
 class LetName: public Identifier {
 
 private:
 
     Vertex* letVertex;
-    expr* assignedExpr;
 
-    std::set<Identifier*> nameReferenceSet;
-    // has some names
-    // if only one name, then might be be initialized or could be used
-    // else only used
-    // TODO redo to use Expression
+    // reference shows, which expression this name was assigned
+    Expression* reference;
 
 public:
 
+    Expression* getReference();
+
     int getLine();
 
-    expr* getAssignedExpr();
+    void setVertex(Vertex* currentVertex);
 
-    std::set<Identifier*> getNameReferenceSet();
+    std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
 
-    std::set<std::pair<Identifier*, int>> getRoots();
+    std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
 
-    void markAsUse(Vertex* currentVertex);
-
-    void markAsDef(Vertex* currentVertex);
-
-    LetName(std::string name, expr* assignedExpression, std::set<Identifier*> nameReferenceSet);
+    LetName(std::string name, Expression* assignedExpression);
 
     ~LetName();
 
@@ -256,15 +231,19 @@ public:
 
 class MainArgName: public Identifier {
 
-public:
+private:
 
-    std::set<std::pair<Identifier*, int>> getRoots();
+    Vertex* mainVertex;
+
+public:
 
     int getLine();
 
-    void markAsUse(Vertex* currentVertex);
+    void setVertex(Vertex* currentVertex);
 
-    void markAsDef(Vertex* currentVertex);
+    std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
+
+    std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
 
     MainArgName(std::string name);
 
@@ -272,5 +251,7 @@ public:
 
 };
 
+// it is used inside Expression constructor when engaging indexed name
+// todo check if it works
 IndexedDFName* parseIndexedDFExpression(expr* expression, std::map<std::string, Identifier*> nameTable, int line,
             std::vector<std::string>* errorReports);

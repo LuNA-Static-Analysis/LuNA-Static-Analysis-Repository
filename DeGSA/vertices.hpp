@@ -119,13 +119,16 @@ class CFVertex: public Vertex {
     private:
 
         std::string name; // name of an import/sub
+        std::vector<Identifier*> argNames; // vector of SubArgNames/MainArgNames
 
     public:
 
         CFVertex(int depth, int number, int line,
-            std::string name, VertexType vertexType, Vertex* parent);
+            std::string name, VertexType vertexType, Vertex* parent, std::vector<Identifier*> argNames);
 
         std::string getName();
+
+        //todo getters
 
         void printInfo();
 
@@ -136,19 +139,19 @@ class ForVertex: public Vertex {
     private:
 
         ForIteratorName* iterator;
-        expr* leftBorder;
-        expr* rightBorder;
+        Expression* leftBorder;
+        Expression* rightBorder;
 
     public:
 
         ForVertex(int depth, int number, int line,
-            ForIteratorName* iterator, expr* leftBorder, expr* rightBorder, Vertex* parent);
+            ForIteratorName* iterator, Expression* leftBorder, Expression* rightBorder, Vertex* parent);
 
         ForIteratorName* getIterator();
 
-        expr* getLeftBorder();
+        Expression* getLeftBorder();
 
-        expr* getRightBorder();
+        Expression* getRightBorder();
 
         void printInfo();
 };
@@ -158,23 +161,23 @@ class WhileVertex: public Vertex {
     private:
 
         WhileIteratorName* iterator;
-        IndexedDFName* outName;
-        expr* conditionExpr;
-        expr* startExpr;
+        Identifier* outName;
+        Expression* conditionExpr;
+        Expression* startExpr;
 
     public:
 
         WhileVertex(int depth, int number, int line,
-            WhileIteratorName* iterator, IndexedDFName* outName, expr* conditionExpr, expr* startExpr,
+            WhileIteratorName* iterator, Identifier* outName, Expression* conditionExpr, Expression* startExpr,
             Vertex* parent);
 
         WhileIteratorName* getIterator();
 
-        IndexedDFName* getOutName();
+        Identifier* getOutName();
 
-        expr* getConditionExpr();
+        Expression* getConditionExpr();
 
-        expr* getStartExpr();
+        Expression* getStartExpr();
 
         void printInfo();
 
@@ -184,15 +187,15 @@ class IfVertex: public Vertex {
 
     private:
 
-        expr* conditionExpr;
+        Expression* conditionExpr;
 
     public:
 
         IfVertex(int depth, int number, int line,
-            expr* conditionExpr,
+            Expression* conditionExpr,
             Vertex* parent);
 
-        expr* getConditionExpr();
+        Expression* getConditionExpr();
 
         void printInfo();
 

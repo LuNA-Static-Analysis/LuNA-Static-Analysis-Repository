@@ -4,3 +4,4 @@ parser/__pycache__
 DeGSA/source.fa
 DeGSA/ucodes.cpp
 DeGSA/grammar.tab.hpp
+ASTWalker
