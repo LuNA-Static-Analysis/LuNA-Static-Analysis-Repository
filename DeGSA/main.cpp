@@ -19,17 +19,19 @@ ast* ast_ = new ast();
 
 int main(int argc, char** argv) {
 
+    std::ofstream outputFile("output.txt");
+
     auto astBuildStart = std::chrono::steady_clock::now();
 
     if (argc != 2) {
-        std::cerr << "Bad number of args. Usage: ./a.out [LuNA program]" << std::endl;
+        std::cout << "INTERNAL ERROR: Bad number of args. Usage: ./a.out [LuNA program]" << std::endl;
         return EXIT_ERROR;
     }
 
     yyin = fopen(argv[1], "r");
 
     if (!yyin) {
-        std::cerr << "Couldn't open the file" << std::endl;
+        std::cout << "INTERNAL ERROR: couldn't open the file" << std::endl;
         return EXIT_ERROR;
     }
 
@@ -38,11 +40,13 @@ int main(int argc, char** argv) {
     auto astBuildEnd = std::chrono::steady_clock::now();
     auto astBuildTotal = std::chrono::duration_cast<ns>(astBuildEnd - astBuildStart).count();
 
-    DDG ddg(ast_);
-    std::cout << "\nTime to build AST: " << (double)astBuildTotal / 1000000000 << " seconds" << std::endl;
-    std::cout << std::flush;
+    // &std::cout for console output
+    DDG ddg(ast_, &outputFile);
+    outputFile << "\nTime to build AST: " << (double)astBuildTotal / 1000000000 << " seconds" << std::endl;
 
     delete ast_;
     fclose(yyin);
+    outputFile.close();
+
     return EXIT_SUCCESS;
 }

@@ -75,6 +75,8 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
             case '/': this->type = divideNode; break;
             case '>': this->type = greaterNode; break;
             case '<': this->type = lesserNode; break;
+            case '=': if (op.size() > 1 && op[1] == '=') {this->type = equalNode; break;}
+            case '!': if (op.size() > 1 && op[1] == '=') {this->type = nonEqualNode; break;}
             default: std::cout << "INTERNAL ERROR: UNKNOWN OPERATION IN EXPRESSION CONSTRUCTOR AT LINE " << ASTexpr->line_ << ": " << op[0] << std::endl;
                 this->type = addNode; //todo temporary
         }
@@ -199,6 +201,16 @@ std::vector<std::string> Expression::markAsUse(Vertex* currentVertex, int size){
             return reports;
 
         case lesserNode:
+            for (auto r: leftExpr->markAsUse(currentVertex, size)) reports.push_back(r);
+            for (auto r: rightExpr->markAsUse(currentVertex, size)) reports.push_back(r);
+            return reports;
+
+        case equalNode:
+            for (auto r: leftExpr->markAsUse(currentVertex, size)) reports.push_back(r);
+            for (auto r: rightExpr->markAsUse(currentVertex, size)) reports.push_back(r);
+            return reports;
+
+        case nonEqualNode:
             for (auto r: leftExpr->markAsUse(currentVertex, size)) reports.push_back(r);
             for (auto r: rightExpr->markAsUse(currentVertex, size)) reports.push_back(r);
             return reports;

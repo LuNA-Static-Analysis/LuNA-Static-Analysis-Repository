@@ -1,24 +1,30 @@
 import printfl(real) as print;
 import c_init_float(real, name) as init;
-sub main(){
+sub main(real mainArg){
         df a;
+        print(mainArg);
         foo(a);
 }
 
 sub foo(real f){
-        while (128 < 129), i = 0 .. out N {
-                if 1 < 2 {
-                        let x = f[i]{
-                                init(1, x);
-                                print(x);
-                                init(1, x[i]);
-                                print(x[i]);
+        df one;
+        for i = 1..2 {
+                df two;
+                while (128 < 129), j = 0 .. out f {
+                        df three;
+                        if 11 < 22 {
+                                df four;
+                                let x = f[j] {
+                                        df five;
+                                        init(1, x);
+                                        print(x);
+                                        init(1, x[i]);
+                                        print(x[i]);
+                                }
                         }
                 }
         }
-}
-
-
+}//todo init use/def sets of vertices
 ====
 
 import c_init_float(real, name) as init;

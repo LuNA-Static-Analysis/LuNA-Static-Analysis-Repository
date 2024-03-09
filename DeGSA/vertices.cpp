@@ -124,19 +124,14 @@ void Vertex::setDeclaredBothIdsMap(std::map<std::string, Identifier*> declaredBo
     this->declaredBothIdsMap = declaredBothIdsMap;
 }
 
-void Vertex::printInfo(){ // virtual?
-    std::cout << "printInfo() placeholder" << std::endl;
-}
-
-void Vertex::printCallStack(){
-    std::cout << "Address: " << this;
-    std::cout << "; type: " << this->getVertexType();
-    std::cout << "; line: " << this->getLine() << std::endl;
+void Vertex::printCallStack(std::ostream* outputTarget){
+    *outputTarget << "Address: " << this;
+    *outputTarget << "; type: " << this->getVertexType();
+    *outputTarget << "; line: " << this->getLine() << std::endl;
     if (this->getParent() != nullptr){
-        this->getParent()->printCallStack();
+        this->getParent()->printCallStack(outputTarget);
     }
 }
-
 
 CFVertex::CFVertex(int depth, int number, int line,
     std::string name, VertexType vertexType, Vertex* parent, std::vector<Identifier*> argNames){
@@ -155,67 +150,67 @@ std::string CFVertex::getName(){
     return name;
 }
 
-void CFVertex::printInfo() {
+void CFVertex::printInfo(std::ostream* outputTarget) {
 
-    std::cout << "Vertex number: " << this->getNumber() << std::endl;
-    std::cout << "Vertex address: " << this << std::endl;
-    std::cout << "Vertex type: ";
-    std::cout << this->getVertexType() << " ";
+    *outputTarget << "Vertex number: " << this->getNumber() << std::endl;
+    *outputTarget << "Vertex address: " << this << std::endl;
+    *outputTarget << "Vertex type: ";
+    *outputTarget << this->getVertexType() << " ";
     switch (this->getVertexType()){
         case importVF:
-            std::cout << "(atomic CF); name: " << this->getName() << std::endl;
+            *outputTarget << "(atomic CF); name: " << this->getName() << std::endl;
             break;
         case subVF:
-            std::cout << "(structured CF);  name: " << this->getName() << std::endl;
+            *outputTarget << "(structured CF);  name: " << this->getName() << std::endl;
             break;
         default:
-            std::cout << "(unknown)" << std::endl;
+            *outputTarget << "(unknown)" << std::endl;
             break;
     }
-    std::cout << "Vertex line: " << this->getLine() << std::endl;
-    std::cout << "Vertex depth: " << this->getDepth() << std::endl;
+    *outputTarget << "Vertex line: " << this->getLine() << std::endl;
+    *outputTarget << "Vertex depth: " << this->getDepth() << std::endl;
 
-    std::cout << "Declared outside DFs:";
-    for (auto i: this->getDeclaredOutsideIdsMap()){//TODO
-        std::cout << " " << i.first;
+    *outputTarget << "Declared outside DFs:";
+    for (auto i: this->getDeclaredOutsideIdsMap()){
+        *outputTarget << " " << i.first;
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Declared inside DFs:";
-    for (auto i: this->getDeclaredInsideIdsMap()){//TODO
-        std::cout << " " << i.first;
+    *outputTarget << "Declared inside DFs:";
+    for (auto i: this->getDeclaredInsideIdsMap()){
+        *outputTarget << " " << i.first;
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Use DFs:";
-    for (Identifier* i: this->getUseSet()){//TODO
-        std::cout << " " << i;
+    *outputTarget << "Use DFs:";
+    for (Identifier* i: this->getUseSet()){
+        *outputTarget << " " << i;
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Def DFs:";
-    for (Identifier* i: this->getDefSet()){//TODO
-        std::cout << " " << i;
+    *outputTarget << "Def DFs:";
+    for (Identifier* i: this->getDefSet()){
+        *outputTarget << " " << i;
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Vertices inside:";
+    *outputTarget << "Vertices inside:";
     for (Vertex* v: this->getInsideSet()){
-        std::cout << " " << v;
+        *outputTarget << " " << v;
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Vertices before (\"in\"):";
+    *outputTarget << "Vertices before (\"in\"):";
     for (auto b: this->getInSet()){
-        std::cout << " " << b.getPointerTo() << " [" << b.getPointerTo()->getNumber() << "] (" << b.getId() << ")";
+        *outputTarget << " " << b.getPointerTo() << " [" << b.getPointerTo()->getNumber() << "] (" << b.getId() << ")";
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Vertices after (\"out\"):";
+    *outputTarget << "Vertices after (\"out\"):";
     for (auto b: this->getOutSet()){
-        std::cout << " " << b.getPointerTo() << " [" << b.getPointerTo()->getNumber() << "] (" << b.getId() << ")";
+        *outputTarget << " " << b.getPointerTo() << " [" << b.getPointerTo()->getNumber() << "] (" << b.getId() << ")";
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
 }
 
@@ -247,60 +242,60 @@ Expression* ForVertex::getRightBorder(){
     return rightBorder;
 }
 
-void ForVertex::printInfo(){
+void ForVertex::printInfo(std::ostream* outputTarget){
 
-    std::cout << "Vertex number: " << this->getNumber() << std::endl;
-    std::cout << "Vertex address: " << this << std::endl;
-    std::cout << "Vertex type: ";
-    std::cout << this->getVertexType() << " " << "(for)" << std::endl;
-    std::cout << "Vertex line: " << this->getLine() << std::endl;
-    std::cout << "Vertex depth: " << this->getDepth() << std::endl;
+    *outputTarget << "Vertex number: " << this->getNumber() << std::endl;
+    *outputTarget << "Vertex address: " << this << std::endl;
+    *outputTarget << "Vertex type: ";
+    *outputTarget << this->getVertexType() << " " << "(for)" << std::endl;
+    *outputTarget << "Vertex line: " << this->getLine() << std::endl;
+    *outputTarget << "Vertex depth: " << this->getDepth() << std::endl;
 
-    std::cout << "Iterator: " + this->getIterator()->getName() << std::endl;
-    std::cout << "Left border: " + this->getLeftBorder()->getExpr()->to_string() << std::endl;
-    std::cout << "Right border: " + this->getRightBorder()->getExpr()->to_string() << std::endl;
+    *outputTarget << "Iterator: " + this->getIterator()->getName() << std::endl;
+    *outputTarget << "Left border: " + this->getLeftBorder()->getExpr()->to_string() << std::endl;
+    *outputTarget << "Right border: " + this->getRightBorder()->getExpr()->to_string() << std::endl;
 
-    std::cout << "Declared outside DFs:";
+    *outputTarget << "Declared outside DFs:";
     for (auto i: this->getDeclaredOutsideIdsMap()){
-        std::cout << " " << i.first;
+        *outputTarget << " " << i.first;
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Declared inside DFs:";
+    *outputTarget << "Declared inside DFs:";
     for (auto i: this->getDeclaredInsideIdsMap()){
-        std::cout << " " << i.first;
+        *outputTarget << " " << i.first;
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Use DFs:";
+    *outputTarget << "Use DFs:";
     for (Identifier* i: this->getUseSet()){
-        std::cout << " " << i;
+        *outputTarget << " " << i;
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Def DFs:";
+    *outputTarget << "Def DFs:";
     for (Identifier* i: this->getDefSet()){
-        std::cout << " " << i;
+        *outputTarget << " " << i;
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Vertices inside:";
+    *outputTarget << "Vertices inside:";
     for (auto i: this->getInsideSet()){
-        std::cout << " " << i;
+        *outputTarget << " " << i;
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Vertices before (\"in\"):";
+    *outputTarget << "Vertices before (\"in\"):";
     for (auto b: this->getInSet()){
-        std::cout << " " << b.getPointerTo() << " [" << b.getPointerTo()->getNumber() << "] (" << b.getId() << ")";
+        *outputTarget << " " << b.getPointerTo() << " [" << b.getPointerTo()->getNumber() << "] (" << b.getId() << ")";
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Vertices after (\"out\"):";
+    *outputTarget << "Vertices after (\"out\"):";
     for (auto b: this->getOutSet()){
-        std::cout << " " << b.getPointerTo() << " [" << b.getPointerTo()->getNumber() << "] (" << b.getId() << ")";
+        *outputTarget << " " << b.getPointerTo() << " [" << b.getPointerTo()->getNumber() << "] (" << b.getId() << ")";
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
 }
 
@@ -337,60 +332,60 @@ Expression* WhileVertex::getStartExpr(){
     return this->startExpr;
 }
 
-void WhileVertex::printInfo(){
-    std::cout << "Vertex number: " << this->getNumber() << std::endl;
-    std::cout << "Vertex address: " << this << std::endl;
-    std::cout << "Vertex type: ";
-    std::cout << this->getVertexType() << " " << "(while)" << std::endl;
-    std::cout << "Vertex line: " << this->getLine() << std::endl;
-    std::cout << "Vertex depth: " << this->getDepth() << std::endl;
+void WhileVertex::printInfo(std::ostream* outputTarget){
+    *outputTarget << "Vertex number: " << this->getNumber() << std::endl;
+    *outputTarget << "Vertex address: " << this << std::endl;
+    *outputTarget << "Vertex type: ";
+    *outputTarget << this->getVertexType() << " " << "(while)" << std::endl;
+    *outputTarget << "Vertex line: " << this->getLine() << std::endl;
+    *outputTarget << "Vertex depth: " << this->getDepth() << std::endl;
 
-    std::cout << "Iterator: " + this->getIterator()->getName() << std::endl;
-    std::cout << "Out name: " + this->getOutName()->getName() << std::endl;
-    std::cout << "Condition expression: " + this->getConditionExpr()->getExpr()->to_string() << std::endl;
-    std::cout << "Start expression: " + this->getStartExpr()->getExpr()->to_string() << std::endl;
+    *outputTarget << "Iterator: " + this->getIterator()->getName() << std::endl;
+    *outputTarget << "Out name: " + this->getOutName()->getName() << std::endl;
+    *outputTarget << "Condition expression: " + this->getConditionExpr()->getExpr()->to_string() << std::endl;
+    *outputTarget << "Start expression: " + this->getStartExpr()->getExpr()->to_string() << std::endl;
 
-    std::cout << "Declared outside DFs:";
+    *outputTarget << "Declared outside DFs:";
     for (auto i: this->getDeclaredOutsideIdsMap()){
-        std::cout << " " << i.first;
+        *outputTarget << " " << i.first;
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Declared inside DFs:";
+    *outputTarget << "Declared inside DFs:";
     for (auto i: this->getDeclaredInsideIdsMap()){
-        std::cout << " " << i.first;
+        *outputTarget << " " << i.first;
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Use DFs:";
+    *outputTarget << "Use DFs:";
     for (Identifier* i: this->getUseSet()){
-        std::cout << " " << i;
+        *outputTarget << " " << i;
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Def DFs:";
+    *outputTarget << "Def DFs:";
     for (Identifier* i: this->getDefSet()){
-        std::cout << " " << i;
+        *outputTarget << " " << i;
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Vertices inside:";
+    *outputTarget << "Vertices inside:";
     for (auto i: this->getInsideSet()){
-        std::cout << " " << i;
+        *outputTarget << " " << i;
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Vertices before (\"in\"):";
+    *outputTarget << "Vertices before (\"in\"):";
     for (auto b: this->getInSet()){
-        std::cout << " " << b.getPointerTo() << " [" << b.getPointerTo()->getNumber() << "] (" << b.getId() << ")";
+        *outputTarget << " " << b.getPointerTo() << " [" << b.getPointerTo()->getNumber() << "] (" << b.getId() << ")";
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Vertices after (\"out\"):";
+    *outputTarget << "Vertices after (\"out\"):";
     for (auto b: this->getOutSet()){
-        std::cout << " " << b.getPointerTo() << " [" << b.getPointerTo()->getNumber() << "] (" << b.getId() << ")";
+        *outputTarget << " " << b.getPointerTo() << " [" << b.getPointerTo()->getNumber() << "] (" << b.getId() << ")";
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 }
 
 IfVertex::IfVertex(int depth, int number, int line,
@@ -411,57 +406,57 @@ Expression* IfVertex::getConditionExpr(){
     return this->conditionExpr;
 }
 
-void IfVertex::printInfo(){
-    std::cout << "Vertex number: " << this->getNumber() << std::endl;
-    std::cout << "Vertex address: " << this << std::endl;
-    std::cout << "Vertex type: ";
-    std::cout << this->getVertexType() << " " << "(if)" << std::endl;
-    std::cout << "Vertex line: " << this->getLine() << std::endl;
-    std::cout << "Vertex depth: " << this->getDepth() << std::endl;
+void IfVertex::printInfo(std::ostream* outputTarget){
+    *outputTarget << "Vertex number: " << this->getNumber() << std::endl;
+    *outputTarget << "Vertex address: " << this << std::endl;
+    *outputTarget << "Vertex type: ";
+    *outputTarget << this->getVertexType() << " " << "(if)" << std::endl;
+    *outputTarget << "Vertex line: " << this->getLine() << std::endl;
+    *outputTarget << "Vertex depth: " << this->getDepth() << std::endl;
 
-    std::cout << "Condition expression: " + this->getConditionExpr()->getExpr()->to_string() << std::endl;
+    *outputTarget << "Condition expression: " + this->getConditionExpr()->getExpr()->to_string() << std::endl;
 
-    std::cout << "Declared outside DFs:";
+    *outputTarget << "Declared outside DFs:";
     for (auto i: this->getDeclaredOutsideIdsMap()){
-        std::cout << " " << i.first;
+        *outputTarget << " " << i.first;
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Declared inside DFs:";
+    *outputTarget << "Declared inside DFs:";
     for (auto i: this->getDeclaredInsideIdsMap()){
-        std::cout << " " << i.first;
+        *outputTarget << " " << i.first;
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Use DFs:";
+    *outputTarget << "Use DFs:";
     for (Identifier* i: this->getUseSet()){
-        std::cout << " " << i;
+        *outputTarget << " " << i;
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Def DFs:";
+    *outputTarget << "Def DFs:";
     for (Identifier* i: this->getDefSet()){
-        std::cout << " " << i;
+        *outputTarget << " " << i;
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Vertices inside:";
+    *outputTarget << "Vertices inside:";
     for (auto i: this->getInsideSet()){
-        std::cout << " " << i;
+        *outputTarget << " " << i;
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Vertices before (\"in\"):";
+    *outputTarget << "Vertices before (\"in\"):";
     for (auto b: this->getInSet()){
-        std::cout << " " << b.getPointerTo() << " [" << b.getPointerTo()->getNumber() << "] (" << b.getId() << ")";
+        *outputTarget << " " << b.getPointerTo() << " [" << b.getPointerTo()->getNumber() << "] (" << b.getId() << ")";
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Vertices after (\"out\"):";
+    *outputTarget << "Vertices after (\"out\"):";
     for (auto b: this->getOutSet()){
-        std::cout << " " << b.getPointerTo() << " [" << b.getPointerTo()->getNumber() << "] (" << b.getId() << ")";
+        *outputTarget << " " << b.getPointerTo() << " [" << b.getPointerTo()->getNumber() << "] (" << b.getId() << ")";
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 }
 
 LetVertex::LetVertex(int depth, int number, int line,
@@ -482,58 +477,58 @@ std::vector<LetName*>* LetVertex::getLetNamesVector(){
     return this->letNamesVector;
 }
 
-void LetVertex::printInfo(){
-    std::cout << "Vertex number: " << this->getNumber() << std::endl;
-    std::cout << "Vertex address: " << this << std::endl;
-    std::cout << "Vertex type: ";
-    std::cout << this->getVertexType() << " " << "(let)" << std::endl;
-    std::cout << "Vertex line: " << this->getLine() << std::endl;
-    std::cout << "Vertex depth: " << this->getDepth() << std::endl;
+void LetVertex::printInfo(std::ostream* outputTarget){
+    *outputTarget << "Vertex number: " << this->getNumber() << std::endl;
+    *outputTarget << "Vertex address: " << this << std::endl;
+    *outputTarget << "Vertex type: ";
+    *outputTarget << this->getVertexType() << " " << "(let)" << std::endl;
+    *outputTarget << "Vertex line: " << this->getLine() << std::endl;
+    *outputTarget << "Vertex depth: " << this->getDepth() << std::endl;
 
-    std::cout << "Assigned expressions and their names: " << std::endl;
+    *outputTarget << "Assigned expressions and their names: " << std::endl;
     for (auto assignment: *(this->getLetNamesVector())){
-        std::cout << assignment->getName() << " = " << assignment->getReference()->getExpr()->to_string() << std::endl;
+        *outputTarget << assignment->getName() << " = " << assignment->getReference()->getExpr()->to_string() << std::endl;
     }
 
-    std::cout << "Declared outside DFs:";
+    *outputTarget << "Declared outside DFs:";
     for (auto i: this->getDeclaredOutsideIdsMap()){
-        std::cout << " " << i.first;
+        *outputTarget << " " << i.first;
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Declared inside DFs:";
+    *outputTarget << "Declared inside DFs:";
     for (auto i: this->getDeclaredInsideIdsMap()){
-        std::cout << " " << i.first;
+        *outputTarget << " " << i.first;
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Use DFs:";
+    *outputTarget << "Use DFs:";
     for (Identifier* i: this->getUseSet()){
-        std::cout << " " << i;
+        *outputTarget << " " << i;
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Def DFs:";
+    *outputTarget << "Def DFs:";
     for (Identifier* i: this->getDefSet()){
-        std::cout << " " << i;
+        *outputTarget << " " << i;
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Vertices inside:";
+    *outputTarget << "Vertices inside:";
     for (auto i: this->getInsideSet()){
-        std::cout << " " << i;
+        *outputTarget << " " << i;
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Vertices before (\"in\"):";
+    *outputTarget << "Vertices before (\"in\"):";
     for (auto b: this->getInSet()){
-        std::cout << " " << b.getPointerTo() << " [" << b.getPointerTo()->getNumber() << "] (" << b.getId() << ")";
+        *outputTarget << " " << b.getPointerTo() << " [" << b.getPointerTo()->getNumber() << "] (" << b.getId() << ")";
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 
-    std::cout << "Vertices after (\"out\"):";
+    *outputTarget << "Vertices after (\"out\"):";
     for (auto b: this->getOutSet()){
-        std::cout << " " << b.getPointerTo() << " [" << b.getPointerTo()->getNumber() << "] (" << b.getId() << ")";
+        *outputTarget << " " << b.getPointerTo() << " [" << b.getPointerTo()->getNumber() << "] (" << b.getId() << ")";
     }
-    std::cout << std::endl;
+    *outputTarget << std::endl;
 }

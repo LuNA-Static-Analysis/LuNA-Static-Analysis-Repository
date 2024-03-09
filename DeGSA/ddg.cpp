@@ -4,6 +4,7 @@
 #include "expr.cpp"
 
 #include <chrono>
+#include <fstream>
 
 using ns = std::chrono::nanoseconds;
 
@@ -475,6 +476,8 @@ class DDG {
                         std::cout << "INTERNAL ERROR: unsuitable expression at while out name leads to nullpointer" << std::endl;
                         errorReports.push_back("ERROR: trying to use non-suitable expression as \"while\" out name\n");
                         whileOutName = nullptr;
+                    } else {
+                        whileOutName->markAsDef(currentVertex, 0);
                     }
 
                     // "while" out name is an IndexedDF that must be marked as "def" TODO also everything inside indices is "used" as well
@@ -563,12 +566,15 @@ class DDG {
         // this function binds vertices to each other
         // currently function initializes "in" and "out" of imports using baseNameSet
         void bindVertices(Vertex* currentVertex){
+            std::cout << "> bindVertices called" << std::endl;
             // go through all basenames and bind imports depending on what info baseNameSet has
             for (BaseDFName* baseName: baseNameSet){
+                std::cout << "checking \"" + baseName->getName() << "\":" << std::endl;
                 std::map<int, std::pair<std::vector<Vertex*>*, std::vector<Vertex*>*>> map = baseName->getMap();
                 for (auto entry: map){
                     for (auto use: *(entry.second.first)){
                         for (auto def: *(entry.second.second)){
+                            //std::cout << "adding to vertex " 
                             use->addIn(def, baseName);
                             def->addOut(use, baseName);
                         }
@@ -654,7 +660,7 @@ class DDG {
 
         }
 
-        DDG(ast* astObjectIn){
+        DDG(ast* astObjectIn, std::ostream* outputTarget){
 
             auto graphBuildStart = std::chrono::steady_clock::now();
             
@@ -698,54 +704,54 @@ class DDG {
                       << " with a type " << (this->vertices).find(1)->second->getVertexType()
                       << " and an address of " << &((this->vertices).find(1)->second) << std::endl;
 
-            // 3. bindVertices vertices to eachother
-            bindVertices(mainVertex);
+            // 3. bind vertices to eachother
+            //bindVertices(mainVertex);//todo
 
             auto graphBuildEnd = std::chrono::steady_clock::now();
 
             auto graphBuildTotal = std::chrono::duration_cast<ns>(graphBuildEnd - graphBuildStart).count();
 
             // printing out information does not count towards time to use and build graph
-            std::cout << "Total vertices: " << vertexCount << std::endl << std::endl; 
+            *outputTarget << "Total vertices: " << vertexCount << std::endl << std::endl; 
             for (int i = 1; i <= vertexCount; i++){
 
                 if (vertices.find(i) == vertices.end()){
                     std::cout << "INTERNAL ERROR: could not find vertex with number ";
                     std::cout << i << std::endl;
                 } else {
-                    vertices.find(i)->second->printInfo();
+                    vertices.find(i)->second->printInfo(outputTarget);
+                    *outputTarget << std::endl;
                 }
-                std::cout << std::endl;
 
             }
 
-            std::cout << "BaseDFNames:" << std::endl;
+            *outputTarget << "BaseDFNames:" << std::endl;
             for (BaseDFName* bn: baseNameSet){
-                std::cout << std::endl;
-                std::cout << "Name: " << bn->getName() << std::endl;
-                std::cout << "Declared at line: " << bn->getLine() << std::endl;
+                *outputTarget << std::endl;
+                *outputTarget << "Name: " << bn->getName() << std::endl;
+                *outputTarget << "Declared at line: " << bn->getLine() << std::endl;
                 auto map = bn->getMap(); // 1 = use, 2 = def
                 for (auto m: map){
-                    std::cout << "Size: " << m.first << std::endl;
+                    *outputTarget << "Size: " << m.first << std::endl;
                     std::pair<std::vector<Vertex*>*, std::vector<Vertex*>*> pair = m.second;
-                    std::cout << "Uses: ";
+                    *outputTarget << "Uses: ";
                     for (auto u: *(pair.first)){
-                        std::cout << u << " ";
+                        *outputTarget << u << " ";
                     }
-                    std::cout << std::endl;
-                    std::cout << "Defs: ";
+                    *outputTarget << std::endl;
+                    *outputTarget << "Defs: ";
                     for (auto d: *(pair.second)){
-                        std::cout << d << " ";
+                        *outputTarget << d << " ";
                     }
-                    std::cout << std::endl;
+                    *outputTarget << std::endl;
                 }
             }
 
-            std::cout << "\n============ Created DDG =============" << std::endl;
+            *outputTarget << "\n============ Created DDG =============" << std::endl;
 
             // 4. search for errors
 
-            std::cout << "\n======== Searching for errors ========" << std::endl;
+            *outputTarget << "\n======== Searching for errors ========" << std::endl;
 
             auto errorsFindStart = std::chrono::steady_clock::now();
 
@@ -756,12 +762,12 @@ class DDG {
 
             // printing out information does not count towards time to find errors
             for (auto r: errorReports){
-                std::cout << r << std::endl;
+                *outputTarget << r << std::endl;
             }
 
-            std::cout << "\nTime to find errors: " << (double)errorsFindTotal / 1000000000 << " seconds" << std::endl;
+            *outputTarget << "\nTime to find errors: " << (double)errorsFindTotal / 1000000000 << " seconds" << std::endl;
 
-            std::cout << "\nTime to build DDG: " << (double)graphBuildTotal / 1000000000 << " seconds" << std::endl;
+            *outputTarget << "\nTime to build DDG: " << (double)graphBuildTotal / 1000000000 << " seconds" << std::endl;
 
         }
 

@@ -108,9 +108,9 @@ class Vertex {
 
         void setDeclaredBothIdsMap(std::map<std::string, Identifier*> declaredBothIdsMap);
 
-        virtual void printInfo();
+        virtual void printInfo(std::ostream* outputTarget) = 0;
 
-        void printCallStack();
+        void printCallStack(std::ostream* outputTarget);
 
 };
 
@@ -130,7 +130,7 @@ class CFVertex: public Vertex {
 
         //todo getters
 
-        void printInfo();
+        void printInfo(std::ostream* outputTarget);
 
 };
 
@@ -153,7 +153,7 @@ class ForVertex: public Vertex {
 
         Expression* getRightBorder();
 
-        void printInfo();
+        void printInfo(std::ostream* outputTarget);
 };
 
 class WhileVertex: public Vertex {
@@ -179,7 +179,7 @@ class WhileVertex: public Vertex {
 
         Expression* getStartExpr();
 
-        void printInfo();
+        void printInfo(std::ostream* outputTarget);
 
 };
 
@@ -197,7 +197,7 @@ class IfVertex: public Vertex {
 
         Expression* getConditionExpr();
 
-        void printInfo();
+        void printInfo(std::ostream* outputTarget);
 
 };
 
@@ -215,6 +215,6 @@ class LetVertex: public Vertex {
 
         std::vector<LetName*>* getLetNamesVector();
 
-        void printInfo();
+        void printInfo(std::ostream* outputTarget);
 
 };

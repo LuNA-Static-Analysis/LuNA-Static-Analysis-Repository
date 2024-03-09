@@ -37,7 +37,9 @@ enum ExpressionType {
     realNode = 9,
     castNode = 10,
     greaterNode = 11, // >
-    lesserNode = 12 // <
+    lesserNode = 12, // <
+    equalNode = 13,
+    nonEqualNode = 14
     //TODO add more
 
 };
