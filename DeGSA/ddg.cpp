@@ -339,9 +339,9 @@ class DDG {
 
                         switch(importAndPositionToUseDef[name][i + 1]){ // i + 1 because map's indices start from 1
                             case use:
-                                callArgs[i]->markAsUse(currentVertex, 0); break;
+                                for (auto r: callArgs[i]->markAsUse(currentVertex, 0)) { errorReports.push_back(r); } break;
                             case def:
-                                callArgs[i]->markAsDef(currentVertex, 0); break;
+                                for (auto r: callArgs[i]->markAsDef(currentVertex, 0)) { errorReports.push_back(r); } break;
                             default:
                                 std::cout << "enterVF -- import: found DF with unexpected UseDef!" << std::endl;
                         }
@@ -435,8 +435,8 @@ class DDG {
                     currentVertex = vertices.find(vertexCount)->second;
                     forIterator->setVertex(currentVertex);
 
-                    leftBorder->markAsUse(currentVertex, 0);
-                    rightBorder->markAsUse(currentVertex, 0);
+                    for (auto r: leftBorder->markAsUse(currentVertex, 0)) { errorReports.push_back(r); }
+                    for (auto r: rightBorder->markAsUse(currentVertex, 0)) { errorReports.push_back(r); }
 
                     return enterBlock(forVF, currentBlock, currentVertex, declaredOutsideIdsMap,
                         currentDepth, {}, {}, "for");
@@ -480,10 +480,10 @@ class DDG {
                     currentVertex = vertices.find(vertexCount)->second;
                     whileIterator->setVertex(currentVertex);
 
-                    conditionExpression->markAsUse(currentVertex, 0);
-                    startExpression->markAsUse(currentVertex, 0);
+                    for (auto r: conditionExpression->markAsUse(currentVertex, 0)) { errorReports.push_back(r); }
+                    for (auto r: startExpression->markAsUse(currentVertex, 0)) { errorReports.push_back(r); }
                     if (whileOutName != nullptr){
-                        whileOutName->markAsDef(currentVertex, 0);
+                        for (auto r: whileOutName->markAsDef(currentVertex, 0)) { errorReports.push_back(r); }
                     }
 
                     return enterBlock(whileVF, currentBlock, currentVertex, declaredOutsideIdsMap,
@@ -501,7 +501,7 @@ class DDG {
                     currentVertex = vertices.find(vertexCount)->second;
 
                     // all identifiers inside "if" expression must be marked as "used"
-                    conditionExpression->markAsUse(currentVertex, 0);
+                    for (auto r: conditionExpression->markAsUse(currentVertex, 0)) { errorReports.push_back(r); }
 
                     return enterBlock(ifVF, currentBlock, currentVertex, declaredOutsideIdsMap,
                         currentDepth, {}, {}, "if");

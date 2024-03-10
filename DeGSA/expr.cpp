@@ -217,7 +217,7 @@ std::vector<std::string> Expression::markAsUse(Vertex* currentVertex, int size){
         
         case assignNode:
             //todo error?
-            std::cout << "WARNING: Expression.markAsUse ended at assignNode \"default\"" << std::endl; break;
+            std::cout << "INTERNAL ERROR (WARNING): Expression.markAsUse ended at assignNode \"default\"" << std::endl; break;
         
         case identifierNode:
             for (auto r: identifier->markAsUse(currentVertex, size)) reports.push_back(r);
@@ -247,39 +247,39 @@ std::vector<std::string> Expression::markAsDef(Vertex* currentVertex, int size){
     switch(type){
 
         case addNode:
-            reports.push_back("ERROR: Expression.markAsDef used to mark binary (+) operation");
+            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark binary (+) operation\n");
             return reports;
         
         case subtractNode:
-            reports.push_back("ERROR: Expression.markAsDef used to mark binary (-) operation");
+            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark binary (-) operation\n");
             return reports;
         
         case multiplyNode:
-            reports.push_back("ERROR: Expression.markAsDef used to mark binary (*) operation");
+            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark binary (*) operation\n");
             return reports;
         
         case divideNode:
-            reports.push_back("ERROR: Expression.markAsDef used to mark binary (/) operation");
+            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark binary (/) operation\n");
             return reports;
         
         case assignNode:
-            reports.push_back("ERROR: Expression.markAsDef used to mark binary (=) operation");
+            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark binary (=) operation\n");
             return reports;
 
         case greaterNode:
-            reports.push_back("ERROR: Expression.markAsDef used to mark binary (>) operation");
+            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark binary (>) operation\n");
             return reports;
 
         case lesserNode:
-            reports.push_back("ERROR: Expression.markAsDef used to mark binary (<) operation");
+            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark binary (<) operation\n");
             return reports;
 
         case equalNode:
-            reports.push_back("ERROR: Expression.markAsDef used to mark binary (==) operation");
+            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark binary (==) operation\n");
             return reports;
 
         case nonEqualNode:
-            reports.push_back("ERROR: Expression.markAsDef used to mark binary (!=) operation");
+            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark binary (!=) operation\n");
             return reports;
         
         case identifierNode: 
@@ -302,11 +302,11 @@ std::vector<std::string> Expression::markAsDef(Vertex* currentVertex, int size){
                     return reports;
                 }
                 case forIteratorNameType: //error
-                    reports.push_back("ERROR: Expression.markAsDef used to mark \"for\" iterator");
+                    reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark \"for\" iterator\n");
                     return reports;
                 
                 case whileIteratorNameType: //error
-                    reports.push_back("ERROR: Expression.markAsDef used to mark \"while\" iterator");
+                    reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark \"while\" iterator\n");
                     return reports;
                 
                 case valueNameType://todo
@@ -318,30 +318,29 @@ std::vector<std::string> Expression::markAsDef(Vertex* currentVertex, int size){
                     return reports;
                 }
                 case mainArgNameType:
-                    reports.push_back("ERROR: Expression.markAsDef used to mark main() argument");
+                    reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark main() argument\n");
                     return reports;
                 
                 default:
-                    std::cout << "WARNING: Expression.markAsDef() ended by default at identifier node" << std::endl;
+                    std::cout << "INTERNAL ERROR (WARNING): Expression.markAsDef() ended by default at identifier node" << std::endl;
                     return reports;
                 
             }
         
         case stringNode:
-            reports.push_back("ERROR: Expression.markAsDef used to mark LuNA string constant");
+            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark LuNA string constant\n");
             return reports;
         
         case intNode:
-            reports.push_back("ERROR: Expression.markAsDef used to mark LuNA int constant");
+            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark LuNA int constant\n");
             return reports;
         
         case realNode:
-            reports.push_back("ERROR: Expression.markAsDef used to mark LuNA real constant");
+            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark LuNA real constant\n");
             return reports;
         
         case castNode:
-            //todo is is okay?
-            for (auto r: leftExpr->markAsUse(currentVertex, size)) reports.push_back(r);
+             reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark LuNA cast\n");
             return reports;
         
         default: 
