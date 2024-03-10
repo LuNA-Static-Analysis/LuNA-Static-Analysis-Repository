@@ -1,12 +1,12 @@
 #include "enums.hpp"
 #include "vertices.hpp"
 
-Vertex::Binding::Binding(Vertex* pointerTo, BaseDFName* id){
+Vertex::Binding::Binding(Vertex* pointerTo, Identifier* id){
     this->id = id;
     this->pointerTo = pointerTo;
 }
 
-BaseDFName* Vertex::Binding::getId(){
+Identifier* Vertex::Binding::getId(){
     return this->id;
 }
 
@@ -33,11 +33,11 @@ VertexType Vertex::getVertexType(){
     return vertexType;
 }
 
-std::set<BaseDFName*> Vertex::getUseSet(){
+std::set<Identifier*> Vertex::getUseSet(){
     return use;
 }
 
-std::set<BaseDFName*> Vertex::getDefSet(){
+std::set<Identifier*> Vertex::getDefSet(){
     return def;
 }
 
@@ -65,13 +65,11 @@ int Vertex::getLine(){
     return line;
 }
 
-//todo DFR redo this
-void Vertex::addIn(Vertex* vertex, BaseDFName* id){
+void Vertex::addIn(Vertex* vertex, Identifier* id){
     this->in.insert(Binding(vertex, id)); //TODO this should not allow duplicates; does it allow it here?
 }
 
-//todo DFR redo this
-void Vertex::addOut(Vertex* vertex, BaseDFName* id){
+void Vertex::addOut(Vertex* vertex, Identifier* id){
     this->out.insert(Binding(vertex, id)); //TODO this should not allow duplicates; does it allow it here?
 }
 
@@ -82,14 +80,14 @@ void Vertex::addInside(Vertex* vertex){
     }
 }
 
-void Vertex::addUse(BaseDFName* id){
+void Vertex::addUse(Identifier* id){
     auto temp = this->use.find(id);
     if (temp == this->use.end()){
         this->use.insert(id);
     }
 }
 
-void Vertex::addDef(BaseDFName* id){
+void Vertex::addDef(Identifier* id){
     auto temp = this->def.find(id);
     if (temp == this->def.end()){
         this->def.insert(id);
@@ -144,6 +142,9 @@ CFVertex::CFVertex(int depth, int number, int line,
 
     this->name = name;
     this->vertexType = vertexType; // import or sub
+
+    this->in = {};
+    this->out = {};
 }
 
 std::string CFVertex::getName(){
@@ -228,6 +229,9 @@ ForVertex::ForVertex(int depth, int number, int line,
     this->iterator = iterator;
     this->leftBorder = leftBorder;
     this->rightBorder = rightBorder;
+
+    this->in = {};
+    this->out = {};
 }
 
 ForIteratorName* ForVertex::getIterator(){
@@ -314,6 +318,9 @@ WhileVertex::WhileVertex(int depth, int number, int line,
     this->outName = outName;
     this->conditionExpr = conditionExpr;
     this->startExpr = startExpr;
+
+    this->in = {};
+    this->out = {};
 }
 
 WhileIteratorName* WhileVertex::getIterator(){
@@ -400,6 +407,9 @@ IfVertex::IfVertex(int depth, int number, int line,
     this->parent = parent;
 
     this->conditionExpr = conditionExpr;
+
+    this->in = {};
+    this->out = {};
 }
 
 Expression* IfVertex::getConditionExpr(){
@@ -471,6 +481,9 @@ LetVertex::LetVertex(int depth, int number, int line,
     this->parent = parent;
 
     this->letNamesVector = letNamesVector;
+
+    this->in = {};
+    this->out = {};
 }
 
 std::vector<LetName*>* LetVertex::getLetNamesVector(){

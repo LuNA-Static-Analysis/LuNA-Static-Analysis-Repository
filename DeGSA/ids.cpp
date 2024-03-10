@@ -340,8 +340,6 @@ MainArgName::~MainArgName(){}
 // todo check if it works
 IndexedDFName* parseIndexedDFExpression(expr* expression, std::map<std::string, Identifier*> nameTable, int line,
     std::vector<std::string>* errorReports){
-    
-    std::cout << "> parseIndexedDFExpression called" << std::endl;
 
     // expression could be either simple or a complex DF
     int indices = -1;

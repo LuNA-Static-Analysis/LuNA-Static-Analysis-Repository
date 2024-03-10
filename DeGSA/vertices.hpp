@@ -20,14 +20,14 @@ class Vertex {
 
     private:
 
-        BaseDFName* id;
+        Identifier* id;
         Vertex* pointerTo;
 
     public:
 
-        Binding(Vertex* pointerTo, BaseDFName* id);
+        Binding(Vertex* pointerTo, Identifier* id);
 
-        BaseDFName* getId();//todo add MainArgs, ForIterators or whatever
+        Identifier* getId();
 
         Vertex* getPointerTo();
 
@@ -53,8 +53,8 @@ class Vertex {
             has no duplicates */
         std::map<std::string, Identifier*> declaredBothIdsMap;
 
-        std::set<BaseDFName*> use; // list of DFs that are used in this vertex
-        std::set<BaseDFName*> def; // list of DFs that are defined in this vertex
+        std::set<Identifier*> use; // list of DFs that are used in this vertex
+        std::set<Identifier*> def; // list of DFs that are defined in this vertex
 
         VertexType vertexType; // type of a vertex (VF type)
         int depth; // amount of blocks that this vertex is in
@@ -68,9 +68,9 @@ class Vertex {
 
         VertexType getVertexType();
 
-        std::set<BaseDFName*> getUseSet();
+        std::set<Identifier*> getUseSet();
 
-        std::set<BaseDFName*> getDefSet();
+        std::set<Identifier*> getDefSet();
 
         std::set<Vertex*> getInsideSet();
 
@@ -86,15 +86,15 @@ class Vertex {
 
         Vertex* getParent();
 
-        void addIn(Vertex* vertex, BaseDFName* id);
+        void addIn(Vertex* vertex, Identifier* id);
 
-        void addOut(Vertex* vertex, BaseDFName* id);
+        void addOut(Vertex* vertex, Identifier* id);
 
         void addInside(Vertex* vertex);
 
-        void addUse(BaseDFName* id);
+        void addUse(Identifier* id);
 
-        void addDef(BaseDFName* id);
+        void addDef(Identifier* id);
 
         std::map<std::string, Identifier*> getDeclaredInsideIdsMap();
 

@@ -265,6 +265,22 @@ std::vector<std::string> Expression::markAsDef(Vertex* currentVertex, int size){
         case assignNode:
             reports.push_back("ERROR: Expression.markAsDef used to mark binary (=) operation");
             return reports;
+
+        case greaterNode:
+            reports.push_back("ERROR: Expression.markAsDef used to mark binary (>) operation");
+            return reports;
+
+        case lesserNode:
+            reports.push_back("ERROR: Expression.markAsDef used to mark binary (<) operation");
+            return reports;
+
+        case equalNode:
+            reports.push_back("ERROR: Expression.markAsDef used to mark binary (==) operation");
+            return reports;
+
+        case nonEqualNode:
+            reports.push_back("ERROR: Expression.markAsDef used to mark binary (!=) operation");
+            return reports;
         
         case identifierNode: 
 
