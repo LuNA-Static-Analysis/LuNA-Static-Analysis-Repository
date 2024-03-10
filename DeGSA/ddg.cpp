@@ -745,8 +745,12 @@ class DDG {
             auto errorsFindTotal = std::chrono::duration_cast<ns>(errorsFindEnd - errorsFindStart).count();
 
             // printing out information does not count towards time to find errors
-            for (auto r: errorReports){
-                *outputTarget << r << std::endl;
+            if (errorReports.size() == 0){
+                *outputTarget << "\nNo errors found\n" << std::endl;
+            } else {
+                for (auto r: errorReports){
+                    *outputTarget << r << std::endl;
+                }
             }
 
             *outputTarget << "\nTime to find errors: " << (double)errorsFindTotal / 1000000000 << " seconds" << std::endl;

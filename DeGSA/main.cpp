@@ -48,5 +48,7 @@ int main(int argc, char** argv) {
     fclose(yyin);
     outputFile.close();
 
+    std::cout << "DeGSA finished successfully" << std::endl;
+
     return EXIT_SUCCESS;
 }
