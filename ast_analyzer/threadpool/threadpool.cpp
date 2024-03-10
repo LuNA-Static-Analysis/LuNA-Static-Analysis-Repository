@@ -10,20 +10,18 @@ ThreadPool::ThreadPool(size_t n_threads) {
 }
 
 void ThreadPool::thread_main() {
-    while (!m_shutdown) {
-        // if we have tasks, we want to move the
-        // first task out, remove it from the queue,
-        // and then execute it
-        std::unique_lock lock(m_tasks_mtx);
-        // with the lock, we can now wait on it with our condition variable
-        m_tasks_cnd.wait(lock);
-        while (!m_tasks.empty()) {
-            Task task = std::move(m_tasks.front());
-            m_tasks.pop();
-            lock.unlock();
-            task();
-            lock.lock();
-        }
+    // if we have tasks, we want to move the
+    // first task out, remove it from the queue,
+    // and then execute it
+    std::unique_lock lock(m_tasks_mtx);
+    // with the lock, we can now wait on it with our condition variable
+    m_tasks_cnd.wait(lock);
+    while (!m_tasks.empty()) {
+        Task task = std::move(m_tasks.front());
+        m_tasks.pop();
+        lock.unlock();
+        task();
+        lock.lock();
     }
 }
 
@@ -37,7 +35,6 @@ ThreadPool::~ThreadPool() {
     }
     lock.unlock();
 
-    std::cerr << "last task";
     for (auto& thread : m_threads) {
         if (thread.joinable()) {
             thread.join();
@@ -47,6 +44,7 @@ ThreadPool::~ThreadPool() {
 
 void ThreadPool::add_task(Task task) {
     std::unique_lock lock(m_tasks_mtx);
+
     m_tasks.emplace(std::move(task));
     m_tasks_cnd.notify_one();
 }

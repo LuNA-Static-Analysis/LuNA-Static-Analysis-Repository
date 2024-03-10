@@ -22,6 +22,8 @@ protected:
 
 
     std::string get_line_from_file(uint num) {
+        // return "";
+
         int fseek_res = fseek(file_, 0, SEEK_SET);
         if (fseek_res == FSEEK_ERROR) {
             perror("fseek");

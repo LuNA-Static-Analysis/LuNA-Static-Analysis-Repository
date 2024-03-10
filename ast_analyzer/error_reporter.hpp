@@ -19,6 +19,7 @@ public:
         unsigned int line,
         const std::string& expectation = "")
     {
+
         if (errors_number < LIMIT_ERRORS) {
             std::string lvl = level == ERROR ? "Error" : "Warning";
 
@@ -43,6 +44,7 @@ public:
 
         if (level == ERROR) {
             errors_number++;
+            return;
         }
     }
 

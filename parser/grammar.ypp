@@ -207,55 +207,6 @@ sub_def:
 	| KW_CPP NAME KW_BLOCK LB INT RB {
         $$ = new cxx_block_def($2);
     }
-
-    /* | KW_CPP NAME KW_BLOCK LB error RB {
-        reporter.report(ERROR_LEVEL::ERROR, 
-            "Unexpected token",
-            line,
-            @5.first_line,
-            "int"
-        );
-    }
-*/
-
-    /* | KW_IMPORT code_id LB opt_ext_params RB error SCOLON {
-        reporter.report(ERROR_LEVEL::ERROR, 
-            "Unexpected token",
-            line,
-            @6.first_line,
-            "keyword as"
-        );
-        yyerrok;
-        $$ = nullptr;
-    }  */
-
-
-    /*
-    | KW_IMPORT error SCOLON {
-        $$ = nullptr;
-        yyerrok;
-    } 
-    */
-
-    /* | KW_IMPORT code_id LB opt_ext_params error SCOLON {
-        reporter.report(ERROR_LEVEL::ERROR, 
-            "Unexpected token",
-            line,
-            @5.first_line,
-            @5.first_column,
-            ")"
-        ); */
-    /* } */
-
-    /* | KW_IMPORT code_id error SCOLON {
-        reporter.report(ERROR_LEVEL::ERROR, 
-            "Unexpected token",
-            line,
-            @3.first_line,
-            @3.first_column,
-            "("
-        ); */
-    /* } */
 ;
 
 opt_ext_params:

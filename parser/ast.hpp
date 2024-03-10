@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <cstring>
+#include <sstream>      
 
 enum luna_type {
     LUNA_INT,
@@ -26,6 +27,7 @@ public:
     }
 
     virtual std::string to_string() const { return std::string("this class has no to_string method");}
+    virtual std::string to_json(const uint shift) const { return std::string("this class has no to_json method");}
     virtual ~virtual_token() {}
 };
 
@@ -43,7 +45,6 @@ public:
 
     ~luna_string() {
         // std::cerr << "luna string dtor\n";
-
         // no delete because tokens_ will be free explicitly. See ~ast()
     }
 
@@ -53,6 +54,10 @@ public:
 
     std::string to_string() const override {
         return *value_;
+    }
+
+    std::string to_json(const uint shift) const override {
+        return "\"value\" : \"" + (*value_) + "\"";
     }
 
     bool operator==(const luna_string& other) const {
@@ -75,6 +80,7 @@ class param : public virtual_token {
     public:    
         luna_string *type_;
         luna_string* name_;
+
         param(luna_string* type, luna_string* name) : type_(type), name_(name) {}
 
         ~param() {
@@ -97,6 +103,13 @@ class param : public virtual_token {
 
         std::string to_string() const override {
             return type_ == nullptr ? "nullptr" : type_->to_string() + " " + (name_ == nullptr ? "nullptr" : name_->to_string());
+        }
+
+        std::string to_json(const uint shift) const override {
+            std::stringstream s;
+            s << "\"param\" :{" << "\"type\" : {" << (type_ == nullptr ? "" : type_->to_json(shift + 1)) << "}, "
+            << "\"name\": {" <<  (name_ == nullptr ? "" : name_->to_json(shift + 1))  << "}}";
+            return s.str();
         }
 };
 
@@ -123,6 +136,23 @@ class param_seq : public virtual_token {
             // s.pop_back();
             return s;
         }
+
+        std::string to_json(const uint shift) const override {
+            std::stringstream s;
+
+            size_t len = params_->size();
+
+            s << "\"params_seq\" : [";
+
+            for (int j = 0; j < len; j++){
+                auto i = params_->at(j);
+                s << "{" << i->to_json(shift + 1) << (j == len - 1 ? "}" : "},");
+            }
+            
+            s << "]";
+
+            return s.str();
+        }
 };
 
 class opt_params : public virtual_token {
@@ -138,6 +168,17 @@ class opt_params : public virtual_token {
         std::string to_string() const override {
             if (param_seq_ == nullptr) return "";
             return param_seq_->to_string();
+        }
+
+        std::string to_json(const uint shift) const override {
+            std::stringstream s;
+            std::string rep = std::string(shift, ' ');
+
+            s << rep << "\"opt_params\": {\n" << (param_seq_ == nullptr ? "" : param_seq_->to_json(shift + 1));
+
+            s << "\n}";
+
+            return s.str();
         }
 };
 
@@ -163,6 +204,24 @@ class name_seq : public virtual_token {
             // s.pop_back();
             return s;
         }
+
+        std::string to_json(const uint shift) const override {
+            std::stringstream s;
+            std::string rep = std::string(shift, ' ');
+
+            size_t len = names_->size();
+
+            s << "\"name_seq\" : [";
+
+            for (int j = 0; j < len; j++){
+                auto i = names_->at(j);
+                s << "{\"name\": {" << i->to_json(shift + 1) << "}" << (j == len - 1 ? "}" : "},");
+            }
+            
+            s << "]";
+
+            return s.str();
+        }
 };
 
 class dfdecls : public virtual_token {
@@ -180,6 +239,14 @@ class dfdecls : public virtual_token {
         std::string to_string() const override {
             return "df " + (name_seq_ == nullptr ? "nullptr" : name_seq_->to_string()) + ";" ;
         }
+
+        std::string to_json(const uint shift) const override {
+            std::stringstream s;
+            std::string rep = std::string(shift, ' ');
+
+            s << rep << "\"name_seq\" : {\n" << ((name_seq_ == nullptr) ? "" : name_seq_->to_json(shift + 1)) << "\n" << rep << "}\n";
+            return s.str();
+        }
 };
 
 class opt_dfdecls : public virtual_token {
@@ -194,6 +261,14 @@ class opt_dfdecls : public virtual_token {
         std::string to_string() const override {
             if (dfdecls_ == nullptr) return "";
             return dfdecls_->to_string();
+        }
+
+        std::string to_json(const uint shift) const override {
+            std::stringstream s;
+            std::string rep = std::string(shift, ' ');
+
+            s << rep << "\"dfdecls\" : {\n" << ((dfdecls_ == nullptr) ? "" : dfdecls_->to_json(shift + 1)) << "\n" << rep << "}\n";
+            return s.str();
         }
 };
 
@@ -222,6 +297,24 @@ class statement_seq : public virtual_token {
             }
             return s;
         }
+
+        std::string to_json(const uint shift) const override {
+            std::stringstream s;
+            std::string rep = std::string(shift, ' ');
+
+            s << rep << "\"statement_seq\" : [\n";
+
+            size_t len = statements_->size();
+
+            for (int j = 0; j < len; j++) {
+                auto i = statements_->at(j);
+                s << rep << "{\n" << (i == nullptr ? "" : i->to_json(shift + 1)) << rep << "}" << (j == len - 1 ? "" : ",") << "\n";
+            }
+
+            s << rep << "]\n";
+
+            return s.str();
+        }
 };
 
 class behv_pragma : public virtual_token {};
@@ -248,6 +341,25 @@ class behv_pragmas_seq : public virtual_token {
             s.pop_back();
             return s;
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+
+        s << rep << "\"behv_pragmas_seq\" : [\n";
+
+        size_t len = behv_pragma_->size();
+
+        for (int j = 0; j < len; j++) {
+            auto i = behv_pragma_->at(j);
+            s << rep << "{\n" << (i == nullptr ? "" : i->to_json(shift + 1)) << rep << "}" << (j == len - 1 ? "" : ",") << "\n";
+        }
+
+        s << rep << "]\n";
+
+        return s.str();
+    }
 };
 
 class opt_behavior : public virtual_token {
@@ -264,6 +376,15 @@ class opt_behavior : public virtual_token {
             if (seq_ == nullptr) return "";
             return seq_->to_string();
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"opt_behavior\" : {\n" << (seq_ == nullptr ? "" : seq_->to_json(shift + 1)) << rep << "}\n";
+
+        return s.str();
+    }
 };
 
 class block : public virtual_token {
@@ -289,14 +410,25 @@ class block : public virtual_token {
         }
 
         std::string to_string() const override {
-            // std::cerr << (opt_dfdecls_ == nullptr ? "" : opt_dfdecls_->to_string()) + "\n";
-            // std::cerr << statement_seq_->to_string() << std::endl;
-            // std::cerr << (opt_behavior_ == nullptr ? "" : opt_behavior_->to_string()) +"\n";
-
             return 
                 (opt_dfdecls_ == nullptr ? "nullptr" : opt_dfdecls_->to_string()) + "\n" +
                 (statement_seq_ == nullptr ? "nullptr" : statement_seq_->to_string()) + 
                 (opt_behavior_ == nullptr ? "nullptr" : opt_behavior_->to_string()) +"\n";
+        }
+
+        std::string to_json(const uint shift) const override {
+            std::stringstream s;
+            std::string rep = std::string(shift, ' ');
+
+            s << rep << "\"block\" : {\n";
+
+            s << rep << (opt_dfdecls_ == nullptr ? "" : opt_dfdecls_->to_json(shift + 1)) <<  ",\n"
+            << rep << (statement_seq_ == nullptr ? "" : statement_seq_->to_json(shift + 1)) << ",\n"
+            << rep << (opt_behavior_ == nullptr ? "" : opt_behavior_->to_json(shift + 1)) << "\n";
+
+            s << rep << "}\n";
+
+            return s.str();
         }
 };
 
@@ -318,21 +450,40 @@ class complex_id : public id {
             return (id_ == nullptr ? "nullptr" : id_->to_string()) 
                 + "[" + (expr_ == nullptr ? "nullptr" : expr_->to_string()) + "]";
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << "\"complex_id\" : {\n" << "\"id\" : {" << id_->to_json(shift + 1) << "}" <<  ",\n" << "\"expr\" : {" << expr_->to_json(shift + 1) << "}" << "\n}\n";
+
+        return s.str();
+    }
 };
 
 class integer : public expr {
-    public:
-        int* value_;
-        integer(int* value) : value_(value) {}
-        ~integer() {
-            delete value_;
-            // // // std::cerr << "integer dtor\n";
-        }
+public:
+    int* value_;
+    integer(int* value) : value_(value) {}
+    ~integer() {
+        delete value_;
+        // // // std::cerr << "integer dtor\n";
+    }
 
-        std::string to_string() const override {
-            if (value_ == nullptr) return "nullptr";
-            return std::to_string(*value_);
-        }
+    std::string to_string() const override {
+        if (value_ == nullptr) return "nullptr";
+        return std::to_string(*value_);
+    }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << "\"integer\" : "  << std::to_string(*value_);
+
+        return s.str();
+    }
+
 };
 
 class real : public expr {
@@ -347,34 +498,79 @@ class real : public expr {
             if (value_ == nullptr) return "nullptr";
             return std::to_string(*value_);
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << "\"real\" : "  << std::to_string(*value_);
+
+        return s.str();
+    }
+
+
 };
 
 class luna_cast : public expr {
-    public:
-        expr *expr_;
-        luna_cast(expr *expr) : expr_(expr) {}
-        ~luna_cast() {
-            delete expr_;
-        }
+public:
+    expr *expr_;
+    luna_cast(expr *expr) : expr_(expr) {}
+    ~luna_cast() {
+        delete expr_;
+    }
 
-        std::string to_string() const override {
-            return expr_ == nullptr ? "nullptr" :expr_->to_string();
-        }
+    std::string to_string() const override {
+        return expr_ == nullptr ? "nullptr" : expr_->to_string();
+    }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        return s.str();
+    }
 };
 
 class to_int : public luna_cast {
 public:
     to_int(expr* expr) : luna_cast(expr) {} 
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << "\"to_int\" : {\n"  << expr_->to_json(shift + 1) << "\n}\n";
+
+        return s.str();
+    }
 };
 
 class to_real : public luna_cast {
 public:
     to_real(expr* expr) : luna_cast(expr) {} 
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << "\"to_real\" : {\n"  << expr_->to_json(shift + 1) << "\n}\n";
+
+        return s.str();
+    }
 };
 
 class to_str: public luna_cast {
 public:
     to_str(expr* expr) : luna_cast(expr) {} 
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << "\"to_str\" : {\n"  << expr_->to_json(shift + 1) << "\n}\n";
+
+        return s.str();
+    }
 };
 
 class code_df_param : public virtual_token {
@@ -402,6 +598,15 @@ class code_df_param : public virtual_token {
         std::string to_string() const override {
             return (type_ == nullptr ? "nullptr" : type_->to_string()) + " " + ((code_df_ == nullptr) ? "" : code_df_->to_string());
         }
+
+        std::string to_json(const uint shift) const override {
+            std::stringstream s;
+            std::string rep = std::string(shift, ' ');
+            s << 
+                rep << "\"type\" : {" << (type_ == nullptr ? "" : type_->to_json(shift + 1)) << "}, " << "\n" <<
+                rep << "\"code_df\" :  {" << ((code_df_ == nullptr) ? "" : code_df_->to_json(shift + 1)) << "}";
+            return s.str();
+        }
 };
 
 class ext_params_seq : public virtual_token {
@@ -427,6 +632,24 @@ public:
         s.pop_back();
         return s;
     }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"ext_params_seq\" : [\n";
+
+        size_t len = params_->size();
+
+        for (int j = 0; j < len; j++) {
+            auto i = params_->at(j);
+            s << rep << "{\n" << (i == nullptr ? "" : i->to_json(shift + 1)) << rep << "}" << (j == len - 1 ? "" : ",") << "\n";
+        }
+
+        s << rep << "\n]\n";
+
+        return s.str();
+    }
 };
 
 class opt_ext_params : public virtual_token {
@@ -443,6 +666,13 @@ class opt_ext_params : public virtual_token {
             return seq_ == nullptr ? "nullptr" :seq_->to_string();
         }
 
+        std::string to_json(const uint shift) const override {
+            std::stringstream s;
+            std::string rep = std::string(shift, ' ');
+
+            s << rep << "\"opt_ext_params\" : {\n" << (seq_ == nullptr ? "" : seq_->to_json(shift + 1)) << rep << "}\n";
+            return s.str();
+        }
 };
 
 class bin_op : public expr {
@@ -464,6 +694,15 @@ class eq : public bin_op {
         std::string to_string() const override {
             return (left_ == nullptr ? "nullptr" : left_->to_string()) + " = " + (right_ == nullptr ? "nullptr" : right_->to_string());
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"eq\" : {\n" <<  "\"left\" : " << left_->to_json(shift + 1) << rep << ",\n" << "\"right\" :{" << right_->to_json(shift + 1) << "\n}\n";
+
+        return s.str();
+    }
 };
 
 // class eqg : public bin_op {
@@ -482,6 +721,15 @@ class sum : public bin_op {
         std::string to_string() const override {
             return (left_ == nullptr ? "nullptr" : left_->to_string()) + " + " + (right_ == nullptr ? "nullptr" : right_->to_string());
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"sum\" : {\n" <<  "\"left\" : {" << left_->to_json(shift + 1) << rep << "},\n" <<  "\"right\" : {"<< right_->to_json(shift + 1) << "}\n}\n";
+
+        return s.str();
+    }
 };
 
 class sub : public bin_op {
@@ -491,6 +739,14 @@ class sub : public bin_op {
         std::string to_string() const override {
             return (left_ == nullptr ? "nullptr" : left_->to_string()) + " - " + (right_ == nullptr ? "nullptr" : right_->to_string());
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"sub\" : {\n" <<  "\"left\" : {" << left_->to_json(shift + 1) << rep << "},\n" <<  "\"right\" : {"<< right_->to_json(shift + 1) << "}\n}\n";
+        return s.str();
+    }
 };
 
 class div1 : public bin_op {
@@ -500,6 +756,14 @@ class div1 : public bin_op {
         std::string to_string() const override {
             return (left_ == nullptr ? "nullptr" : left_->to_string()) + " \\ " + (right_ == nullptr ? "nullptr" : right_->to_string());
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"div\" : {\n" <<  "\"left\" : {" << left_->to_json(shift + 1) << rep << "},\n" <<  "\"right\" : {"<< right_->to_json(shift + 1) << "}\n}\n";
+        return s.str();
+    }
 };
 
 class mul : public bin_op {
@@ -509,6 +773,14 @@ class mul : public bin_op {
         std::string to_string() const override {
             return (left_ == nullptr ? "nullptr" : left_->to_string()) + " * " + (right_ == nullptr ? "nullptr" : right_->to_string());
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"mul\" : {\n" <<  "\"left\" : {" << left_->to_json(shift + 1) << rep << "},\n" <<  "\"right\" : {"<< right_->to_json(shift + 1) << "}\n}\n";
+        return s.str();
+    }
 };
 
 class mod : public bin_op {
@@ -518,6 +790,15 @@ class mod : public bin_op {
         std::string to_string() const override {
             return (left_ == nullptr ? "nullptr" : left_->to_string()) + " % " + (right_ == nullptr ? "nullptr" : right_->to_string());
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"mod\" : {\n" <<  "\"left\" : {" << left_->to_json(shift + 1) << rep << "},\n" <<  "\"right\" : {"<< right_->to_json(shift + 1) << "}\n}\n";
+
+        return s.str();
+    }
 };
 
 class lt : public bin_op {
@@ -527,6 +808,14 @@ class lt : public bin_op {
         std::string to_string() const override {
             return (left_ == nullptr ? "nullptr" : left_->to_string()) + " < " + (right_ == nullptr ? "nullptr" : right_->to_string());
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"lt\" : {\n" <<  "\"left\" : {" << left_->to_json(shift + 1) << rep << "},\n" <<  "\"right\" : {"<< right_->to_json(shift + 1) << "}\n}\n";
+        return s.str();
+    }
 };
 
 class gt : public bin_op {
@@ -536,6 +825,14 @@ class gt : public bin_op {
         std::string to_string() const override {
             return (left_ == nullptr ? "nullptr" : left_->to_string()) + " > " + (right_ == nullptr ? "nullptr" : right_->to_string());
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"gt\" : {\n" <<  "\"left\" : {" << left_->to_json(shift + 1) << rep << "},\n" <<  "\"right\" : {"<< right_->to_json(shift + 1) << "}\n}\n";
+        return s.str();
+    }
 };
 
 class leq : public bin_op {
@@ -545,6 +842,14 @@ class leq : public bin_op {
         std::string to_string() const override {
             return (left_ == nullptr ? "nullptr" : left_->to_string()) + " <= " + (right_ == nullptr ? "nullptr" : right_->to_string());
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"leq\" : {\n" <<  "\"left\" : {" << left_->to_json(shift + 1) << rep << "},\n" <<  "\"right\" : {"<< right_->to_json(shift + 1) << "}\n}\n";
+        return s.str();
+    }
 };
 
 class geq : public bin_op {
@@ -554,6 +859,14 @@ class geq : public bin_op {
         std::string to_string() const override {
             return (left_ == nullptr ? "nullptr" : left_->to_string()) + " >= " + (right_ == nullptr ? "nullptr" : right_->to_string());
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"geq\" : {\n" <<  "\"left\" : {" << left_->to_json(shift + 1) << rep << "},\n" <<  "\"right\" : {"<< right_->to_json(shift + 1) << "}\n}\n";
+        return s.str();
+    }
 };
 
 class dbleq : public bin_op {
@@ -563,6 +876,14 @@ class dbleq : public bin_op {
         std::string to_string() const override {
             return (left_ == nullptr ? "nullptr" : left_->to_string()) + " == " + (right_ == nullptr ? "nullptr" : right_->to_string());
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"dbleq\" : {\n" <<  "\"left\" : {" << left_->to_json(shift + 1) << rep << "},\n" <<  "\"right\" : {" + right_->to_json(shift + 1) << "}\n}\n";
+        return s.str();
+    }
 };
 
 class neq : public bin_op {
@@ -571,6 +892,14 @@ class neq : public bin_op {
         std::string to_string() const override {
             return (left_ == nullptr ? "nullptr" : left_->to_string()) + " != " + (right_ == nullptr ? "nullptr" : right_->to_string());
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"neq\" : {\n" << "\"left\" : {" << left_->to_json(shift + 1) << rep << "},\n" <<  "\"right\" : {"<< right_->to_json(shift + 1) << "}\n}\n";
+        return s.str();
+    }
 };
 
 class dblamp : public bin_op {
@@ -580,6 +909,14 @@ class dblamp : public bin_op {
         std::string to_string() const override {
             return (left_ == nullptr ? "nullptr" : left_->to_string()) + " && " + (right_ == nullptr ? "nullptr" : right_->to_string());
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"dblamp\" : {\n" <<  "\"left\" : {" << left_->to_json(shift + 1) << rep << "},\n" <<  "\"right\" : {"<< right_->to_json(shift + 1) << "}\n}\n";
+        return s.str();
+    }
 };
 
 class dblpipe : public bin_op {
@@ -589,6 +926,14 @@ class dblpipe : public bin_op {
         std::string to_string() const override {
             return (left_ == nullptr ? "nullptr" : left_->to_string()) + " || " + (right_ == nullptr ? "nullptr" : right_->to_string());
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"dblpipe\" : {\n" <<  "\"left\" : {" << left_->to_json(shift + 1) << rep << "},\n" <<  "\"right\" : {"<< right_->to_json(shift + 1) << "}\n}\n";
+        return s.str();
+    }
 };
 
 class sub_def : public virtual_token {
@@ -620,6 +965,25 @@ class program : public virtual_token {
             // res.pop_back();
             return res;
         }
+
+        std::string to_json(const uint shift) const override {
+            std::stringstream s;
+            std::string rep = std::string(shift, ' ');
+            s << "{\n" << "\"program\" : [\n";
+
+            size_t len =  sub_defs->size();
+
+            for (int j = 0; j < len; j++) {
+                sub_def* i = sub_defs->at(j);
+                s << rep << "{\n" << (i == nullptr ? "" : (i->to_json(shift + 1))) << "}" <<  (j == len - 1 ? "" : ",") << "\n";
+            }
+
+            std::string str = s.str();
+
+            s << "\n]" << "\n}";
+
+            return s.str();
+        }
 };
 
 class control_pragma : public virtual_token {
@@ -645,6 +1009,25 @@ class control_pragma : public virtual_token {
             s.pop_back();
             return s;
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"control_pragma\" : {\n" << 
+        rep << "where_type : " << where_type_->to_json(shift + 1);
+
+        s << "{\n" << "\"exprs_\" : [\n";
+
+        for (auto i : *expr_) {
+            s << rep;
+            s << (i == nullptr ? "\"\"" : ("{\n" + rep + i->to_json(shift + 1)  +  "\n" + rep + "}")) + '\n';
+        }
+
+        s << "\n]" << "\n}";
+
+        return s.str();
+    }
 };
 
 class luna_sub_def : public sub_def {
@@ -677,15 +1060,24 @@ class luna_sub_def : public sub_def {
         }
 
         std::string to_string() const override {
-            // // std::cerr << code_id_->to_string() << std::endl;
-            // // std::cerr << params_->to_string() << std::endl;
-            // // std::cerr << block_->to_string() << std::endl;
-            // // std::cerr << control_pragma_->to_string() << std::endl;
-
             return "sub " + (code_id_ == nullptr ? "nullptr" : code_id_->to_string()) + 
                 "(" + (params_ == nullptr ? "nullptr" :params_->to_string()) + ") {\n" +
                 (block_ == nullptr ? "nullptr" : block_->to_string()) + "}\n" +
                 (control_pragma_ == nullptr ? "" : control_pragma_->to_string()); 
+        }
+
+        std::string to_json(const uint shift) const override {
+            std::stringstream s;
+            std::string rep = std::string(shift, ' ');
+
+            s << "\"sub\" : {\n" << rep 
+            << "\"code_id\" : {" << (code_id_ == nullptr ? "" : code_id_->to_json(shift + 1)) << "}"
+            << (params_ == nullptr ? "" : ",\n" + params_->to_json(shift + 1)) << rep 
+            << (block_ == nullptr ? "" : ",\n" + block_->to_json(shift + 1)) << rep 
+            << (control_pragma_ == nullptr ? "" : ",\n" + control_pragma_->to_json(shift + 1)) << rep 
+            << "}\n";
+
+            return s.str();
         }
 };
 
@@ -716,6 +1108,19 @@ class import : public sub_def {
             + ") as " + (luna_code_id_ == nullptr ? "nullptr" : luna_code_id_->to_string()) + ": "
             + options_ + ";";
         }
+
+        std::string to_json(const uint shift) const override {
+            std::stringstream s;
+            std::string rep = std::string(shift, ' ');
+
+            s << "\"import\" : {\n" << 
+                rep << "\"cxx_code_id\" : {"  <<  (cxx_code_id_ == nullptr ? "" : cxx_code_id_->to_json(shift + 1)) << "}, " << "\n" <<
+                rep << (params_ == nullptr ? "" : params_->to_json(shift + 1)) << "," <<
+                rep << "\"luna_code_id\" : { " << (luna_code_id_ == nullptr ? "" : luna_code_id_->to_json(shift + 1)) << "}, " << "\n" <<
+                rep << "\"options\" : " << (options_ == "" ? "\"\"" : options_) << "\n}";
+            return s.str();
+        }
+
 };
 
 class cxx_block_with_params_def : public sub_def {
@@ -730,6 +1135,17 @@ class cxx_block_with_params_def : public sub_def {
             delete code_id_;
             delete params_;
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"cxx_block_with_params_def\" : {\n" 
+        << rep << "\"code_id\" : " << code_id_->to_json(shift + 1) << ",\n"
+        << params_->to_json(shift + 1) << "\n}\n";
+
+        return s.str();
+    }
 };
 
 class cxx_block_def : public sub_def {
@@ -740,6 +1156,15 @@ class cxx_block_def : public sub_def {
         ~cxx_block_def() {
             delete name_;
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+        s << rep << "\"cxx_block_def\" : {\n" 
+        << rep << "\"name\" : " << name_->to_json(shift + 1) << "\n}\n";
+
+        return s.str();
+    }
 };
 
 class if_statement : public statement {
@@ -757,6 +1182,17 @@ class if_statement : public statement {
         std::string to_string() const override {
             return "if " + (expr_ == nullptr ? "nullptr" :expr_->to_string()) + "{\n" +
                 (block_ == nullptr ? "nullptr" : block_->to_string()) + "}";
+        }
+
+        std::string to_json(const uint shift) const override {
+            std::stringstream s;
+            std::string rep = std::string(shift, ' ');
+
+            s << rep << "\"if_statement\" : {\n" 
+            << rep << (expr_ == nullptr ? "" : expr_->to_json(shift + 1))
+            << rep << (block_ == nullptr ? "" : ",\n" + block_->to_json(shift + 1)) << "\n" << rep << "}";
+
+            return s.str();
         }
 };
 
@@ -785,11 +1221,6 @@ class for_statement : public statement {
         }
 
         std::string to_string() const override {
-            // std::cerr << name_->to_string() << std::endl;
-            // std::cerr << expr_1_->to_string() << std::endl;
-            // std::cerr << expr_2_->to_string() << std::endl;
-            // std::cerr << block_->to_string() << std::endl;
-
             return 
                 "for " +
                 (name_ == nullptr ? "nullptr" :name_->to_string()) + 
@@ -798,6 +1229,22 @@ class for_statement : public statement {
                 (block_ == nullptr ? "nullptr" :block_->to_string()) + "}\n" +
                 (control_pragma_ == nullptr ? "" : control_pragma_->to_string());
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << "\"for_statement\" : {\n"
+        << rep << "\"name\" : {"  << (name_ == nullptr ? "" :name_->to_json(shift + 1)) << "}\n"
+        << (expr_1_ == nullptr ? "" : ",\n" + expr_1_->to_json(shift + 1)) 
+        << (expr_2_ == nullptr ? "" : ",\n" +expr_2_->to_json(shift + 1)) 
+        << (block_ == nullptr ? "" : ",\n" + block_->to_json(shift + 1)) 
+        << (control_pragma_ == nullptr ? "" : ",\n" + control_pragma_->to_json(shift + 1))
+        << "}"
+        ;
+
+        return s.str();
+    }
 };
 
 class assign : public virtual_token {
@@ -814,6 +1261,15 @@ class assign : public virtual_token {
         std::string to_string() const override {
             return (name_ == nullptr ? "" :name_->to_string()) + "=" + (expr_ == nullptr ? "" :expr_->to_string());
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"assign\" : {\n" << "\"name\" : {" << name_->to_json(shift + 1) << "}," << "\"expr\" : {" << expr_->to_json(shift + 1) << "}" << "\n}\n";
+
+        return s.str();
+    }
 };
 
 class assign_seq : public virtual_token {
@@ -837,6 +1293,24 @@ class assign_seq : public virtual_token {
             s.pop_back();
             return s;
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << "\"assign_seq\" : [\n";
+
+        size_t len = assign_seq_->size();
+
+        for (int j = 0; j < len; j++) {
+            auto i = assign_seq_->at(j);
+            s << rep << "{\n" << (i == nullptr ? "" : (i->to_json(shift + 1))) << "}" << (j == len - 1 ? "" : ",");
+        }
+
+        s << "\n]";
+
+        return s.str();
+    }
 };
 
 class let_statement : public statement {
@@ -856,6 +1330,15 @@ class let_statement : public statement {
             return "let" + (assign_seq_ == nullptr ? "nullptr" : assign_seq_->to_string()) + "{\n"+
             (block_ == nullptr ? "nullptr" : block_->to_string()) + "}";
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"let_statement\" : {\n" << assign_seq_->to_json(shift + 1) << "\n}\n";
+
+        return s.str();
+    }
 };
 
 class behv_pragma_seq : public behv_pragma {
@@ -865,6 +1348,15 @@ class behv_pragma_seq : public behv_pragma {
         ~behv_pragma_seq() {
             delete name_seq_;
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"behv_pragma_seq\" : {\n" << (name_seq_ == nullptr ? "" : name_seq_->to_json(shift + 1)) << "\n}\n";
+
+        return s.str();
+    }
 };
 
 class while_statement : public statement {
@@ -906,6 +1398,13 @@ class while_statement : public statement {
                 (block_ == nullptr ? "nullptr" :block_->to_string()) +
                 (id_ == nullptr ? "nullptr" :id_->to_string());
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        return s.str();
+    }
 };
 
 class exprs_seq : public virtual_token {
@@ -925,11 +1424,29 @@ class exprs_seq : public virtual_token {
             std::string s;
             for (auto i : *expr_) {
                 // if (i == nullptr) continue;
-                s += (i == nullptr ? "nullptr" :i->to_string()) + ',';
+                s += (i == nullptr ? "nullptr" : i->to_string()) + ',';
             }
             s.pop_back();
             return s;
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << "\"exprs_seq\" : [\n";
+
+        size_t len = expr_->size();
+
+        for (int j = 0; j < len; j++) {
+            auto i = expr_->at(j);
+            s << rep << "{\n" << (i == nullptr ? "" : (i->to_json(shift + 1))) << "}" << (j == len - 1 ? "" : ",");
+        }
+
+        s << "\n]";
+
+        return s.str();
+    }
 };
 
 class opt_exprs : public virtual_token {
@@ -945,6 +1462,15 @@ public:
         if (exprs_seq_ == nullptr) return "";
         return exprs_seq_->to_string();
     }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"opt_exprs\" : {\n" << (exprs_seq_ == nullptr ? "" : exprs_seq_->to_json(shift + 1)) << rep << "}\n";
+
+        return s.str();
+    }
 };
 
 class opt_setdf_rules : public virtual_token {
@@ -959,6 +1485,15 @@ public:
         if (opt_exprs_ == nullptr) return "";
         return opt_exprs_->to_string();
     }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"opt_setdf_rules\" : {\n" << (opt_exprs_ == nullptr ? "" : opt_exprs_->to_json(shift + 1)) << rep << "}\n";
+
+        return s.str();
+    }
 };
 
 class opt_label : public virtual_token {
@@ -969,10 +1504,18 @@ public:
     ~opt_label() {
         delete id_;
     }
-
     std::string to_string() const override {
         if (id_ == nullptr) return "";
         return "cf " + id_->to_string() + ":";
+    }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"opt_label\" : {\n" << (id_ == nullptr ? "" : id_->to_json(shift + 1)) << rep << "}\n";
+
+        return s.str();
     }
 };
 
@@ -988,6 +1531,14 @@ public:
     std::string to_string() const override {
         if (opt_exprs_ == nullptr) return "";
         return opt_exprs_->to_string();
+    }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"opt_rules\" : {\n" << (opt_exprs_ == nullptr ? "" : opt_exprs_->to_json(shift + 1)) << rep << "}\n";
+        return s.str();
     }
 };
 
@@ -1032,6 +1583,22 @@ public:
             (opt_rules_ == nullptr ? "nullptr" :opt_rules_->to_string()) + 
             (opt_behavior_ == nullptr ? "nullptr" :opt_behavior_->to_string());
     }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"cf_statement\" : {\n" 
+        << rep << " " << "\"code_id\": {" << (code_id_ == nullptr ? "" : code_id_->to_json(shift + 1)) << rep << "}" 
+        << (opt_label_ == nullptr ? "" : ",\n" + opt_label_->to_json(shift + 1)) << rep 
+        << (opt_exprs_ == nullptr ? "" : ",\n" + opt_exprs_->to_json(shift + 1))  << rep 
+        << (opt_setdf_rules_ == nullptr ? "" : ",\n" + opt_setdf_rules_->to_json(shift + 1)) << rep 
+        << (opt_rules_ == nullptr ? "" : ",\n" + opt_rules_->to_json(shift + 1)) << rep 
+        << (opt_behavior_ == nullptr ? "" : ",\n" + opt_behavior_->to_json(shift + 1)) 
+        << rep << "}\n";
+
+        return s.str();
+    }
 };
 
 class id_seq : public virtual_token {
@@ -1045,6 +1612,24 @@ public:
             delete i;
         }
         delete seq_;
+    }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << "\"id_seq\" : [\n";
+
+        size_t len = seq_->size();
+
+        for (int j = 0; j < len; j++) {
+            auto i = seq_->at(j);
+            s << rep << "{\n" << (i == nullptr ? "" : (i->to_json(shift + 1))) << "}" << (j == len - 1 ? "" : ",");
+        }
+
+        s << "\n]";
+
+        return s.str();
     }
 };
 
@@ -1060,6 +1645,18 @@ class behv_pragma_eq : public behv_pragma {
             delete id_;
             delete expr_;
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"behv_pragma_eq\" : {\n" 
+        << rep << "name: {" << name_->to_json(shift + 1) << "},\n"
+        << id_->to_json(shift + 1) << ",\n" 
+        << expr_->to_json(shift + 1) << "\n}\n";
+
+        return s.str();
+    }
 };
 
 class behv_pragma_eqg : public behv_pragma {
@@ -1074,6 +1671,19 @@ class behv_pragma_eqg : public behv_pragma {
             delete id_;
             delete expr_;
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"behv_pragma_eqg\" : {\n" 
+        << rep << "\"name\": {" << name_->to_json(shift + 1) << "},\n"
+        << id_->to_json(shift + 1) << ",\n" 
+        << expr_->to_json(shift + 1) << "\n}\n";
+
+
+        return s.str();
+    }
 };
 
 class behv_pragma_id_seq : public behv_pragma {
@@ -1087,6 +1697,17 @@ class behv_pragma_id_seq : public behv_pragma {
             delete name_;
             delete id_seq_;
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"behv_pragma_id_seq\" : {\n" 
+        << rep << "\"name\": {" << name_->to_json(shift + 1) 
+        << (id_seq_ == nullptr ? "": "},\n" + id_seq_->to_json(shift + 1)) << "\n}\n";
+
+        return s.str();
+    }
 };
 
 class behv_pragma_expr : public behv_pragma {
@@ -1099,6 +1720,17 @@ class behv_pragma_expr : public behv_pragma {
             delete name_;
             delete expr_;
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"behv_pragma_expr\" : {\n" 
+        << rep << "\"name\": {" << name_->to_json(shift + 1) << "}" << ",\n"
+        << "\"expr\" : {" << expr_->to_json(shift + 1) << "}" << "\n}\n";
+
+        return s.str();
+    }
 };
 
 class behv_pragma_name_seq : public behv_pragma {
@@ -1111,6 +1743,17 @@ class behv_pragma_name_seq : public behv_pragma {
             delete name_;
             delete seq_;
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"behv_pragma_name_seq\" : {\n" 
+        << rep << "name: " << name_->to_json(shift + 1) << ",\n"
+        << seq_->to_json(shift + 1) << "\n}\n";
+
+        return s.str();
+    }
 };
 
 class opt_expr : public virtual_token {
@@ -1121,6 +1764,15 @@ class opt_expr : public virtual_token {
         ~opt_expr() {
             delete exprs_seq_;
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"opt_expr\" : {\n" << exprs_seq_->to_json(shift + 1) << "\n}\n";
+
+        return s.str();
+    }
 };
 
 class simple_id : public id {
@@ -1134,6 +1786,15 @@ class simple_id : public id {
         std::string to_string() const override {
             return value_->to_string();
         }
+
+    std::string to_json(const uint shift) const override {
+        std::stringstream s;
+        std::string rep = std::string(shift, ' ');
+
+        s << rep << "\"simple_id\" : {" << value_->to_json(shift + 1) << "}\n";
+
+        return s.str();
+    }
 };
 
 class ast {
@@ -1171,6 +1832,13 @@ public:
 
     int get_tokens_count() {
         return tokens_->size();
+    }
+
+    std::string to_json() const {
+        if (program_ == nullptr) {
+            return "{}";
+        }
+        return program_->to_json(1);
     }
 
 private:

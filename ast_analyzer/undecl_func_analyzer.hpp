@@ -1,6 +1,10 @@
 #include "base_analyzer.hpp"
 #include "utils.cpp"
 
+
+
+
+
 class undecl_func_analyzer : public base_analyzer {
 public:
     undecl_func_analyzer(ast* ast_, FILE* yyin, error_reporter* reporter)  {
@@ -45,6 +49,7 @@ public:
 
             luna_sub_def* luna_sub_def_decl = dynamic_cast<luna_sub_def *> (i); 
             if (luna_sub_def_decl != nullptr) {
+
                 std::vector<luna_type>* params = new std::vector<luna_type>();
 
                 if (luna_sub_def_decl->params_->param_seq_ != nullptr) {
@@ -58,6 +63,20 @@ public:
 
                 std::multimap<luna_string, std::vector<expr *> *> cur_cfs = get_all_calling(luna_sub_def_decl->block_);
                 calls = get_types_from_calling(&cur_cfs);
+
+                // собирает все вызовы которые не внутри if 
+                // это проверка безусловной рекурсии
+                std::vector<luna_string> cfs = get_cfs(luna_sub_def_decl->block_);
+                for (auto i : cfs) {
+                    if (i.to_string() == luna_sub_def_decl->code_id_->to_string()) {
+                        reporter_->report(ERROR_LEVEL::ERROR,
+                            "Infinite recursion",
+                            get_line_from_file(i.line_),
+                            i.line_
+                        );
+                    }
+                }
+
             }
         }
 
@@ -142,6 +161,37 @@ public:
 
         return true;
     }
+
+
+    std::vector<luna_string> get_cfs(block* block) {
+        std::vector<luna_string> cfs;
+
+        for (auto i : *(block->statement_seq_->statements_)) {
+            if (i == nullptr) continue;
+
+            cf_statement* cur_cf = dynamic_cast<cf_statement*> (i);
+            if (cur_cf != nullptr) {
+                cfs.push_back(*cur_cf->code_id_);
+                continue;
+            }
+
+            // while_statement* cur_while = dynamic_cast<while_statement*> (i);
+            // if (cur_while != nullptr) {
+            //     auto inner_cfs = get_cfs(cur_while->block_);
+            //     cfs.insert(cfs.end(), inner_cfs.begin(), inner_cfs.end());
+            //     continue;
+            // }
+
+            for_statement* cur_for = dynamic_cast<for_statement*> (i);
+            if (cur_for != nullptr) {
+                auto inner_cfs = get_cfs(cur_for->block_);
+                cfs.insert(cfs.end(), inner_cfs.begin(), inner_cfs.end());
+                continue;
+            }
+        }
+        return cfs;
+    }
+
 
     std::multimap<luna_string, std::vector<expr*>*> get_all_calling(block* block) {
         std::multimap<luna_string, std::vector<expr*>*> cfs;
@@ -234,7 +284,6 @@ public:
         if (bin_op_ != nullptr) {
             luna_type left_type = get_type(bin_op_->left_);
             luna_type right_type = get_type(bin_op_->right_);
-
 
             if (left_type == LUNA_ERROR_TYPE || right_type == LUNA_ERROR_TYPE) return LUNA_ERROR_TYPE;
             if (left_type == LUNA_UNDEFINED || right_type == LUNA_UNDEFINED) {
