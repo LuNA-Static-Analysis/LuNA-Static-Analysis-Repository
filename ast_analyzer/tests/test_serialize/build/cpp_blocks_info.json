@@ -1,0 +1,14 @@
+{
+    "0": {
+        "pos": 34,
+        "comment": "initial launcher: sub main()"
+    },
+    "1": {
+        "pos": 34,
+        "comment": "sub main"
+    },
+    "2": {
+        "pos": 60,
+        "comment": "entry (migrate) cf _l4: init(1, x);"
+    }
+}

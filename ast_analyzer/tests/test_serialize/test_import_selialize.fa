@@ -1,0 +1,33 @@
+import c_a(int b, real c, name d, value e) as a;
+
+sub main() {
+  df x, y;
+  if (a == 1) {
+    init();
+  }
+
+  if (a > 1) {
+    init();
+  }
+
+  if (a >= 1) {
+    df x, y;
+    init();
+  }
+
+  if (a <= 1) {
+    df x, y;
+    init();
+  }
+
+  if (a < 1) {
+    df x, y;
+    init();
+  }
+  
+  if (a != 1) {
+    df x, y;
+    init();
+  }
+
+}

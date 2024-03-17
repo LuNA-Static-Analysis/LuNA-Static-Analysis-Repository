@@ -1,0 +1,71 @@
+{
+    "init": {
+        "args": [
+            {
+                "type": "int"
+            },
+            {
+                "type": "name"
+            }
+        ],
+        "code": "c_init",
+        "cuda_support": "false",
+        "mpi": "false",
+        "nocpu": "false",
+        "type": "extern"
+    },
+    "main": {
+        "args": [],
+        "begin": 34,
+        "body": [
+            {
+                "begin": 49,
+                "names": [
+                    "x",
+                    "y"
+                ],
+                "type": "dfs"
+            },
+            {
+                "args": [
+                    {
+                        "is_expr": true,
+                        "type": "iconst",
+                        "value": 1
+                    },
+                    {
+                        "begin": 68,
+                        "is_expr": true,
+                        "ref": [
+                            "x"
+                        ],
+                        "type": "id"
+                    }
+                ],
+                "begin": 60,
+                "code": "init",
+                "id": [
+                    "_l4"
+                ],
+                "rules": [
+                    {
+                        "begin": 60,
+                        "items": [
+                            [
+                                "x"
+                            ]
+                        ],
+                        "property": "req_unlimited",
+                        "ruletype": "enum"
+                    }
+                ],
+                "type": "exec"
+            }
+        ],
+        "end": 73,
+        "type": "struct",
+        "where": {
+            "type": "luna"
+        }
+    }
+}

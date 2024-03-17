@@ -161,26 +161,31 @@ program:
     sub_def {
         $$ = new program();
         $$->sub_defs->push_back($1);
+        $$->set_position(@1.first_line);
     }
 	
     | program sub_def { 
         $1->sub_defs->push_back($2);
+        $$->set_position(@1.first_line);
     };
 
 sub_def:
     // sub main() {}
 	KW_SUB control_pragma code_id opt_params block {
         $$ = new luna_sub_def($2, $3, $4, $5);
+        $$->set_position(@1.first_line);
     }
 
     // C++ sub codeid opt_params __block (int)
 	| KW_CPP KW_SUB code_id opt_params KW_BLOCK LB INT RB {
         $$ = new cxx_block_with_params_def($3, $4);
+        $$->set_position(@1.first_line);
     }
 
     // import init(params) as init;
 	| KW_IMPORT code_id LB opt_ext_params RB KW_AS code_id SCOLON {
         $$ = new import($2, $4, $7, std::string(""));
+        $$->set_position(@1.first_line);
     }
 
 	| KW_IMPORT error SCOLON {
@@ -196,22 +201,26 @@ sub_def:
     // import init(params) as init : CUDA;
     | KW_IMPORT code_id LB opt_ext_params RB KW_AS code_id COLON KW_CUDA SCOLON {
         $$ = new import($2, $4, $7, std::string("CUDA"));
+        $$->set_position(@1.first_line);
     }
     
     // import init(params) as init : CUDA , NOCPU;
     | KW_IMPORT code_id LB opt_ext_params RB KW_AS code_id COLON KW_CUDA COMMA KW_NOCPU SCOLON {
         $$ = new import($2, $4, $7, std::string("CUDA, NOCPU"));
+        $$->set_position(@1.first_line);
     }
 
     // C++ main __block (int)
 	| KW_CPP NAME KW_BLOCK LB INT RB {
         $$ = new cxx_block_def($2);
+        $$->set_position(@1.first_line);
     }
 ;
 
 opt_ext_params:
     ext_params_seq { 
         $$ = new opt_ext_params($1);
+        $$->set_position(@1.first_line);
     }
 	| { $$ = new opt_ext_params(nullptr); }
 
@@ -219,16 +228,19 @@ ext_params_seq:
 	code_df_param  { 
         $$ = new ext_params_seq();
         $$->params_->push_back($1);
+        $$->set_position(@1.first_line);
     }
 
 	| ext_params_seq COMMA code_df_param {
         $1->params_->push_back($3);
+        $$->set_position(@1.first_line);
     }
 	; 
 
 code_df_param:
     type code_df {
         $$ = new code_df_param($1, $2);
+        $$->set_position(@1.first_line);
     }
 ;
 
@@ -242,7 +254,7 @@ type:
 	| KW_REAL { $$ = $1; } 
 	| KW_STRING  { $$ = $1; } 
 	| KW_NAME { $$ = $1; } 
-	| KW_VALUE AMP { $$ = $1; } // maybe error
+	| KW_VALUE AMP { $$ = $1; } 
 	| KW_VALUE { $$ = $1; }
 	;
 
@@ -250,16 +262,19 @@ block:
     statement { 
         $$ = new block();
         $$->statement_seq_->statements_->push_back($1); 
+        $$->set_position(@1.first_line);
     }
 
 	| LCB opt_dfdecls statement_seq RCB opt_behavior { 
         $$ = new block($2, $3, $5); 
+        $$->set_position(@1.first_line);
     }
 	;
 
 opt_dfdecls:
 	dfdecls { 
         $$ = new opt_dfdecls($1); 
+        $$->set_position(@1.first_line);
     }
 
 	| { $$ = new opt_dfdecls(nullptr); }
@@ -268,6 +283,7 @@ opt_dfdecls:
 dfdecls:
 	KW_DF name_seq SCOLON { 
         $$ = new dfdecls($2); 
+        $$->set_position(@1.first_line);
     }
 	;
 
@@ -287,11 +303,13 @@ statement_seq:
 	statement  { 
         $$ = new statement_seq();
         $$->statements_->push_back($1); 
+        $$->set_position(@1.first_line);
     }
 
 	| statement_seq statement {
         if ($1 != nullptr) {
             $1->statements_->push_back($2);
+            $$->set_position(@1.first_line);
         }
     }
     ;
@@ -301,6 +319,7 @@ control_pragma:
         vector<expr *> exprs;
         exprs.push_back($4);
         $$ = new control_pragma($2, &exprs);
+        $$->set_position(@1.first_line);
     }
 
     | LARR where_type COMMA expr COMMA expr RARR {
@@ -308,9 +327,12 @@ control_pragma:
         exprs.push_back($4);
         exprs.push_back($6);
         $$ = new control_pragma($2, &exprs);
+        $$->set_position(@1.first_line);
+
     }
     | LARR where_type RARR{
         $$ = new control_pragma($2, nullptr);
+        $$->set_position(@1.first_line);
     }
     | 
     {
@@ -359,31 +381,38 @@ behv_pragmas_seq:
 	behv_pragma { 
         $$ = new behv_pragmas_seq();
         $$->behv_pragma_->push_back($1); 
+        $$->set_position(@1.first_line);
     }
 	| behv_pragmas_seq behv_pragma {
         $1->behv_pragma_->push_back($2);
+        $$->set_position(@1.first_line);
     }
 	;
 
 behv_pragma:
 	NAME id EQ expr SCOLON {
         $$ = new behv_pragma_eq($1, $2, $4);
+        $$->set_position(@1.first_line);
     }
 
 	| NAME id EQG expr SCOLON {
         $$ = new behv_pragma_eqg($1, $2, $4);
+        $$->set_position(@1.first_line);
     }
 
 	| NAME id_seq SCOLON {
         $$ = new behv_pragma_id_seq($1, $2);
+        $$->set_position(@1.first_line);
     }
 
 	| NAME COLON expr SCOLON {
         $$ = new behv_pragma_expr($1, $3);
+        $$->set_position(@1.first_line);
     }
 
 	| name_seq SCOLON {
         $$ = new behv_pragma_seq($1);
+        $$->set_position(@1.first_line);
     }
 	;
 
@@ -391,9 +420,11 @@ id_seq:
 	id { 
         $$ = new id_seq();
         $$->seq_->push_back($1); 
+        $$->set_position(@1.first_line);
     }
 	| id_seq COMMA id {
         $1->seq_->push_back($3);
+        $$->set_position(@1.first_line);
     }
 
 let_statement: KW_LET assign_seq block {
@@ -423,9 +454,11 @@ assign_seq:
 	assign { 
         $$ = new assign_seq();
         $$->assign_seq_->push_back($1);
+        $$->set_position(@1.first_line);
     }
 	| assign_seq COMMA assign  {
         $1->assign_seq_->push_back($3);
+        $$->set_position(@1.first_line);
     }
 	;
 
@@ -501,40 +534,111 @@ code_id:
 	;
 
 expr:
-	INT { $$ = $1; } // int
-	| REAL { $$ = $1; } // real 
-	| STRING { $$ = $1; } // string
+	INT { 
+        $$ = $1; 
+        $$->set_position(@1.first_line);
+    } 
+	| REAL { 
+        $$ = $1; 
+        $$->set_position(@1.first_line);
+    }  
+	| STRING { 
+        $$ = $1; 
+        $$->set_position(@1.first_line);
+    } 
 
     // int(1.0)
-	| KW_INT LB expr RB { $$ = new to_int($3); } // int
+	| KW_INT LB expr RB { 
+        $$ = new to_int($3); 
+        $$->set_position(@1.first_line);
+    }     
     // real(1)
-	| KW_REAL LB expr RB  {$$ = new to_real($3); } // real
+	| KW_REAL LB expr RB  {
+        $$ = new to_real($3); 
+        $$->set_position(@1.first_line);
+    } 
     // string()
-	| KW_STRING LB expr RB { $$ = new to_str($3); } // string
+	| KW_STRING LB expr RB { 
+        $$ = new to_str($3); 
+        $$->set_position(@1.first_line);
+    } 
 
-	| expr PLUS expr { $$ = new sum($1, $3); } // ??
-	| expr MINUS expr { $$ = new sub($1, $3); } // ??
-	| expr MUL expr { $$ = new mul($1, $3); } // ??
-	| expr DIV expr { $$ = new div1($1, $3); } // ??
+	| expr PLUS expr { 
+        $$ = new sum($1, $3); 
+        $$->set_position(@1.first_line);
+    } 
+	| expr MINUS expr { 
+        $$ = new sub($1, $3);
+        $$->set_position(@1.first_line);
+    } 
+	| expr MUL expr { 
+        $$ = new mul($1, $3);
+        $$->set_position(@1.first_line);
+    } 
+	| expr DIV expr { 
+        $$ = new div1($1, $3); 
+        $$->set_position(@1.first_line);
+    } 
 
-	| expr MOD expr { $$ = new mod($1, $3); } // int 
-	| expr LT expr { $$ = new lt($1, $3); } // int
-	| expr GT expr { $$ = new gt($1, $3); } // int
-	| expr LEQ expr { $$ = new leq($1, $3); } // int
-	| expr GEQ expr { $$ = new geq($1, $3); } // int
-	| expr DBLEQ expr{ $$ = new dbleq($1, $3); } // int
-	| expr NEQ expr { $$ = new neq($1, $3); } //int
+	| expr MOD expr { 
+        $$ = new mod($1, $3);
+        $$->set_position(@1.first_line);
+    }  
+	| expr LT expr { 
+        $$ = new lt($1, $3); 
+        $$->set_position(@1.first_line);
+    } 
+	| expr GT expr { 
+        $$ = new gt($1, $3); 
+        $$->set_position(@1.first_line);
+    } 
+	| expr LEQ expr { 
+        $$ = new leq($1, $3);
+        $$->set_position(@1.first_line);
+     } 
+	| expr GEQ expr { 
+        $$ = new geq($1, $3);
+        $$->set_position(@1.first_line);
+     } 
+	| expr DBLEQ expr{ 
+        $$ = new dbleq($1, $3); 
+        $$->set_position(@1.first_line);
+    } 
+	| expr NEQ expr { 
+        $$ = new neq($1, $3);
+        $$->set_position(@1.first_line);
+    }
 
-	| expr DBLAMP expr { $$ = new dblamp($1, $3); } //
-	| expr DBLPIPE expr { $$ = new dblpipe($1, $3); } //
-	| LB expr RB { $$ = $2; } // ??
-	| id { $$ = $1; } // ?? 
-	| expr QMARK expr COLON expr {} //
+	| expr DBLAMP expr { 
+        $$ = new dblamp($1, $3); 
+        $$->set_position(@1.first_line);
+    } 
+	| expr DBLPIPE expr { 
+        $$ = new dblpipe($1, $3); 
+        $$->set_position(@1.first_line);
+    } 
+	| LB expr RB { 
+        $$ = $2; 
+        $$->set_position(@1.first_line);
+    }
+	| id { 
+        $$ = $1; 
+        $$->set_position(@1.first_line);
+    } 
+	| expr QMARK expr COLON expr {
+        // todo
+    } 
 	;
 
 opt_params:
-	LB params_seq RB { $$ = new opt_params($2); }
-	| LB RB { $$ = new opt_params(nullptr); }
+	LB params_seq RB { 
+        $$ = new opt_params($2); 
+        $$->set_position(@1.first_line);
+    }
+	| LB RB { 
+        $$ = new opt_params(nullptr);
+        $$->set_position(@1.first_line);
+    }
 
     | LB error RB {
         reporter.report(ERROR_LEVEL::ERROR,
@@ -551,6 +655,7 @@ params_seq:
 	param  { 
         $$ = new param_seq();
         $$->params_->push_back($1); 
+        $$->set_position(@1.first_line);
     }
 	| params_seq COMMA param {
         $1->params_->push_back($3);
@@ -565,10 +670,23 @@ param:
     }
 	;
 
-where_type: KW_RUSH { $$ = $1; }
-	    | KW_STATIC { $$ = $1; }
-	    | KW_STATIC_FOR { $$ = $1; }
-	    | KW_UNROLLING{ $$ = $1; }
-        | { $$ = new luna_string(nullptr); }
-	    ;
+where_type: 
+    KW_RUSH { 
+        $$ = $1; 
+        $$->set_position(@1.first_line);
+    }
+    | KW_STATIC { 
+        $$ = $1; 
+        $$->set_position(@1.first_line);
+    }
+    | KW_STATIC_FOR { 
+        $$ = $1; 
+        $$->set_position(@1.first_line);
+    }
+    | KW_UNROLLING{ 
+        $$ = $1; 
+        $$->set_position(@1.first_line);
+    }
+    | { $$ = new luna_string(nullptr); }
+    ;
 %%

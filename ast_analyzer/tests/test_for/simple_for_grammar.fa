@@ -1,6 +1,6 @@
 // what if N == 1..N ???
 sub main() {
-    for i=1..10 {
+    for i=100..10 {
         init();
     }
 

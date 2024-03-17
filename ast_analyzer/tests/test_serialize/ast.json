@@ -1,0 +1,69 @@
+{
+"program" : [
+ {
+"import" : {
+  "cxx_code_id" : {"value" : "c_init"}, 
+     "opt_ext_params" : {
+    "ext_params_seq" : [
+    {
+     "type" : {"value" : "int"}, 
+     "code_df" :  {}    },
+    {
+     "type" : {"value" : "name"}, 
+     "code_df" :  {}    }
+    
+]
+   }
+,  "luna_code_id" : { "value" : "init"}, 
+  "options" : ""
+}},
+ {
+"sub" : {
+  "code_id" : {"value" : "main"},
+   "opt_params": {
+
+}  ,
+   "block" : {
+       "dfdecls" : {
+     "name_seq" : {
+"name_seq" : [{"name": {"value" : "x"}},{"name": {"value" : "y"}}]
+     }
+
+    }
+,
+       "statement_seq" : [
+    {
+     "cf_statement" : {
+      "code_id": {"value" : "init"     },
+      "opt_label" : {
+      }
+     ,
+      "opt_exprs" : {
+"exprs_seq" : [
+       {
+"value" : "1"},       {
+        "simple_id" : {"value" : "x"}
+}
+]      }
+     ,
+      "opt_setdf_rules" : {
+      }
+     ,
+      "opt_rules" : {
+      }
+     ,
+      "opt_behavior" : {
+      }
+     }
+    }
+    ]
+,
+       "opt_behavior" : {
+    }
+
+   }
+    }
+}
+
+]
+}
