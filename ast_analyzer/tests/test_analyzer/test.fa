@@ -5,6 +5,4 @@ sub main() {
     df x, y;
     init(1, x);
     init(x, y);
-//    print(x);
-//    print(x);
 }

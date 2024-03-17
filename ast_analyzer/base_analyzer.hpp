@@ -2,12 +2,17 @@
 #include "../parser/ast.hpp"
 #include "error_reporter.hpp"
 
+#include <vector>
+#include <map>
+#include <string>
+#include <set>
 #include <assert.h>
 
 class base_analyzer {
 public:
     virtual bool analyze() = 0;
     virtual ~base_analyzer() {}
+    virtual std::string get_name() = 0;
 
 protected:
     static const int FSEEK_ERROR = -1;
@@ -17,6 +22,8 @@ protected:
 
 
     std::string get_line_from_file(uint num) {
+        // return "";
+
         int fseek_res = fseek(file_, 0, SEEK_SET);
         if (fseek_res == FSEEK_ERROR) {
             perror("fseek");
@@ -57,4 +64,6 @@ protected:
         delete line;
         return l;
     }
+
+    
 };

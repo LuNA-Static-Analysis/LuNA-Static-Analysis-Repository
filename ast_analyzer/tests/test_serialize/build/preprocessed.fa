@@ -1,0 +1,5 @@
+import c_init(int, name) as init;
+sub main() {
+  df x, y;
+  init(1, x);
+}

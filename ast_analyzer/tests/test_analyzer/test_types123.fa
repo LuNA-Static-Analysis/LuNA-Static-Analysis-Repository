@@ -1,0 +1,6 @@
+import c_foo(name) as foo;
+
+sub main() {
+  df x[1];
+  foo(x[1]); 
+}

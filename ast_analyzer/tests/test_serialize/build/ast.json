@@ -1,0 +1,143 @@
+{
+"program" : [
+ {
+"import" : {
+  "cxx_code_id" : {"value" : "c_init"}, 
+     "opt_ext_params" : {
+    "ext_params_seq" : [
+    {
+     "type" : {"value" : "int"}, 
+     "code_df" :  {}    },
+    {
+     "type" : {"value" : "name"}, 
+     "code_df" :  {}    }
+    
+]
+   }
+,  "luna_code_id" : { "value" : "init"}, 
+  "options" : ""
+}},
+ {
+"import" : {
+  "cxx_code_id" : {"value" : "c_iprint"}, 
+     "opt_ext_params" : {
+    "ext_params_seq" : [
+    {
+     "type" : {"value" : "int"}, 
+     "code_df" :  {}    }
+    
+]
+   }
+,  "luna_code_id" : { "value" : "iprint"}, 
+  "options" : ""
+}},
+ {
+"sub" : {
+  "code_id" : {"value" : "main"},
+   "opt_params": {
+
+}  ,
+   "block" : {
+       "dfdecls" : {
+     "name_seq" : {
+"name_seq" : [{"name": {"value" : "x"}}]
+     }
+
+    }
+,
+       "statement_seq" : [
+    {
+     "cf_statement" : {
+      "code_id": {"value" : "init"     },
+      "opt_label" : {
+       "simple_id" : {"value" : "a"}
+      }
+     ,
+      "opt_exprs" : {
+"exprs_seq" : [
+       {
+"value" : "7"},       {
+        "simple_id" : {"value" : "x"}
+}
+]      }
+     ,
+      "opt_setdf_rules" : {
+      }
+     ,
+      "opt_rules" : {
+      }
+     ,
+      "opt_behavior" : {
+       "behv_pragmas_seq" : [
+       {
+        "behv_pragma_expr" : {
+        "name": {"value" : "locator_cyclic"},
+"expr" : {"value" : "1"}
+}
+       }
+       ]
+      }
+     }
+    },
+    {
+     "cf_statement" : {
+      "code_id": {"value" : "iprint"     },
+      "opt_label" : {
+      }
+     ,
+      "opt_exprs" : {
+"exprs_seq" : [
+       {
+        "simple_id" : {"value" : "x"}
+}
+]      }
+     ,
+      "opt_setdf_rules" : {
+      }
+     ,
+      "opt_rules" : {
+      }
+     ,
+      "opt_behavior" : {
+       "behv_pragmas_seq" : [
+       {
+        "behv_pragma_id_seq" : {
+        "name": {"value" : "request"},
+"id_seq" : [
+         {
+          "simple_id" : {"value" : "x"}
+}
+]
+}
+       },
+       {
+        "behv_pragma_expr" : {
+        "name": {"value" : "locator_cyclic"},
+"expr" : {"value" : "2"}
+}
+       }
+       ]
+      }
+     }
+    }
+    ]
+,
+       "opt_behavior" : {
+     "behv_pragmas_seq" : [
+     {
+      "behv_pragma_eqg" : {
+      "name": {"value" : "locator_cyclic"},
+       "simple_id" : {"value" : "x"}
+,
+"value" : "3"
+}
+     }
+     ]
+    }
+
+   }
+    }
+}
+
+]
+}

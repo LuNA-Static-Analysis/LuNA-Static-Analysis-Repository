@@ -1,0 +1,9 @@
+import c_init(name) as init;
+import c_foo(int) as foo;
+
+sub main() {
+  df x;
+  init(x);
+  foo(x + 1);
+}
+
