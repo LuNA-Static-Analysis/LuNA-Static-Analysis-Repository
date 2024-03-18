@@ -39,12 +39,20 @@ enum ExpressionType {
     nonEqualNode = 11, // !=
     andNode = 12, // &&
     orNode = 13, // ||
+
     //todo ternary operator
+
     assignNode = 15, // =; todo does it exist?
+
+    // identifier
     identifierNode = 16,
+
+    // constants
     stringNode = 17,
     intNode = 18,
     realNode = 19,
+    
+    // unary operators
     intCastNode = 20,
     realCastNode = 21,
     stringCastNode = 22,

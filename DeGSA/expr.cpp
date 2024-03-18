@@ -60,10 +60,19 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
 
     luna_string* lunaString = dynamic_cast<luna_string*>(ASTexpr);
     if (lunaString != NULL){
-        //todo is real and is int and is string; merge to master, find in utils.cpp
-        //lunaString.is_real();
-        this->type = stringNode;
-        this->constant = lunaString->to_string();
+
+        std::string s = *(lunaString->get_value());
+        if (std::regex_match(s, std::regex("[0-9]+"))){ // int
+            this->type = intNode;
+        }
+        if (std::regex_match(s, std::regex("[0-9]+[.][0-9]+"))){ // real
+            this->type = realNode;
+        }
+        if (std::regex_match(s, std::regex("\"[^\"]*\""))){ // string
+            this->type = stringNode;
+        }
+
+        this->constant = s;
         return;
     }
 
@@ -88,12 +97,34 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
             case '-': this->type = subtractNode; break;
             case '*': this->type = multiplyNode; break;
             case '/': this->type = divideNode; break;
-            case '>': this->type = greaterNode; break;
-            case '<': this->type = lesserNode; break;
+            case '%': this->type = modulusNode; break;
+            case '>':
+                if (op.size() > 1 && op[1] == '=') {
+                    this->type = greaterOrEqualNode; break;
+                } else {
+                    this->type = greaterNode; break;
+                }
+            case '<':
+                if (op.size() > 1 && op[1] == '=') {
+                    this->type = lesserOrEqualNode; break;
+                } else {
+                    this->type = lesserNode; break;
+                }
             case '=': if (op.size() > 1 && op[1] == '=') {this->type = equalNode; break;}
             case '!': if (op.size() > 1 && op[1] == '=') {this->type = nonEqualNode; break;}
+            case '&':
+                if (op.size() > 1 && op[1] == '&') {
+                    this->type = andNode;
+                }
+                break;
+            case '|':
+                if (op.size() > 1 && op[1] == '|') {
+                    this->type = andNode;
+                }
+                break;
+            //todo ternary
             default: std::cout << "INTERNAL ERROR: UNKNOWN OPERATION IN EXPRESSION CONSTRUCTOR AT LINE " << ASTexpr->line_ << ": " << op[0] << std::endl;
-                this->type = addNode; //todo temporary
+                this->type = noneNode;
         }
 
         this->leftExpr = new Expression(lunaBinOp->left_, nameTable, errorReports);
@@ -119,28 +150,15 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
             if (identifierName != nameTable.end()){
 
                 switch(identifierName->second->getType()){
-                    case subArgNameType:
-                        // argument of a sub
-                        this->identifier = identifierName->second;
-                        break;
-                    case baseDFNameType:
-                        // simple DF (no indices)
+                    case baseDFNameType: // simple DF (no indices)
                         this->identifier = new IndexedDFName(simpleDFName, identifierName->second, {}, ASTexpr->line_);
                         break;
+                    case subArgNameType: // argument of a sub
                     case forIteratorNameType:
-                        this->identifier = identifierName->second;
-                        break;
                     case whileIteratorNameType:
-                        this->identifier = identifierName->second;
-                        break;
                     case valueNameType:
-                        this->identifier = identifierName->second;
-                        break;
                     case letNameType:
-                        this->identifier = identifierName->second;
-                        break;
-                    case mainArgNameType:
-                        // argument of a main
+                    case mainArgNameType: // argument of a main
                         this->identifier = identifierName->second;
                         break;
                     default:
@@ -176,28 +194,65 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
     return;
 }
 
-//todo only works with constants!
-Expression Expression::operator + (const Expression& other) {//todo how is expression transferred here?
+Expression Expression::binOp(){
+    Expression left = this->leftExpr->getAsConstant();
+    Expression right = this->rightExpr->getAsConstant();
 
-        Expression left = this->getAsConstant();
-        Expression right = other.getAsConstant();
+    if (left.type == realNode && right.type == realNode ||
+        left.type == intNode && right.type == realNode || 
+        left.type == realNode && right.type == intNode){ // result is double
 
-        if (left.type == realNode && right.type == realNode ||
-            left.type == intNode && right.type == realNode || 
-            left.type == realNode && right.type == intNode){
-            
-            return Expression(
-                std::to_string(stod(left.constant) + stod(right.constant)),
-                realNode);
-            
-        } else if (this->type == intNode && other.type == intNode){
-            return Expression(
-                std::to_string(stoi(left.constant) + stoi(right.constant)),
-                intNode);
-        } else {
-            std::cout << "INTERNAL ERROR: + operator used with unsuitable type" << std::endl;
-            return Expression("", noneNode);
+        double l = std::stod(left.constant);
+        double r = std::stod(right.constant);
+        switch(this->type){
+            case addNode: return Expression(std::to_string(l + r), realNode);
+            case subtractNode: return Expression(std::to_string(l - r), realNode);
+            case multiplyNode: return Expression(std::to_string(l * r), realNode);
+            case divideNode: return Expression(std::to_string(l / r), realNode);
+            case modulusNode: 
+                std::cout << "INTERNAL ERROR: attempt to use modulus with double" << std::endl;
+                return Expression("", noneNode);
+            case greaterNode: return Expression(std::to_string(l > r), intNode);
+            case greaterOrEqualNode: return Expression(std::to_string(l >= r), intNode);
+            case lesserNode: return Expression(std::to_string(l < r), intNode);
+            case lesserOrEqualNode: return Expression(std::to_string(l <= r), intNode);
+            case equalNode: return Expression(std::to_string(l == r), intNode);
+            case nonEqualNode: return Expression(std::to_string(l != r), intNode);
+            case andNode: return Expression(std::to_string(l && r), intNode);
+            case orNode: return Expression(std::to_string(l || r), intNode);
+
+            default:
+                std::cout << "INTERNAL ERROR: binOp reached default in switch" << std::endl;
+                return Expression("", noneNode);
         }
+            
+    } else if (left.type == intNode && left.type == intNode){ // result is int
+
+        int l = std::stoi(left.constant);
+        int r = std::stoi(right.constant);
+        switch(this->type){
+            case addNode: return Expression(std::to_string(l + r), intNode);
+            case subtractNode: return Expression(std::to_string(l - r), intNode);
+            case multiplyNode: return Expression(std::to_string(l * r), intNode);
+            case divideNode: return Expression(std::to_string(l / r), intNode);
+            case modulusNode: return Expression(std::to_string(l % r), intNode);
+            case greaterNode: return Expression(std::to_string(l > r), intNode);
+            case greaterOrEqualNode: return Expression(std::to_string(l >= r), intNode);
+            case lesserNode: return Expression(std::to_string(l < r), intNode);
+            case lesserOrEqualNode: return Expression(std::to_string(l <= r), intNode);
+            case equalNode: return Expression(std::to_string(l == r), intNode);
+            case nonEqualNode: return Expression(std::to_string(l != r), intNode);
+            case andNode: return Expression(std::to_string(l && r), intNode);
+            case orNode: return Expression(std::to_string(l || r), intNode);
+            default:
+                std::cout << "INTERNAL ERROR: binOp reached default in switch" << std::endl;
+                return Expression("", noneNode);
+        }
+
+    } else {
+        std::cout << "INTERNAL ERROR: calculate used with unsuitable type" << std::endl;
+        return Expression("", noneNode);
+    }
 }
 
 Identifier* Expression::getAsIdentifier(){
@@ -210,20 +265,49 @@ Identifier* Expression::getAsIdentifier(){
 
 // naive implementation: returns noneNode once encounters an identifier
 // creates new object and returns a pointer; never return already existing object!
-Expression Expression::getAsConstant() const {
-    std::cout << this->type << std::endl;
+Expression Expression::getAsConstant(){
     switch (this->type){
-        case addNode: 
-            std::cout << "cool" << std::endl;
-            return *(this->leftExpr) + *(this->rightExpr);
-            //todo cases
-        case intNode://todo use copy constructors?
-            std::cout << "very cool" << std::endl;
+
+        // binary operations
+        case addNode:
+        case subtractNode:
+        case multiplyNode:
+        case divideNode:
+        case modulusNode:
+        case greaterNode:
+        case greaterOrEqualNode:
+        case lesserNode:
+        case lesserOrEqualNode:
+        case equalNode:
+        case nonEqualNode:
+        case andNode:
+        case orNode:
+            return this->binOp();
+
+        // ternary operations
+        //todo
+        
+        // constants
+        case intNode:
             return Expression(this->constant, intNode);
         case stringNode:
             return Expression(this->constant, stringNode);
         case realNode:
             return Expression(this->constant, realNode);
+
+        case identifierNode: {
+            // todo in case of a let or sub, we can try to get value
+            LetName* letName = dynamic_cast<LetName*>(this->identifier);
+            if (letName != nullptr){
+                return letName->getReference()->getAsConstant();
+            }
+            SubArgName* subArgName = dynamic_cast<SubArgName*>(this->identifier);
+            if (subArgName != nullptr){
+                return subArgName->getReference()->getAsConstant();
+            }
+        }
+
+        // expression unsuitable for being a constant
         default:
             std::cout << "INTERNAL ERROR: getAsConstant returned noneNode" << std::endl;
             return Expression("", noneNode);
@@ -237,40 +321,12 @@ std::vector<std::string> Expression::markAsUse(Vertex* currentVertex, int size){
     switch(type){
 
         case addNode:
-            for (auto r: leftExpr->markAsUse(currentVertex, size)) reports.push_back(r);
-            for (auto r: rightExpr->markAsUse(currentVertex, size)) reports.push_back(r);
-            return reports;
-        
         case subtractNode:
-            for (auto r: leftExpr->markAsUse(currentVertex, size)) reports.push_back(r);
-            for (auto r: rightExpr->markAsUse(currentVertex, size)) reports.push_back(r);
-            return reports;
-        
         case multiplyNode:
-            for (auto r: leftExpr->markAsUse(currentVertex, size)) reports.push_back(r);
-            for (auto r: rightExpr->markAsUse(currentVertex, size)) reports.push_back(r);
-            return reports;
-        
         case divideNode:
-            for (auto r: leftExpr->markAsUse(currentVertex, size)) reports.push_back(r);
-            for (auto r: rightExpr->markAsUse(currentVertex, size)) reports.push_back(r);
-            return reports;
-        
         case greaterNode:
-            for (auto r: leftExpr->markAsUse(currentVertex, size)) reports.push_back(r);
-            for (auto r: rightExpr->markAsUse(currentVertex, size)) reports.push_back(r);
-            return reports;
-
         case lesserNode:
-            for (auto r: leftExpr->markAsUse(currentVertex, size)) reports.push_back(r);
-            for (auto r: rightExpr->markAsUse(currentVertex, size)) reports.push_back(r);
-            return reports;
-
         case equalNode:
-            for (auto r: leftExpr->markAsUse(currentVertex, size)) reports.push_back(r);
-            for (auto r: rightExpr->markAsUse(currentVertex, size)) reports.push_back(r);
-            return reports;
-
         case nonEqualNode:
             for (auto r: leftExpr->markAsUse(currentVertex, size)) reports.push_back(r);
             for (auto r: rightExpr->markAsUse(currentVertex, size)) reports.push_back(r);
@@ -284,13 +340,14 @@ std::vector<std::string> Expression::markAsUse(Vertex* currentVertex, int size){
             for (auto r: identifier->markAsUse(currentVertex, size)) reports.push_back(r);
             return reports;
         
-        case stringNode: return reports;
-
-        case intNode: return reports;
-
-        case realNode: return reports;
+        case stringNode:
+        case intNode:
+        case realNode: 
+            return reports;
 
         case realCastNode: 
+        case intCastNode:
+        case stringCastNode:
             for (auto r: leftExpr->markAsUse(currentVertex, size)) reports.push_back(r);
             return reports;
 

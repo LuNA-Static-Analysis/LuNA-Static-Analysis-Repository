@@ -4,6 +4,8 @@
 #include "ids.hpp"
 #include "../parser/ast.hpp"
 
+#include <regex>
+
 // abstract class that represents nodes in an AST
 // required to store information about expressions in LuNA code
 // terminals are Identifiers
@@ -26,11 +28,11 @@ class Expression {
 
         std::string getConstant();
 
-        Expression operator + (const Expression& other);
+        Expression binOp();
 
         Identifier* getAsIdentifier();
 
-        Expression getAsConstant() const;
+        Expression getAsConstant();
 
         std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
 
