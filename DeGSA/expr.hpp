@@ -16,6 +16,7 @@ class Expression {
         ExpressionType type; // type of a node [operation] (i.e. add, subtract, assign, identifier, ... )
         Expression* leftExpr; // left operand
         Expression* rightExpr; // right operand
+        Expression* ternaryOperatorCondition; // extra expression serving as ternary operator condition
         Identifier* identifier; // nullptr if not an identifier (type will also be not "identifierNode")
         std::string constant; // int, string, real LuNA constant
         expr* ASTexpr;
@@ -29,6 +30,8 @@ class Expression {
         std::string getConstant();
 
         Expression binOp();
+
+        Expression terOp();
 
         Identifier* getAsIdentifier();
 
