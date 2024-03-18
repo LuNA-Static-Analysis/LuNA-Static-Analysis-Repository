@@ -1,0 +1,8 @@
+sub main() {
+}
+
+sub main1() {
+  init();
+  df x;
+  init();
+}

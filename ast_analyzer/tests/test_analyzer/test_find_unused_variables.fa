@@ -1,9 +1,8 @@
-sub main() {
-    df x;
-    
-    while (x[i] < 0 ) , i = 0 .. out N {
-        init(t[i]);
-    }
+import c_init(name) as init;
+import c_init(name) as init;
 
-    init1(a[i]);
+sub main1(int x) {
+    df x, t;
+    
+    init1(x[k]);
 }

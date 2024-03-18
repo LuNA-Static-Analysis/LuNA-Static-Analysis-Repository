@@ -8,12 +8,15 @@
 #include <assert.h>
 
 class undeclarated_names_analyzer : public base_analyzer {
-
 public:
     undeclarated_names_analyzer(ast* ast_, FILE* yyin, error_reporter* reporter) {
         this->ast_ = ast_;
         this->file_ = yyin;
         this->reporter_ = reporter;
+    }
+
+    std::string get_name() override {
+        return "undeclarated_names_analyzer";
     }
 
     bool analyze() override {
@@ -171,7 +174,7 @@ public:
             if (cur_while != nullptr) {
                 std::vector<luna_string*> inner_scope;
                 inner_scope.push_back(cur_while->left_);
-                std::cerr << cur_while->left_->to_string() << std::endl;
+                // std::cerr << cur_while->left_->to_string() << std::endl;
                 scope->push_back(&inner_scope);
 
                 std::vector<expr *> v;
@@ -200,11 +203,15 @@ public:
             for_statement* cur_for = dynamic_cast<for_statement*> (stat);
             if (cur_for != nullptr) {
                 std::vector<expr *> v;
+
                 v.push_back(cur_for->expr_1_);
                 v.push_back(cur_for->expr_2_);
 
+                check_for_statement_types(cur_for);
+
                 std::vector<luna_string*>* for_vars = get_vars(&v);
                 for (auto i : *for_vars) {
+
                     if (!is_define_in_scope(i, scope)) {
                         reporter_->report(ERROR_LEVEL::ERROR,
                             "Name \"" + i->to_string() + "\" is used, but not defined",
@@ -259,4 +266,30 @@ public:
         return has_errors;
     }
 
+    void check_for_statement_types(for_statement* for_stat) {
+        expr* e1 = for_stat->expr_1_;
+        expr* e2 = for_stat->expr_2_;
+
+        if (is_real(e2->to_string()) || is_string(e2->to_string()) || is_real(e1->to_string()) || is_string(e1->to_string())) {
+            reporter_->report(ERROR_LEVEL::ERROR,
+                "Invalid type of expression",
+                get_line_from_file(for_stat->line_),
+                for_stat->line_,
+                "integer or value"
+            );
+        }
+
+        if (is_int(e1->to_string()) && is_int(e2->to_string())) {
+            int l = std::stoi(e1->to_string());
+            int r = std::stoi(e2->to_string());
+
+            if (r < l) {
+                reporter_->report(ERROR_LEVEL::ERROR,
+                    "Bad range ",
+                    get_line_from_file(for_stat->line_),
+                    for_stat->line_
+                );
+            }
+        }
+    }
 };

@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../../LuNA-error-analyzer"
+		},
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../cppparser"
+		}
+	],
+	"settings": {}
+}

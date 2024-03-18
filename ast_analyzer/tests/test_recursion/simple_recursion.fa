@@ -1,0 +1,26 @@
+sub main() {
+  df N, x;
+
+  main1();
+
+  if (N == x) {
+    main();
+  }
+
+  for i=0..N {
+    main();
+
+    for i=0..N {
+      main();
+    }
+
+    while (x[i] < 0) , i = 0 .. out N {
+      main();
+    }
+
+  }
+
+  while (x[i] < 0) , i = 0 .. out N {
+    main();
+  }
+}

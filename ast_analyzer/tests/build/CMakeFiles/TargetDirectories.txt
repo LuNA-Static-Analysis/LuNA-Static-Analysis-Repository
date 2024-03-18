@@ -1,0 +1,5 @@
+/home/maxwell/LuNA-Static-Analysis-Repository/ast_analyzer/tests/build/CMakeFiles/main.dir
+/home/maxwell/LuNA-Static-Analysis-Repository/ast_analyzer/tests/build/CMakeFiles/edit_cache.dir
+/home/maxwell/LuNA-Static-Analysis-Repository/ast_analyzer/tests/build/CMakeFiles/rebuild_cache.dir
+/home/maxwell/LuNA-Static-Analysis-Repository/ast_analyzer/tests/build/_deps/json-build/CMakeFiles/edit_cache.dir
+/home/maxwell/LuNA-Static-Analysis-Repository/ast_analyzer/tests/build/_deps/json-build/CMakeFiles/rebuild_cache.dir

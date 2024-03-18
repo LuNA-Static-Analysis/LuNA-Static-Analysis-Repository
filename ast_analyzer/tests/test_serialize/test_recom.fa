@@ -1,0 +1,6 @@
+import c_helloworld() as hello_world;
+
+sub main()
+{
+	hello_world() @ { locator_cyclic: 0; };
+}

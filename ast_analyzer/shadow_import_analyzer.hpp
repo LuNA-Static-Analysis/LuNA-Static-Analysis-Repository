@@ -1,7 +1,4 @@
-#include <vector>
-#include <map>
-#include <string>
-#include <set>
+
 
 #include "../parser/ast.hpp"
 #include "error_reporter.hpp"
@@ -17,6 +14,10 @@ public:
 
     bool analyze() override {
         return analyze_shadow_import();
+    }
+
+    std::string get_name() override {
+        return "shadow_import_analyzer";
     }
 
     bool analyze_shadow_import() {

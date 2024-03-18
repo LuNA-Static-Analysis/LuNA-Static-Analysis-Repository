@@ -1,0 +1,9 @@
+sub main(int a, value b) {
+  df x;
+  init();
+
+  let x=y[k][l], message="Success" { 
+      df x;
+      init();
+  }
+}
