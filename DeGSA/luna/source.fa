@@ -1,28 +1,7 @@
 import printfl(real) as print;
 import c_init_float(real, name) as init;
-sub main(real mainArg){
-        df a;
-        print(mainArg);
-        foo(a);
-}
-
-sub foo(real f){
-        df one;
-        init(1, one);
-        for i = 1..one {
-                df two;
-                while (128 < one), j = 0 .. out f {
-                        df three;
-                        if 11 < 22 {
-                                df four;
-                                let x = f[j] + 1 {
-                                        df five;
-                                        init(1, x);
-                                        print(x);
-                                        init(1, x[i]);
-                                        print(x[i]);
-                                }
-                        }
-                }
+sub main(){
+        if (1.0 < 2.0 && 3.0 < 4.0){
+                print(1.0);
         }
 }

@@ -8,6 +8,19 @@ expr* Expression::getExpr(){
     return this->ASTexpr;
 }
 
+std::string Expression::getConstant(){
+    return this->constant;
+}
+
+Expression::Expression(std::string constant, ExpressionType type){//todo
+    this->ASTexpr = nullptr;
+    this->constant = constant;
+    this->identifier = nullptr;
+    this->leftExpr = nullptr;
+    this->rightExpr = nullptr;
+    this->type = type;
+}
+
 Expression::Expression(expr* ASTexpr){
     this->ASTexpr = ASTexpr;
     this->constant = "";
@@ -31,30 +44,32 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
     this->leftExpr = nullptr;
     this->rightExpr = nullptr;
 
-    luna_string* lunaString = dynamic_cast<luna_string*>(ASTexpr);
-    if (lunaString != NULL){
-        this->type = stringNode;
-        this->constant = lunaString->to_string();
-        return;
-    }
-
-    integer* lunaInteger = dynamic_cast<integer*>(ASTexpr);
+    integer* lunaInteger = dynamic_cast<integer*>(ASTexpr);//todo does not happen
     if (lunaInteger != NULL) {
         this->type = intNode;
         this->constant = lunaInteger->to_string();
         return;
     }
 
-    real* lunaReal = dynamic_cast<real*>(ASTexpr);
+    real* lunaReal = dynamic_cast<real*>(ASTexpr); //todo does not happen
     if (lunaReal != NULL) {
         this->type = realNode;
         this->constant = lunaReal->to_string();
         return;
     }
 
+    luna_string* lunaString = dynamic_cast<luna_string*>(ASTexpr);
+    if (lunaString != NULL){
+        //todo is real and is int and is string; merge to master, find in utils.cpp
+        //lunaString.is_real();
+        this->type = stringNode;
+        this->constant = lunaString->to_string();
+        return;
+    }
+
     luna_cast* lunaCast = dynamic_cast<luna_cast*>(ASTexpr);
     if (lunaCast != NULL){
-        this->type = castNode;//todo add type to which we are casting
+        this->type = realCastNode;//todo add type to which we are casting
         this->leftExpr = new Expression(lunaCast->expr_, nameTable, errorReports);
         return;
     }
@@ -161,11 +176,57 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
     return;
 }
 
+//todo only works with constants!
+Expression Expression::operator + (const Expression& other) {//todo how is expression transferred here?
+
+        Expression left = this->getAsConstant();
+        Expression right = other.getAsConstant();
+
+        if (left.type == realNode && right.type == realNode ||
+            left.type == intNode && right.type == realNode || 
+            left.type == realNode && right.type == intNode){
+            
+            return Expression(
+                std::to_string(stod(left.constant) + stod(right.constant)),
+                realNode);
+            
+        } else if (this->type == intNode && other.type == intNode){
+            return Expression(
+                std::to_string(stoi(left.constant) + stoi(right.constant)),
+                intNode);
+        } else {
+            std::cout << "INTERNAL ERROR: + operator used with unsuitable type" << std::endl;
+            return Expression("", noneNode);
+        }
+}
+
 Identifier* Expression::getAsIdentifier(){
     if (this->type == identifierNode){
         return this->identifier;
     } else {
         return nullptr;
+    }
+}
+
+// naive implementation: returns noneNode once encounters an identifier
+// creates new object and returns a pointer; never return already existing object!
+Expression Expression::getAsConstant() const {
+    std::cout << this->type << std::endl;
+    switch (this->type){
+        case addNode: 
+            std::cout << "cool" << std::endl;
+            return *(this->leftExpr) + *(this->rightExpr);
+            //todo cases
+        case intNode://todo use copy constructors?
+            std::cout << "very cool" << std::endl;
+            return Expression(this->constant, intNode);
+        case stringNode:
+            return Expression(this->constant, stringNode);
+        case realNode:
+            return Expression(this->constant, realNode);
+        default:
+            std::cout << "INTERNAL ERROR: getAsConstant returned noneNode" << std::endl;
+            return Expression("", noneNode);
     }
 }
 
@@ -229,9 +290,11 @@ std::vector<std::string> Expression::markAsUse(Vertex* currentVertex, int size){
 
         case realNode: return reports;
 
-        case castNode: 
+        case realCastNode: 
             for (auto r: leftExpr->markAsUse(currentVertex, size)) reports.push_back(r);
             return reports;
+
+        //todo other nodes!
         
         default: std::cout << "WARNING: Expression.markAsUse ended as \"default\"" << std::endl;
 
@@ -339,10 +402,12 @@ std::vector<std::string> Expression::markAsDef(Vertex* currentVertex, int size){
             reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark LuNA real constant\n");
             return reports;
         
-        case castNode:
+        case realCastNode:
              reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark LuNA cast\n");
             return reports;
         
+        //todo other casts!
+
         default: 
             std::cout << "WARNING: Expression.markAsDef ended as \"default\"" << std::endl;
             return reports;

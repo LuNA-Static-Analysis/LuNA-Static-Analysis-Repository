@@ -26,21 +26,30 @@ enum VertexType {
 
 enum ExpressionType {
 
-    addNode = 1,
-    subtractNode = 2,
-    multiplyNode = 3,
-    divideNode = 4,
-    assignNode = 5,
-    identifierNode = 6,
-    stringNode = 7,
-    intNode = 8,
-    realNode = 9,
-    castNode = 10,
-    greaterNode = 11, // >
-    lesserNode = 12, // <
-    equalNode = 13,
-    nonEqualNode = 14
-    //TODO add more
+    addNode = 1, // +
+    subtractNode = 2, // -
+    multiplyNode = 3, // *
+    divideNode = 4, // /
+    modulusNode = 5, // %
+    greaterNode = 6, // >
+    greaterOrEqualNode = 7, // >=
+    lesserNode = 8, // <
+    lesserOrEqualNode = 9, // <=
+    equalNode = 10, // ==
+    nonEqualNode = 11, // !=
+    andNode = 12, // &&
+    orNode = 13, // ||
+    //todo ternary operator
+    assignNode = 15, // =; todo does it exist?
+    identifierNode = 16,
+    stringNode = 17,
+    intNode = 18,
+    realNode = 19,
+    intCastNode = 20,
+    realCastNode = 21,
+    stringCastNode = 22,
+
+    noneNode = 23 // means error happened
 
 };
 

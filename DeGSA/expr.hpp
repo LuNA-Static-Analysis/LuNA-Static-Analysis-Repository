@@ -24,11 +24,19 @@ class Expression {
 
         expr* getExpr();
 
+        std::string getConstant();
+
+        Expression operator + (const Expression& other);
+
         Identifier* getAsIdentifier();
+
+        Expression getAsConstant() const;
 
         std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
 
         std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
+
+        Expression(std::string constant, ExpressionType type);
 
         Expression(expr* ASTexpr);
 
