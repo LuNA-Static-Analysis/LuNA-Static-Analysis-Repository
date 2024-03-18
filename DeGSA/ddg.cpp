@@ -633,10 +633,81 @@ class DDG {
 
         }
 
+        void checkConstantConditions(){
+            for (auto v: vertices){
+                Vertex* vertex = v.second;
+
+                if (vertex->getVertexType() == ifVF){
+                    IfVertex* ifVertex = dynamic_cast<IfVertex*>(vertex);
+                    Expression conditionConstant = ifVertex->getConditionExpr()->getAsConstant();
+                    if (conditionConstant.getType() != noneNode){
+                        switch(conditionConstant.getType()){
+                            case realNode:
+                                if (std::stod(conditionConstant.getConstant()) == 0)
+                                    errorReports.push_back(
+                                        "WARNING: always false condition in \"if\" at line " + std::to_string(ifVertex->getLine()) + "\n"
+                                    );
+                                else
+                                    errorReports.push_back(
+                                        "WARNING: always true condition in \"if\" at line " + std::to_string(ifVertex->getLine()) + "\n"
+                                    );
+                                continue;
+                            case intNode:
+                                if (std::stoi(conditionConstant.getConstant()) == 0)
+                                    errorReports.push_back(
+                                        "WARNING: always false condition in \"if\" at line " + std::to_string(ifVertex->getLine()) + "\n"
+                                    );
+                                else
+                                    errorReports.push_back(
+                                        "WARNING: always true condition in \"if\" at line " + std::to_string(ifVertex->getLine()) + "\n"
+                                    );
+                                continue;
+                            default:
+                                std::cout << "INTERNAL ERROR: checkConstantConditions reached default at if" << std::endl;
+                        }
+                    }
+                }
+
+                if (vertex->getVertexType() == whileVF){
+                    WhileVertex* whileVertex = dynamic_cast<WhileVertex*>(vertex);
+                    Expression conditionConstant = whileVertex->getConditionExpr()->getAsConstant();
+                    if (conditionConstant.getType() != noneNode){
+                        switch(conditionConstant.getType()){
+                            case realNode:
+                                if (std::stod(conditionConstant.getConstant()) == 0)
+                                    errorReports.push_back(
+                                        "WARNING: always false condition in \"while\" at line " + std::to_string(whileVertex->getLine()) + "\n"
+                                    );
+                                else
+                                    errorReports.push_back(
+                                        "WARNING: always true condition in \"while\" at line " + std::to_string(whileVertex->getLine()) + "\n"
+                                    );
+                                continue;
+                            case intNode:
+                                if (std::stoi(conditionConstant.getConstant()) == 0)
+                                    errorReports.push_back(
+                                        "WARNING: always false condition in \"while\" at line " + std::to_string(whileVertex->getLine()) + "\n"
+                                    );
+                                else
+                                    errorReports.push_back(
+                                        "WARNING: always true condition in \"while\" at line " + std::to_string(whileVertex->getLine()) + "\n"
+                                    );
+                                continue;
+                            default:
+                                std::cout << "INTERNAL ERROR: checkConstantConditions reached default at while" << std::endl;
+                        }
+                    }
+                }
+
+            }
+        }
+
         // this function accepts list of errors to find and tries to find them in the created graph and baseNameSet
         void findErrors(){
 
             checkBaseNameSet();
+
+            checkConstantConditions();
 
             //TODO cyclic dependence
 
