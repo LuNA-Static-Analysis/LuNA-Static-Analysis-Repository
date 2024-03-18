@@ -1,6 +1,6 @@
 %{
 
-#include "error_reporter.hpp"
+#include "../parser/error_reporter.hpp"
 #include "../parser/ast.hpp"
 
 #include <iostream>

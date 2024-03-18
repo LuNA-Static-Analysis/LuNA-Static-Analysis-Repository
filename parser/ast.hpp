@@ -1,19 +1,20 @@
 #ifndef LUNA_AST
 #define LUNA_AST
 
-//MODIFICATIONS
-#define uint unsigned int // VSCode on Windows could not see uint before for some reason
-//typedef int ssize_t; // while using MSYS2 offered compilator, I found that this is a conflicting definition;
-// everything works on my laptop with this commented, later will check if this works on the desktop
-
-//also this must be added to the class ast: friend class DDG;
-
-//END
-
 #include <iostream>
 #include <vector>
 #include <cstring>
 #include <sstream>      
+
+enum luna_type {
+    LUNA_INT,
+    LUNA_REAL,
+    LUNA_STRING,
+    LUNA_NAME,
+    LUNA_VALUE,
+    LUNA_UNDEFINED,
+    LUNA_ERROR_TYPE,
+};
 
 enum luna_type {
     LUNA_INT,
@@ -68,6 +69,7 @@ public:
     std::string to_json(const uint shift) const override {
         return "\"value\" : \"" + (*value_) + "\"";
     }
+
 
     bool operator==(const luna_string& other) const {
         return *(this->value_) == *(other.value_);
