@@ -16,6 +16,16 @@ enum luna_type {
     LUNA_ERROR_TYPE,
 };
 
+enum luna_type {
+    LUNA_INT,
+    LUNA_REAL,
+    LUNA_STRING,
+    LUNA_NAME,
+    LUNA_VALUE,
+    LUNA_UNDEFINED,
+    LUNA_ERROR_TYPE,
+};
+
 class block;
 
 class virtual_token {
