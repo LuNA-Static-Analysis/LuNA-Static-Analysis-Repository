@@ -107,7 +107,7 @@ class DDG {
 
         // scanForDFDecls is a function that scans block for DF declarations
         // DFs, according to LuNA rules, must be declared on the very first line, and no other declarations shall follow
-        std::map<std::string, Identifier*> scanForDFDecls(block* blockobj /* todo int line*/){
+        std::map<std::string, Identifier*> scanForDFDecls(block* blockobj, Vertex* currentVertex){
             
             std::map<std::string, Identifier*> DFDecls = {};
 
@@ -115,12 +115,13 @@ class DDG {
             if ((blockobj->opt_dfdecls_ != NULL) && (blockobj->opt_dfdecls_->dfdecls_ != NULL)) { // found some DF declarations
         
                 // get names of declared DFs
-                //TODO check that lines are correct
                 std::vector<luna_string*> DFNames = *(blockobj->opt_dfdecls_->dfdecls_->name_seq_->names_);
                 for (luna_string* currentDFDecl: DFNames){
                     std::string dfName = *(currentDFDecl->value_);
                     if (DFDecls.find(dfName) == DFDecls.end()){
-                        DFDecls.insert(std::make_pair(dfName, new BaseDFName(dfName, blockobj->opt_dfdecls_->dfdecls_->line_)));//TODO :)
+                        BaseDFName* newBaseDFName = new BaseDFName(dfName);
+                        newBaseDFName->setVertex(currentVertex);
+                        DFDecls.insert(std::make_pair(dfName, newBaseDFName));
                     } else {
                         std::string report = "ERROR: found duplicate name in df declaration in block " + std::to_string((long long)blockobj) +
                         ": " + dfName + "\n";
@@ -178,7 +179,7 @@ class DDG {
 
             /* find DF declarations in current block; we can declare DF once in every block!
             scanForDFDecls returns map with no duplicates */
-            std::map<std::string, Identifier*> declaredInsideIdsMap = scanForDFDecls(currentBlock);
+            std::map<std::string, Identifier*> declaredInsideIdsMap = scanForDFDecls(currentBlock, currentVertex);
             // update declaredBothIdsMap with newly declared base names
             for (auto i: declaredInsideIdsMap){
                 std::string identifierName = i.first;
@@ -222,7 +223,7 @@ class DDG {
                     // create Expression objects for call args
                     std::vector<Expression*> callArgs = {};
                     for (int i = 0; i < rawArguments.size(); i++){
-                        Expression* expression = new Expression(rawArguments[i], declaredBothIdsMap, &errorReports);
+                        Expression* expression = new Expression(rawArguments[i], declaredBothIdsMap, &errorReports, nullptr); // todo this is not cool
                         callArgs.push_back(expression);
                     }
 
@@ -382,10 +383,12 @@ class DDG {
 
                                 if (name == "main"){
                                     MainArgName* mainArgName = new MainArgName(identifierDeclaredName);
+                                    mainArgName->setVertex(currentVertex);
                                     declaredNamesVector.push_back(mainArgName);
                                     nextDeclaredOutsideIdsMap.insert(std::make_pair(identifierDeclaredName, mainArgName));
                                 } else {
-                                    SubArgName* subArgName = new SubArgName(identifierDeclaredName, callArgs[i], line);
+                                    SubArgName* subArgName = new SubArgName(identifierDeclaredName, callArgs[i]);
+                                    subArgName->setVertex(currentVertex);
                                     declaredNamesVector.push_back(subArgName);
                                     nextDeclaredOutsideIdsMap.insert(std::make_pair(identifierDeclaredName, subArgName));
                                 }
@@ -426,9 +429,9 @@ class DDG {
                     declaredOutsideIdsMap.insert(std::make_pair(forIteratorString, forIterator));
 
                     // all names inside "for" expressions must be marked as used
-                    Expression* leftBorder = new Expression(innerStatementForVF->expr_1_, declaredOutsideIdsMap, &errorReports);
+                    Expression* leftBorder = new Expression(innerStatementForVF->expr_1_, declaredOutsideIdsMap, &errorReports, currentVertex);
                     
-                    Expression* rightBorder = new Expression(innerStatementForVF->expr_2_, declaredOutsideIdsMap, &errorReports);
+                    Expression* rightBorder = new Expression(innerStatementForVF->expr_2_, declaredOutsideIdsMap, &errorReports, currentVertex);
 
                     vertices.insert(std::make_pair(vertexCount, new ForVertex(currentDepth, vertexCount, line,
                         forIterator, leftBorder, rightBorder, callerVertex)));
@@ -457,7 +460,7 @@ class DDG {
                     WhileIteratorName* whileIterator = new WhileIteratorName(whileIteratorString);
                     declaredOutsideIdsMap.insert(std::make_pair(whileIteratorString, whileIterator));
 
-                    Expression* whileOutNameExpr = new Expression(innerStatementWhileVF->id_, declaredOutsideIdsMap, &errorReports);
+                    Expression* whileOutNameExpr = new Expression(innerStatementWhileVF->id_, declaredOutsideIdsMap, &errorReports, currentVertex);
                     Identifier* whileOutName = whileOutNameExpr->getAsIdentifier();
                     if ((whileOutName == nullptr) || 
                         ((whileOutName->getType() != indexedDFNameType) && (whileOutName->getType() != subArgNameType))){//todo is mainArgAllowed?
@@ -470,9 +473,9 @@ class DDG {
 
                     // "while" out name is an IndexedDF that must be marked as "def" TODO also everything inside indices is "used" as well
                     // everything inside condition and iterator start must be marked as used
-                    Expression* conditionExpression = new Expression(innerStatementWhileVF->expr_, declaredOutsideIdsMap, &errorReports);
+                    Expression* conditionExpression = new Expression(innerStatementWhileVF->expr_, declaredOutsideIdsMap, &errorReports, currentVertex);
 
-                    Expression* startExpression = new Expression(innerStatementWhileVF->right_, declaredOutsideIdsMap, &errorReports);
+                    Expression* startExpression = new Expression(innerStatementWhileVF->right_, declaredOutsideIdsMap, &errorReports, currentVertex);
 
                     vertices.insert(std::make_pair(vertexCount, new WhileVertex(currentDepth, vertexCount, line,
                         whileIterator, whileOutName, conditionExpression, startExpression,
@@ -494,7 +497,7 @@ class DDG {
 
                     if_statement* innerStatementIfVF = dynamic_cast<if_statement*>(innerStatement);
 
-                    Expression* conditionExpression = new Expression(innerStatementIfVF->expr_, declaredOutsideIdsMap, &errorReports);
+                    Expression* conditionExpression = new Expression(innerStatementIfVF->expr_, declaredOutsideIdsMap, &errorReports, currentVertex);
 
                     vertices.insert(std::make_pair(vertexCount, new IfVertex(currentDepth, vertexCount, line,
                         conditionExpression, callerVertex)));
@@ -524,7 +527,7 @@ class DDG {
                             return nullptr;//todo pretty hefty exception here
                         }
 
-                        Expression* letExpr = new Expression(assignment->expr_, declaredOutsideIdsMap, &errorReports);
+                        Expression* letExpr = new Expression(assignment->expr_, declaredOutsideIdsMap, &errorReports, currentVertex);
                         LetName* letName = new LetName(*(assignment->name_->get_value()), letExpr);
                         declaredOutsideIdsMap.insert(std::make_pair(letString, letName));
                         letNamesVector->push_back(letName);
@@ -533,6 +536,9 @@ class DDG {
                     vertices.insert(std::make_pair(vertexCount, new LetVertex(currentDepth, vertexCount, line,
                         letNamesVector, callerVertex)));
                     currentVertex = vertices.find(vertexCount)->second;
+                    for (auto ln: *letNamesVector){
+                        ln->setVertex(currentVertex);
+                    }
 
                     return enterBlock(letVF, currentBlock, currentVertex, declaredOutsideIdsMap,
                         currentDepth, {}, {}, "let");

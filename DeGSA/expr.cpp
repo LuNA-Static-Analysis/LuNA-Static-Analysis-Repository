@@ -34,7 +34,7 @@ Expression::Expression(expr* ASTexpr){
 // nameTable stores information about what Ids are visible currently, and we can
 // find the Identifier object by its name
 // if there is no required Identifiers, then it's an error
-Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTable, std::vector<std::string>* errorReports){
+Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTable, std::vector<std::string>* errorReports, Vertex* currentVertex){
 
     this->ASTexpr = ASTexpr;
 
@@ -91,7 +91,7 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
         if (stringCast != nullptr)
             this->type = stringCastNode;
 
-        this->leftExpr = new Expression(lunaCast->expr_, nameTable, errorReports);
+        this->leftExpr = new Expression(lunaCast->expr_, nameTable, errorReports, currentVertex);
         return;
     }
 
@@ -138,8 +138,8 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
                 this->type = noneNode;
         }
 
-        this->leftExpr = new Expression(lunaBinOp->left_, nameTable, errorReports);
-        this->rightExpr = new Expression(lunaBinOp->right_, nameTable, errorReports);
+        this->leftExpr = new Expression(lunaBinOp->left_, nameTable, errorReports, currentVertex);
+        this->rightExpr = new Expression(lunaBinOp->right_, nameTable, errorReports, currentVertex);
         return;
     }
 
@@ -164,7 +164,8 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
 
                 switch(identifierName->second->getType()){
                     case baseDFNameType: // simple DF (no indices)
-                        this->identifier = new IndexedDFName(simpleDFName, identifierName->second, {}, ASTexpr->line_);
+                        this->identifier = new IndexedDFName(simpleDFName, identifierName->second, {});
+                        this->identifier->setVertex(currentVertex);
                         break;
                     case subArgNameType: // argument of a sub
                     case forIteratorNameType:
@@ -189,7 +190,7 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
         complex_id* complexDF = dynamic_cast<complex_id*>(ASTexpr);
         if (complexDF != NULL){
 
-            IndexedDFName* temp = parseIndexedDFExpression(complexDF, nameTable, ASTexpr->line_, errorReports);
+            IndexedDFName* temp = parseIndexedDFExpression(complexDF, nameTable, ASTexpr->line_, errorReports, currentVertex);
             if (temp != nullptr){
                 this->type = identifierNode;
                 this->identifier = temp;

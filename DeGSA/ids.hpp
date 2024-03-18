@@ -16,14 +16,15 @@ class Identifier {
 
 protected:
 
-    // todo ??? name == "" if type == subArgName; else it is valid
+    Vertex* vertex; // vertex where name was declared
     std::string name;
     IdentifierType type;
-    int line;
     std::set<Vertex*> useSet;//todo init
     std::set<Vertex*> defSet;//todo init
 
 public:
+
+    Vertex* getVertex();
 
     std::string getName();
 
@@ -33,7 +34,7 @@ public:
 
     std::set<Vertex*> getDefSet();
 
-    virtual int getLine() = 0;
+    int getLine();
 
     // recursive method that returns a map of base names and amount of [] that were included in this identifier
     // ForIds, WhileIds are ignored -- we do not care if they were used or not
@@ -43,6 +44,8 @@ public:
     // pure ( = 0) virtual method, i.e. it must be initialized in every derived class so they are not abstract
     //TODO this might be redundant, as we have markUse and markDef now
     //virtual std::set<std::pair<Identifier*, int>> getRoots() = 0;
+
+    void setVertex(Vertex* currentVertex);
 
     virtual std::vector<std::string> markAsUse(Vertex* currentVertex, int size) = 0;
 
@@ -65,13 +68,11 @@ public:
 
     Expression* getReference();
 
-    int getLine();
-
     std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
 
     std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
 
-    SubArgName(std::string name, Expression* reference, int line);
+    SubArgName(std::string name, Expression* reference);
 
     ~SubArgName();
 
@@ -92,13 +93,11 @@ public:
 
     std::map<int, std::pair<std::vector<Vertex*>*, std::vector<Vertex*>*>> getMap();
 
-    int getLine();
-
     std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
 
     std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
 
-    BaseDFName(std::string name, int line);
+    BaseDFName(std::string name);
 
     ~BaseDFName();
 
@@ -124,13 +123,11 @@ public:
 
     std::vector<Expression*> getExpressionsVector();
 
-    int getLine();
-
     std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
 
     std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
 
-    IndexedDFName(std::string name, Identifier* base, std::vector<Expression*> expressionsVector, int line);
+    IndexedDFName(std::string name, Identifier* base, std::vector<Expression*> expressionsVector);
 
     ~IndexedDFName();
 
@@ -138,19 +135,11 @@ public:
 
 class ForIteratorName: public Identifier {
 
-private:
-
-    Vertex* forVertex;
-
 public:
-
-    int getLine();
 
     Expression* getLeftBorder();
 
     Expression* getRightBorder();
-
-    void setVertex(Vertex* currentVertex);
 
     std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
 
@@ -164,19 +153,11 @@ public:
 
 class WhileIteratorName: public Identifier {
 
-private:
-
-    Vertex* whileVertex;
-
 public:
 
     Expression* getConditionExpr();
 
     Expression* getStartExpr();
-
-    int getLine();
-
-    void setVertex(Vertex* currentVertex);
 
     std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
 
@@ -194,8 +175,6 @@ class ValueId: public Identifier {//todo rename this
 private:
 
 public:
-
-    int getLine();
 
     //std::set<std::pair<Identifier*, int>> getRoots();
 
@@ -215,10 +194,6 @@ public:
 
     Expression* getReference();
 
-    int getLine();
-
-    void setVertex(Vertex* currentVertex);
-
     std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
 
     std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
@@ -237,10 +212,6 @@ private:
 
 public:
 
-    int getLine();
-
-    void setVertex(Vertex* currentVertex);
-
     std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
 
     std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
@@ -252,6 +223,5 @@ public:
 };
 
 // it is used inside Expression constructor when engaging indexed name
-// todo check if it works
 IndexedDFName* parseIndexedDFExpression(expr* expression, std::map<std::string, Identifier*> nameTable, int line,
-            std::vector<std::string>* errorReports);
+            std::vector<std::string>* errorReports, Vertex* currentVertex);

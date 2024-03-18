@@ -1,5 +1,9 @@
 #include "ids.hpp"
 
+Vertex* Identifier::getVertex(){
+    return this->vertex;
+}
+
 std::string Identifier::getName(){
     return this->name;
 }
@@ -16,16 +20,24 @@ std::set<Vertex*> Identifier::getDefSet(){
     return defSet;
 }
 
+int Identifier::getLine(){
+    if (this->vertex != nullptr){
+        return this->vertex->getLine();
+    } else {
+        return -1;
+    }
+}
+
+void Identifier::setVertex(Vertex* currentVertex){
+    this->vertex = currentVertex;
+}
+
 Identifier::Identifier(){}
 
 Identifier::~Identifier(){}
 
 Expression* SubArgName::getReference(){
     return this->reference;
-}
-
-int SubArgName::getLine(){
-    return this->line;
 }
 
 std::vector<std::string> SubArgName::markAsUse(Vertex* currentVertex, int size){
@@ -36,11 +48,10 @@ std::vector<std::string> SubArgName::markAsDef(Vertex* currentVertex, int size){
     return reference->markAsDef(currentVertex, size);
 }
 
-SubArgName::SubArgName(std::string name, Expression* reference, int line){
+SubArgName::SubArgName(std::string name, Expression* reference){
     this->type = subArgNameType;
     this->name = name;
     this->reference = reference;
-    this->line = line;
 }
 
 SubArgName::~SubArgName(){}
@@ -93,15 +104,10 @@ std::map<int, std::pair<std::vector<Vertex*>*, std::vector<Vertex*>*>> BaseDFNam
     return this->sizeToUseDefVectors;
 }
 
-int BaseDFName::getLine(){
-    return this->line;
-}
-
-BaseDFName::BaseDFName(std::string name, int line){
+BaseDFName::BaseDFName(std::string name){
     this->name = name;
     this->type = baseDFNameType;
     this->sizeToUseDefVectors = {};
-    this->line = line;
 }
 
 BaseDFName::~BaseDFName(){}
@@ -112,10 +118,6 @@ Identifier* IndexedDFName::getBase(){
 
 std::vector<Expression*> IndexedDFName::getExpressionsVector(){
     return this->expressionsVector;
-}
-
-int IndexedDFName::getLine(){
-    return this->line;
 }
 
 std::vector<std::string> IndexedDFName::markAsUse(Vertex* currentVertex, int size){
@@ -146,7 +148,7 @@ std::vector<std::string> IndexedDFName::markAsDef(Vertex* currentVertex, int siz
     return reports;
 }
 
-IndexedDFName::IndexedDFName(std::string name, Identifier* base, std::vector<Expression*> expressionsVector, int line){
+IndexedDFName::IndexedDFName(std::string name, Identifier* base, std::vector<Expression*> expressionsVector){
     this->name = name;
     this->type = indexedDFNameType;
 
@@ -156,35 +158,23 @@ IndexedDFName::IndexedDFName(std::string name, Identifier* base, std::vector<Exp
 
     this->base = base;
     this->expressionsVector = expressionsVector;
-    this->line = line;
 }
 
 IndexedDFName::~IndexedDFName(){}
 
 Expression* ForIteratorName::getLeftBorder(){
-    if (this->forVertex == nullptr){
+    if (this->vertex == nullptr){
         return nullptr;
     } else {
-        return dynamic_cast<ForVertex*>(this->forVertex)->getLeftBorder();
+        return dynamic_cast<ForVertex*>(this->vertex)->getLeftBorder();
     }
 }
 
 Expression* ForIteratorName::getRightBorder(){
-    if (this->forVertex == nullptr){
+    if (this->vertex == nullptr){
         return nullptr;
     } else {
-        return dynamic_cast<ForVertex*>(this->forVertex)->getRightBorder();
-    }
-}
-
-int ForIteratorName::getLine(){
-    if (forVertex != nullptr) return this->forVertex->getLine();
-    else return -1;
-}
-
-void ForIteratorName::setVertex(Vertex* currentVertex){
-    if (this->forVertex == nullptr) {
-        this->forVertex = currentVertex;
+        return dynamic_cast<ForVertex*>(this->vertex)->getRightBorder();
     }
 }
 
@@ -205,38 +195,26 @@ std::vector<std::string> ForIteratorName::markAsDef(Vertex* currentVertex, int s
 ForIteratorName::ForIteratorName(std::string name){
     this->name = name;
     this->type = forIteratorNameType;
-    this->forVertex = nullptr;
+    this->vertex = nullptr;
     this->useSet = {};
     this->defSet = {};//todo
-    this->line = -2;//todo
 }
 
 ForIteratorName::~ForIteratorName(){}
 
 Expression* WhileIteratorName::getConditionExpr(){
-    if (this->whileVertex == nullptr){
+    if (this->vertex == nullptr){
         return nullptr;
     } else {
-        return dynamic_cast<WhileVertex*>(this->whileVertex)->getConditionExpr();
+        return dynamic_cast<WhileVertex*>(this->vertex)->getConditionExpr();
     }
 }
 
 Expression* WhileIteratorName::getStartExpr(){
-    if (this->whileVertex == nullptr){
+    if (this->vertex == nullptr){
         return nullptr;
     } else {
-        return dynamic_cast<WhileVertex*>(this->whileVertex)->getStartExpr();
-    }
-}
-
-int WhileIteratorName::getLine(){
-    if (whileVertex != nullptr) return this->whileVertex->getLine();
-    else return -1;
-}
-
-void WhileIteratorName::setVertex(Vertex* currentVertex){
-    if (this->whileVertex == nullptr) {
-        this->whileVertex = currentVertex;
+        return dynamic_cast<WhileVertex*>(this->vertex)->getStartExpr();
     }
 }
 
@@ -258,26 +236,15 @@ std::vector<std::string> WhileIteratorName::markAsDef(Vertex* currentVertex, int
 WhileIteratorName::WhileIteratorName(std::string name){
     this->name = name;
     this->type = whileIteratorNameType;
-    this->whileVertex = nullptr;
+    this->vertex = nullptr;
     this->useSet = {};
     this->defSet = {};//todo
-    this->line = -2;//todo
 }
 
 WhileIteratorName::~WhileIteratorName(){}
 
 Expression* LetName::getReference(){
     return this->reference;
-}
-
-int LetName::getLine(){
-    return this->letVertex->getLine();
-}
-
-void LetName::setVertex(Vertex* currentVertex){
-    if (this->letVertex == nullptr) {
-        this->letVertex = currentVertex;
-    }
 }
 
 std::vector<std::string> LetName::markAsUse(Vertex* currentVertex, int size){
@@ -300,16 +267,6 @@ LetName::LetName(std::string name, Expression* assignedExpression){
 }
 
 LetName::~LetName(){}
-
-int MainArgName::getLine(){
-    return this->mainVertex->getLine();
-}
-
-void MainArgName::setVertex(Vertex* currentVertex){
-    if (this->mainVertex == nullptr) {
-        this->mainVertex = currentVertex;
-    }
-}
 
 std::vector<std::string> MainArgName::markAsUse(Vertex* currentVertex, int size){
     std::cout << "Main arg name " << this->getName() << " is being marked as used" << std::endl;
@@ -339,7 +296,7 @@ MainArgName::~MainArgName(){}
 // it is used inside Expression constructor when engaging indexed name
 // todo check if it works
 IndexedDFName* parseIndexedDFExpression(expr* expression, std::map<std::string, Identifier*> nameTable, int line,
-    std::vector<std::string>* errorReports){
+    std::vector<std::string>* errorReports, Vertex* currentVertex){
 
     // expression could be either simple or a complex DF
     int indices = -1;
@@ -360,7 +317,7 @@ IndexedDFName* parseIndexedDFExpression(expr* expression, std::map<std::string, 
     std::vector<Expression*> expressionsVector(indices);
     complex_id* newComplexDF = dynamic_cast<complex_id*>(expression);
     for (int i = 0; i < indices; i++){
-        expressionsVector[indices - i - 1] = new Expression(newComplexDF->expr_, nameTable, errorReports);
+        expressionsVector[indices - i - 1] = new Expression(newComplexDF->expr_, nameTable, errorReports, currentVertex);
         newComplexDF = dynamic_cast<complex_id*>(newComplexDF->id_);
     }
     auto base = nameTable.find(baseName);
@@ -371,7 +328,7 @@ IndexedDFName* parseIndexedDFExpression(expr* expression, std::map<std::string, 
         // baseDFName, TODO
         // indexation is not allowed if baseName has a type of:
         // for iterator, while iterator
-        IndexedDFName* temp = new IndexedDFName(baseName, base->second, expressionsVector, line);
+        IndexedDFName* temp = new IndexedDFName(baseName, base->second, expressionsVector);
         std::cout << "Created new IndexedDFName object with base name " << baseName << " and expressionsVector: ";
         std::cout << std::flush;
         for (auto e: temp->getExpressionsVector()){

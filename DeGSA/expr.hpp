@@ -45,6 +45,6 @@ class Expression {
 
         Expression(expr* ASTexpr);
 
-        Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTable, std::vector<std::string>* errorReports);
+        Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTable, std::vector<std::string>* errorReports, Vertex* currentVertex);
 
 };
