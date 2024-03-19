@@ -222,12 +222,20 @@ bool ForIteratorName::isIndexable(){
     return false;
 }
 
+void ForIteratorName::setVertex(Vertex* vertex){
+    if (this->vertex == nullptr){
+        this->vertex = vertex;
+        this->defSet.insert(vertex);
+        vertex->addDef(this);
+    }
+}
+
 ForIteratorName::ForIteratorName(std::string name){
     this->name = name;
     this->type = forIteratorNameType;
     this->vertex = nullptr;
     this->useSet = {};
-    this->defSet = {};//todo
+    this->defSet = {};
 }
 
 ForIteratorName::~ForIteratorName(){}
@@ -267,12 +275,20 @@ bool WhileIteratorName::isIndexable(){
     return false;
 }
 
+void WhileIteratorName::setVertex(Vertex* vertex){
+    if (this->vertex == nullptr){
+        this->vertex = vertex;
+        this->defSet.insert(vertex);
+        vertex->addDef(this);
+    }
+}
+
 WhileIteratorName::WhileIteratorName(std::string name){
     this->name = name;
     this->type = whileIteratorNameType;
     this->vertex = nullptr;
     this->useSet = {};
-    this->defSet = {};//todo
+    this->defSet = {};
 }
 
 WhileIteratorName::~WhileIteratorName(){}

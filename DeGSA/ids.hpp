@@ -36,7 +36,7 @@ public:
 
     int getLine();
 
-    void setVertex(Vertex* currentVertex);
+    virtual void setVertex(Vertex* currentVertex);
 
     // pure ( = 0) virtual method, i.e. it must be initialized in every derived class so they are not abstract
     virtual std::vector<std::string> markAsUse(Vertex* currentVertex, int size) = 0;
@@ -147,6 +147,8 @@ public:
 
     bool isIndexable();
 
+    void setVertex(Vertex* vertex);
+
     ForIteratorName(std::string name);
 
     ~ForIteratorName();
@@ -166,6 +168,8 @@ public:
     std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
 
     bool isIndexable();
+
+    void setVertex(Vertex* vertex);
 
     WhileIteratorName(std::string name);
 
