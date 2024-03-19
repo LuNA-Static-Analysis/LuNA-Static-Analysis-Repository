@@ -41,6 +41,8 @@ class Expression {
 
         std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
 
+        bool isIndexable();
+
         Expression(std::string constant, ExpressionType type);
 
         Expression(expr* ASTexpr);

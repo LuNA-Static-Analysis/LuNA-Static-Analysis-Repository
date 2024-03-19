@@ -1,21 +1,14 @@
 import printfl(real) as print;
 import c_init_float(real, name) as init;
 
-sub foo(int f){
-        df a;
-        let x = f * 3 {
-                if (x * 4 - x * 4){
-                        print(1.0);
-                }
-                if ((x + int(5 * 3.2)) * 1 - 19){
-                        print(1.0);
-                }
-                while (((x * 2) && 23) - 1), i = 0..out a{
+sub main(){
+        foo(1.0);
+}
+
+sub foo(real f){
+        let x = f {
+                if (x[0]){//todo wrong indexation check
                         print(1.0);
                 }
         }
-}
-
-sub main(){
-        foo(1);
 }

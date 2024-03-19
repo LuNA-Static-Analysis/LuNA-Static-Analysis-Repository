@@ -36,20 +36,14 @@ public:
 
     int getLine();
 
-    // recursive method that returns a map of base names and amount of [] that were included in this identifier
-    // ForIds, WhileIds are ignored -- we do not care if they were used or not
-    // method is used to initialize use/defs of all BaseDFNames
-    //todo improve readability
-
-    // pure ( = 0) virtual method, i.e. it must be initialized in every derived class so they are not abstract
-    //TODO this might be redundant, as we have markUse and markDef now
-    //virtual std::set<std::pair<Identifier*, int>> getRoots() = 0;
-
     void setVertex(Vertex* currentVertex);
 
+    // pure ( = 0) virtual method, i.e. it must be initialized in every derived class so they are not abstract
     virtual std::vector<std::string> markAsUse(Vertex* currentVertex, int size) = 0;
 
     virtual std::vector<std::string> markAsDef(Vertex* currentVertex, int size) = 0;
+
+    virtual bool isIndexable() = 0;
 
     Identifier();
 
@@ -71,6 +65,8 @@ public:
     std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
 
     std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
+
+    bool isIndexable();
 
     SubArgName(std::string name, Expression* reference);
 
@@ -96,6 +92,8 @@ public:
     std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
 
     std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
+
+    bool isIndexable();
 
     BaseDFName(std::string name);
 
@@ -127,7 +125,9 @@ public:
 
     std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
 
-    IndexedDFName(std::string name, Identifier* base, std::vector<Expression*> expressionsVector);
+    bool isIndexable();
+
+    IndexedDFName(std::string name, Identifier* base, std::vector<Expression*> expressionsVector, std::vector<std::string>* errorReports);
 
     ~IndexedDFName();
 
@@ -144,6 +144,8 @@ public:
     std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
 
     std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
+
+    bool isIndexable();
 
     ForIteratorName(std::string name);
 
@@ -163,6 +165,8 @@ public:
 
     std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
 
+    bool isIndexable();
+
     WhileIteratorName(std::string name);
 
     ~WhileIteratorName();
@@ -180,7 +184,7 @@ public:
 
 };
 
-//todo what first -- vertex or letname???
+
 class LetName: public Identifier {
 
 private:
@@ -197,6 +201,8 @@ public:
     std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
 
     std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
+
+    bool isIndexable();
 
     LetName(std::string name, Expression* assignedExpression);
 
@@ -215,6 +221,8 @@ public:
     std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
 
     std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
+
+    bool isIndexable();
 
     MainArgName(std::string name);
 

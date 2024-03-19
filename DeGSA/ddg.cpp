@@ -143,12 +143,13 @@ class DDG {
 
         }
 
-        // enterBlock must be called inside enterVF whenever enterVF encounters a block
-        // declaredOutsideIdsMap must have no duplicates!
-        //
-        // this function exists to avoid code duplication while parsing for, while, sub and other operators with blocks
-        // however, one-for-all function is still not great (for example, some arguments are used exclusively with "for" block)
-        //TODO what to do with this?
+        /*  enterBlock must be called inside enterVF whenever enterVF encounters a block
+            declaredOutsideIdsMap must have no duplicates!
+        
+            this function exists to avoid code duplication while parsing for, while, sub and other operators with blocks
+            however, one-for-all function is still not great (for example, some arguments are used exclusively with "for" block)
+        
+        */
         Vertex* enterBlock(VertexType VertexType, block* currentBlock, Vertex* currentVertex, std::map<std::string, Identifier*> declaredOutsideIdsMap,
             int currentDepth, std::vector<Expression*> callArgs, std::vector<Identifier*> declaredArgs, std::string currentCFName){
 
@@ -340,9 +341,11 @@ class DDG {
 
                         switch(importAndPositionToUseDef[name][i + 1]){ // i + 1 because map's indices start from 1
                             case use:
-                                for (auto r: callArgs[i]->markAsUse(currentVertex, 0)) { errorReports.push_back(r); } break;
+                                if (callArgs[i] != nullptr)
+                                    for (auto r: callArgs[i]->markAsUse(currentVertex, 0)) { errorReports.push_back(r); } break;
                             case def:
-                                for (auto r: callArgs[i]->markAsDef(currentVertex, 0)) { errorReports.push_back(r); } break;
+                                if (callArgs[i] != nullptr)
+                                    for (auto r: callArgs[i]->markAsDef(currentVertex, 0)) { errorReports.push_back(r); } break;
                             default:
                                 std::cout << "enterVF -- import: found DF with unexpected UseDef!" << std::endl;
                         }
@@ -438,8 +441,10 @@ class DDG {
                     currentVertex = vertices.find(vertexCount)->second;
                     forIterator->setVertex(currentVertex);
 
-                    for (auto r: leftBorder->markAsUse(currentVertex, 0)) { errorReports.push_back(r); }
-                    for (auto r: rightBorder->markAsUse(currentVertex, 0)) { errorReports.push_back(r); }
+                    if (leftBorder != nullptr)
+                        for (auto r: leftBorder->markAsUse(currentVertex, 0)) { errorReports.push_back(r); }
+                    if (rightBorder != nullptr)
+                        for (auto r: rightBorder->markAsUse(currentVertex, 0)) { errorReports.push_back(r); }
 
                     return enterBlock(forVF, currentBlock, currentVertex, declaredOutsideIdsMap,
                         currentDepth, {}, {}, "for");
@@ -463,7 +468,7 @@ class DDG {
                     Expression* whileOutNameExpr = new Expression(innerStatementWhileVF->id_, declaredOutsideIdsMap, &errorReports, currentVertex);
                     Identifier* whileOutName = whileOutNameExpr->getAsIdentifier();
                     if ((whileOutName == nullptr) || 
-                        ((whileOutName->getType() != indexedDFNameType) && (whileOutName->getType() != subArgNameType))){//todo is mainArgAllowed?
+                        ((whileOutName->getType() != indexedDFNameType) && (whileOutName->getType() != subArgNameType))){
 
                         std::cout << "INTERNAL ERROR: unsuitable expression at while out name leads to nullpointer" << std::endl;
                         errorReports.push_back("ERROR: trying to use non-suitable expression as \"while\" out name\n");
@@ -471,7 +476,7 @@ class DDG {
 
                     }
 
-                    // "while" out name is an IndexedDF that must be marked as "def" TODO also everything inside indices is "used" as well
+                    // "while" out name is an IndexedDF that must be marked as "def"
                     // everything inside condition and iterator start must be marked as used
                     Expression* conditionExpression = new Expression(innerStatementWhileVF->expr_, declaredOutsideIdsMap, &errorReports, currentVertex);
 
@@ -483,8 +488,12 @@ class DDG {
                     currentVertex = vertices.find(vertexCount)->second;
                     whileIterator->setVertex(currentVertex);
 
-                    for (auto r: conditionExpression->markAsUse(currentVertex, 0)) { errorReports.push_back(r); }
-                    for (auto r: startExpression->markAsUse(currentVertex, 0)) { errorReports.push_back(r); }
+                    if (conditionExpression != nullptr)
+                        for (auto r: conditionExpression->markAsUse(currentVertex, 0)) { errorReports.push_back(r); }
+
+                    if (startExpression != nullptr)
+                        for (auto r: startExpression->markAsUse(currentVertex, 0)) { errorReports.push_back(r); }
+
                     if (whileOutName != nullptr){
                         for (auto r: whileOutName->markAsDef(currentVertex, 0)) { errorReports.push_back(r); }
                     }
@@ -504,7 +513,8 @@ class DDG {
                     currentVertex = vertices.find(vertexCount)->second;
 
                     // all identifiers inside "if" expression must be marked as "used"
-                    for (auto r: conditionExpression->markAsUse(currentVertex, 0)) { errorReports.push_back(r); }
+                    if (conditionExpression != nullptr)
+                        for (auto r: conditionExpression->markAsUse(currentVertex, 0)) { errorReports.push_back(r); }
 
                     return enterBlock(ifVF, currentBlock, currentVertex, declaredOutsideIdsMap,
                         currentDepth, {}, {}, "if");
@@ -558,6 +568,7 @@ class DDG {
         // this function binds vertices to each other
         // currently function initializes "in" and "out" of imports using baseNameSet
         void bindVertices(Vertex* currentVertex){
+            std::cout << "\nbindVertices started\n" << std::endl;
             // go through all basenames and bind imports depending on what info baseNameSet has
             for (BaseDFName* baseName: baseNameSet){
                 std::cout << "checking \"" + baseName->getName() << "\":" << std::endl;
@@ -571,7 +582,7 @@ class DDG {
                     }
                 }
             }
-
+            std::cout << "\nbindVertices finished\n" << std::endl;
         }
 
     public:
@@ -635,7 +646,6 @@ class DDG {
                     errorReports.push_back(report);
                 }
             }
-
 
         }
 
@@ -711,13 +721,15 @@ class DDG {
         // this function accepts list of errors to find and tries to find them in the created graph and baseNameSet
         void findErrors(){
 
+            std::cout << "\ncheckBaseNameSet started\n" << std::endl;
             checkBaseNameSet();
+            std::cout << "\ncheckBaseNameSet finished\n" << std::endl;
 
+            std::cout << "\ncheckConstantConditions started\n" << std::endl;
             checkConstantConditions();
+            std::cout << "\ncheckConstantConditions finished\n" << std::endl;
 
             //TODO cyclic dependence
-
-            //TODO attempt to initialize unfitting expression
 
         }
 
@@ -740,8 +752,6 @@ class DDG {
 
             this->baseNameSet = {};
 
-            //this->mainBlock
-
             // 1. find use- and def- atomic CFs
 
             std::cout << "\n============ Creating DDG ============" << std::endl;
@@ -752,12 +762,13 @@ class DDG {
                 std::cout << "ERROR: No main found" << std::endl;
                 return;
             }
+            this->mainBlock = (this->subNameToBlock)["main"];
 
             std::set<std::string> emptySet = {};
 
             // 2. create all the vertices
 
-            Vertex* mainVertex = enterVF({}, {}, (this->subNameToBlock)["main"], 1,
+            Vertex* mainVertex = enterVF({}, {}, mainBlock, 1,
                         subVF, "main", mainLine,
                         /* callerVertex */ nullptr, nullptr);
 
@@ -766,7 +777,7 @@ class DDG {
                       << " and an address of " << &((this->vertices).find(1)->second) << std::endl;
 
             // 3. bind vertices to eachother
-            bindVertices(mainVertex);//todo here be errors
+            bindVertices(mainVertex);
 
             auto graphBuildEnd = std::chrono::steady_clock::now();
 
@@ -812,7 +823,7 @@ class DDG {
 
             // 4. search for errors
 
-            *outputTarget << "\n======== Searching for errors ========" << std::endl;
+            *outputTarget << "\n======== Searching for errors ========\n" << std::endl;
 
             auto errorsFindStart = std::chrono::steady_clock::now();
 

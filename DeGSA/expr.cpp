@@ -12,7 +12,7 @@ std::string Expression::getConstant(){
     return this->constant;
 }
 
-Expression::Expression(std::string constant, ExpressionType type){//todo
+Expression::Expression(std::string constant, ExpressionType type){
     this->ASTexpr = nullptr;
     this->constant = constant;
     this->identifier = nullptr;
@@ -43,20 +43,7 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
     this->identifier = nullptr;
     this->leftExpr = nullptr;
     this->rightExpr = nullptr;
-
-    integer* lunaInteger = dynamic_cast<integer*>(ASTexpr);//todo does not happen
-    if (lunaInteger != NULL) {
-        this->type = intNode;
-        this->constant = lunaInteger->to_string();
-        return;
-    }
-
-    real* lunaReal = dynamic_cast<real*>(ASTexpr); //todo does not happen
-    if (lunaReal != NULL) {
-        this->type = realNode;
-        this->constant = lunaReal->to_string();
-        return;
-    }
+    this->type = noneNode;
 
     luna_string* lunaString = dynamic_cast<luna_string*>(ASTexpr);
     if (lunaString != NULL){
@@ -156,15 +143,13 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
         // it is not necessarily a correct expression! it could be indexed "for" iterator, for example
         if (simpleDF != NULL){
 
-            this->type = identifierNode;
-
             std::string simpleDFName = *(simpleDF->value_->value_);
             auto identifierName = nameTable.find(simpleDFName);
             if (identifierName != nameTable.end()){
 
                 switch(identifierName->second->getType()){
                     case baseDFNameType: // simple DF (no indices)
-                        this->identifier = new IndexedDFName(simpleDFName, identifierName->second, {});
+                        this->identifier = new IndexedDFName(simpleDFName, identifierName->second, {}, errorReports);
                         this->identifier->setVertex(currentVertex);
                         break;
                     case subArgNameType: // argument of a sub
@@ -192,7 +177,6 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
 
             IndexedDFName* temp = parseIndexedDFExpression(complexDF, nameTable, ASTexpr->line_, errorReports, currentVertex);
             if (temp != nullptr){
-                this->type = identifierNode;
                 this->identifier = temp;
             } else {
                 std::cout << "INTERNAL ERROR: creating Expression object (IndexedDFName) at line " + std::to_string(ASTexpr->line_) + "\n";
@@ -334,13 +318,18 @@ Expression Expression::getAsConstant(){
 
         case identifierNode: {
             // in case of a let or sub, we can try to get value
-            LetName* letName = dynamic_cast<LetName*>(this->identifier);
-            if (letName != nullptr){
-                return letName->getReference()->getAsConstant();
-            }
-            SubArgName* subArgName = dynamic_cast<SubArgName*>(this->identifier);
-            if (subArgName != nullptr){
-                return subArgName->getReference()->getAsConstant();
+            if (this->identifier != nullptr){
+                LetName* letName = dynamic_cast<LetName*>(this->identifier);
+                if (letName != nullptr){
+                    return letName->getReference()->getAsConstant();
+                }
+                SubArgName* subArgName = dynamic_cast<SubArgName*>(this->identifier);
+                if (subArgName != nullptr){
+                    return subArgName->getReference()->getAsConstant();
+                }
+                return Expression("", noneNode);//todo temporary
+            } else {
+                return Expression("", noneNode);
             }
         }
 
@@ -387,19 +376,25 @@ std::vector<std::string> Expression::markAsUse(Vertex* currentVertex, int size){
         case nonEqualNode:
         case andNode:
         case orNode:
-            for (auto r: leftExpr->markAsUse(currentVertex, size)) reports.push_back(r);
-            for (auto r: rightExpr->markAsUse(currentVertex, size)) reports.push_back(r);
+            if (leftExpr != nullptr)
+                for (auto r: leftExpr->markAsUse(currentVertex, size)) reports.push_back(r);
+            if (rightExpr != nullptr)
+                for (auto r: rightExpr->markAsUse(currentVertex, size)) reports.push_back(r);
             return reports;
         
         case ternaryNode:
             //todo marks must depend on outcome of an operator -- implement constant check at least
-            for (auto r: leftExpr->markAsUse(currentVertex, size)) reports.push_back(r);
-            for (auto r: rightExpr->markAsUse(currentVertex, size)) reports.push_back(r);
-            for (auto r: ternaryOperatorCondition->markAsUse(currentVertex, size)) reports.push_back(r);
+            if (leftExpr != nullptr)
+                for (auto r: leftExpr->markAsUse(currentVertex, size)) reports.push_back(r);
+            if (rightExpr != nullptr)
+                for (auto r: rightExpr->markAsUse(currentVertex, size)) reports.push_back(r);
+            if (ternaryOperatorCondition != nullptr)
+                for (auto r: ternaryOperatorCondition->markAsUse(currentVertex, size)) reports.push_back(r);
             return reports;
         
         case identifierNode:
-            for (auto r: identifier->markAsUse(currentVertex, size)) reports.push_back(r);
+            if (identifier != nullptr)
+                for (auto r: identifier->markAsUse(currentVertex, size)) reports.push_back(r);
             return reports;
         
         case stringNode:
@@ -410,7 +405,8 @@ std::vector<std::string> Expression::markAsUse(Vertex* currentVertex, int size){
         case realCastNode: 
         case intCastNode:
         case stringCastNode:
-            for (auto r: leftExpr->markAsUse(currentVertex, size)) reports.push_back(r);
+            if (leftExpr != nullptr)
+                for (auto r: leftExpr->markAsUse(currentVertex, size)) reports.push_back(r);
             return reports;
         
         // only noneNode must be left
@@ -470,8 +466,9 @@ std::vector<std::string> Expression::markAsDef(Vertex* currentVertex, int size){
             reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark ternary operator\n");
             return reports;
         
-        case identifierNode: 
+        case identifierNode:
 
+            if (identifier != nullptr)
             switch(identifier->getType()){
 
                 case subArgNameType: { //ok
@@ -546,4 +543,13 @@ std::vector<std::string> Expression::markAsDef(Vertex* currentVertex, int size){
     }
 
     return reports;
+}
+
+bool Expression::isIndexable(){
+    // only identifiers are indexable
+    if (type == identifierNode){
+        return identifier->isIndexable();
+    } else {
+        return false;
+    }
 }
