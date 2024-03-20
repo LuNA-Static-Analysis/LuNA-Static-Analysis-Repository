@@ -801,7 +801,7 @@ class DDG {
             for (BaseDFName* bn: baseNameSet){
                 *outputTarget << std::endl;
                 *outputTarget << "Name: " << bn->getName() << std::endl;
-                *outputTarget << "Declared at line: " << bn->getLine() << std::endl;
+                *outputTarget << "Declared in function call at line: " << bn->getLine() << std::endl;
                 auto map = bn->getMap(); // 1 = use, 2 = def
                 for (auto m: map){
                     *outputTarget << "Size: " << m.first << std::endl;

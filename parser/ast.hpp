@@ -755,7 +755,7 @@ class div1 : public bin_op {
         div1(expr *left, expr *right) : bin_op(left, right) {}
 
         std::string to_string() const override {
-            return (left_ == nullptr ? "nullptr" : left_->to_string()) + " \\ " + (right_ == nullptr ? "nullptr" : right_->to_string());
+            return (left_ == nullptr ? "nullptr" : left_->to_string()) + " / " + (right_ == nullptr ? "nullptr" : right_->to_string());
         }
 
     std::string to_json(const uint shift) const override {

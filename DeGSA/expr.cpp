@@ -249,7 +249,8 @@ Expression Expression::binOp(){
         }
 
     } else {
-        std::cout << "INTERNAL ERROR: calculate used with unsuitable type" << std::endl;
+        std::cout << "INTERNAL ERROR: binOp calculation used with unsuitable type:" << std::endl;
+        std::cout << "Left: " << left.type << "; right: " << right.type << std::endl;
         return Expression("", noneNode);
     }
 }
@@ -383,7 +384,7 @@ std::vector<std::string> Expression::markAsUse(Vertex* currentVertex, int size){
             return reports;
         
         case ternaryNode:
-            //todo marks must depend on outcome of an operator -- implement constant check at least
+            //todo marks must depend on outcome of an ternary operator -- implement constant check at least
             if (leftExpr != nullptr)
                 for (auto r: leftExpr->markAsUse(currentVertex, size)) reports.push_back(r);
             if (rightExpr != nullptr)
@@ -410,7 +411,7 @@ std::vector<std::string> Expression::markAsUse(Vertex* currentVertex, int size){
             return reports;
         
         // only noneNode must be left
-        default: std::cout << "WARNING: Expression.markAsUse ended as \"default\"" << std::endl;
+        default: std::cout << "INTERNAL ERROR: Expression.markAsUse ended as \"default\"" << std::endl;
 
     }
 
