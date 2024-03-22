@@ -1,0 +1,68 @@
+{
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "bison",
+            "command": "bison",
+            "args": [
+                "-d",
+                "${workspaceFolder}/parser/grammar.ypp"
+            ]
+        },
+        {
+            "type": "shell",
+            "label": "flex",
+            "dependsOn": [
+                "bison"
+            ],
+            "command": "flex",
+            "args": [
+                "${workspaceFolder}/parser/lexics.l"
+            ]
+        },
+        {
+            "type": "shell",
+            "label": "python",
+            "dependsOn": [
+                "flex"
+            ],
+            "command": "python3",
+            "args": [
+                "${workspaceFolder}/parser/pp.py",
+                "${workspaceFolder}/DeGSA/luna/source.fa",
+                "-o",
+                "prepr.fa"
+            ]
+        },
+        {
+            "type": "shell",
+            "label": "compile",
+            "dependsOn": [
+                "python"
+            ],
+            "command": "g++",
+            "args": [
+                "-g", // add debug information
+                "-I${workspaceFolder}/parser", // includes fix
+                //"-Wall", // all warnings
+                "-std=gnu++0x", // todo change version?
+                "lex.yy.c",
+                "grammar.tab.cpp",
+                "${workspaceFolder}/DeGSA/main.cpp",
+                "-o",
+                "a.out"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ],
+    "version": "2.0.0"
+}

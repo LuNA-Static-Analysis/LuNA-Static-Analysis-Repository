@@ -764,8 +764,6 @@ class DDG {
             }
             this->mainBlock = (this->subNameToBlock)["main"];
 
-            std::set<std::string> emptySet = {};
-
             // 2. create all the vertices
 
             Vertex* mainVertex = enterVF({}, {}, mainBlock, 1,

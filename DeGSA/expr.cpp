@@ -29,11 +29,14 @@ Expression::Expression(expr* ASTexpr){
     this->rightExpr = nullptr;
 }
 
-// this function gets an expression, recursively goes through it and
-// returns an obejct of type Expression, plus creates objects for IndexedDFs
-// nameTable stores information about what Ids are visible currently, and we can
-// find the Identifier object by its name
-// if there is no required Identifiers, then it's an error
+/* 
+    this function gets an expression, recursively goes through it and
+    returns an obejct of type Expression, plus creates objects for IndexedDFs
+    nameTable stores information about what Ids are visible currently, and we can
+    find the Identifier object by its name
+    if there is no required Identifiers, then it's an error
+*/
+//TODO stop parsing strings and use jsons or inheritance
 Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTable, std::vector<std::string>* errorReports, Vertex* currentVertex){
 
     this->ASTexpr = ASTexpr;
