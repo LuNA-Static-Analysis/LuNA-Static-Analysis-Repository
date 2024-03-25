@@ -1,0 +1,171 @@
+{
+"program" : [
+ {
+"sub" : {
+  "code_id" : {"value" : "main"},
+   "opt_params": {
+
+}  ,
+   "block" : {
+       "dfdecls" : {
+     "name_seq" : {
+"name_seq" : [{"name": {"value" : "N"}},{"name": {"value" : "x"}}]
+     }
+
+    }
+,
+       "statement_seq" : [
+    {
+     "cf_statement" : {
+      "code_id": {"value" : "main1"     },
+      "opt_label" : {
+      }
+     ,
+      "opt_exprs" : {
+      }
+     ,
+      "opt_setdf_rules" : {
+      }
+     ,
+      "opt_rules" : {
+      }
+     ,
+      "opt_behavior" : {
+      }
+     }
+    },
+    {
+     "if_statement" : {
+           "dbleq" : {
+"left" : {       "simple_id" : {"value" : "N"}
+      },
+"right" : {       "simple_id" : {"value" : "x"}
+}
+}
+     ,
+      "block" : {
+             "dfdecls" : {
+
+       }
+,
+             "statement_seq" : [
+       {
+        "cf_statement" : {
+         "code_id": {"value" : "main"        },
+         "opt_label" : {
+         }
+        ,
+         "opt_exprs" : {
+         }
+        ,
+         "opt_setdf_rules" : {
+         }
+        ,
+         "opt_rules" : {
+         }
+        ,
+         "opt_behavior" : {
+         }
+        }
+       }
+       ]
+,
+             "opt_behavior" : {
+       }
+
+      }
+
+     }    },
+    {
+"for_statement" : {
+     "name" : {"value" : "i"}
+,
+"value" : "0",
+      "simple_id" : {"value" : "N"}
+,
+      "block" : {
+             "dfdecls" : {
+
+       }
+,
+             "statement_seq" : [
+       {
+        "cf_statement" : {
+         "code_id": {"value" : "main"        },
+         "opt_label" : {
+         }
+        ,
+         "opt_exprs" : {
+         }
+        ,
+         "opt_setdf_rules" : {
+         }
+        ,
+         "opt_rules" : {
+         }
+        ,
+         "opt_behavior" : {
+         }
+        }
+       },
+       {
+"for_statement" : {
+        "name" : {"value" : "i"}
+,
+"value" : "0",
+         "simple_id" : {"value" : "N"}
+,
+         "block" : {
+                   "dfdecls" : {
+
+          }
+,
+                   "statement_seq" : [
+          {
+           "cf_statement" : {
+            "code_id": {"value" : "main"           },
+            "opt_label" : {
+            }
+           ,
+            "opt_exprs" : {
+            }
+           ,
+            "opt_setdf_rules" : {
+            }
+           ,
+            "opt_rules" : {
+            }
+           ,
+            "opt_behavior" : {
+            }
+           }
+          }
+          ]
+,
+                   "opt_behavior" : {
+          }
+
+         }
+}       },
+       {
+       }
+       ]
+,
+             "opt_behavior" : {
+       }
+
+      }
+}    },
+    {
+    }
+    ]
+,
+       "opt_behavior" : {
+    }
+
+   }
+    }
+}
+
+]
+}

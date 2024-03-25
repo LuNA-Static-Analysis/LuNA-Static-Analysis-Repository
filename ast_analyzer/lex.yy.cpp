@@ -553,7 +553,7 @@ char *yytext;
 
 #include "../parser/ast.hpp"
 #include "grammar.tab.hpp"
-#include "error_reporter.hpp"
+#include "../parser/error_reporter.hpp"
 
 #include <string>
 #include <cstring>
