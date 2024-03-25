@@ -31,8 +31,6 @@ class Expression {
 
         Expression binOp();
 
-        Expression terOp();
-
         Identifier* getAsIdentifier();
 
         Expression getAsConstant();

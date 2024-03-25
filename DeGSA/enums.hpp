@@ -41,9 +41,6 @@ enum ExpressionType {
     andNode = 12, // &&
     orNode = 13, // ||
 
-    // ternary operator: (condition) ? left : right
-    ternaryNode = 14,
-
     // identifier
     identifierNode = 15,
 

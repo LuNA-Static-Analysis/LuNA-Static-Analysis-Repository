@@ -258,27 +258,6 @@ Expression Expression::binOp(){
     }
 }
 
-Expression Expression::terOp(){ // strictly constants!
-    Expression condition = this->ternaryOperatorCondition->getAsConstant();
-    if (condition.type == realNode){
-        if (std::stod(condition.constant) != 0){
-            return this->leftExpr->getAsConstant();
-        } else {
-            return this->rightExpr->getAsConstant();
-        }
-    } else if (condition.type == intNode) {
-        if (std::stoi(condition.constant) != 0){
-            return this->leftExpr->getAsConstant();
-        } else {
-            return this->rightExpr->getAsConstant();
-        }
-    } else {
-        std::cout << "INTERNAL ERROR: unsuitable type inside ternary operator constant calculation" << std::endl;
-    }
-
-    return Expression("", noneNode);
-}
-
 Identifier* Expression::getAsIdentifier(){
     if (this->type == identifierNode){
         return this->identifier;
@@ -307,10 +286,6 @@ Expression Expression::getAsConstant(){
         case andNode:
         case orNode:
             return this->binOp();
-
-        // ternary operations
-        case ternaryNode:
-            return this->terOp();
         
         // constants
         case intNode:
@@ -386,16 +361,6 @@ std::vector<std::string> Expression::markAsUse(Vertex* currentVertex, int size){
                 for (auto r: rightExpr->markAsUse(currentVertex, size)) reports.push_back(r);
             return reports;
         
-        case ternaryNode:
-            //todo marks must depend on outcome of an ternary operator -- implement constant check at least
-            if (leftExpr != nullptr)
-                for (auto r: leftExpr->markAsUse(currentVertex, size)) reports.push_back(r);
-            if (rightExpr != nullptr)
-                for (auto r: rightExpr->markAsUse(currentVertex, size)) reports.push_back(r);
-            if (ternaryOperatorCondition != nullptr)
-                for (auto r: ternaryOperatorCondition->markAsUse(currentVertex, size)) reports.push_back(r);
-            return reports;
-        
         case identifierNode:
             if (identifier != nullptr)
                 for (auto r: identifier->markAsUse(currentVertex, size)) reports.push_back(r);
@@ -464,10 +429,6 @@ std::vector<std::string> Expression::markAsDef(Vertex* currentVertex, int size){
             return reports;
         case orNode:
             reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark binary (||) operation\n");
-            return reports;
-        
-        case ternaryNode:
-            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark ternary operator\n");
             return reports;
         
         case identifierNode:

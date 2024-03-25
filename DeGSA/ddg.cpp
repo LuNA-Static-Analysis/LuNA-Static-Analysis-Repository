@@ -347,7 +347,7 @@ class DDG {
                                 if (callArgs[i] != nullptr)
                                     for (auto r: callArgs[i]->markAsDef(currentVertex, 0)) { errorReports.push_back(r); } break;
                             default:
-                                std::cout << "enterVF -- import: found DF with unexpected UseDef!" << std::endl;
+                                std::cout << "INTERNAL ERROR: enterVF -- import: found DF with unexpected UseDef!" << std::endl;
                         }
                     }
                     return currentVertex;
@@ -759,7 +759,7 @@ class DDG {
             this->findSubs(astobj);
 
             if (!(this->mainExists)){
-                std::cout << "ERROR: No main found" << std::endl;
+                std::cout << "INTERNAL ERROR: No main found" << std::endl;
                 return;
             }
             this->mainBlock = (this->subNameToBlock)["main"];
