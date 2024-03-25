@@ -1,14 +1,188 @@
-import a(int, real) as a;
-import b(int) as a;
+#!/usr/bin/luna
 
-sub main(int a, real t) {
-    df a;
-    a = 1;
-    cf a : init(a);
+import rinit(name, real) as rinit;
+import iset(name, int) as iset;
+import calc_max(real, real, name) as calc_max;
+import init_ro(name, int) as init_ro;
+import init_fi(name, name, name, int) as init_fi;
+import poi_part(value, value, value, value, int, name, name, name, name) as poi_part;
+import show(int, real) as show;
+import save(value, int) as save;
 
-    if a != 1 {
-        df a;
-        init(a);
-    }
+#define FG_COUNT 16
+#define EPS 0.01
+
+sub reduce_max(name arr, name res, int n)
+{
+	df tmp;
+	rinit(tmp[0], arr[0]) --> (arr[0]) @ {
+//		request arr[0];
+		locator_cyclic: 0;
+		//req_unlimited tmp[0];
+	};
+
+	for i=1..n-1 {
+		calc_max(arr[i], tmp[i-1], tmp[i])
+			--> (arr[i], tmp[i-1]) @ {
+			//request arr[i], tmp[i-1];
+			locator_cyclic:0;
+			//req_unlimited tmp[i];
+		};
+	} @ {
+		locator_cyclic:0;
+		unroll_at_once;
+	}
+
+	rinit(res, tmp[n-1]) --> (tmp[n-1]) @ {
+		//request tmp[n-1];
+		locator_cyclic:0;
+		//req_unlimited res;
+	};
+} @ {
+	locator_cyclic tmp[i]=>0;
+	locator_cyclic arr[i]=>0;
+	locator_cyclic res=>0;
+}
+
+sub main()
+{
+	df Ro, Fi, iters, max, FiU, FiD, lmax, dummy;
+	
+	// Init ro & fi[0]
+	for i=0..$FG_COUNT-1 {
+		init_ro(Ro[i], i) @ {
+			locator_cyclic:i;
+			//req_unlimited Ro[i];
+		};
+
+		init_fi(Fi[0][i], FiU[0][i], FiD[0][i], i) @ {
+			locator_cyclic:i;
+			//req_unlimited Fi[0][i], FiU[0][i], FiD[0][i];
+		};
+	} @ {
+		locator_cyclic:0;
+		unroll_at_once;
+	}
+
+	rinit(max[0], $EPS+1) @ {
+		locator_cyclic:0;
+		//req_unlimited max[0];
+	};
+	
+	while max[t]>$EPS, t=0..out iters
+	{
+		poi_part(Ro[0], Fi[t][0], FiU[t][0], FiU[t][1], 0,
+				Fi[t+1][0], FiU[t+1][0], FiD[t+1][0], lmax[t+1][0])
+			--> (Fi[t][0], FiU[t][0], FiU[t][1]) @ {
+                        stealable;
+			//request Ro[0], Fi[t][0], FiU[t][0], FiU[t][1];
+			locator_cyclic:0;
+			//req_unlimited Fi[t+1][0], FiU[t+1][0], FiD[t+1][0], lmax[t+1][0];
+		};
+		for i=1..$FG_COUNT-2 {
+			poi_part(Ro[i], Fi[t][i], FiD[t][i-1], FiU[t][i+1], i,
+					Fi[t+1][i], FiU[t+1][i], FiD[t+1][i], lmax[t+1][i])
+				-->(Fi[t][i], FiD[t][i-1], FiU[t][i+1]) @ {
+                                stealable;
+				//request Ro[i], Fi[t][i], FiD[t][i-1], FiU[t][i+1];
+				locator_cyclic:i/11;
+				//req_unlimited Fi[t+1][i], FiU[t+1][i], FiD[t+1][i], lmax[t+1][i];
+			};
+		} @ {   
+			locator_cyclic:0;
+			unroll_at_once;
+		}
+		poi_part(
+			Ro[$FG_COUNT-1], Fi[t][$FG_COUNT-1],
+			FiD[t][$FG_COUNT-2], FiD[t][$FG_COUNT-1],
+			$FG_COUNT-1,
+			Fi[t+1][$FG_COUNT-1], FiU[t+1][$FG_COUNT-1],
+			FiD[t+1][$FG_COUNT-1], lmax[t+1][$FG_COUNT-1])
+				--> (
+					Fi[t][$FG_COUNT-1],
+					FiD[t][$FG_COUNT-2],
+					FiD[t][$FG_COUNT-1])
+				@ {
+                                        stealable;
+					//request 
+					//	Ro[$FG_COUNT-1],
+					//	Fi[t][$FG_COUNT-1],
+					//	FiD[t][$FG_COUNT-2],
+					//	FiD[t][$FG_COUNT-1];
+				locator_cyclic:0;
+				//req_unlimited
+				//	Fi[t+1][$FG_COUNT-1],
+				//	FiU[t+1][$FG_COUNT-1],
+				//	FiD[t+1][$FG_COUNT-1],
+				//	lmax[t+1][$FG_COUNT-1];
+			};
+		reduce_max(lmax[t+1], max[t+1], $FG_COUNT) --> (max[t]) @ {
+			locator_cyclic:0;
+		};
+
+		if (t%10==0) {
+			show(t, 0.0) @ {
+				//request max[t+1];
+				locator_cyclic:0;
+			};
+		} @ {
+			locator_cyclic: 0;
+		}
+	} @ {
+		//req_unlimited iters;
+		//request max[t];
+		locator_cyclic:0;
+		unroll_at_once;
+	}
+
+
+	
+	iset(dummy[0], 1) @ {
+		locator_cyclic:0;
+		//req_unlimited dummy[0];
+	};
+
+	for i=0..$FG_COUNT-1 {
+		if dummy[i] {
+			save(iters, i) >> (dummy[i+1]) @ {
+//			save(Fi[iters][i], i) >> (dummy[i+1]) @ {
+				//request iters;
+//				request Fi[iters][i];
+				locator_cyclic:0;
+				//req_unlimited dummy[i+1];
+				delete Ro[i];
+				delete Fi[iters][i], FiU[iters][i], FiD[iters][i];
+				delete dummy[i];
+			};
+		} @ {
+			//request dummy[i];
+			locator_cyclic:0;
+		}
+	} @ {
+		locator_cyclic:0;
+		unroll_at_once;
+	}
+
+	if dummy[$FG_COUNT] {
+		show(iters, 0) --> (dummy[$FG_COUNT]) @ {
+			//request iters;
+			locator_cyclic: 0;
+			delete max[iters], iters;
+		};
+	} @ {
+		locator_cyclic: 0;
+		//request dummy[$FG_COUNT];
+	}
+
+
+} @ {
+	locator_cyclic Ro[i]=>i;
+	locator_cyclic Fi[t][i]=>i;
+	locator_cyclic iters=>0;
+	locator_cyclic max[t]=>0;
+	locator_cyclic FiU[t][i]=>i-1;
+	locator_cyclic FiD[t][i]=>i+1;
+	locator_cyclic dummy[i]=>0;
+	locator_cyclic lmax[t][i]=>0;
 }
 

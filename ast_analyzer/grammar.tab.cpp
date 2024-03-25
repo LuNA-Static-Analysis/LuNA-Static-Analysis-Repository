@@ -70,7 +70,7 @@
 #line 1 "../parser/grammar.ypp"
 
 
-#include "error_reporter.hpp"
+#include "../parser/error_reporter.hpp"
 #include "../parser/ast.hpp"
 
 #include <iostream>
@@ -640,18 +640,18 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   155,   155,   158,   161,   166,   172,   177,   182,   186,
-     191,   197,   202,   207,   262,   265,   268,   273,   279,   285,
-     286,   290,   291,   292,   293,   294,   295,   299,   304,   310,
-     314,   318,   324,   329,   336,   341,   349,   355,   361,   365,
-     370,   371,   372,   373,   374,   376,   388,   401,   404,   408,
-     412,   418,   422,   426,   430,   434,   440,   444,   448,   453,
-     458,   463,   472,   476,   482,   486,   491,   497,   503,   510,
-     513,   519,   523,   529,   533,   539,   540,   546,   553,   554,
-     555,   558,   560,   562,   564,   565,   566,   567,   569,   570,
-     571,   572,   573,   574,   575,   577,   578,   579,   580,   581,
-     585,   586,   588,   600,   604,   610,   617,   618,   619,   620,
-     621
+       0,   155,   155,   158,   161,   167,   174,   180,   186,   191,
+     196,   202,   208,   214,   221,   225,   228,   234,   241,   248,
+     249,   253,   254,   255,   256,   257,   258,   262,   268,   275,
+     280,   284,   291,   296,   303,   309,   318,   325,   333,   338,
+     343,   344,   345,   346,   347,   349,   361,   374,   377,   381,
+     386,   393,   398,   403,   408,   413,   420,   425,   430,   435,
+     440,   445,   454,   459,   466,   470,   475,   481,   487,   494,
+     497,   503,   507,   513,   517,   523,   524,   530,   537,   541,
+     545,   551,   556,   561,   566,   570,   574,   578,   583,   587,
+     591,   595,   599,   603,   607,   612,   616,   620,   624,   628,
+     634,   638,   643,   655,   660,   666,   674,   678,   682,   686,
+     690
 };
 #endif
 
@@ -1582,317 +1582,339 @@ yyreduce:
             {
         (yyval.program_) = new program();
         (yyval.program_)->sub_defs->push_back((yyvsp[0].sub_def_));
+        (yyval.program_)->set_position((yylsp[0]).first_line);
     }
-#line 1587 "grammar.tab.cpp"
+#line 1588 "grammar.tab.cpp"
     break;
 
   case 5: /* program: program sub_def  */
-#line 166 "../parser/grammar.ypp"
+#line 167 "../parser/grammar.ypp"
                       { 
         (yyvsp[-1].program_)->sub_defs->push_back((yyvsp[0].sub_def_));
+        (yyval.program_)->set_position((yylsp[-1]).first_line);
     }
-#line 1595 "grammar.tab.cpp"
+#line 1597 "grammar.tab.cpp"
     break;
 
   case 6: /* sub_def: KW_SUB control_pragma code_id opt_params block  */
-#line 172 "../parser/grammar.ypp"
+#line 174 "../parser/grammar.ypp"
                                                        {
         (yyval.sub_def_) = new luna_sub_def((yyvsp[-3].control_pragma_), (yyvsp[-2].string_), (yyvsp[-1].opt_params_), (yyvsp[0].block_));
+        (yyval.sub_def_)->set_position((yylsp[-4]).first_line);
     }
-#line 1603 "grammar.tab.cpp"
+#line 1606 "grammar.tab.cpp"
     break;
 
   case 7: /* sub_def: KW_CPP KW_SUB code_id opt_params KW_BLOCK LB INT RB  */
-#line 177 "../parser/grammar.ypp"
+#line 180 "../parser/grammar.ypp"
                                                               {
         (yyval.sub_def_) = new cxx_block_with_params_def((yyvsp[-5].string_), (yyvsp[-4].opt_params_));
+        (yyval.sub_def_)->set_position((yylsp[-7]).first_line);
     }
-#line 1611 "grammar.tab.cpp"
+#line 1615 "grammar.tab.cpp"
     break;
 
   case 8: /* sub_def: KW_IMPORT code_id LB opt_ext_params RB KW_AS code_id SCOLON  */
-#line 182 "../parser/grammar.ypp"
+#line 186 "../parser/grammar.ypp"
                                                                       {
         (yyval.sub_def_) = new import((yyvsp[-6].string_), (yyvsp[-4].opt_ext_params_), (yyvsp[-1].string_), std::string(""));
+        (yyval.sub_def_)->set_position((yylsp[-7]).first_line);
     }
-#line 1619 "grammar.tab.cpp"
+#line 1624 "grammar.tab.cpp"
     break;
 
   case 9: /* sub_def: KW_IMPORT error SCOLON  */
-#line 186 "../parser/grammar.ypp"
+#line 191 "../parser/grammar.ypp"
                                  {
         delete (yyval.sub_def_);
         (yyval.sub_def_) = nullptr;
     }
-#line 1628 "grammar.tab.cpp"
+#line 1633 "grammar.tab.cpp"
     break;
 
   case 10: /* sub_def: error SCOLON  */
-#line 191 "../parser/grammar.ypp"
+#line 196 "../parser/grammar.ypp"
                    {
         delete (yyval.sub_def_);
         (yyval.sub_def_) = nullptr;
     }
-#line 1637 "grammar.tab.cpp"
+#line 1642 "grammar.tab.cpp"
     break;
 
   case 11: /* sub_def: KW_IMPORT code_id LB opt_ext_params RB KW_AS code_id COLON KW_CUDA SCOLON  */
-#line 197 "../parser/grammar.ypp"
+#line 202 "../parser/grammar.ypp"
                                                                                 {
         (yyval.sub_def_) = new import((yyvsp[-8].string_), (yyvsp[-6].opt_ext_params_), (yyvsp[-3].string_), std::string("CUDA"));
+        (yyval.sub_def_)->set_position((yylsp[-9]).first_line);
     }
-#line 1645 "grammar.tab.cpp"
+#line 1651 "grammar.tab.cpp"
     break;
 
   case 12: /* sub_def: KW_IMPORT code_id LB opt_ext_params RB KW_AS code_id COLON KW_CUDA COMMA KW_NOCPU SCOLON  */
-#line 202 "../parser/grammar.ypp"
+#line 208 "../parser/grammar.ypp"
                                                                                                {
         (yyval.sub_def_) = new import((yyvsp[-10].string_), (yyvsp[-8].opt_ext_params_), (yyvsp[-5].string_), std::string("CUDA, NOCPU"));
+        (yyval.sub_def_)->set_position((yylsp[-11]).first_line);
     }
-#line 1653 "grammar.tab.cpp"
+#line 1660 "grammar.tab.cpp"
     break;
 
   case 13: /* sub_def: KW_CPP NAME KW_BLOCK LB INT RB  */
-#line 207 "../parser/grammar.ypp"
+#line 214 "../parser/grammar.ypp"
                                          {
         (yyval.sub_def_) = new cxx_block_def((yyvsp[-4].string_));
-    }
-#line 1661 "grammar.tab.cpp"
-    break;
-
-  case 14: /* opt_ext_params: ext_params_seq  */
-#line 262 "../parser/grammar.ypp"
-                   { 
-        (yyval.opt_ext_params_) = new opt_ext_params((yyvsp[0].ext_params_seq_));
+        (yyval.sub_def_)->set_position((yylsp[-5]).first_line);
     }
 #line 1669 "grammar.tab.cpp"
     break;
 
-  case 15: /* opt_ext_params: %empty  */
-#line 265 "../parser/grammar.ypp"
-          { (yyval.opt_ext_params_) = new opt_ext_params(nullptr); }
-#line 1675 "grammar.tab.cpp"
+  case 14: /* opt_ext_params: ext_params_seq  */
+#line 221 "../parser/grammar.ypp"
+                   { 
+        (yyval.opt_ext_params_) = new opt_ext_params((yyvsp[0].ext_params_seq_));
+        (yyval.opt_ext_params_)->set_position((yylsp[0]).first_line);
+    }
+#line 1678 "grammar.tab.cpp"
     break;
 
-  case 16: /* ext_params_seq: code_df_param  */
-#line 268 "../parser/grammar.ypp"
-                       { 
-        (yyval.ext_params_seq_) = new ext_params_seq();
-        (yyval.ext_params_seq_)->params_->push_back((yyvsp[0].code_df_param_));
-    }
+  case 15: /* opt_ext_params: %empty  */
+#line 225 "../parser/grammar.ypp"
+          { (yyval.opt_ext_params_) = new opt_ext_params(nullptr); }
 #line 1684 "grammar.tab.cpp"
     break;
 
+  case 16: /* ext_params_seq: code_df_param  */
+#line 228 "../parser/grammar.ypp"
+                       { 
+        (yyval.ext_params_seq_) = new ext_params_seq();
+        (yyval.ext_params_seq_)->params_->push_back((yyvsp[0].code_df_param_));
+        (yyval.ext_params_seq_)->set_position((yylsp[0]).first_line);
+    }
+#line 1694 "grammar.tab.cpp"
+    break;
+
   case 17: /* ext_params_seq: ext_params_seq COMMA code_df_param  */
-#line 273 "../parser/grammar.ypp"
+#line 234 "../parser/grammar.ypp"
                                              {
         (yyvsp[-2].ext_params_seq_)->params_->push_back((yyvsp[0].code_df_param_));
+        (yyval.ext_params_seq_)->set_position((yylsp[-2]).first_line);
     }
-#line 1692 "grammar.tab.cpp"
+#line 1703 "grammar.tab.cpp"
     break;
 
   case 18: /* code_df_param: type code_df  */
-#line 279 "../parser/grammar.ypp"
+#line 241 "../parser/grammar.ypp"
                  {
         (yyval.code_df_param_) = new code_df_param((yyvsp[-1].string_), (yyvsp[0].string_));
+        (yyval.code_df_param_)->set_position((yylsp[-1]).first_line);
     }
-#line 1700 "grammar.tab.cpp"
-    break;
-
-  case 19: /* code_df: NAME  */
-#line 285 "../parser/grammar.ypp"
-             { (yyval.string_) = (yyvsp[0].string_); }
-#line 1706 "grammar.tab.cpp"
-    break;
-
-  case 20: /* code_df: %empty  */
-#line 286 "../parser/grammar.ypp"
-          { (yyval.string_) = nullptr; }
 #line 1712 "grammar.tab.cpp"
     break;
 
-  case 21: /* type: KW_INT  */
-#line 290 "../parser/grammar.ypp"
-               { (yyval.string_) = (yyvsp[0].string_);}
+  case 19: /* code_df: NAME  */
+#line 248 "../parser/grammar.ypp"
+             { (yyval.string_) = (yyvsp[0].string_); }
 #line 1718 "grammar.tab.cpp"
     break;
 
-  case 22: /* type: KW_REAL  */
-#line 291 "../parser/grammar.ypp"
-                  { (yyval.string_) = (yyvsp[0].string_); }
+  case 20: /* code_df: %empty  */
+#line 249 "../parser/grammar.ypp"
+          { (yyval.string_) = nullptr; }
 #line 1724 "grammar.tab.cpp"
     break;
 
-  case 23: /* type: KW_STRING  */
-#line 292 "../parser/grammar.ypp"
-                     { (yyval.string_) = (yyvsp[0].string_); }
+  case 21: /* type: KW_INT  */
+#line 253 "../parser/grammar.ypp"
+               { (yyval.string_) = (yyvsp[0].string_);}
 #line 1730 "grammar.tab.cpp"
     break;
 
-  case 24: /* type: KW_NAME  */
-#line 293 "../parser/grammar.ypp"
+  case 22: /* type: KW_REAL  */
+#line 254 "../parser/grammar.ypp"
                   { (yyval.string_) = (yyvsp[0].string_); }
 #line 1736 "grammar.tab.cpp"
     break;
 
-  case 25: /* type: KW_VALUE AMP  */
-#line 294 "../parser/grammar.ypp"
-                       { (yyval.string_) = (yyvsp[-1].string_); }
+  case 23: /* type: KW_STRING  */
+#line 255 "../parser/grammar.ypp"
+                     { (yyval.string_) = (yyvsp[0].string_); }
 #line 1742 "grammar.tab.cpp"
     break;
 
-  case 26: /* type: KW_VALUE  */
-#line 295 "../parser/grammar.ypp"
-                   { (yyval.string_) = (yyvsp[0].string_); }
+  case 24: /* type: KW_NAME  */
+#line 256 "../parser/grammar.ypp"
+                  { (yyval.string_) = (yyvsp[0].string_); }
 #line 1748 "grammar.tab.cpp"
     break;
 
+  case 25: /* type: KW_VALUE AMP  */
+#line 257 "../parser/grammar.ypp"
+                       { (yyval.string_) = (yyvsp[-1].string_); }
+#line 1754 "grammar.tab.cpp"
+    break;
+
+  case 26: /* type: KW_VALUE  */
+#line 258 "../parser/grammar.ypp"
+                   { (yyval.string_) = (yyvsp[0].string_); }
+#line 1760 "grammar.tab.cpp"
+    break;
+
   case 27: /* block: statement  */
-#line 299 "../parser/grammar.ypp"
+#line 262 "../parser/grammar.ypp"
               { 
         (yyval.block_) = new block();
         (yyval.block_)->statement_seq_->statements_->push_back((yyvsp[0].statement_)); 
+        (yyval.block_)->set_position((yylsp[0]).first_line);
     }
-#line 1757 "grammar.tab.cpp"
+#line 1770 "grammar.tab.cpp"
     break;
 
   case 28: /* block: LCB opt_dfdecls statement_seq RCB opt_behavior  */
-#line 304 "../parser/grammar.ypp"
+#line 268 "../parser/grammar.ypp"
                                                          { 
         (yyval.block_) = new block((yyvsp[-3].opt_dfdecls_), (yyvsp[-2].statement_seq_), (yyvsp[0].opt_behavior_)); 
+        (yyval.block_)->set_position((yylsp[-4]).first_line);
     }
-#line 1765 "grammar.tab.cpp"
-    break;
-
-  case 29: /* opt_dfdecls: dfdecls  */
-#line 310 "../parser/grammar.ypp"
-                { 
-        (yyval.opt_dfdecls_) = new opt_dfdecls((yyvsp[0].dfdecls_)); 
-    }
-#line 1773 "grammar.tab.cpp"
-    break;
-
-  case 30: /* opt_dfdecls: %empty  */
-#line 314 "../parser/grammar.ypp"
-          { (yyval.opt_dfdecls_) = new opt_dfdecls(nullptr); }
 #line 1779 "grammar.tab.cpp"
     break;
 
+  case 29: /* opt_dfdecls: dfdecls  */
+#line 275 "../parser/grammar.ypp"
+                { 
+        (yyval.opt_dfdecls_) = new opt_dfdecls((yyvsp[0].dfdecls_)); 
+        (yyval.opt_dfdecls_)->set_position((yylsp[0]).first_line);
+    }
+#line 1788 "grammar.tab.cpp"
+    break;
+
+  case 30: /* opt_dfdecls: %empty  */
+#line 280 "../parser/grammar.ypp"
+          { (yyval.opt_dfdecls_) = new opt_dfdecls(nullptr); }
+#line 1794 "grammar.tab.cpp"
+    break;
+
   case 31: /* dfdecls: KW_DF name_seq SCOLON  */
-#line 318 "../parser/grammar.ypp"
+#line 284 "../parser/grammar.ypp"
                               { 
         (yyval.dfdecls_) = new dfdecls((yyvsp[-1].name_seq_)); 
+        (yyval.dfdecls_)->set_position((yylsp[-2]).first_line);
     }
-#line 1787 "grammar.tab.cpp"
+#line 1803 "grammar.tab.cpp"
     break;
 
   case 32: /* name_seq: NAME  */
-#line 324 "../parser/grammar.ypp"
+#line 291 "../parser/grammar.ypp"
              { 
         (yyval.name_seq_) = new name_seq();
         (yyval.name_seq_)->names_->push_back((yyvsp[0].string_)); 
         (yyvsp[0].string_)->set_position((yylsp[0]).first_line);
     }
-#line 1797 "grammar.tab.cpp"
+#line 1813 "grammar.tab.cpp"
     break;
 
   case 33: /* name_seq: name_seq COMMA NAME  */
-#line 329 "../parser/grammar.ypp"
+#line 296 "../parser/grammar.ypp"
                               {
         (yyvsp[-2].name_seq_)->names_->push_back((yyvsp[0].string_));
         (yyvsp[0].string_)->set_position((yylsp[0]).first_line);
     }
-#line 1806 "grammar.tab.cpp"
+#line 1822 "grammar.tab.cpp"
     break;
 
   case 34: /* statement_seq: statement  */
-#line 336 "../parser/grammar.ypp"
+#line 303 "../parser/grammar.ypp"
                    { 
         (yyval.statement_seq_) = new statement_seq();
         (yyval.statement_seq_)->statements_->push_back((yyvsp[0].statement_)); 
+        (yyval.statement_seq_)->set_position((yylsp[0]).first_line);
     }
-#line 1815 "grammar.tab.cpp"
+#line 1832 "grammar.tab.cpp"
     break;
 
   case 35: /* statement_seq: statement_seq statement  */
-#line 341 "../parser/grammar.ypp"
+#line 309 "../parser/grammar.ypp"
                                   {
         if ((yyvsp[-1].statement_seq_) != nullptr) {
             (yyvsp[-1].statement_seq_)->statements_->push_back((yyvsp[0].statement_));
+            (yyval.statement_seq_)->set_position((yylsp[-1]).first_line);
         }
     }
-#line 1825 "grammar.tab.cpp"
+#line 1843 "grammar.tab.cpp"
     break;
 
   case 36: /* control_pragma: LARR where_type COMMA expr RARR  */
-#line 349 "../parser/grammar.ypp"
+#line 318 "../parser/grammar.ypp"
                                     {
         vector<expr *> exprs;
         exprs.push_back((yyvsp[-1].expr_));
         (yyval.control_pragma_) = new control_pragma((yyvsp[-3].string_), &exprs);
+        (yyval.control_pragma_)->set_position((yylsp[-4]).first_line);
     }
-#line 1835 "grammar.tab.cpp"
+#line 1854 "grammar.tab.cpp"
     break;
 
   case 37: /* control_pragma: LARR where_type COMMA expr COMMA expr RARR  */
-#line 355 "../parser/grammar.ypp"
+#line 325 "../parser/grammar.ypp"
                                                  {
         vector<expr *> exprs;
         exprs.push_back((yyvsp[-3].expr_));
         exprs.push_back((yyvsp[-1].expr_));
         (yyval.control_pragma_) = new control_pragma((yyvsp[-5].string_), &exprs);
+        (yyval.control_pragma_)->set_position((yylsp[-6]).first_line);
+
     }
-#line 1846 "grammar.tab.cpp"
+#line 1867 "grammar.tab.cpp"
     break;
 
   case 38: /* control_pragma: LARR where_type RARR  */
-#line 361 "../parser/grammar.ypp"
+#line 333 "../parser/grammar.ypp"
                           {
         (yyval.control_pragma_) = new control_pragma((yyvsp[-1].string_), nullptr);
+        (yyval.control_pragma_)->set_position((yylsp[-2]).first_line);
     }
-#line 1854 "grammar.tab.cpp"
+#line 1876 "grammar.tab.cpp"
     break;
 
   case 39: /* control_pragma: %empty  */
-#line 365 "../parser/grammar.ypp"
+#line 338 "../parser/grammar.ypp"
     {
         (yyval.control_pragma_) =  nullptr;
     }
-#line 1862 "grammar.tab.cpp"
+#line 1884 "grammar.tab.cpp"
     break;
 
   case 40: /* statement: cf_statement  */
-#line 370 "../parser/grammar.ypp"
+#line 343 "../parser/grammar.ypp"
                  { (yyval.statement_) = (yyvsp[0].cf_statement_);}
-#line 1868 "grammar.tab.cpp"
+#line 1890 "grammar.tab.cpp"
     break;
 
   case 41: /* statement: let_statement  */
-#line 371 "../parser/grammar.ypp"
+#line 344 "../parser/grammar.ypp"
                     { (yyval.statement_) = (yyvsp[0].let_statement_); }
-#line 1874 "grammar.tab.cpp"
+#line 1896 "grammar.tab.cpp"
     break;
 
   case 42: /* statement: for_statement  */
-#line 372 "../parser/grammar.ypp"
+#line 345 "../parser/grammar.ypp"
                     { (yyval.statement_) = (yyvsp[0].for_statement_); }
-#line 1880 "grammar.tab.cpp"
+#line 1902 "grammar.tab.cpp"
     break;
 
   case 43: /* statement: while_statement  */
-#line 373 "../parser/grammar.ypp"
+#line 346 "../parser/grammar.ypp"
                       { (yyval.statement_) = (yyvsp[0].while_statement_); }
-#line 1886 "grammar.tab.cpp"
+#line 1908 "grammar.tab.cpp"
     break;
 
   case 44: /* statement: if_statement  */
-#line 374 "../parser/grammar.ypp"
+#line 347 "../parser/grammar.ypp"
                    { (yyval.statement_) = (yyvsp[0].if_statement_); }
-#line 1892 "grammar.tab.cpp"
+#line 1914 "grammar.tab.cpp"
     break;
 
   case 45: /* statement: error SCOLON  */
-#line 376 "../parser/grammar.ypp"
+#line 349 "../parser/grammar.ypp"
                    {
 	    reporter.report(ERROR_LEVEL::ERROR,
             "Unexpected token",
@@ -1902,11 +1924,11 @@ yyreduce:
         delete (yyval.statement_);
         (yyval.statement_) = nullptr;
     }
-#line 1906 "grammar.tab.cpp"
+#line 1928 "grammar.tab.cpp"
     break;
 
   case 46: /* cf_statement: opt_label code_id opt_exprs opt_setdf_rules opt_rules opt_behavior SCOLON  */
-#line 388 "../parser/grammar.ypp"
+#line 361 "../parser/grammar.ypp"
                                                                                         {
         (yyval.cf_statement_) = new cf_statement((yyvsp[-6].opt_label_), (yyvsp[-5].string_), (yyvsp[-4].opt_exprs_), (yyvsp[-3].opt_setdf_rules_), (yyvsp[-2].opt_rules_), (yyvsp[-1].opt_behavior_));
 
@@ -1917,411 +1939,493 @@ yyreduce:
             (yyval.cf_statement_)->set_position((yyvsp[-5].string_)->line_);
         }
     }
-#line 1921 "grammar.tab.cpp"
+#line 1943 "grammar.tab.cpp"
     break;
 
   case 47: /* opt_behavior: AT LCB behv_pragmas_seq RCB  */
-#line 401 "../parser/grammar.ypp"
+#line 374 "../parser/grammar.ypp"
                                     {
         (yyval.opt_behavior_) = new opt_behavior((yyvsp[-1].behv_pragmas_seq_));
     }
-#line 1929 "grammar.tab.cpp"
+#line 1951 "grammar.tab.cpp"
     break;
 
   case 48: /* opt_behavior: %empty  */
-#line 404 "../parser/grammar.ypp"
+#line 377 "../parser/grammar.ypp"
           { (yyval.opt_behavior_) = new opt_behavior(nullptr); }
-#line 1935 "grammar.tab.cpp"
+#line 1957 "grammar.tab.cpp"
     break;
 
   case 49: /* behv_pragmas_seq: behv_pragma  */
-#line 408 "../parser/grammar.ypp"
+#line 381 "../parser/grammar.ypp"
                     { 
         (yyval.behv_pragmas_seq_) = new behv_pragmas_seq();
         (yyval.behv_pragmas_seq_)->behv_pragma_->push_back((yyvsp[0].behv_pragma_)); 
+        (yyval.behv_pragmas_seq_)->set_position((yylsp[0]).first_line);
     }
-#line 1944 "grammar.tab.cpp"
+#line 1967 "grammar.tab.cpp"
     break;
 
   case 50: /* behv_pragmas_seq: behv_pragmas_seq behv_pragma  */
-#line 412 "../parser/grammar.ypp"
+#line 386 "../parser/grammar.ypp"
                                        {
         (yyvsp[-1].behv_pragmas_seq_)->behv_pragma_->push_back((yyvsp[0].behv_pragma_));
-    }
-#line 1952 "grammar.tab.cpp"
-    break;
-
-  case 51: /* behv_pragma: NAME id EQ expr SCOLON  */
-#line 418 "../parser/grammar.ypp"
-                               {
-        (yyval.behv_pragma_) = new behv_pragma_eq((yyvsp[-4].string_), (yyvsp[-3].id_), (yyvsp[-1].expr_));
-    }
-#line 1960 "grammar.tab.cpp"
-    break;
-
-  case 52: /* behv_pragma: NAME id EQG expr SCOLON  */
-#line 422 "../parser/grammar.ypp"
-                                  {
-        (yyval.behv_pragma_) = new behv_pragma_eqg((yyvsp[-4].string_), (yyvsp[-3].id_), (yyvsp[-1].expr_));
-    }
-#line 1968 "grammar.tab.cpp"
-    break;
-
-  case 53: /* behv_pragma: NAME id_seq SCOLON  */
-#line 426 "../parser/grammar.ypp"
-                             {
-        (yyval.behv_pragma_) = new behv_pragma_id_seq((yyvsp[-2].string_), (yyvsp[-1].id_seq_));
+        (yyval.behv_pragmas_seq_)->set_position((yylsp[-1]).first_line);
     }
 #line 1976 "grammar.tab.cpp"
     break;
 
+  case 51: /* behv_pragma: NAME id EQ expr SCOLON  */
+#line 393 "../parser/grammar.ypp"
+                               {
+        (yyval.behv_pragma_) = new behv_pragma_eq((yyvsp[-4].string_), (yyvsp[-3].id_), (yyvsp[-1].expr_));
+        (yyval.behv_pragma_)->set_position((yylsp[-4]).first_line);
+    }
+#line 1985 "grammar.tab.cpp"
+    break;
+
+  case 52: /* behv_pragma: NAME id EQG expr SCOLON  */
+#line 398 "../parser/grammar.ypp"
+                                  {
+        (yyval.behv_pragma_) = new behv_pragma_eqg((yyvsp[-4].string_), (yyvsp[-3].id_), (yyvsp[-1].expr_));
+        (yyval.behv_pragma_)->set_position((yylsp[-4]).first_line);
+    }
+#line 1994 "grammar.tab.cpp"
+    break;
+
+  case 53: /* behv_pragma: NAME id_seq SCOLON  */
+#line 403 "../parser/grammar.ypp"
+                             {
+        (yyval.behv_pragma_) = new behv_pragma_id_seq((yyvsp[-2].string_), (yyvsp[-1].id_seq_));
+        (yyval.behv_pragma_)->set_position((yylsp[-2]).first_line);
+    }
+#line 2003 "grammar.tab.cpp"
+    break;
+
   case 54: /* behv_pragma: NAME COLON expr SCOLON  */
-#line 430 "../parser/grammar.ypp"
+#line 408 "../parser/grammar.ypp"
                                  {
         (yyval.behv_pragma_) = new behv_pragma_expr((yyvsp[-3].string_), (yyvsp[-1].expr_));
+        (yyval.behv_pragma_)->set_position((yylsp[-3]).first_line);
     }
-#line 1984 "grammar.tab.cpp"
+#line 2012 "grammar.tab.cpp"
     break;
 
   case 55: /* behv_pragma: name_seq SCOLON  */
-#line 434 "../parser/grammar.ypp"
+#line 413 "../parser/grammar.ypp"
                           {
         (yyval.behv_pragma_) = new behv_pragma_seq((yyvsp[-1].name_seq_));
+        (yyval.behv_pragma_)->set_position((yylsp[-1]).first_line);
     }
-#line 1992 "grammar.tab.cpp"
+#line 2021 "grammar.tab.cpp"
     break;
 
   case 56: /* id_seq: id  */
-#line 440 "../parser/grammar.ypp"
+#line 420 "../parser/grammar.ypp"
            { 
         (yyval.id_seq_) = new id_seq();
         (yyval.id_seq_)->seq_->push_back((yyvsp[0].id_)); 
+        (yyval.id_seq_)->set_position((yylsp[0]).first_line);
     }
-#line 2001 "grammar.tab.cpp"
+#line 2031 "grammar.tab.cpp"
     break;
 
   case 57: /* id_seq: id_seq COMMA id  */
-#line 444 "../parser/grammar.ypp"
+#line 425 "../parser/grammar.ypp"
                           {
         (yyvsp[-2].id_seq_)->seq_->push_back((yyvsp[0].id_));
+        (yyval.id_seq_)->set_position((yylsp[-2]).first_line);
     }
-#line 2009 "grammar.tab.cpp"
+#line 2040 "grammar.tab.cpp"
     break;
 
   case 58: /* let_statement: KW_LET assign_seq block  */
-#line 448 "../parser/grammar.ypp"
+#line 430 "../parser/grammar.ypp"
                                        {
     (yyval.let_statement_) = new let_statement((yyvsp[-1].assign_seq_), (yyvsp[0].block_));
     (yyval.let_statement_)->set_position((yylsp[-2]).first_line);
 }
-#line 2018 "grammar.tab.cpp"
+#line 2049 "grammar.tab.cpp"
     break;
 
   case 59: /* for_statement: KW_FOR control_pragma NAME EQ expr DIAP expr block  */
-#line 453 "../parser/grammar.ypp"
+#line 435 "../parser/grammar.ypp"
                                                                   {
     (yyval.for_statement_) = new for_statement((yyvsp[-6].control_pragma_), (yyvsp[-5].string_), (yyvsp[-3].expr_), (yyvsp[-1].expr_), (yyvsp[0].block_));
     (yyval.for_statement_)->set_position((yylsp[-7]).first_line);
 }
-#line 2027 "grammar.tab.cpp"
+#line 2058 "grammar.tab.cpp"
     break;
 
   case 60: /* while_statement: KW_WHILE control_pragma expr COMMA NAME EQ expr DIAP KW_OUT id block  */
-#line 458 "../parser/grammar.ypp"
+#line 440 "../parser/grammar.ypp"
                                                                                       {
     (yyval.while_statement_) = new while_statement((yyvsp[-9].control_pragma_), (yyvsp[-8].expr_), (yyvsp[-6].string_), (yyvsp[-4].expr_), (yyvsp[-1].id_), (yyvsp[0].block_));
     (yyval.while_statement_)->set_position((yylsp[-10]).first_line);
 }
-#line 2036 "grammar.tab.cpp"
+#line 2067 "grammar.tab.cpp"
     break;
 
   case 61: /* if_statement: KW_IF expr block  */
-#line 463 "../parser/grammar.ypp"
+#line 445 "../parser/grammar.ypp"
                                          {
     (yyval.if_statement_) = new if_statement((yyvsp[-1].expr_), (yyvsp[0].block_));
     (yyval.if_statement_)->set_position((yylsp[-2]).first_line);
 }
-#line 2045 "grammar.tab.cpp"
+#line 2076 "grammar.tab.cpp"
     break;
 
   case 62: /* assign_seq: assign  */
-#line 472 "../parser/grammar.ypp"
+#line 454 "../parser/grammar.ypp"
                { 
         (yyval.assign_seq_) = new assign_seq();
         (yyval.assign_seq_)->assign_seq_->push_back((yyvsp[0].assign_));
+        (yyval.assign_seq_)->set_position((yylsp[0]).first_line);
     }
-#line 2054 "grammar.tab.cpp"
+#line 2086 "grammar.tab.cpp"
     break;
 
   case 63: /* assign_seq: assign_seq COMMA assign  */
-#line 476 "../parser/grammar.ypp"
+#line 459 "../parser/grammar.ypp"
                                    {
         (yyvsp[-2].assign_seq_)->assign_seq_->push_back((yyvsp[0].assign_));
+        (yyval.assign_seq_)->set_position((yylsp[-2]).first_line);
     }
-#line 2062 "grammar.tab.cpp"
+#line 2095 "grammar.tab.cpp"
     break;
 
   case 64: /* assign: NAME EQ expr  */
-#line 482 "../parser/grammar.ypp"
+#line 466 "../parser/grammar.ypp"
                      { (yyval.assign_) = new assign((yyvsp[-2].string_), (yyvsp[0].expr_)); }
-#line 2068 "grammar.tab.cpp"
+#line 2101 "grammar.tab.cpp"
     break;
 
   case 65: /* opt_label: KW_CF id COLON  */
-#line 486 "../parser/grammar.ypp"
+#line 470 "../parser/grammar.ypp"
                        { 
         (yyval.opt_label_) = new opt_label((yyvsp[-1].id_)); 
         (yyval.opt_label_)->set_position((yylsp[-2]).first_line);
     }
-#line 2077 "grammar.tab.cpp"
+#line 2110 "grammar.tab.cpp"
     break;
 
   case 66: /* opt_label: %empty  */
-#line 491 "../parser/grammar.ypp"
+#line 475 "../parser/grammar.ypp"
     {
         (yyval.opt_label_) = new opt_label(nullptr);
 	}
-#line 2085 "grammar.tab.cpp"
+#line 2118 "grammar.tab.cpp"
     break;
 
   case 67: /* id: NAME  */
-#line 497 "../parser/grammar.ypp"
+#line 481 "../parser/grammar.ypp"
              { 
         (yyval.id_) = new simple_id((yyvsp[0].string_));
         (yyval.id_)->set_position((yylsp[0]).first_line);
         (yyvsp[0].string_)->set_position((yylsp[0]).first_line);
     }
-#line 2095 "grammar.tab.cpp"
+#line 2128 "grammar.tab.cpp"
     break;
 
   case 68: /* id: id LSB expr RSB  */
-#line 503 "../parser/grammar.ypp"
+#line 487 "../parser/grammar.ypp"
                           {
         (yyval.id_) = new complex_id((yyvsp[-3].id_), (yyvsp[-1].expr_));
         (yyval.id_)->set_position((yylsp[-3]).first_line);
     }
-#line 2104 "grammar.tab.cpp"
+#line 2137 "grammar.tab.cpp"
     break;
 
   case 69: /* opt_exprs: LB exprs_seq RB  */
-#line 510 "../parser/grammar.ypp"
+#line 494 "../parser/grammar.ypp"
                         { 
         (yyval.opt_exprs_) = new opt_exprs((yyvsp[-1].exprs_seq_)); 
     }
-#line 2112 "grammar.tab.cpp"
+#line 2145 "grammar.tab.cpp"
     break;
 
   case 70: /* opt_exprs: LB RB  */
-#line 513 "../parser/grammar.ypp"
+#line 497 "../parser/grammar.ypp"
                 { 
         (yyval.opt_exprs_) = new opt_exprs(nullptr); 
         }
-#line 2120 "grammar.tab.cpp"
+#line 2153 "grammar.tab.cpp"
     break;
 
   case 71: /* exprs_seq: expr  */
-#line 519 "../parser/grammar.ypp"
+#line 503 "../parser/grammar.ypp"
              { 
         (yyval.exprs_seq_) = new exprs_seq();
         (yyval.exprs_seq_)->expr_->push_back((yyvsp[0].expr_)); 
     }
-#line 2129 "grammar.tab.cpp"
+#line 2162 "grammar.tab.cpp"
     break;
 
   case 72: /* exprs_seq: exprs_seq COMMA expr  */
-#line 523 "../parser/grammar.ypp"
+#line 507 "../parser/grammar.ypp"
                                {
         (yyvsp[-2].exprs_seq_)->expr_->push_back((yyvsp[0].expr_));
     }
-#line 2137 "grammar.tab.cpp"
+#line 2170 "grammar.tab.cpp"
     break;
 
   case 73: /* opt_setdf_rules: RARR opt_exprs  */
-#line 529 "../parser/grammar.ypp"
+#line 513 "../parser/grammar.ypp"
                        { 
         (yyval.opt_setdf_rules_) = new opt_setdf_rules((yyvsp[0].opt_exprs_)); 
         // // // std::cerr << "opt_setdf_rules" << std::endl;
         }
-#line 2146 "grammar.tab.cpp"
+#line 2179 "grammar.tab.cpp"
     break;
 
   case 74: /* opt_setdf_rules: %empty  */
-#line 533 "../parser/grammar.ypp"
+#line 517 "../parser/grammar.ypp"
       {
         (yyval.opt_setdf_rules_) = new opt_setdf_rules(nullptr); 
     }
-#line 2154 "grammar.tab.cpp"
+#line 2187 "grammar.tab.cpp"
     break;
 
   case 75: /* opt_rules: ARROW opt_exprs  */
-#line 539 "../parser/grammar.ypp"
+#line 523 "../parser/grammar.ypp"
                     { (yyval.opt_rules_) = new opt_rules((yyvsp[0].opt_exprs_)); }
-#line 2160 "grammar.tab.cpp"
+#line 2193 "grammar.tab.cpp"
     break;
 
   case 76: /* opt_rules: %empty  */
-#line 540 "../parser/grammar.ypp"
+#line 524 "../parser/grammar.ypp"
       {
         (yyval.opt_rules_) = new opt_rules(nullptr);
     }
-#line 2168 "grammar.tab.cpp"
+#line 2201 "grammar.tab.cpp"
     break;
 
   case 77: /* code_id: NAME  */
-#line 546 "../parser/grammar.ypp"
+#line 530 "../parser/grammar.ypp"
              { 
         (yyval.string_) = (yyvsp[0].string_);
         (yyval.string_)->set_position((yylsp[0]).first_line);
     }
-#line 2177 "grammar.tab.cpp"
+#line 2210 "grammar.tab.cpp"
     break;
 
   case 78: /* expr: INT  */
-#line 553 "../parser/grammar.ypp"
-            { (yyval.expr_) = (yyvsp[0].int_); }
-#line 2183 "grammar.tab.cpp"
-    break;
-
-  case 79: /* expr: REAL  */
-#line 554 "../parser/grammar.ypp"
-               { (yyval.expr_) = (yyvsp[0].double_); }
-#line 2189 "grammar.tab.cpp"
-    break;
-
-  case 80: /* expr: STRING  */
-#line 555 "../parser/grammar.ypp"
-                 { (yyval.expr_) = (yyvsp[0].string_); }
-#line 2195 "grammar.tab.cpp"
-    break;
-
-  case 81: /* expr: KW_INT LB expr RB  */
-#line 558 "../parser/grammar.ypp"
-                            { (yyval.expr_) = new to_int((yyvsp[-1].expr_)); }
-#line 2201 "grammar.tab.cpp"
-    break;
-
-  case 82: /* expr: KW_REAL LB expr RB  */
-#line 560 "../parser/grammar.ypp"
-                              {(yyval.expr_) = new to_real((yyvsp[-1].expr_)); }
-#line 2207 "grammar.tab.cpp"
-    break;
-
-  case 83: /* expr: KW_STRING LB expr RB  */
-#line 562 "../parser/grammar.ypp"
-                               { (yyval.expr_) = new to_str((yyvsp[-1].expr_)); }
-#line 2213 "grammar.tab.cpp"
-    break;
-
-  case 84: /* expr: expr PLUS expr  */
-#line 564 "../parser/grammar.ypp"
-                         { (yyval.expr_) = new sum((yyvsp[-2].expr_), (yyvsp[0].expr_)); }
+#line 537 "../parser/grammar.ypp"
+            { 
+        (yyval.expr_) = (yyvsp[0].int_); 
+        (yyval.expr_)->set_position((yylsp[0]).first_line);
+    }
 #line 2219 "grammar.tab.cpp"
     break;
 
-  case 85: /* expr: expr MINUS expr  */
-#line 565 "../parser/grammar.ypp"
-                          { (yyval.expr_) = new sub((yyvsp[-2].expr_), (yyvsp[0].expr_)); }
-#line 2225 "grammar.tab.cpp"
+  case 79: /* expr: REAL  */
+#line 541 "../parser/grammar.ypp"
+               { 
+        (yyval.expr_) = (yyvsp[0].double_); 
+        (yyval.expr_)->set_position((yylsp[0]).first_line);
+    }
+#line 2228 "grammar.tab.cpp"
     break;
 
-  case 86: /* expr: expr MUL expr  */
-#line 566 "../parser/grammar.ypp"
-                        { (yyval.expr_) = new mul((yyvsp[-2].expr_), (yyvsp[0].expr_)); }
-#line 2231 "grammar.tab.cpp"
-    break;
-
-  case 87: /* expr: expr DIV expr  */
-#line 567 "../parser/grammar.ypp"
-                        { (yyval.expr_) = new div1((yyvsp[-2].expr_), (yyvsp[0].expr_)); }
+  case 80: /* expr: STRING  */
+#line 545 "../parser/grammar.ypp"
+                 { 
+        (yyval.expr_) = (yyvsp[0].string_); 
+        (yyval.expr_)->set_position((yylsp[0]).first_line);
+    }
 #line 2237 "grammar.tab.cpp"
     break;
 
-  case 88: /* expr: expr MOD expr  */
-#line 569 "../parser/grammar.ypp"
-                        { (yyval.expr_) = new mod((yyvsp[-2].expr_), (yyvsp[0].expr_)); }
-#line 2243 "grammar.tab.cpp"
+  case 81: /* expr: KW_INT LB expr RB  */
+#line 551 "../parser/grammar.ypp"
+                            { 
+        (yyval.expr_) = new to_int((yyvsp[-1].expr_)); 
+        (yyval.expr_)->set_position((yylsp[-3]).first_line);
+    }
+#line 2246 "grammar.tab.cpp"
     break;
 
-  case 89: /* expr: expr LT expr  */
-#line 570 "../parser/grammar.ypp"
-                       { (yyval.expr_) = new lt((yyvsp[-2].expr_), (yyvsp[0].expr_)); }
-#line 2249 "grammar.tab.cpp"
-    break;
-
-  case 90: /* expr: expr GT expr  */
-#line 571 "../parser/grammar.ypp"
-                       { (yyval.expr_) = new gt((yyvsp[-2].expr_), (yyvsp[0].expr_)); }
+  case 82: /* expr: KW_REAL LB expr RB  */
+#line 556 "../parser/grammar.ypp"
+                              {
+        (yyval.expr_) = new to_real((yyvsp[-1].expr_)); 
+        (yyval.expr_)->set_position((yylsp[-3]).first_line);
+    }
 #line 2255 "grammar.tab.cpp"
     break;
 
-  case 91: /* expr: expr LEQ expr  */
-#line 572 "../parser/grammar.ypp"
-                        { (yyval.expr_) = new leq((yyvsp[-2].expr_), (yyvsp[0].expr_)); }
-#line 2261 "grammar.tab.cpp"
+  case 83: /* expr: KW_STRING LB expr RB  */
+#line 561 "../parser/grammar.ypp"
+                               { 
+        (yyval.expr_) = new to_str((yyvsp[-1].expr_)); 
+        (yyval.expr_)->set_position((yylsp[-3]).first_line);
+    }
+#line 2264 "grammar.tab.cpp"
     break;
 
-  case 92: /* expr: expr GEQ expr  */
-#line 573 "../parser/grammar.ypp"
-                        { (yyval.expr_) = new geq((yyvsp[-2].expr_), (yyvsp[0].expr_)); }
-#line 2267 "grammar.tab.cpp"
-    break;
-
-  case 93: /* expr: expr DBLEQ expr  */
-#line 574 "../parser/grammar.ypp"
-                         { (yyval.expr_) = new dbleq((yyvsp[-2].expr_), (yyvsp[0].expr_)); }
+  case 84: /* expr: expr PLUS expr  */
+#line 566 "../parser/grammar.ypp"
+                         { 
+        (yyval.expr_) = new sum((yyvsp[-2].expr_), (yyvsp[0].expr_)); 
+        (yyval.expr_)->set_position((yylsp[-2]).first_line);
+    }
 #line 2273 "grammar.tab.cpp"
     break;
 
-  case 94: /* expr: expr NEQ expr  */
-#line 575 "../parser/grammar.ypp"
-                        { (yyval.expr_) = new neq((yyvsp[-2].expr_), (yyvsp[0].expr_)); }
-#line 2279 "grammar.tab.cpp"
+  case 85: /* expr: expr MINUS expr  */
+#line 570 "../parser/grammar.ypp"
+                          { 
+        (yyval.expr_) = new sub((yyvsp[-2].expr_), (yyvsp[0].expr_));
+        (yyval.expr_)->set_position((yylsp[-2]).first_line);
+    }
+#line 2282 "grammar.tab.cpp"
     break;
 
-  case 95: /* expr: expr DBLAMP expr  */
-#line 577 "../parser/grammar.ypp"
-                           { (yyval.expr_) = new dblamp((yyvsp[-2].expr_), (yyvsp[0].expr_)); }
-#line 2285 "grammar.tab.cpp"
-    break;
-
-  case 96: /* expr: expr DBLPIPE expr  */
-#line 578 "../parser/grammar.ypp"
-                            { (yyval.expr_) = new dblpipe((yyvsp[-2].expr_), (yyvsp[0].expr_)); }
+  case 86: /* expr: expr MUL expr  */
+#line 574 "../parser/grammar.ypp"
+                        { 
+        (yyval.expr_) = new mul((yyvsp[-2].expr_), (yyvsp[0].expr_));
+        (yyval.expr_)->set_position((yylsp[-2]).first_line);
+    }
 #line 2291 "grammar.tab.cpp"
     break;
 
-  case 97: /* expr: LB expr RB  */
-#line 579 "../parser/grammar.ypp"
-                     { (yyval.expr_) = (yyvsp[-1].expr_); }
-#line 2297 "grammar.tab.cpp"
+  case 87: /* expr: expr DIV expr  */
+#line 578 "../parser/grammar.ypp"
+                        { 
+        (yyval.expr_) = new div1((yyvsp[-2].expr_), (yyvsp[0].expr_)); 
+        (yyval.expr_)->set_position((yylsp[-2]).first_line);
+    }
+#line 2300 "grammar.tab.cpp"
     break;
 
-  case 98: /* expr: id  */
-#line 580 "../parser/grammar.ypp"
-             { (yyval.expr_) = (yyvsp[0].id_); }
-#line 2303 "grammar.tab.cpp"
-    break;
-
-  case 99: /* expr: expr QMARK expr COLON expr  */
-#line 581 "../parser/grammar.ypp"
-                                     {}
+  case 88: /* expr: expr MOD expr  */
+#line 583 "../parser/grammar.ypp"
+                        { 
+        (yyval.expr_) = new mod((yyvsp[-2].expr_), (yyvsp[0].expr_));
+        (yyval.expr_)->set_position((yylsp[-2]).first_line);
+    }
 #line 2309 "grammar.tab.cpp"
     break;
 
+  case 89: /* expr: expr LT expr  */
+#line 587 "../parser/grammar.ypp"
+                       { 
+        (yyval.expr_) = new lt((yyvsp[-2].expr_), (yyvsp[0].expr_)); 
+        (yyval.expr_)->set_position((yylsp[-2]).first_line);
+    }
+#line 2318 "grammar.tab.cpp"
+    break;
+
+  case 90: /* expr: expr GT expr  */
+#line 591 "../parser/grammar.ypp"
+                       { 
+        (yyval.expr_) = new gt((yyvsp[-2].expr_), (yyvsp[0].expr_)); 
+        (yyval.expr_)->set_position((yylsp[-2]).first_line);
+    }
+#line 2327 "grammar.tab.cpp"
+    break;
+
+  case 91: /* expr: expr LEQ expr  */
+#line 595 "../parser/grammar.ypp"
+                        { 
+        (yyval.expr_) = new leq((yyvsp[-2].expr_), (yyvsp[0].expr_));
+        (yyval.expr_)->set_position((yylsp[-2]).first_line);
+     }
+#line 2336 "grammar.tab.cpp"
+    break;
+
+  case 92: /* expr: expr GEQ expr  */
+#line 599 "../parser/grammar.ypp"
+                        { 
+        (yyval.expr_) = new geq((yyvsp[-2].expr_), (yyvsp[0].expr_));
+        (yyval.expr_)->set_position((yylsp[-2]).first_line);
+     }
+#line 2345 "grammar.tab.cpp"
+    break;
+
+  case 93: /* expr: expr DBLEQ expr  */
+#line 603 "../parser/grammar.ypp"
+                         { 
+        (yyval.expr_) = new dbleq((yyvsp[-2].expr_), (yyvsp[0].expr_)); 
+        (yyval.expr_)->set_position((yylsp[-2]).first_line);
+    }
+#line 2354 "grammar.tab.cpp"
+    break;
+
+  case 94: /* expr: expr NEQ expr  */
+#line 607 "../parser/grammar.ypp"
+                        { 
+        (yyval.expr_) = new neq((yyvsp[-2].expr_), (yyvsp[0].expr_));
+        (yyval.expr_)->set_position((yylsp[-2]).first_line);
+    }
+#line 2363 "grammar.tab.cpp"
+    break;
+
+  case 95: /* expr: expr DBLAMP expr  */
+#line 612 "../parser/grammar.ypp"
+                           { 
+        (yyval.expr_) = new dblamp((yyvsp[-2].expr_), (yyvsp[0].expr_)); 
+        (yyval.expr_)->set_position((yylsp[-2]).first_line);
+    }
+#line 2372 "grammar.tab.cpp"
+    break;
+
+  case 96: /* expr: expr DBLPIPE expr  */
+#line 616 "../parser/grammar.ypp"
+                            { 
+        (yyval.expr_) = new dblpipe((yyvsp[-2].expr_), (yyvsp[0].expr_)); 
+        (yyval.expr_)->set_position((yylsp[-2]).first_line);
+    }
+#line 2381 "grammar.tab.cpp"
+    break;
+
+  case 97: /* expr: LB expr RB  */
+#line 620 "../parser/grammar.ypp"
+                     { 
+        (yyval.expr_) = (yyvsp[-1].expr_); 
+        (yyval.expr_)->set_position((yylsp[-2]).first_line);
+    }
+#line 2390 "grammar.tab.cpp"
+    break;
+
+  case 98: /* expr: id  */
+#line 624 "../parser/grammar.ypp"
+             { 
+        (yyval.expr_) = (yyvsp[0].id_); 
+        (yyval.expr_)->set_position((yylsp[0]).first_line);
+    }
+#line 2399 "grammar.tab.cpp"
+    break;
+
+  case 99: /* expr: expr QMARK expr COLON expr  */
+#line 628 "../parser/grammar.ypp"
+                                     {
+        // todo
+    }
+#line 2407 "grammar.tab.cpp"
+    break;
+
   case 100: /* opt_params: LB params_seq RB  */
-#line 585 "../parser/grammar.ypp"
-                         { (yyval.opt_params_) = new opt_params((yyvsp[-1].param_seq_)); }
-#line 2315 "grammar.tab.cpp"
+#line 634 "../parser/grammar.ypp"
+                         { 
+        (yyval.opt_params_) = new opt_params((yyvsp[-1].param_seq_)); 
+        (yyval.opt_params_)->set_position((yylsp[-2]).first_line);
+    }
+#line 2416 "grammar.tab.cpp"
     break;
 
   case 101: /* opt_params: LB RB  */
-#line 586 "../parser/grammar.ypp"
-                { (yyval.opt_params_) = new opt_params(nullptr); }
-#line 2321 "grammar.tab.cpp"
+#line 638 "../parser/grammar.ypp"
+                { 
+        (yyval.opt_params_) = new opt_params(nullptr);
+        (yyval.opt_params_)->set_position((yylsp[-1]).first_line);
+    }
+#line 2425 "grammar.tab.cpp"
     break;
 
   case 102: /* opt_params: LB error RB  */
-#line 588 "../parser/grammar.ypp"
+#line 643 "../parser/grammar.ypp"
                   {
         reporter.report(ERROR_LEVEL::ERROR,
             "Unexpected token",
@@ -2331,68 +2435,81 @@ yyreduce:
         delete (yyval.opt_params_);
         (yyval.opt_params_) = new opt_params(nullptr);
     }
-#line 2335 "grammar.tab.cpp"
+#line 2439 "grammar.tab.cpp"
     break;
 
   case 103: /* params_seq: param  */
-#line 600 "../parser/grammar.ypp"
+#line 655 "../parser/grammar.ypp"
                { 
         (yyval.param_seq_) = new param_seq();
         (yyval.param_seq_)->params_->push_back((yyvsp[0].param_)); 
+        (yyval.param_seq_)->set_position((yylsp[0]).first_line);
     }
-#line 2344 "grammar.tab.cpp"
+#line 2449 "grammar.tab.cpp"
     break;
 
   case 104: /* params_seq: params_seq COMMA param  */
-#line 604 "../parser/grammar.ypp"
+#line 660 "../parser/grammar.ypp"
                                  {
         (yyvsp[-2].param_seq_)->params_->push_back((yyvsp[0].param_));
     }
-#line 2352 "grammar.tab.cpp"
+#line 2457 "grammar.tab.cpp"
     break;
 
   case 105: /* param: type NAME  */
-#line 610 "../parser/grammar.ypp"
+#line 666 "../parser/grammar.ypp"
                   { 
         (yyval.param_) = new param((yyvsp[-1].string_), (yyvsp[0].string_)); 
         (yyval.param_)->set_position((yylsp[0]).first_line);
         (yyvsp[0].string_)->set_position((yylsp[0]).first_line);
     }
-#line 2362 "grammar.tab.cpp"
+#line 2467 "grammar.tab.cpp"
     break;
 
   case 106: /* where_type: KW_RUSH  */
-#line 617 "../parser/grammar.ypp"
-                    { (yyval.string_) = (yyvsp[0].string_); }
-#line 2368 "grammar.tab.cpp"
+#line 674 "../parser/grammar.ypp"
+            { 
+        (yyval.string_) = (yyvsp[0].string_); 
+        (yyval.string_)->set_position((yylsp[0]).first_line);
+    }
+#line 2476 "grammar.tab.cpp"
     break;
 
   case 107: /* where_type: KW_STATIC  */
-#line 618 "../parser/grammar.ypp"
-                        { (yyval.string_) = (yyvsp[0].string_); }
-#line 2374 "grammar.tab.cpp"
+#line 678 "../parser/grammar.ypp"
+                { 
+        (yyval.string_) = (yyvsp[0].string_); 
+        (yyval.string_)->set_position((yylsp[0]).first_line);
+    }
+#line 2485 "grammar.tab.cpp"
     break;
 
   case 108: /* where_type: KW_STATIC_FOR  */
-#line 619 "../parser/grammar.ypp"
-                            { (yyval.string_) = (yyvsp[0].string_); }
-#line 2380 "grammar.tab.cpp"
+#line 682 "../parser/grammar.ypp"
+                    { 
+        (yyval.string_) = (yyvsp[0].string_); 
+        (yyval.string_)->set_position((yylsp[0]).first_line);
+    }
+#line 2494 "grammar.tab.cpp"
     break;
 
   case 109: /* where_type: KW_UNROLLING  */
-#line 620 "../parser/grammar.ypp"
-                          { (yyval.string_) = (yyvsp[0].string_); }
-#line 2386 "grammar.tab.cpp"
+#line 686 "../parser/grammar.ypp"
+                  { 
+        (yyval.string_) = (yyvsp[0].string_); 
+        (yyval.string_)->set_position((yylsp[0]).first_line);
+    }
+#line 2503 "grammar.tab.cpp"
     break;
 
   case 110: /* where_type: %empty  */
-#line 621 "../parser/grammar.ypp"
-          { (yyval.string_) = new luna_string(nullptr); }
-#line 2392 "grammar.tab.cpp"
+#line 690 "../parser/grammar.ypp"
+      { (yyval.string_) = new luna_string(nullptr); }
+#line 2509 "grammar.tab.cpp"
     break;
 
 
-#line 2396 "grammar.tab.cpp"
+#line 2513 "grammar.tab.cpp"
 
       default: break;
     }
@@ -2590,5 +2707,5 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 623 "../parser/grammar.ypp"
+#line 692 "../parser/grammar.ypp"
 
