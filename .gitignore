@@ -4,10 +4,14 @@ DeGSA/source.fa
 DeGSA/ucodes.cpp
 DeGSA/grammar.tab.hpp
 DeGSA/lex.yy.c
+DeGSA/lex.yy.cpp
 DeGSA/output.txt
 a.out
 grammar.tab.cpp
 grammar.tab.hpp
 lex.yy.c
+lex.yy.cpp
 output.txt
 prepr.fa
+ast.json
+in.json
