@@ -24,28 +24,53 @@ extern error_reporter reporter;
 uint tokens = 0;
 ast *ast_ = new ast();
 
-// todo: сделать парсинг параметров
-// без параметров - запускаются оба
-// -ast
-// -degsa
-// -o
 int main(int argc, char **argv)
 {
-    std::ofstream outputFile("output.txt");
+
+    bool launchASTAnalyzer = false;
+    bool launchDeGSA = false;
+    char* inputFileName = argv[1];
+    std::string outputFileName = "output.txt";
+
+    for (int i = 2; i < argc; i++){
+
+        std::string arg(argv[i]);
+
+        if (arg == "-ast"){
+            launchASTAnalyzer = true;
+        } else if (arg == "-degsa"){
+            launchDeGSA = true;
+        } else if (arg == "-o"){
+            std::cout << arg << std::endl;
+            if (i < argc - 1){
+                i++;
+                outputFileName = std::string(argv[i]);
+            } else {
+                std::cerr << "No output file name presented, using default name" << std::endl;
+            }
+        } else {
+            std::cerr << "Unidentified parameter" << std::endl;
+        }
+    }
+
+    if (inputFileName == nullptr){
+        std::cerr << "No input file name present" << std::endl;
+    }
+
+    if (!launchASTAnalyzer && !launchDeGSA){
+        launchASTAnalyzer = true;
+        launchDeGSA = true;
+    }
+
+    std::ofstream outputFile(outputFileName);//todo perhaps need to add name check
 
     auto astBuildStart = std::chrono::steady_clock::now();
 
-    if (argc != 2)
-    {
-        std::cerr << "Bad number of args. Usage: ./a.out test.fa" << std::endl;
-        return EXIT_ERROR;
-    }
-
-    yyin = fopen(argv[1], "r");
+    yyin = fopen(inputFileName, "r");
 
     if (!yyin)
     {
-        std::cerr << "Couldn'e open file" << std::endl;
+        std::cerr << "Couldn't open file" << std::endl;
         return EXIT_ERROR;
     }
 
@@ -91,86 +116,101 @@ int main(int argc, char **argv)
 
         ThreadPool thread_pool{n};
 
-        thread_pool.add_task(
-            [&analyzers, &sem0]()
-            {
-                analyzers[0]->analyze();
-                delete analyzers[0];
+        if (launchASTAnalyzer){
 
-                sem0.release();
-            });
+            thread_pool.add_task(
+                [&analyzers, &sem0]()
+                {
+                    analyzers[0]->analyze();
+                    delete analyzers[0];
 
-        thread_pool.add_task(
-            [&analyzers, &sem1]()
-            {
-                analyzers[1]->analyze();
-                delete analyzers[1];
+                    sem0.release();
+                }
+            );
 
-                sem1.release();
-            });
+            thread_pool.add_task(
+                [&analyzers, &sem1]()
+                {
+                    analyzers[1]->analyze();
+                    delete analyzers[1];
 
-        thread_pool.add_task(
-            [&analyzers, &sem2]()
-            {
-                analyzers[2]->analyze();
-                delete analyzers[2];
+                    sem1.release();
+                }
+            );
 
-                sem2.release();
-            });
+            thread_pool.add_task(
+                [&analyzers, &sem2]()
+                {
+                    analyzers[2]->analyze();
+                    delete analyzers[2];
 
-        thread_pool.add_task(
-            [&analyzers, &sem3]()
-            {
-                analyzers[3]->analyze();
-                delete analyzers[3];
+                    sem2.release();
+                }
+            );
 
-                sem3.release();
-            });
+            thread_pool.add_task(
+                [&analyzers, &sem3]()
+                {
+                    analyzers[3]->analyze();
+                    delete analyzers[3];
 
-        thread_pool.add_task(
-            [&analyzers, &sem4]()
-            {
-                analyzers[4]->analyze();
-                delete analyzers[4];
+                    sem3.release();
+                }
+            );
 
-                sem4.release();
-            });
+            thread_pool.add_task(
+                [&analyzers, &sem4]()
+                {
+                    analyzers[4]->analyze();
+                    delete analyzers[4];
 
-        thread_pool.add_task(
-            [&analyzers, &sem5]()
-            {
-                analyzers[5]->analyze();
-                delete analyzers[5];
+                    sem4.release();
+                }
+            );
 
-                sem5.release();
-            });
+            thread_pool.add_task(
+                [&analyzers, &sem5]()
+                {
+                    analyzers[5]->analyze();
+                    delete analyzers[5];
 
-        thread_pool.add_task(
-            [&analyzers, &sem6]()
-            {
-                analyzers[6]->analyze();
-                delete analyzers[6];
+                    sem5.release();
+                }
+            );
 
-                sem6.release();
-            });
+            thread_pool.add_task(
+                [&analyzers, &sem6]()
+                {
+                    analyzers[6]->analyze();
+                    delete analyzers[6];
 
-        thread_pool.add_task(
-            [&sem7, &outputFile, &astBuildTotal]()
-            {
-                DDG ddg(ast_, &outputFile);
-                outputFile << "\nTime to build AST: " << (double)astBuildTotal / 1000000000 << " seconds" << std::endl;
-                sem7.release();
-            });
+                    sem6.release();
+                }
+            );
+        }
+
+        if (launchDeGSA)
+            thread_pool.add_task(
+                [&sem7, &outputFile, &astBuildTotal]()
+                {
+                    DDG ddg(ast_, &outputFile);
+                    outputFile << "\nTime to build AST: " << (double)astBuildTotal / 1000000000 << " seconds" << std::endl;
+                    sem7.release();
+                }
+            );
     }
 
-    sem0.acquire();
-    sem1.acquire();
-    sem2.acquire();
-    sem3.acquire();
-    sem4.acquire();
-    sem5.acquire();
-    sem6.acquire();
-    sem7.acquire();
+    if (launchASTAnalyzer){
+        sem0.acquire();
+        sem1.acquire();
+        sem2.acquire();
+        sem3.acquire();
+        sem4.acquire();
+        sem5.acquire();
+        sem6.acquire();
+    }
+    if (launchDeGSA)
+        sem7.acquire();
 
     delete ast_;
     fclose(yyin);

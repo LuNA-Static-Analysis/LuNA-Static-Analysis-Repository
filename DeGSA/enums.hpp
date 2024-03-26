@@ -26,6 +26,7 @@ enum VertexType {
 
 enum ExpressionType {
 
+    // binary operations
     addNode = 1, // +
     subtractNode = 2, // -
     multiplyNode = 3, // *
@@ -40,24 +41,20 @@ enum ExpressionType {
     andNode = 12, // &&
     orNode = 13, // ||
 
-    //todo ternary operator
-
-    assignNode = 15, // =; todo does it exist?
-
     // identifier
-    identifierNode = 16,
+    identifierNode = 15,
 
     // constants
-    stringNode = 17,
-    intNode = 18,
-    realNode = 19,
+    stringNode = 16,
+    intNode = 17,
+    realNode = 18,
     
     // unary operators
-    intCastNode = 20,
-    realCastNode = 21,
-    stringCastNode = 22,
+    intCastNode = 19,
+    realCastNode = 20,
+    stringCastNode = 21,
 
-    noneNode = 23 // means error happened
+    noneNode = 22 // means error happened somewhere, or expression can not exist
 
 };
 

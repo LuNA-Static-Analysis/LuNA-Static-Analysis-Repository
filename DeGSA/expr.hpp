@@ -16,6 +16,7 @@ class Expression {
         ExpressionType type; // type of a node [operation] (i.e. add, subtract, assign, identifier, ... )
         Expression* leftExpr; // left operand
         Expression* rightExpr; // right operand
+        Expression* ternaryOperatorCondition; // extra expression serving as ternary operator condition
         Identifier* identifier; // nullptr if not an identifier (type will also be not "identifierNode")
         std::string constant; // int, string, real LuNA constant
         expr* ASTexpr;
@@ -38,10 +39,12 @@ class Expression {
 
         std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
 
+        bool isIndexable();
+
         Expression(std::string constant, ExpressionType type);
 
         Expression(expr* ASTexpr);
 
-        Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTable, std::vector<std::string>* errorReports);
+        Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTable, std::vector<std::string>* errorReports, Vertex* currentVertex);
 
 };

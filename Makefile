@@ -1,8 +1,5 @@
 all: bison flex analyzer
 
-prepr: $1 
-	python3 ./parser/pp.py source.fa -o prepr.fa
-
 flex: ./parser/lexics.l
 	lex -o ./parser/lex.yy.cpp ./parser/lexics.l 
 
