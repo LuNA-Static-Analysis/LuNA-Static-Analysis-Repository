@@ -24,31 +24,21 @@ extern error_reporter reporter;
 uint tokens = 0;
 ast *ast_ = new ast();
 
-// todo: сделать парсинг параметров
-// без параметров - запускаются оба
-// файл с входной программой
-// -ast
-// -degsa
-// -o и название создаваемого файла
-
-//TODO ЗАПУСКАТЬ ПО УСЛОВИЮ
 int main(int argc, char **argv)
 {
 
     bool launchASTAnalyzer = false;
     bool launchDeGSA = false;
-    char* inputFileName = nullptr;
+    char* inputFileName = argv[1];
     std::string outputFileName = "output.txt";
 
-    for (int i = 1; i < argc; i++){
+    for (int i = 2; i < argc; i++){
 
         std::string arg(argv[i]);
 
         if (arg == "-ast"){
-            std::cout << arg << std::endl;
             launchASTAnalyzer = true;
         } else if (arg == "-degsa"){
-            std::cout << arg << std::endl;
             launchDeGSA = true;
         } else if (arg == "-o"){
             std::cout << arg << std::endl;
@@ -56,10 +46,10 @@ int main(int argc, char **argv)
                 i++;
                 outputFileName = std::string(argv[i]);
             } else {
-                std::cerr << "No output file name present, using default name" << std::endl;
+                std::cerr << "No output file name presented, using default name" << std::endl;
             }
-        } else { // must be input file name
-            inputFileName = argv[i];
+        } else {
+            std::cerr << "Unidentified parameter" << std::endl;
         }
     }
 
@@ -126,7 +116,7 @@ int main(int argc, char **argv)
 
         ThreadPool thread_pool{n};
 
-        if(launchASTAnalyzer){
+        if (launchASTAnalyzer){
 
             thread_pool.add_task(
                 [&analyzers, &sem0]()
