@@ -2,11 +2,9 @@
 
 #include "../parser/ast.hpp"
 #include "error_reporter.hpp"
+#include "./error_message/error_entry.hpp"
 
 class existance_main_analyzer : public base_analyzer {
-// private:
-//     static const std::string MAIN = std::string("main";
-
 public:
     existance_main_analyzer(ast* ast_, FILE* yyin, error_reporter* reporter)  {
         this->ast_ = ast_;
@@ -41,11 +39,8 @@ public:
 
         if (has_main) return false;
 
-        reporter_->report(ERROR_LEVEL::ERROR,
-            "No sub main\n",
-            "",
-            0
-        );
+        reporter_->report_json(12, details());
+
         return true;
     }
 };

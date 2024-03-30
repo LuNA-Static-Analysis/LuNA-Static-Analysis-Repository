@@ -37,17 +37,14 @@ public:
 
         for (auto i : map) {
             if (i.second.size() <= 1) continue;
-            std::string prev_decls;
 
-            for (auto line : i.second) {
-                prev_decls += "\tLine " + std::to_string(line) + ": " + get_line_from_file(line) + "\n";
+            details detail = details();
+
+            for (auto line : i.second)  {
+                detail.add_cf(cf(i.first, "extern", get_file(), line));
             }
+            reporter_->report_json(7, detail);
 
-            reporter_->report(ERROR_LEVEL::WARNING,
-                "LuNA alias \"" + i.first + "\" multiple declarations",
-                prev_decls,
-                0 
-            );
             has_errors = true;
         }
         return has_errors;
