@@ -30,15 +30,14 @@ public:
         std::vector<luna_sub_def *> duplicated = find_pairs<luna_sub_def *>(&luna_funcs);
 
         for (auto i : duplicated) {
-            reporter_->report(ERROR_LEVEL::ERROR,
-                "CF \"" + *(i->code_id_->value_) + "\" is aleady defined.",
-                get_line_from_file(i->code_id_->line_),
-                i->code_id_->line_
-            );
+            details detail = details();
+            detail.add_cf(cf(i->code_id_->to_string(), "struct", get_file(), i->line_));
+            reporter_->report_json(7, detail);
         }
 
         return duplicated.size() > 0;
     }
+
     template <typename T>
         std::vector<T> find_pairs(std::vector<T>* v) {
             std::set<std::string> set;

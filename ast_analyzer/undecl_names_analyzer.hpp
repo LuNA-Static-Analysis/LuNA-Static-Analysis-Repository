@@ -131,11 +131,10 @@ public:
 
                     for (auto var : *vars) {
                         if (!is_define_in_scope(var, scope)) {
-                            reporter_->report(ERROR_LEVEL::ERROR,
-                                "Name \"" + var->to_string() + "\" is used, but not defined",
-                                get_line_from_file(var->line_),
-                                var->line_
-                            );
+                            details detail = details();
+                            declared declared_ = declared(call_stack_entry(get_file(), var->line_, current_cf));
+                            detail.add_df(df(var->to_string(), declared_, initialized()));
+                            reporter_->report_json(14, detail);
                         }
                     }
                 }
@@ -157,11 +156,10 @@ public:
 
                 for (auto i : *inner_if_vars) {
                     if (!is_define_in_scope(i, scope)) {
-                        reporter_->report(ERROR_LEVEL::ERROR,
-                            "Name \"" + i->to_string() + "\" is used, but not defined",
-                            get_line_from_file(i->line_),
-                            i->line_
-                        );
+                        details detail = details();
+                        declared declared_ = declared(call_stack_entry(get_file(), i->line_, current_cf));
+                        detail.add_df(df(i->to_string(), declared_, initialized()));
+                        reporter_->report_json(14, detail);
                     }
                 }
 
@@ -186,11 +184,10 @@ public:
 
                 for (auto i : *while_vars) {
                     if (!is_define_in_scope(i, scope)) {
-                        reporter_->report(ERROR_LEVEL::ERROR,
-                            "Name \"" + i->to_string() + "\" is used, but not defined",
-                            get_line_from_file(i->line_),
-                            i->line_
-                        );
+                        details detail = details();
+                        declared declared_ = declared(call_stack_entry(get_file(), i->line_, current_cf));
+                        detail.add_df(df(i->to_string(), declared_, initialized()));
+                        reporter_->report_json(14, detail);
                     }
                 }
 
@@ -213,11 +210,10 @@ public:
                 for (auto i : *for_vars) {
 
                     if (!is_define_in_scope(i, scope)) {
-                        reporter_->report(ERROR_LEVEL::ERROR,
-                            "Name \"" + i->to_string() + "\" is used, but not defined",
-                            get_line_from_file(i->line_),
-                            i->line_
-                        );
+                        details detail = details();
+                        declared declared_ = declared(call_stack_entry(get_file(), i->line_, current_cf));
+                        detail.add_df(df(i->to_string(), declared_, initialized()));
+                        reporter_->report_json(14, detail);
                     }
                 }
 
@@ -259,6 +255,7 @@ public:
                 scope->push_back(&luna_sub_def_params);
             }
 
+            current_cf = i->code_id_->to_string();
             has_errors = check_unused(scope, i->block_);
         }
 

@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include <iostream>
+#include "error_message/error_entry.hpp" 
 
 
 enum ERROR_LEVEL {
@@ -50,6 +51,10 @@ public:
 
     bool has_errors() const {
         return errors_number != 0;
+    }
+
+    void report_json(const int error_code, const details details) {
+        std::cerr << "{ \"error_code\" : \"LuNA_" + std::to_string(error_code) + "\", " + details.to_json() + "}" + "\n";
     }
 
 private:
