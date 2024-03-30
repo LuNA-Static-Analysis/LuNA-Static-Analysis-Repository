@@ -2,7 +2,7 @@
 
 #include <cstring>
 #include <iostream>
-#include "error_message/df.hpp" 
+#include "error_message/error_entry.hpp" 
 
 
 enum ERROR_LEVEL {
