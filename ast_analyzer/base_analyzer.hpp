@@ -1,6 +1,7 @@
 #pragma once
 #include "../parser/ast.hpp"
 #include "error_reporter.hpp"
+#include "error_message/df.hpp"
 
 #include <vector>
 #include <map>
@@ -14,12 +15,18 @@ public:
     virtual ~base_analyzer() {}
     virtual std::string get_name() = 0;
 
+
 protected:
     static const int FSEEK_ERROR = -1;
     FILE* file_;
     ast* ast_;
     error_reporter* reporter_;
 
+    std::string current_cf;
+
+    std::string get_file() {
+        return "todo.fa";
+    }
 
     std::string get_line_from_file(uint num) {
         // return "";
