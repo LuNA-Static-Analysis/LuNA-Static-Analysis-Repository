@@ -1,12 +1,83 @@
 {
-    "name": "John",
-    "age": 30,
-    "married": true,
-    "divorced": false,
-    "children": ["Ann", "Billy"],
-    "pets": null,
-    "cars": [
-      {"model": "BMW 230", "mpg": 27.5},
-      {"model": "Ford Edge", "mpg": 24.1}
+    "error_list": [
+      {
+        "error_code" : "LuNA02",
+        "details" : {
+          "_comment": "why only callstack entry?",
+          "call_stack_entry" : {}, 
+          "cf" : {
+            "name": "set_int",
+            "type": "extern",
+            "file": "main.fa",
+            "line": 3
+          }
+        }
+      },
+      {
+        "error_code" : "LuNA11",
+        "details" : {
+          "cf" : {
+            "name": "set_int",
+            "type": "extern",
+            "file": "main.fa",
+            "line": 3
+          }
+        }
+      },
+      {
+        "error_code": "LUNA12",
+        "details": {}
+      },
+      {
+        "error_code": "LUNA14",
+        "details": {
+            "df": {
+              "name": "x",
+              "declared": [
+                
+              ],
+              "initialized": [
+                [
+                  {
+                    "file": "main.fa",
+                    "line": 1,
+                    "name": "main"
+                  },
+                  {
+                    "file": "main.fa",
+                    "line": 2,
+                    "name": "foo"
+                  }
+                ]
+              ],
+              "used": [
+                [
+                  {
+                    "file": "main.fa",
+                    "line": 1,
+                    "name": "main"
+                  },
+                  {
+                    "file": "main.fa",
+                    "line": 2,
+                    "name": "foo"
+                  }
+                ],
+                [
+                  {
+                    "file": "main.fa",
+                    "line": 1,
+                    "name": "main"
+                  },
+                  {
+                    "file": "main.fa",
+                    "line": 2,
+                    "name": "foo"
+                  }
+                ]
+              ]
+            }
+        }
+      }
     ]
 }
