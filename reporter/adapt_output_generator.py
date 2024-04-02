@@ -1,11 +1,14 @@
 import json
 
+def get_callstack_entry(call): # argument is a map
+    return "file: {file}, line: {line}, name: {name}".format(
+            file = call["file"], line = call["line"], name = call["name"]
+        ) + "\n"
+
 def get_callstack(callstack): # argument is an array of maps
     result = "\n"
     for call in callstack:
-        result += "file: {file}, line: {line}, name: {name}".format(
-            file = call["file"], line = call["line"], name = call["name"]
-        ) + "\n"
+        result += get_callstack_entry(call)
     return result
 
 def get_all_callstacks(callstacks): # argument is an array of arrays of maps
@@ -36,21 +39,37 @@ for error_report in error_list:
     output_file.write("Error #" + str(error_number) + ":\n")
     error_code = error_report["error_code"][4:6] # getting an error number
     match int(error_code): # react according to what error it is exactly
-        case 1:
-            pass
+        case 1: #todo
+            output_file.write((templates_map[error_code] + "\n\n\n")
+                              
+            )
         case 2:
             output_file.write((templates_map[error_code] + "\n\n")
-                #.replace("$callstack_entry", get_cf(error_report["details"]["cf"]))
+                .replace("$cf_name", error_report["details"]["cf"]["name"])
+                .replace("$callstack_entry", get_cf(error_report["details"]["cf"]))
                 .replace("$cf", get_cf(error_report["details"]["cf"]))
             )
         case 3:
-            pass
+            output_file.write((templates_map[error_code] + "\n\n")
+                .replace("$df_name", error_report["details"]["df"]["name"])
+                .replace("$uses_callstacks", get_all_callstacks(error_report["details"]["df"]["used"]))
+                .replace("$defs_callstacks", get_all_callstacks(error_report["details"]["df"]["initialized"]))
+            )
         case 4:
-            pass
+            output_file.write((templates_map[error_code] + "\n\n")
+                .replace("$callstack_entry", get_cf(error_report["details"]["cf"]))
+                .replace("$cf", get_cf(error_report["details"]["cf"]))
+            )
         case 5:
-            pass
-        case 6:
-            pass
+            output_file.write((templates_map[error_code] + "\n\n")
+                .replace("$df_name", error_report["details"]["df"]["name"])
+                .replace("$uses_callstacks", get_all_callstacks(error_report["details"]["df"]["used"]))
+                .replace("$decl_callstacks", get_all_callstacks(error_report["details"]["df"]["declared"]))
+            )
+        case 6: #todo
+            output_file.write((templates_map[error_code] + "\n\n\n")
+
+            )
         case 7:
             pass
         case 8:
