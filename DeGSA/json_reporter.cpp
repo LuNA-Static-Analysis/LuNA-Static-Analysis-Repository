@@ -50,7 +50,7 @@ std::string JsonReporter::createCallStackEntry(
 std::string JsonReporter::createCallStack(
         std::vector<std::string> callStackEntries
 ){
-    
+    return "";//todo
 }
 
 JsonReporter::JsonReporter(){}

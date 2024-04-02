@@ -844,11 +844,11 @@ class DDG {
 
             *outputTarget << "\nTime to build DDG: " << (double)graphBuildTotal / 1000000000 << " seconds" << std::endl;
 
-            JsonReporter* jsonReporter = new JsonReporter();
+            /*JsonReporter* jsonReporter = new JsonReporter();
             std::map<std::string, std::string> map = {};
             map.insert(std::make_pair("key", "value"));
             map.insert(std::make_pair("key1", "value1"));
-            std::cout << jsonReporter->createJson(map) << std::endl;
+            std::cout << jsonReporter->createJson(map) << std::endl;*/
 
         }
 

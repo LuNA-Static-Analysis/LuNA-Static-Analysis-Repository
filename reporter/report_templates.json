@@ -1,0 +1,6 @@
+{
+    "02": "(error code: LUNA2) No function with name $name exists.\nCall stack entry: $callstack_entry\n$cf",
+    "11": "(error code: LUNA11) Importing multiple functions with same aliases.\n$cf",
+    "12": "(error code: LUNA12) No function named \"main\"",
+    "14": "(error code: LUNA14) Attempt to use undeclared DF $df_name.\nDefs callstacks:\n$defs_callstacks\nUses callstacks:\n$uses_callstacks"
+}

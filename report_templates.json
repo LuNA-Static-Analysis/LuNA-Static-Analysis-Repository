@@ -1,6 +1,0 @@
-{
-    "02": "(2) No function with name $name exists.\nCall stack entry: $callstack_entry\n$cf",
-    "11": "(11) Importing multiple functions with same aliases.\n$cf",
-    "12": "(12) No main",
-    "14": "(14) Attempt to use undeclared DF $df_name.\nDeclared callstacks:\n$decl_callstacks\nDefs callstacks:\n$defs_callstacks\nUses callstacks:\n$uses_callstacks"
-}

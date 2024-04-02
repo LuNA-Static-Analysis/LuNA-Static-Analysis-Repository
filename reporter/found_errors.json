@@ -3,7 +3,6 @@
       {
         "error_code" : "LuNA02",
         "details" : {
-          "_comment": "why only callstack entry?",
           "call_stack_entry" : {}, 
           "cf" : {
             "name": "set_int",

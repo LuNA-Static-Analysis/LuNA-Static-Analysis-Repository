@@ -19,13 +19,13 @@ def get_cf(cf): # argument is a map
         name = cf["name"], type = cf["type"], file = cf["file"], line = cf["line"]
     ) + "\n"
 
-json_file = open("in.json", "r") # open the file with reports
+json_file = open("found_errors.json", "r") # open the file with reports
 json_map = json.load(json_file) # load the file to local structure (map)
 
 templates_file = open("report_templates.json", "r") # open the file with templates that must be filled with details
 templates_map = json.load(templates_file)
 
-output_file = open("ADAPT_output.txt", "w")
+output_file = open("adapt_output.txt", "w")
 
 error_list = json_map["error_list"] # this should be a list
 output_file.write("Found {error_count} errors:\n\n".format(error_count = len(error_list)))
@@ -33,7 +33,7 @@ output_file.write("Found {error_count} errors:\n\n".format(error_count = len(err
 error_number = 0
 for error_report in error_list:
     error_number += 1
-    output_file.write(str(error_number) + ":\n")
+    output_file.write("Error #" + str(error_number) + ":\n")
     error_code = error_report["error_code"][4:6] # getting an error number
     match int(error_code): # react according to what error it is exactly
         case 1:
@@ -64,13 +64,12 @@ for error_report in error_list:
                 .replace("$cf", get_cf(error_report["details"]["cf"]))
             )
         case 12:
-            output_file.write((templates_map[error_code] + "\n\n"))
+            output_file.write((templates_map[error_code] + "\n\n\n"))
         case 13:
             pass
         case 14:
             output_file.write((templates_map[error_code] + "\n\n")
                 .replace("$df_name", error_report["details"]["df"]["name"])
-                .replace("$decl_callstacks", get_all_callstacks(error_report["details"]["df"]["declared"]))
                 .replace("$uses_callstacks", get_all_callstacks(error_report["details"]["df"]["used"]))
                 .replace("$defs_callstacks", get_all_callstacks(error_report["details"]["df"]["initialized"]))
             )
