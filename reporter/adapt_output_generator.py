@@ -52,12 +52,13 @@ for error_report in error_list:
         case 3:
             output_file.write((templates_map[error_code] + "\n\n")
                 .replace("$df_name", error_report["details"]["df"]["name"])
+                .replace("$decl_callstacks", get_all_callstacks(error_report["details"]["df"]["declared"]))
                 .replace("$uses_callstacks", get_all_callstacks(error_report["details"]["df"]["used"]))
                 .replace("$defs_callstacks", get_all_callstacks(error_report["details"]["df"]["initialized"]))
             )
         case 4:
             output_file.write((templates_map[error_code] + "\n\n")
-                .replace("$callstack_entry", get_cf(error_report["details"]["cf"]))
+                .replace("$callstack_entry", get_callstack_entry(error_report["details"]["call_stack_entry"]))
                 .replace("$cf", get_cf(error_report["details"]["cf"]))
             )
         case 5:
@@ -71,73 +72,120 @@ for error_report in error_list:
 
             )
         case 7:
-            pass
+            output_file.write((templates_map[error_code] + "\n\n")
+                .replace("$decl_callstacks", get_all_callstacks(error_report["details"]["df"]["declared"]))
+            )
         case 8:
-            pass
-        case 9:
-            pass
+            pass #no such error exists
+        case 9: #todo
+            output_file.write((templates_map[error_code] + "\n\n\n")
+
+            )
         case 10:
-            pass
+            output_file.write((templates_map[error_code] + "\n\n")
+                .replace("$df_name", error_report["details"]["df"]["name"])
+                .replace("$decl_callstacks", get_all_callstacks(error_report["details"]["df"]["declared"]))
+                .replace("$uses_callstacks", get_all_callstacks(error_report["details"]["df"]["used"]))
+                .replace("$defs_callstacks", get_all_callstacks(error_report["details"]["df"]["initialized"]))
+            )
         case 11:
             output_file.write((templates_map[error_code] + "\n\n")
                 .replace("$cf", get_cf(error_report["details"]["cf"]))
             )
         case 12:
             output_file.write((templates_map[error_code] + "\n\n\n"))
-        case 13:
-            pass
+        case 13:#todo create new template + get dfs function
+            output_file.write((templates_map[error_code] + "\n\n\n"))
         case 14:
             output_file.write((templates_map[error_code] + "\n\n")
                 .replace("$df_name", error_report["details"]["df"]["name"])
                 .replace("$uses_callstacks", get_all_callstacks(error_report["details"]["df"]["used"]))
                 .replace("$defs_callstacks", get_all_callstacks(error_report["details"]["df"]["initialized"]))
             )
-        case 15:
-            pass
-        case 16:
-            pass
+        case 15: #todo
+            output_file.write((templates_map[error_code] + "\n\n\n")
+
+            )
+        case 16: #todo perhaps change json format
+            output_file.write((templates_map[error_code] + "\n\n")
+                .replace("$cf_name", error_report["details"]["cf"]["name"])
+                .replace("$cf", get_cf(error_report["details"]["cf"]))
+            )
         case 17:
+            output_file.write((templates_map[error_code] + "\n\n")
+                .replace("$cf", get_cf(error_report["details"]["cf"]))
+            )
+        case 18: #todo
             pass
-        case 18:
+        case 19: #todo
             pass
-        case 19:
+        case 20: #todo
             pass
-        case 20:
+        case 21: #todo
             pass
-        case 21:
+        case 22: #todo
             pass
-        case 22:
-            pass
-        case 23:
-            pass
-        case 24:
-            pass
-        case 25:
-            pass
-        case 26:
-            pass
-        case 27:
-            pass
-        case 28:
-            pass
-        case 29:
-            pass
-        case 30:
-            pass
-        case 31:
-            pass
-        case 32:
-            pass
-        case 33:
-            pass
-        case 34:
-            pass
-        case 35:
-            pass
-        case 36:
-            pass
-        case 37:
-            pass
+        case 23: #todo add expression string to json?
+            output_file.write((templates_map[error_code] + "\n\n")
+                .replace("$bool", str(error_report["details"]["type"]))
+                .replace("$callstack_entry", get_callstack_entry(error_report["details"]["where"]))
+            )
+        case 24: #todo
+            output_file.write((templates_map[error_code] + "\n\n\n")
+
+            )
+        case 25: #todo add expression string to json? what is arg_index?
+            output_file.write((templates_map[error_code] + "\n\n\n")
+
+            )
+        case 26: #todo add expression string to json?
+            output_file.write((templates_map[error_code] + "\n\n")
+                .replace("$callstack", get_callstack(error_report["details"]["callstack"]))
+            )
+        case 27: #todo
+            output_file.write((templates_map[error_code] + "\n\n\n")
+
+            )
+        case 28: #todo
+            output_file.write((templates_map[error_code] + "\n\n\n")
+
+            )
+        case 29: #todo
+            output_file.write((templates_map[error_code] + "\n\n\n")
+
+            )
+        case 30: #todo
+            output_file.write((templates_map[error_code] + "\n\n\n")
+
+            )
+        case 31: #todo
+            output_file.write((templates_map[error_code] + "\n\n\n")
+
+            )
+        case 32: #todo
+            output_file.write((templates_map[error_code] + "\n\n\n")
+
+            )
+        case 33: #todo
+            output_file.write((templates_map[error_code] + "\n\n\n")
+
+            )
+        case 34: #todo
+            output_file.write((templates_map[error_code] + "\n\n\n")
+
+            )
+        case 35: #todo
+            output_file.write((templates_map[error_code] + "\n\n\n")
+
+            )
+        case 36: #todo
+            output_file.write((templates_map[error_code] + "\n\n\n")
+
+            )
+        case 37: #todo
+            output_file.write((templates_map[error_code] + "\n\n\n")
+
+            )
         case _:
             print("INTERNAL ERROR: unknown error code encountered")
 
