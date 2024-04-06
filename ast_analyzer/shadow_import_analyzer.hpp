@@ -43,7 +43,7 @@ public:
             for (auto line : i.second)  {
                 detail.add_cf(cf(i.first, "extern", get_file(), line));
             }
-            reporter_->report_json(7, detail);
+            reporter_->report_json("07", detail);
 
             has_errors = true;
         }

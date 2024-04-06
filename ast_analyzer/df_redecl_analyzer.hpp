@@ -70,16 +70,7 @@ public:
 
             detail.add_df(df(i.first, declared_, initialized()));
 
-            reporter_->report_json(13, detail);
-
-            std::string prev_decls;
-
-
-            // reporter_->report(ERROR_LEVEL::ERROR,
-            //     "Alias \"" + i.first + "\" multiple declarations",
-            //     prev_decls,
-            //     0 
-            // );
+            reporter_->report_json("13", detail);
         }
 
         for (auto i : *(block_->statement_seq_->statements_)) {

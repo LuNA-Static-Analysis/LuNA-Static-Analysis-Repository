@@ -134,7 +134,7 @@ public:
                             details detail = details();
                             declared declared_ = declared(call_stack_entry(get_file(), var->line_, current_cf));
                             detail.add_df(df(var->to_string(), declared_, initialized()));
-                            reporter_->report_json(14, detail);
+                            reporter_->report_json("14", detail);
                         }
                     }
                 }
@@ -159,7 +159,7 @@ public:
                         details detail = details();
                         declared declared_ = declared(call_stack_entry(get_file(), i->line_, current_cf));
                         detail.add_df(df(i->to_string(), declared_, initialized()));
-                        reporter_->report_json(14, detail);
+                        reporter_->report_json("14", detail);
                     }
                 }
 
@@ -187,7 +187,7 @@ public:
                         details detail = details();
                         declared declared_ = declared(call_stack_entry(get_file(), i->line_, current_cf));
                         detail.add_df(df(i->to_string(), declared_, initialized()));
-                        reporter_->report_json(14, detail);
+                        reporter_->report_json("14", detail);
                     }
                 }
 
@@ -213,7 +213,7 @@ public:
                         details detail = details();
                         declared declared_ = declared(call_stack_entry(get_file(), i->line_, current_cf));
                         detail.add_df(df(i->to_string(), declared_, initialized()));
-                        reporter_->report_json(14, detail);
+                        reporter_->report_json("14", detail);
                     }
                 }
 
@@ -268,12 +268,10 @@ public:
         expr* e2 = for_stat->expr_2_;
 
         if (is_real(e2->to_string()) || is_string(e2->to_string()) || is_real(e1->to_string()) || is_string(e1->to_string())) {
-            reporter_->report(ERROR_LEVEL::ERROR,
-                "Invalid type of expression",
-                get_line_from_file(for_stat->line_),
-                for_stat->line_,
-                "integer or value"
-            );
+            details d = details();
+            d.add_expression(e1->to_string());
+            d.add_expression(e2->to_string());
+            reporter_->report_json("00", d);
         }
 
         if (is_int(e1->to_string()) && is_int(e2->to_string())) {
@@ -281,11 +279,10 @@ public:
             int r = std::stoi(e2->to_string());
 
             if (r < l) {
-                reporter_->report(ERROR_LEVEL::ERROR,
-                    "Bad range ",
-                    get_line_from_file(for_stat->line_),
-                    for_stat->line_
-                );
+                details d = details();
+                d.add_expression(e1->to_string());
+                d.add_expression(e2->to_string());
+                reporter_->report_json("00", d);
             }
         }
     }

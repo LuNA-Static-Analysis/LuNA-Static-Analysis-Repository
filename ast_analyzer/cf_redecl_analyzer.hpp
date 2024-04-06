@@ -32,7 +32,7 @@ public:
         for (auto i : duplicated) {
             details detail = details();
             detail.add_cf(cf(i->code_id_->to_string(), "struct", get_file(), i->line_));
-            reporter_->report_json(7, detail);
+            reporter_->report_json("16", detail);
         }
 
         return duplicated.size() > 0;

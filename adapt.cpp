@@ -30,7 +30,7 @@ int main(int argc, char **argv)
     bool launchASTAnalyzer = false;
     bool launchDeGSA = false;
     char* inputFileName = argv[1];
-    std::string outputFileName = "output.txt";
+    std::string outputFileName = "degsa_output.txt";
 
     for (int i = 2; i < argc; i++){
 
@@ -110,7 +110,6 @@ int main(int argc, char **argv)
     std::binary_semaphore sem5{0};
     std::binary_semaphore sem6{0};
     std::binary_semaphore sem7{0};
-
     { // не удалять
         size_t n = 4;
 
@@ -212,6 +211,7 @@ int main(int argc, char **argv)
     if (launchDeGSA)
         sem7.acquire();
 
+    std::cerr << reporter.get_errors();
     delete ast_;
     fclose(yyin);
 

@@ -39,7 +39,7 @@ public:
 
         if (has_main) return false;
 
-        reporter_->report_json(12, details());
+        reporter_->report_json("12", details());
 
         return true;
     }

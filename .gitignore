@@ -7,6 +7,7 @@ DeGSA/lex.yy.c
 DeGSA/lex.yy.cpp
 DeGSA/output.txt
 a.out
+adapt.out
 grammar.tab.cpp
 grammar.tab.hpp
 lex.yy.c
@@ -15,3 +16,7 @@ output.txt
 prepr.fa
 ast.json
 in.json
+adapt_output.txt
+degsa_output.txt
+found_errors copy.json
+temp.json

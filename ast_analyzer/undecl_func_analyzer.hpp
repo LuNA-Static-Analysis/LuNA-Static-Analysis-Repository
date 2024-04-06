@@ -64,14 +64,11 @@ public:
                 std::vector<luna_string> cfs = get_cfs(luna_sub_def_decl->block_);
                 for (auto i : cfs) {
                     if (i.to_string() == luna_sub_def_decl->code_id_->to_string()) {
-                        reporter_->report(ERROR_LEVEL::ERROR,
-                            "Infinite recursion",
-                            get_line_from_file(i.line_),
-                            i.line_
-                        );
+                        details detail = details();
+                        detail.add_call_stack_entry(call_stack_entry(get_file(), i.line_, current_cf));
+                        reporter_->report_json("00", detail);
                     }
                 }
-
             }
         }
 
@@ -118,7 +115,7 @@ public:
                     details detail = details();
                     detail.add_call_stack_entry(call_stack_entry(get_file(), call.first.line_, current_cf));
                     detail.add_cf(cf(func_decl.first.to_string(), "extern", get_file(), func_decl.first.line_));
-                    reporter_->report_json(4, detail);
+                    reporter_->report_json("04", detail);
 
                     break;
                 }
@@ -132,19 +129,17 @@ public:
 
                     if (level == ERROR_LEVEL::NO_ERROR) continue;
 
-                    reporter_->report(level,
-                        "Invalid " + std::to_string(k + 1) + "'th parameter type: \"" + print_type(cur_call_param_type) + "\"",
-                        get_line_from_file(call.first.line_),
-                        call.first.line_,
-                        print_type(cur_func_delc_call_param_type)
-                    );
+                    details detail = details();
+                    detail.add_call_stack_entry(call_stack_entry(get_file(), call.first.line_, current_cf));
+                    detail.add_cf(cf(func_decl.first.to_string(), "extern", get_file(), func_decl.first.line_));
+                    reporter_->report_json("04", detail);
                 }
             }
 
             if (!has_such_cf) {
                 details detail = details();
                 detail.add_call_stack_entry(call_stack_entry(get_file(), call.first.line_, current_cf));
-                reporter_->report_json(4, detail);
+                reporter_->report_json("04", detail);
             }
         }
 
