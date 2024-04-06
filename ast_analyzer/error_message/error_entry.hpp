@@ -164,7 +164,7 @@ public:
 
   details() = default;
 
-  std::string to_json() const override{
+  std::string to_json() const override {
     std::stringstream s;
 
     size_t len = dfs.size();

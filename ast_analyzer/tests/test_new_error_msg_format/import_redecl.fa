@@ -1,0 +1,4 @@
+import c_init(int i) as init;
+import c_init1(int i) as init;
+import c_init2(int i) as init;
+

@@ -60,17 +60,26 @@ public:
 
         for (auto i : map) {
             if (i.second.size() <= 1) continue;
-            std::string prev_decls;
+
+            details detail = details();
+            declared declared_ = declared();
 
             for (auto line : i.second) {
-                prev_decls += "\tLine " + std::to_string(line) + ": " + get_line_from_file(line) + '\n';
+                declared_.add_decl(call_stack_entry(get_file(), line, current_cf));
             }
 
-            reporter_->report(ERROR_LEVEL::ERROR,
-                "Alias \"" + i.first + "\" multiple declarations",
-                prev_decls,
-                0 
-            );
+            detail.add_df(df(i.first, declared_, initialized()));
+
+            reporter_->report_json(13, detail);
+
+            std::string prev_decls;
+
+
+            // reporter_->report(ERROR_LEVEL::ERROR,
+            //     "Alias \"" + i.first + "\" multiple declarations",
+            //     prev_decls,
+            //     0 
+            // );
         }
 
         for (auto i : *(block_->statement_seq_->statements_)) {
