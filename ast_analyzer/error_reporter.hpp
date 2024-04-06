@@ -56,7 +56,7 @@ public:
     void report_json(std::string error_code, const details details) {
         std::string s = std::string("{ \"error_code\" : \"LuNA" + error_code + "\", " + details.to_json() + "}" + "\n");
         // std::cerr << "---";
-        errors_msg.push_back("s");
+        errors_msg.push_back(s);
         // std::cerr << "---";
         // errors_msg.push_back(std::string("1"));
         // errors_msg.insert(std::string("{ \"error_code\" : \"LuNA" + error_code + "\", " + details.to_json() + "}" + "\n"));
