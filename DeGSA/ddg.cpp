@@ -2,6 +2,7 @@
 #include "vertices.cpp"
 #include "ids.cpp"
 #include "expr.cpp"
+#include "json_reporter.cpp"
 
 #include <chrono>
 #include <fstream>
@@ -842,6 +843,12 @@ class DDG {
             *outputTarget << "\nTime to find errors: " << (double)errorsFindTotal / 1000000000 << " seconds" << std::endl;
 
             *outputTarget << "\nTime to build DDG: " << (double)graphBuildTotal / 1000000000 << " seconds" << std::endl;
+
+            /*JsonReporter* jsonReporter = new JsonReporter();
+            std::map<std::string, std::string> map = {};
+            map.insert(std::make_pair("key", "value"));
+            map.insert(std::make_pair("key1", "value1"));
+            std::cout << jsonReporter->createJson(map) << std::endl;*/
 
         }
 

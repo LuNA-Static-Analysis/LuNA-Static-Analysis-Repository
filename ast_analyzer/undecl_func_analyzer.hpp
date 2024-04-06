@@ -1,10 +1,6 @@
 #include "base_analyzer.hpp"
 #include "utils.cpp"
 
-
-
-
-
 class undecl_func_analyzer : public base_analyzer {
 public:
     undecl_func_analyzer(ast* ast_, FILE* yyin, error_reporter* reporter)  {
@@ -27,7 +23,7 @@ public:
         std::vector<sub_def *> sub_defs = *(ast_->get_program()->sub_defs);
 
         std::map<luna_string , std::vector<luna_type> *> cf_decls;
-        std::multimap<luna_string , std::vector<luna_type> *>* calls;
+        std::multimap<luna_string , std::vector<luna_type> *>* calls = nullptr;
 
         for (auto i : sub_defs) {
             if (i == nullptr) continue;
@@ -49,7 +45,6 @@ public:
 
             luna_sub_def* luna_sub_def_decl = dynamic_cast<luna_sub_def *> (i); 
             if (luna_sub_def_decl != nullptr) {
-
                 std::vector<luna_type>* params = new std::vector<luna_type>();
 
                 if (luna_sub_def_decl->params_->param_seq_ != nullptr) {
@@ -98,6 +93,13 @@ public:
         //     std::cerr << std::endl;
         // }
 
+        if (calls == nullptr) {
+            for (auto i : cf_decls) {
+                delete i.second;
+            }
+            return false;
+        }
+
         for (auto call : *calls) {
             luna_string alias = call.first;
 
@@ -113,12 +115,11 @@ public:
                 has_such_cf = true;
 
                 if (func_decl.second->size() != call.second->size()) {
-                    reporter_->report(ERROR_LEVEL::ERROR,
-                        "The number of parameters in call and declaration doesn't match",
-                        "\tLine " + std::to_string(call.first.line_) + ": " + get_line_from_file(call.first.line_) + " // declaration\n" \
-                        + "\tLine " + std::to_string(func_decl.first.line_)+ ": " + get_line_from_file(func_decl.first.line_) + " // calling \n",
-                        0
-                    );
+                    details detail = details();
+                    detail.add_call_stack_entry(call_stack_entry(get_file(), call.first.line_, current_cf));
+                    detail.add_cf(cf(func_decl.first.to_string(), "extern", get_file(), func_decl.first.line_));
+                    reporter_->report_json(4, detail);
+
                     break;
                 }
 
@@ -141,11 +142,9 @@ public:
             }
 
             if (!has_such_cf) {
-                reporter_->report(ERROR_LEVEL::ERROR,
-                    "Undefined reference: \"" + call.first.to_string() + "\"",
-                    get_line_from_file(call.first.line_),
-                    call.first.line_
-                );
+                details detail = details();
+                detail.add_call_stack_entry(call_stack_entry(get_file(), call.first.line_, current_cf));
+                reporter_->report_json(4, detail);
             }
         }
 

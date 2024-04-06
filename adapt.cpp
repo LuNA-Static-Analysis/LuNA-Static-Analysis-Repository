@@ -30,7 +30,7 @@ int main(int argc, char **argv)
     bool launchASTAnalyzer = false;
     bool launchDeGSA = false;
     char* inputFileName = argv[1];
-    std::string outputFileName = "output.txt";
+    std::string outputFileName = "degsa_output.txt";
 
     for (int i = 2; i < argc; i++){
 

@@ -7,6 +7,6 @@ ARG4=$5
 
 python3 ./parser/pp.py $LUNAPROG -o prepr.fa
 
-./a.out prepr.fa $ARG1 $ARG2 $ARG3 $ARG4
+./adapt.out prepr.fa $ARG1 $ARG2 $ARG3 $ARG4
 
 rm prepr.fa
