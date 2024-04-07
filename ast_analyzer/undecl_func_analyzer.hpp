@@ -64,9 +64,9 @@ public:
                 std::vector<luna_string> cfs = get_cfs(luna_sub_def_decl->block_);
                 for (auto i : cfs) {
                     if (i.to_string() == luna_sub_def_decl->code_id_->to_string()) {
-                        details detail = details();
+                        details detail = details("00");
                         detail.add_call_stack_entry(call_stack_entry(get_file(), i.line_, current_cf));
-                        reporter_->report_json("00", detail);
+                        reporter_->report_json(detail);
                     }
                 }
             }
@@ -112,10 +112,10 @@ public:
                 has_such_cf = true;
 
                 if (func_decl.second->size() != call.second->size()) {
-                    details detail = details();
+                    details detail = details("04");
                     detail.add_call_stack_entry(call_stack_entry(get_file(), call.first.line_, current_cf));
                     detail.add_cf(cf(func_decl.first.to_string(), "extern", get_file(), func_decl.first.line_));
-                    reporter_->report_json("04", detail);
+                    reporter_->report_json(detail);
 
                     break;
                 }
@@ -129,17 +129,17 @@ public:
 
                     if (level == ERROR_LEVEL::NO_ERROR) continue;
 
-                    details detail = details();
+                    details detail = details("04");
                     detail.add_call_stack_entry(call_stack_entry(get_file(), call.first.line_, current_cf));
                     detail.add_cf(cf(func_decl.first.to_string(), "extern", get_file(), func_decl.first.line_));
-                    reporter_->report_json("04", detail);
+                    reporter_->report_json(detail);
                 }
             }
 
             if (!has_such_cf) {
-                details detail = details();
+                details detail = details("04");
                 detail.add_call_stack_entry(call_stack_entry(get_file(), call.first.line_, current_cf));
-                reporter_->report_json("04", detail);
+                reporter_->report_json(detail);
             }
         }
 

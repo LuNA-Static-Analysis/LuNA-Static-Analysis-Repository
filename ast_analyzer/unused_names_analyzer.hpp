@@ -44,7 +44,7 @@ public:
 
             for (auto s : *scope) {
                 for (auto var : *s) {
-                    details d = details();
+                    details d = details("10");
                     d.add_df(
                         df(
                             var->to_string(),
@@ -52,7 +52,7 @@ public:
                             initialized()
                         )
                     );
-                    reporter_->report_json("10", d);
+                    reporter_->report_json(d);
                 }
             }
 
@@ -140,7 +140,7 @@ public:
                 check_(scope, cur_if->block_);
                 
                 for (auto var : *(scope->back())) {
-                    details d = details();
+                    details d = details("10");
                     d.add_df(
                         df(
                             var->to_string(),
@@ -148,7 +148,7 @@ public:
                             initialized()
                         )
                     );
-                    reporter_->report_json("10", d);
+                    reporter_->report_json(d);
                 }
 
                 scope->pop_back();
@@ -171,7 +171,7 @@ public:
                 check_(scope, cur_while->block_);
 
                 for (auto var : *(scope->back())) {
-                    details d = details();
+                    details d = details("10");
                     d.add_df(
                         df(
                             var->to_string(),
@@ -179,7 +179,7 @@ public:
                             initialized()
                         )
                     );
-                    reporter_->report_json("10", d);
+                    reporter_->report_json(d);
                 }
 
                 scope->pop_back();
@@ -200,7 +200,7 @@ public:
                 check_(scope, cur_for->block_);
 
                 for (auto var : *(scope->back())) {
-                    details d = details();
+                    details d = details("10");
                     d.add_df(
                         df(
                             var->to_string(),
@@ -208,7 +208,7 @@ public:
                             initialized()
                         )
                     );
-                    reporter_->report_json("10", d);
+                    reporter_->report_json(d);
                 }
 
                 scope->pop_back();

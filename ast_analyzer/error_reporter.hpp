@@ -53,30 +53,24 @@ public:
         return errors_number != 0;
     }
 
-    void report_json(std::string error_code, const details details) {
-        std::string s = std::string("{ \"error_code\" : \"LuNA" + error_code + "\", " + details.to_json() + "}" + "\n");
-        // std::cerr << "---";
+    void report_json(const details details) {
+        std::string s = std::string("{ \"error_code\" : \"LuNA" + details.error_code + "\", " + details.to_json() + "}" + "\n");
         errors_msg.push_back(s);
-        // std::cerr << "---";
-        // errors_msg.push_back(std::string("1"));
-        // errors_msg.insert(std::string("{ \"error_code\" : \"LuNA" + error_code + "\", " + details.to_json() + "}" + "\n"));
-        // std::cout << std::string("{ \"error_code\" : \"LuNA" + error_code + "\", " + details.to_json() + "}" + "\n");
     }
 
     std::string get_errors() {
         std::stringstream ss;
 
-        ss << "{ error_list: ";
+        ss << "{ \"error_list\": [";
 
         size_t len = errors_msg.size();
-        ss << "\"details \" : [";
 
         for (int j = 0; j < len; j++) {
             auto i = errors_msg.at(j);
-            ss << "{" << i << "}" << (j == len - 1 ? "" : ",");
+            ss << i << (j == len - 1 ? "" : ",");
         }
 
-        ss << "]";
+        ss << "]}";
 
         return ss.str();
     }

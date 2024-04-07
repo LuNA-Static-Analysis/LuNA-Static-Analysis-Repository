@@ -61,7 +61,7 @@ public:
         for (auto i : map) {
             if (i.second.size() <= 1) continue;
 
-            details detail = details();
+            details detail = details("13");
             declared declared_ = declared();
 
             for (auto line : i.second) {
@@ -70,7 +70,7 @@ public:
 
             detail.add_df(df(i.first, declared_, initialized()));
 
-            reporter_->report_json("13", detail);
+            reporter_->report_json(detail);
         }
 
         for (auto i : *(block_->statement_seq_->statements_)) {

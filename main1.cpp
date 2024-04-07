@@ -20,7 +20,6 @@ extern int yyparse();
 extern FILE *yyin;
 int line_num = 1;
 std::string line, prev_line;
-extern error_reporter reporter;
 uint tokens = 0;
 ast *ast_ = new ast();
 
@@ -91,6 +90,8 @@ int main(int argc, char **argv)
     }
 
     out.close();
+
+    error_reporter reporter = error_reporter();
 
     std::vector<base_analyzer *> analyzers = {
         new undeclarated_names_analyzer(ast_, yyin, &reporter),
@@ -223,6 +224,16 @@ int main(int argc, char **argv)
     // if (launchDeGSA) {
     //     sem7.acquire();
     // }
+
+    std::ofstream o;
+    o.open("./reporter/found_errors.json");
+
+    if (o.is_open())
+    {
+        o << reporter.get_errors();
+    }
+
+    o.close();
 
     delete ast_;
     fclose(yyin);

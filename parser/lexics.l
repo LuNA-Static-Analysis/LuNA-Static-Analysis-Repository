@@ -2,7 +2,7 @@
 
 #include "../parser/ast.hpp"
 #include "grammar.tab.hpp"
-#include "../parser/error_reporter.hpp"
+// #include "../parser/error_reporter.hpp"
 
 #include <string>
 #include <cstring>
@@ -15,7 +15,7 @@ std::string yystring();
 void next_token(const std::string&);
 extern bool has_errors;
 using namespace std;
-extern error_reporter reporter;
+// extern error_reporter reporter;
 
 extern int cur_position_in_line;
 extern int line_num;
@@ -175,10 +175,12 @@ std::string yystring() {
 void yyerror(const char* msg) {
 	/* std::cerr << "yyerror\n"; */
 	/* if (has_errors) return; */
-	reporter.report(ERROR_LEVEL::ERROR, 
-		"Unexpected token",
-        line,
-	 	line_num
-    );
+
+  std::cerr << "Syntax error: Unexpected token at line : " << line_num << "\n" << line << std::endl;
+	// reporter.report(ERROR_LEVEL::ERROR, 
+	// 	"Unexpected token",
+  //       line,
+	//  	line_num
+  //   );
 	// has_errors = true; */
 }
