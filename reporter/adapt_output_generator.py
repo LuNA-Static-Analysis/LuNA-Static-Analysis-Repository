@@ -22,6 +22,12 @@ def get_cf(cf): # argument is a map
         name = cf["name"], type = cf["type"], file = cf["file"], line = cf["line"]
     ) + "\n"
 
+def get_all_cfs(cfs): # argument is an array of maps
+    result = ""
+    for cf in cfs:
+        result += get_cf(cf)
+    return result
+
 json_file = open("found_errors.json", "r") # open the file with reports
 json_map = json.load(json_file) # load the file to local structure (map)
 
@@ -90,7 +96,7 @@ for error_report in error_list:
             )
         case 11:
             output_file.write((templates_map[error_code] + "\n\n")
-                .replace("$cf", get_cf(error_report["details"]["cf"]))
+                .replace("$cfs", get_all_cfs(error_report["details"]["cfs"]))
             )
         case 12:
             output_file.write((templates_map[error_code] + "\n\n\n"))
@@ -106,10 +112,10 @@ for error_report in error_list:
             output_file.write((templates_map[error_code] + "\n\n\n")
 
             )
-        case 16: #todo perhaps change json format
+        case 16:
             output_file.write((templates_map[error_code] + "\n\n")
-                .replace("$cf_name", error_report["details"]["cf"]["name"])
-                .replace("$cf", get_cf(error_report["details"]["cf"]))
+                .replace("$cf_name", error_report["details"]["cfs"][0]["name"])
+                .replace("$cfs", get_all_cfs(error_report["details"]["cfs"]))
             )
         case 17:
             output_file.write((templates_map[error_code] + "\n\n")

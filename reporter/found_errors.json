@@ -277,12 +277,19 @@
       {
         "error_code" : "LuNA11",
         "details" : {
-          "cf" : {
+          "cfs" : [{
             "name": "set_int",
             "type": "extern",
             "file": "main.fa",
             "line": 3
+          },
+          {
+            "name": "set_int",
+            "type": "extern",
+            "file": "main.fa",
+            "line": 4
           }
+          ]
         }
       },
 
@@ -475,12 +482,19 @@
       {
         "error_code": "LUNA16",
         "details" : {
-          "cf" : {
+          "cfs" : [{
             "name": "set_int",
             "type": "extern",
             "file": "main.fa",
             "line": 3
+          },
+          {
+            "name": "set_int",
+            "type": "extern",
+            "file": "main.fa",
+            "line": 4
           }
+          ]
         }
       },
 
