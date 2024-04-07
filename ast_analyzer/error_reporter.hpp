@@ -3,7 +3,7 @@
 #include <cstring>
 #include <iostream>
 #include <vector>
-#include "error_message/error_entry.hpp" 
+#include "../error_message/error_entry.hpp" 
 
 
 enum ERROR_LEVEL {

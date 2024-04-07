@@ -36,7 +36,7 @@ public:
     std::stringstream s;
 
     size_t len = lines.size();
-    s << "\"init : \" : [";
+    s << "\"init\" : [";
 
     for (int j = 0; j < len; j++) {
         auto i = lines.at(j);
@@ -88,7 +88,7 @@ public:
     std::stringstream s;
 
     size_t len = inits_.size();
-    s << "\"initialized : \" : [";
+    s << "\"initialized\" : [";
 
     for (int j = 0; j < len; j++) {
         auto i = inits_.at(j);
@@ -176,7 +176,7 @@ public:
     std::stringstream s;
 
     size_t len = dfs.size();
-    s << "\"details \" : {";
+    s << "\"details\" : {";
 
     s << dfs_to_json();
     s << (len != 0 && cfs.size() != 0 ? "," : " ");
@@ -191,7 +191,7 @@ public:
     s << (len != 0 && exprs.size() != 0 ? "," : " ");
 
     len = exprs.size();
-    s << (len != 0 ? "\"expr \" : " + exprs.at(0) : "");
+    s << (len != 0 ? "\"expr\" : " + exprs.at(0) : "");
 
     s << "}";
 
