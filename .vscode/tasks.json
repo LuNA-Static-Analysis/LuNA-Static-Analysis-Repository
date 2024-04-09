@@ -2,7 +2,7 @@
     "tasks": [
         {
             "type": "shell",
-            "label": "bison",
+            "label": "DeGSA_bison",
             "command": "bison",
             "args": [
                 "-d",
@@ -11,9 +11,9 @@
         },
         {
             "type": "shell",
-            "label": "flex",
+            "label": "DeGSA_flex",
             "dependsOn": [
-                "bison"
+                "DeGSA_bison"
             ],
             "command": "flex",
             "args": [
@@ -22,9 +22,9 @@
         },
         {
             "type": "shell",
-            "label": "python",
+            "label": "DeGSA_python",
             "dependsOn": [
-                "flex"
+                "DeGSA_flex"
             ],
             "command": "python3",
             "args": [
@@ -36,9 +36,9 @@
         },
         {
             "type": "shell",
-            "label": "compile",
+            "label": "DeGSA_compile",
             "dependsOn": [
-                "python"
+                "DeGSA_python"
             ],
             "command": "g++",
             "args": [
@@ -51,6 +51,75 @@
                 "${workspaceFolder}/DeGSA/main.cpp",
                 "-o",
                 "a.out"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+
+        {
+            "type": "shell",
+            "label": "ADAPT_bison",
+            "command": "bison",
+            "args": [
+                "-d",
+                "${workspaceFolder}/parser/grammar.ypp",
+                "-o",
+                "${workspaceFolder}/parser/grammar.tab.cpp"
+            ]
+        },
+        {
+            "type": "shell",
+            "label": "ADAPT_flex",
+            "dependsOn": [
+                "ADAPT_bison"
+            ],
+            "command": "lex",
+            "args": [
+                "-o",
+                "${workspaceFolder}/parser/lex.yy.cpp",
+                "${workspaceFolder}/parser/lexics.l"
+            ]
+        },
+        {
+            "type": "shell",
+            "label": "ADAPT_python",
+            "dependsOn": [
+                "ADAPT_flex"
+            ],
+            "command": "python3",
+            "args": [
+                "${workspaceFolder}/parser/pp.py",
+                "${workspaceFolder}/DeGSA/luna/source.fa",
+                "-o",
+                "prepr.fa"
+            ]
+        },
+        {
+            "type": "shell",
+            "label": "ADAPT_compile",
+            "dependsOn": [
+                "ADAPT_python"
+            ],
+            "command": "g++",
+            "args": [
+                "-g", // add debug information
+                "-I${workspaceFolder}/parser", // includes fix
+                //"-Wall", // all warnings
+                "-std=c++20",
+                "${workspaceFolder}/parser/lex.yy.cpp",
+                "${workspaceFolder}/parser/grammar.tab.cpp",
+                "${workspaceFolder}/adapt.cpp",
+                "${workspaceFolder}/ast_analyzer/threadpool/threadpool.cpp",
+                "-o",
+                "adapt.out"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
