@@ -46,7 +46,10 @@ output_file = open("adapt_output.txt", "w")
 
 json_file = open("found_errors.json", "r") # open the file with reports
 error_list = json.load(json_file) # load the file to local structure (map); this must be an array
-output_file.write("Found {error_count} errors:\n\n".format(error_count = len(error_list)))
+if (len(error_list) != 0):
+    output_file.write("Found {error_count} errors:\n\n".format(error_count = len(error_list)))
+else:
+    output_file.write("No errors found.\n")
 
 error_number = 0
 for error_report in error_list:
