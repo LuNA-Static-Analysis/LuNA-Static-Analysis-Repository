@@ -38,12 +38,12 @@ public:
         for (auto i : map) {
             if (i.second.size() <= 1) continue;
 
-            details detail = details();
+            details detail = details("11");
 
             for (auto line : i.second)  {
                 detail.add_cf(cf(i.first, "extern", get_file(), line));
             }
-            reporter_->report_json(7, detail);
+            reporter_->report_json(detail);
 
             has_errors = true;
         }

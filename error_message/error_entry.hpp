@@ -36,7 +36,7 @@ public:
     std::stringstream s;
 
     size_t len = lines.size();
-    s << "\"init : \" : [";
+    s << "\"init\" : [";
 
     for (int j = 0; j < len; j++) {
         auto i = lines.at(j);
@@ -88,7 +88,7 @@ public:
     std::stringstream s;
 
     size_t len = inits_.size();
-    s << "\"initialized : \" : [";
+    s << "\"initialized\" : [";
 
     for (int j = 0; j < len; j++) {
         auto i = inits_.at(j);
@@ -149,6 +149,8 @@ public:
   std::vector<df> dfs;
   std::vector<cf> cfs;
   std::vector<call_stack_entry> cse;
+  std::vector<std::string> exprs;
+  std::string error_code;
 
   void add_df(df d) {
     dfs.push_back(d);
@@ -162,57 +164,76 @@ public:
     cse.push_back(c);
   }
 
-  details() = default;
+  void add_expression(std::string e) {
+    exprs.push_back(e);
+  }
 
-  std::string to_json() const override{
+  details() = default;
+  details(std::string error_code) : error_code(error_code) {}
+
+  std::string to_json() const override {
+
     std::stringstream s;
 
     size_t len = dfs.size();
-    s << "\"details \" : [";
+    s << "\"details\" : {";
 
-    for (int j = 0; j < len; j++) {
-        auto i = dfs.at(j);
-        s << "{" << i.to_json() << "}" << (j == len - 1 ? "" : ",");
-    }
-
-    s << (len == 0 ? " " : ",");
-
+    s << dfs_to_json();
+    s << (len != 0 && cfs.size() != 0 ? "," : " ");
     len = cfs.size();
-    for (int j = 0; j < len; j++) {
-        auto i = cfs.at(j);
-        s << "{" << i.to_json() << "}" << (j == len - 1 ? "" : ",");
-    }
 
-    s << (len == 0 ? " " : ",");
-
+    s << cfs_to_json();
+    s << (len != 0 && cse.size() != 0 ? "," : " ");
     len = cse.size();
-    for (int j = 0; j < len; j++) {
-        auto i = cse.at(j);
-        s << "{" << i.to_json() << "}" << (j == len - 1 ? "" : ",");
-    }
 
-    s << "]";
+    s << (len != 0 ? cse.at(0).to_json() : "");
+
+    s << (len != 0 && exprs.size() != 0 ? "," : " ");
+
+    len = exprs.size();
+    s << (len != 0 ? "\"expr\" : " + exprs.at(0) : "");
+
+    s << "}";
 
     return s.str();
   }
+
+
+  std::string dfs_to_json() const {
+    if (dfs.size() == 0) return "";
+
+    if (error_code == "03" || error_code == "05" || error_code == "07" || error_code == "10" || error_code == "14") {
+      return dfs.at(0).to_json();
+    }
+    else {
+      std::stringstream s;
+      s << "\"dfs \" : [";
+      for (int j = 0; j < dfs.size(); j++) {
+          auto i = dfs.at(j);
+          s << "{" << i.to_json() << "}" << (j == dfs.size() - 1 ? "" : ",");
+      }
+      s << "]";
+      return s.str();
+    }
+    return "";
+  }
+
+  std::string cfs_to_json() const {
+    if (cfs.size() == 0) return "";
+
+    if (error_code == "02" || error_code == "04" || error_code == "17") {
+      return cfs.at(0).to_json();
+    }
+    else {
+      std::stringstream s;
+      s << "\"cfs \" : [";
+      for (int j = 0; j < cfs.size(); j++) {
+          auto i = cfs.at(j);
+          s << "{" << i.to_json() << "}" << (j == cfs.size() - 1 ? "" : ",");
+      }
+      s << "]";
+      return s.str();
+    }
+    return "";
+  }
 };
-
-
-// class expression : serializiable {};
-
-// class bin_expression : public expression {
-// public:
-//   std::string type;
-//   std::vector<expression&> args;
-// };
-
-// class const_expression : public expression {
-// public:
-//   std::string value;
-// };
-
-// class ref_expression : public expression {
-// public:
-//   std::string name;
-//   std::vector<expression&> indecies;
-// };
