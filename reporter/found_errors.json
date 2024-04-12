@@ -1,1 +1,35 @@
-[]
+[{"details": {"dfs": [{"declared": [],"initialized": [],"name": "d","used": []}
+,{"declared": [],"initialized": [],"name": "d","used": []}
+]}
+,"error_code": "LUNA13"}
+,{"details": {"call_stack_entry": {"file": "DeGSA/luna/source.fa","line": "5","name": "nonexist"}
+}
+,"error_code": "LUNA02"}
+,{"details": {"df": {"declared": [],"initialized": [],"name": "e","used": []}
+}
+,"error_code": "LUNA14"}
+,{"details": {"callstack": [],"cf": {"file": "","line": "9","name": "","type": ""}
+,"expression": "e"}
+,"error_code": "LUNA26"}
+,{"details": {"df": {"declared": [],"initialized": [],"name": "c","used": []}
+}
+,"error_code": "LUNA10"}
+,{"details": {"df": {"declared": [],"initialized": [],"name": "a","used": []}
+}
+,"error_code": "LUNA03"}
+,{"details": {"df": {"declared": [],"initialized": [],"name": "a","used": []}
+}
+,"error_code": "LUNA10"}
+,{"details": {"df": {"declared": [],"initialized": [],"name": "b","used": []}
+}
+,"error_code": "LUNA05"}
+,{"details": {"df": {"declared": [],"initialized": [],"name": "d","used": []}
+}
+,"error_code": "LUNA10"}
+,{"details": {"condition": "1","type": "1","where": {"file": "DeGSA/luna/source.fa","line": "11","name": "if"}
+}
+,"error_code": "LUNA23"}
+,{"details": {"condition": "0","type": "0","where": {"file": "DeGSA/luna/source.fa","line": "16","name": "if"}
+}
+,"error_code": "LUNA23"}
+]

@@ -1,0 +1,36 @@
+{
+    "version": "0.2.0",
+    "configurations": [{
+        "name": "DeGSA debugger",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceRoot}/a.out",
+        "args": [
+            "prepr.fa"
+        ],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "gdb", // requires gdb to be installed
+        "preLaunchTask": "DeGSA_compile"
+
+    },
+    {
+        "name": "ADAPT debugger",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceRoot}/adapt.out",
+        "args": [
+            "prepr.fa"
+        ],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "gdb", // requires gdb to be installed
+        "preLaunchTask": "ADAPT_compile"
+
+    }
+    ]
+}

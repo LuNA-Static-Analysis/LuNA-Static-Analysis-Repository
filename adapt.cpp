@@ -23,15 +23,13 @@ std::string line, prev_line;
 uint tokens = 0;
 ast *ast_ = new ast();
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv){
 
     bool launchASTAnalyzer = false;
     bool launchDeGSA = false;
     char* inputFileName = argv[1];
     std::string outputFileName = "output.txt";
 
-    //todo real .fa name
     std::string realLunaSource(argv[2]);
 
     for (int i = 3; i < argc; i++){
@@ -42,7 +40,7 @@ int main(int argc, char **argv)
             launchASTAnalyzer = true;
         } else if (arg == "-degsa"){
             launchDeGSA = true;
-        } else if (arg == "-o"){
+        } else if (arg == "-o"){//todo unused
             std::cout << arg << std::endl;
             if (i < argc - 1){
                 i++;
@@ -94,33 +92,41 @@ int main(int argc, char **argv)
 
     out.close();
 
-    error_reporter reporter = error_reporter();
+    if (launchASTAnalyzer){
+        error_reporter reporter = error_reporter();
 
-    std::vector<base_analyzer *> analyzers = {
-        new undeclarated_names_analyzer(ast_, yyin, &reporter),
-        new unused_names_analyzer(ast_, yyin, &reporter),
-        new shadow_import_analyzer(ast_, yyin, &reporter),
-        new existance_main_analyzer(ast_, yyin, &reporter),
-        new cf_redecl_analyzer(ast_, yyin, &reporter),
-        new undecl_func_analyzer(ast_, yyin, &reporter),
-        new df_redecl_analyzer(ast_, yyin, &reporter)
-    };
+        std::vector<base_analyzer *> analyzers = {
+            new undeclarated_names_analyzer(ast_, yyin, &reporter),
+            new unused_names_analyzer(ast_, yyin, &reporter),
+            new shadow_import_analyzer(ast_, yyin, &reporter),
+            new existance_main_analyzer(ast_, yyin, &reporter),
+            new cf_redecl_analyzer(ast_, yyin, &reporter),
+            new undecl_func_analyzer(ast_, yyin, &reporter),
+            new df_redecl_analyzer(ast_, yyin, &reporter)
+        };
 
-    for (auto a : analyzers) {
-        std::cerr << a->get_name() << std::endl;
-        a->analyze();
-        delete a;
+        for (auto a : analyzers) {
+            std::cerr << a->get_name() << std::endl;
+            a->analyze();
+            delete a;
+        }
+
+        std::ofstream o;
+        o.open("./reporter/found_errors.json");
+
+        if (o.is_open())
+        {
+            o << reporter.get_errors();
+        }
+
+        o.close();
     }
 
-    std::ofstream o;
-    o.open("./reporter/found_errors.json");
-
-    if (o.is_open())
-    {
-        o << reporter.get_errors();
+    if (launchDeGSA){
+        std::ofstream degsaOutputFile("degsa_output.txt");
+        DDG ddg(ast_, &degsaOutputFile, realLunaSource);
+        degsaOutputFile << "\nTime to build AST: " << (double)astBuildTotal / 1000000000 << " seconds" << std::endl;
     }
-
-    o.close();
 
     delete ast_;
     fclose(yyin);
