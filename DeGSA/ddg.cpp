@@ -27,6 +27,8 @@ class DDG {
         int mainLine; // line in code where main() is called
         block* mainBlock; // needed to start analysis from main
 
+        std::string fileName;
+
         std::map<std::string, block*> subNameToBlock; // map of structured CF blocks
         std::map<std::string, std::vector<param*>*> subNameToArgsVector; // map of args of subprograms; vector starts from 0
 
@@ -98,8 +100,8 @@ class DDG {
                     }
 
                 } else {
-                    errorReports.push_back("ERROR: unknown CF of name " + subDef->to_string() 
-                    + " found.\nFunction: findSubs()\n");
+                    std::cout << "INTERNAL ERROR: unknown CF of name " + subDef->to_string() 
+                    + " found.\nFunction: findSubs()" << std::endl;
                 }
                     
             }
@@ -119,14 +121,22 @@ class DDG {
                 std::vector<luna_string*> DFNames = *(blockobj->opt_dfdecls_->dfdecls_->name_seq_->names_);
                 for (luna_string* currentDFDecl: DFNames){
                     std::string dfName = *(currentDFDecl->value_);
-                    if (DFDecls.find(dfName) == DFDecls.end()){
+                    auto previousDFIterator = DFDecls.find(dfName);
+                    if (previousDFIterator == DFDecls.end()){
                         BaseDFName* newBaseDFName = new BaseDFName(dfName);
                         newBaseDFName->setVertex(currentVertex);
                         DFDecls.insert(std::make_pair(dfName, newBaseDFName));
                     } else {
-                        std::string report = "ERROR: found duplicate name in df declaration in block " + std::to_string((long long)blockobj) +
-                        ": " + dfName + "\n";
-                        this->errorReports.push_back(report);
+                        Identifier* previousDF = previousDFIterator->second;
+                        // error code: 13
+                        // df list
+                        std::vector<std::string> dfList = {};
+                        dfList.push_back(JsonReporter::createDF(previousDF->getName(), "[]", "[]", "[]"));//todo callstacks
+                        dfList.push_back(JsonReporter::createDF(dfName, "[]", "[]", "[]"));//todo callstacks
+                        //todo find all duplicate dfs
+                        this->errorReports.push_back(JsonReporter::create13(
+                            dfList
+                        ));
                     }
                 }
 
@@ -193,8 +203,16 @@ class DDG {
                     );
                     this->baseNameSet.insert(identifier);
                 } else {
-                    std::string report = "ERROR: duplicate name declared at " + currentCFName + ": " + identifierName + "\n";
-                    errorReports.push_back(report);
+                    //TODO redundant check; it already happens inside scanForDFDecls
+                    // error code: 13
+                    // df list
+                    std::vector<std::string> dfList = {};
+                    dfList.push_back(JsonReporter::createDF(identifierName, "[]", "[]", "[]"));//todo callstacks
+                    dfList.push_back(JsonReporter::createDF(identifierName, "[]", "[]", "[]"));//todo callstacks
+                    //todo find all duplicate dfs
+                    this->errorReports.push_back(JsonReporter::create13(
+                        dfList
+                    ));
                 }
             }
 
@@ -220,7 +238,12 @@ class DDG {
                      pass them to enterVF (as callArgs) */
 
                     // vector of call args of type expr
-                    std::vector<expr*> rawArguments = *(innerStatementFunctionVF->opt_exprs_->exprs_seq_->expr_);
+                    std::vector<expr*> rawArguments;
+                    if (innerStatementFunctionVF->opt_exprs_->exprs_seq_ != nullptr)
+                        rawArguments = *(innerStatementFunctionVF->opt_exprs_->exprs_seq_->expr_);
+                    else
+                        rawArguments = {};
+
 
                     // create Expression objects for call args
                     std::vector<Expression*> callArgs = {};
@@ -248,8 +271,15 @@ class DDG {
                             
                         } else {
                             std::cout << "INTERNAL ERROR: no sub with name " << nextCFName << " found" << std::endl;
-                            std::string report = "ERROR: could not find sub with a name " + nextCFName + "\n";
-                            errorReports.push_back(report);
+
+                            // error code: 02
+                            // callstack entry
+                            this->errorReports.push_back(JsonReporter::create2(
+                                fileName,
+                                innerStatement->line_,
+                                nextCFName
+                            ));
+
                             currentVertex->addInside(tempVertex);
                             continue;
                         }
@@ -399,8 +429,14 @@ class DDG {
                             } else {
                                 declaredNamesVector.push_back(nullptr);//todo beware of this when parsing
                                 std::cout << "INTERNAL ERROR: created nullptr sub/main arg name because of name duplication" << std::endl;
-                                std::string report = "ERROR: duplicate name of a sub arg at " + name + ": " + identifierDeclaredName + "; line: " + std::to_string(line) + "\n";
-                                errorReports.push_back(report);
+
+                                std::vector<std::string> dfList = {};
+                                dfList.push_back(JsonReporter::createDF(identifierDeclaredName, "[]", "[]", "[]"));//todo callstacks
+                                dfList.push_back(JsonReporter::createDF(identifierDeclaredName, "[]", "[]", "[]"));//todo callstacks
+                                this->errorReports.push_back(JsonReporter::create13(
+                                    dfList
+                                ));
+
                             }
                         }
 
@@ -423,7 +459,15 @@ class DDG {
                     // check for duplicate name
                     std::string forIteratorString = innerStatementForVF->name_->to_string();
                     if (declaredOutsideIdsMap.find(forIteratorString) != declaredOutsideIdsMap.end()){
-                        errorReports.push_back("ERROR: duplicate name of a \"for\" iterator\n");
+
+                        std::vector<std::string> dfList = {};
+                        dfList.push_back(JsonReporter::createDF(forIteratorString, "[]", "[]", "[]"));//todo callstacks
+                        dfList.push_back(JsonReporter::createDF(forIteratorString, "[]", "[]", "[]"));//todo callstacks
+                        //todo find all duplicate dfs
+                        this->errorReports.push_back(JsonReporter::create13(
+                            dfList
+                        ));
+
                         std::cout << "INTERNAL ERROR: aborted creating for vertex" << std::endl;
                         return nullptr;//todo pretty hefty exception here
                     }
@@ -458,7 +502,15 @@ class DDG {
                     // check for duplicate name
                     std::string whileIteratorString = innerStatementWhileVF->left_->to_string();
                     if (declaredOutsideIdsMap.find(whileIteratorString) != declaredOutsideIdsMap.end()){
-                        errorReports.push_back("ERROR: duplicate name of a \"while\" iterator\n");
+
+                        std::vector<std::string> dfList = {};
+                        dfList.push_back(JsonReporter::createDF(whileIteratorString, "[]", "[]", "[]"));//todo callstacks
+                        dfList.push_back(JsonReporter::createDF(whileIteratorString, "[]", "[]", "[]"));//todo callstacks
+                        //todo find all duplicate dfs
+                        this->errorReports.push_back(JsonReporter::create13(
+                            dfList
+                        ));
+
                         std::cout << "INTERNAL ERROR: aborted creating while vertex" << std::endl;
                         return nullptr;//todo pretty hefty exception here
                     }
@@ -472,7 +524,16 @@ class DDG {
                         ((whileOutName->getType() != indexedDFNameType) && (whileOutName->getType() != subArgNameType))){
 
                         std::cout << "INTERNAL ERROR: unsuitable expression at while out name leads to nullpointer" << std::endl;
-                        errorReports.push_back("ERROR: trying to use non-suitable expression as \"while\" out name\n");
+
+                        this->errorReports.push_back(JsonReporter::create26(
+                            whileOutNameExpr->getExpr()->to_string(),
+                            "while",
+                            "struct",
+                            fileName,
+                            line,
+                            "[]"//todo callstack
+                        ));
+
                         whileOutName = nullptr;
 
                     }
@@ -533,7 +594,13 @@ class DDG {
                         // check for duplicate name
                         std::string letString = *(assignment->name_->get_value());
                         if (declaredOutsideIdsMap.find(letString) != declaredOutsideIdsMap.end()){
-                            errorReports.push_back("ERROR: duplicate name of a \"let\" identifier\n");
+
+                            std::vector<std::string> dfList = {};
+                            dfList.push_back(JsonReporter::createDF(letString, "[]", "[]", "[]"));//todo callstacks
+                            dfList.push_back(JsonReporter::createDF(letString, "[]", "[]", "[]"));//todo callstacks
+                            //todo find all duplicate dfs
+                            this->errorReports.push_back(JsonReporter::create13(dfList));
+
                             std::cout << "INTERNAL ERROR: aborted creating let vertex" << std::endl;
                             return nullptr;//todo pretty hefty exception here
                         }
@@ -611,12 +678,21 @@ class DDG {
                     // multiple initialization of a DF
                     if (size == 0){ // simple DFs
                         if (defs.size() > 1){
-                            std::string report = "ERROR: multiple initialization of a DF " + bn->getName() + " in lines:\n";
+                            /*std::string report = "ERROR: multiple initialization of a DF " + bn->getName() + " in lines:\n";
                             for (auto def: defs){
                                 report += (std::to_string(def->getLine()) + " ");
                             }
                             report += "\n";
-                            errorReports.push_back(report);
+                            errorReports.push_back(report);*/
+                            // error code: 03
+                            // details: df
+                            //todo callstacks
+                            this->errorReports.push_back(JsonReporter::create3(
+                                bn->getName(),
+                                "[]",
+                                "[]",
+                                "[]"
+                            ));
                         }
                     } else { // indexed DFs
                         //TODO add warnings?
@@ -625,26 +701,51 @@ class DDG {
 
                     // unused DF 1
                     if (uses.size() == 0){
-                        std::string report = "ERROR: unused DF " + bn->getName() + " with " + std::to_string(size) + " indices\n";
-                        errorReports.push_back(report);
+                        /*std::string report = "ERROR: unused DF " + bn->getName() + " with " + std::to_string(size) + " indices\n";
+                        errorReports.push_back(report);*/
+                        // error code: 10
+                        // details: df
+                        //todo callstacks
+                        this->errorReports.push_back(JsonReporter::create10(
+                            bn->getName(),
+                            "[]",
+                            "[]",
+                            "[]"
+                        ));
                     } else {
                         // using uninitialized DFs
                         if (defs.size() == 0){
-                            std::string report = "ERROR: using uninitialized DF " + bn->getName() + " with " + std::to_string(size) +
+                            /*std::string report = "ERROR: using uninitialized DF " + bn->getName() + " with " + std::to_string(size) +
                             " indices at lines:\n";
                             for (auto use: uses){
                                 report += (std::to_string(use->getLine()) + " ");
                             }
                             report += "\n";
-                            errorReports.push_back(report);
+                            errorReports.push_back(report);*/
+                            // error code: 05
+                            // details: df
+                            //todo callstacks
+                            this->errorReports.push_back(JsonReporter::create5(
+                                bn->getName(),
+                                "[]",
+                                "[]",
+                                "[]"
+                            ));
                         }
                     }
 
                 }
                 // unused DF 2
                 if (bnMap.size() == 0){
-                    std::string report = "ERROR: unused base name DF " + bn->getName() + "\n";
-                    errorReports.push_back(report);
+                    // error code: 10
+                    // details: df
+                    //todo callstacks
+                    this->errorReports.push_back(JsonReporter::create10(
+                        bn->getName(),
+                        "[]",
+                        "[]",
+                        "[]"
+                    ));
                 }
             }
 
@@ -660,24 +761,42 @@ class DDG {
                     if (conditionConstant.getType() != noneNode){
                         switch(conditionConstant.getType()){
                             case realNode:
-                                if (std::stod(conditionConstant.getConstant()) == 0)
-                                    errorReports.push_back(
-                                        "WARNING: always false condition in \"if\" at line " + std::to_string(ifVertex->getLine()) + "\n"
-                                    );
-                                else
-                                    errorReports.push_back(
-                                        "WARNING: always true condition in \"if\" at line " + std::to_string(ifVertex->getLine()) + "\n"
-                                    );
+                                if (std::stod(conditionConstant.getConstant()) == 0){
+                                    this->errorReports.push_back(JsonReporter::create23(
+                                        false,
+                                        ifVertex->getConditionExpr()->getExpr()->to_string(),
+                                        fileName,
+                                        ifVertex->getLine(),
+                                        "if"
+                                    ));
+                                } else {
+                                    this->errorReports.push_back(JsonReporter::create23(
+                                        true,
+                                        ifVertex->getConditionExpr()->getExpr()->to_string(),
+                                        fileName,
+                                        ifVertex->getLine(),
+                                        "if"
+                                    ));
+                                }
                                 continue;
                             case intNode:
-                                if (std::stoi(conditionConstant.getConstant()) == 0)
-                                    errorReports.push_back(
-                                        "WARNING: always false condition in \"if\" at line " + std::to_string(ifVertex->getLine()) + "\n"
-                                    );
-                                else
-                                    errorReports.push_back(
-                                        "WARNING: always true condition in \"if\" at line " + std::to_string(ifVertex->getLine()) + "\n"
-                                    );
+                                if (std::stoi(conditionConstant.getConstant()) == 0) {
+                                    this->errorReports.push_back(JsonReporter::create23(
+                                        false,
+                                        ifVertex->getConditionExpr()->getExpr()->to_string(),
+                                        fileName,
+                                        ifVertex->getLine(),
+                                        "if"
+                                    ));
+                                } else {
+                                    this->errorReports.push_back(JsonReporter::create23(
+                                        true,
+                                        ifVertex->getConditionExpr()->getExpr()->to_string(),
+                                        fileName,
+                                        ifVertex->getLine(),
+                                        "if"
+                                    ));
+                                }
                                 continue;
                             default:
                                 std::cout << "INTERNAL ERROR: checkConstantConditions reached default at if" << std::endl;
@@ -691,24 +810,42 @@ class DDG {
                     if (conditionConstant.getType() != noneNode){
                         switch(conditionConstant.getType()){
                             case realNode:
-                                if (std::stod(conditionConstant.getConstant()) == 0)
-                                    errorReports.push_back(
-                                        "WARNING: always false condition in \"while\" at line " + std::to_string(whileVertex->getLine()) + "\n"
-                                    );
-                                else
-                                    errorReports.push_back(
-                                        "WARNING: always true condition in \"while\" at line " + std::to_string(whileVertex->getLine()) + "\n"
-                                    );
+                                if (std::stod(conditionConstant.getConstant()) == 0) {
+                                    this->errorReports.push_back(JsonReporter::create23(
+                                        false,
+                                        whileVertex->getConditionExpr()->getExpr()->to_string(),
+                                        fileName,
+                                        whileVertex->getLine(),
+                                        "while"
+                                    ));
+                                } else {
+                                    this->errorReports.push_back(JsonReporter::create23(
+                                        true,
+                                        whileVertex->getConditionExpr()->getExpr()->to_string(),
+                                        fileName,
+                                        whileVertex->getLine(),
+                                        "while"
+                                    ));
+                                }
                                 continue;
                             case intNode:
-                                if (std::stoi(conditionConstant.getConstant()) == 0)
-                                    errorReports.push_back(
-                                        "WARNING: always false condition in \"while\" at line " + std::to_string(whileVertex->getLine()) + "\n"
-                                    );
-                                else
-                                    errorReports.push_back(
-                                        "WARNING: always true condition in \"while\" at line " + std::to_string(whileVertex->getLine()) + "\n"
-                                    );
+                                if (std::stoi(conditionConstant.getConstant()) == 0) {
+                                    this->errorReports.push_back(JsonReporter::create23(
+                                        false,
+                                        whileVertex->getConditionExpr()->getExpr()->to_string(),
+                                        fileName,
+                                        whileVertex->getLine(),
+                                        "while"
+                                    ));
+                                } else {
+                                    this->errorReports.push_back(JsonReporter::create23(
+                                        true,
+                                        whileVertex->getConditionExpr()->getExpr()->to_string(),
+                                        fileName,
+                                        whileVertex->getLine(),
+                                        "while"
+                                    ));
+                                }
                                 continue;
                             default:
                                 std::cout << "INTERNAL ERROR: checkConstantConditions reached default at while" << std::endl;
@@ -734,9 +871,11 @@ class DDG {
 
         }
 
-        DDG(ast* astObjectIn, std::ostream* outputTarget){
+        DDG(ast* astObjectIn, std::ostream* outputTarget, std::string fileName){
 
             auto graphBuildStart = std::chrono::steady_clock::now();
+
+            this->fileName = fileName;
             
             this->vertexCount = 0;
             this->imports = {};
@@ -849,6 +988,36 @@ class DDG {
             map.insert(std::make_pair("key", "value"));
             map.insert(std::make_pair("key1", "value1"));
             std::cout << jsonReporter->createJson(map) << std::endl;*/
+
+            std::string jsonOutputPath = "reporter/found_errors.json";
+
+            std::ifstream inFile(jsonOutputPath);
+            
+            if (inFile.good()){ // file already exists
+
+                std::ifstream t(jsonOutputPath);
+                std::string existingReports(
+                    (std::istreambuf_iterator<char>(t)),
+                    std::istreambuf_iterator<char>()
+                );
+
+                std::ofstream outFile(jsonOutputPath);
+                std::string newReports = JsonReporter::createArray(errorReports);
+                if (existingReports.size() < 10){ // no objects present; todo change this
+                    outFile << newReports;
+                } else {
+                    existingReports.pop_back();
+                    newReports[0] = ',';
+                    outFile << existingReports << newReports;
+                }
+                outFile.close();
+                
+            } else { // file does not exist
+                inFile.close();
+                std::ofstream outFile(jsonOutputPath);
+                outFile << JsonReporter::createArray(errorReports);
+                outFile.close();
+            }
 
         }
 

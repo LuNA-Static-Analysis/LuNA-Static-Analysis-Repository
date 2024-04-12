@@ -1,4 +1,5 @@
 #include "expr.hpp"
+#include "json_reporter.cpp"
 
 ExpressionType Expression::getType(){
     return this->type;
@@ -168,8 +169,12 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
                         break;
                 }
             } else {
-                std::string report = "ERROR: no name \"" + simpleDFName + "\" found!" + "\n";
-                errorReports->push_back(report);
+                errorReports->push_back(JsonReporter::create14(
+                    simpleDFName,
+                    "[]",
+                    "[]",
+                    "[]"
+                ));//todo callstacks
             }
 
             return;
@@ -390,46 +395,29 @@ std::vector<std::string> Expression::markAsDef(Vertex* currentVertex, int size){
     std::vector<std::string> reports = {};
     std::cout << "Expression " << this->getExpr()->to_string() << " is being marked as defined" << std::endl;
     switch(type){
-
         case addNode:
-            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark binary (+) operation\n");
-            return reports;
         case subtractNode:
-            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark binary (-) operation\n");
-            return reports;
         case multiplyNode:
-            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark binary (*) operation\n");
-            return reports;
         case divideNode:
-            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark binary (/) operation\n");
-            return reports;
         case modulusNode:
-            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark binary (%) operation\n");
-            return reports;
         case greaterNode:
-            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark binary (>) operation\n");
-            return reports;
         case greaterOrEqualNode:
-            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark binary (>=) operation\n");
-            return reports;
         case lesserNode:
-            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark binary (<) operation\n");
-            return reports;
         case lesserOrEqualNode:
-            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark binary (<=) operation\n");
-            return reports;
         case equalNode:
-            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark binary (==) operation\n");
-            return reports;
         case nonEqualNode:
-            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark binary (!=) operation\n");
-            return reports;
         case andNode:
-            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark binary (&&) operation\n");
+        case orNode:{
+            reports.push_back(JsonReporter::create26(//todo
+                this->getExpr()->to_string(),
+                "",
+                "",
+                "",
+                currentVertex->getLine(),
+                "[]"
+            ));
             return reports;
-        case orNode:
-            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark binary (||) operation\n");
-            return reports;
+        }
         
         case identifierNode:
 
@@ -451,13 +439,29 @@ std::vector<std::string> Expression::markAsDef(Vertex* currentVertex, int size){
                     indexedDFName->markAsDef(currentVertex, size);
                     return reports;
                 }
-                case forIteratorNameType: //error
-                    reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark \"for\" iterator\n");
+                case forIteratorNameType: {//error
+                    reports.push_back(JsonReporter::create26(//todo
+                        this->getExpr()->to_string(),
+                        "",
+                        "",
+                        "",
+                        currentVertex->getLine(),
+                        "[]"
+                    ));
                     return reports;
+                }
                 
-                case whileIteratorNameType: //error
-                    reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark \"while\" iterator\n");
+                case whileIteratorNameType:{ //error
+                    reports.push_back(JsonReporter::create26(//todo
+                        this->getExpr()->to_string(),
+                        "",
+                        "",
+                        "",
+                        currentVertex->getLine(),
+                        "[]"
+                    ));
                     return reports;
+                }
                 
                 case valueNameType://todo
                     return reports;
@@ -467,9 +471,17 @@ std::vector<std::string> Expression::markAsDef(Vertex* currentVertex, int size){
                     for (auto r: letName->getReference()->markAsDef(currentVertex, size)) reports.push_back(r);
                     return reports;
                 }
-                case mainArgNameType:
-                    reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark main() argument\n");
+                case mainArgNameType: {
+                    reports.push_back(JsonReporter::create26(//todo
+                        this->getExpr()->to_string(),
+                        "",
+                        "",
+                        "",
+                        currentVertex->getLine(),
+                        "[]"
+                    ));
                     return reports;
+                }
                 
                 default:
                     std::cout << "INTERNAL ERROR (WARNING): Expression.markAsDef() ended by default at identifier node" << std::endl;
@@ -478,27 +490,19 @@ std::vector<std::string> Expression::markAsDef(Vertex* currentVertex, int size){
             }
         
         case stringNode:
-            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark LuNA string constant\n");
-            return reports;
-        
         case intNode:
-            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark LuNA int constant\n");
-            return reports;
-        
         case realNode:
-            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark LuNA real constant\n");
-            return reports;
-        
         case intCastNode:
-            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark LuNA int cast\n");
-            return reports;
-        
         case realCastNode:
-            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark LuNA real cast\n");
-            return reports;
-
         case stringCastNode:
-            reports.push_back("ERROR: initializing unsuitable expression -- Expression.markAsDef used to mark LuNA string cast\n");
+            reports.push_back(JsonReporter::create26(//todo
+                this->getExpr()->to_string(),
+                "",
+                "",
+                "",
+                currentVertex->getLine(),
+                "[]"
+            ));
             return reports;
 
         // only noneNode must be left

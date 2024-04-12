@@ -1,6 +1,6 @@
 {
     "01": "(error code: LUNA01) Import call arguments of function $cf_name in LuNA does not match arguments in C++.\n- Called at:\n$callstack_entry- Function information:\n$cf",
-    "02": "(error code: LUNA02) No function with name $cf_name exists.\n- Called at:\n$callstack_entry- Function information:\n$cf",
+    "02": "(error code: LUNA02) No function with name $cf_name exists.\n- Called at:\n$callstack_entry",
     "03": "(error code: LUNA03) Multiple initializing of a DF $df_name.\n- DF information:\nDeclaration callstacks:\n$decl_callstacks\nInitialization callstacks:\n$defs_callstacks\nUse callstacks:\n$uses_callstacks",
     "04": "(error code: LUNA04) Call arguments do not match declared arguments.\n- Called at:\n$callstack_entry- Function information:\n$cf",
     "05": "(error code: LUNA05) Attempt to use uninitialized DF $df_name.\n- DF information:\nDeclaration callstacks:\n$decl_callstacks\nUse callstacks:\n$uses_callstacks",
