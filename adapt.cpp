@@ -20,7 +20,6 @@ extern int yyparse();
 extern FILE *yyin;
 int line_num = 1;
 std::string line, prev_line;
-extern error_reporter reporter;
 uint tokens = 0;
 ast *ast_ = new ast();
 
@@ -30,9 +29,12 @@ int main(int argc, char **argv)
     bool launchASTAnalyzer = false;
     bool launchDeGSA = false;
     char* inputFileName = argv[1];
-    std::string outputFileName = "degsa_output.txt";
+    std::string outputFileName = "output.txt";
 
-    for (int i = 2; i < argc; i++){
+    //todo real .fa name
+    std::string realLunaSource(argv[2]);
+
+    for (int i = 3; i < argc; i++){
 
         std::string arg(argv[i]);
 
@@ -92,6 +94,8 @@ int main(int argc, char **argv)
 
     out.close();
 
+    error_reporter reporter = error_reporter();
+
     std::vector<base_analyzer *> analyzers = {
         new undeclarated_names_analyzer(ast_, yyin, &reporter),
         new unused_names_analyzer(ast_, yyin, &reporter),
@@ -102,116 +106,22 @@ int main(int argc, char **argv)
         new df_redecl_analyzer(ast_, yyin, &reporter)
     };
 
-    std::binary_semaphore sem0{0};
-    std::binary_semaphore sem1{0};
-    std::binary_semaphore sem2{0};
-    std::binary_semaphore sem3{0};
-    std::binary_semaphore sem4{0};
-    std::binary_semaphore sem5{0};
-    std::binary_semaphore sem6{0};
-    std::binary_semaphore sem7{0};
-    { // не удалять
-        size_t n = 4;
-
-        ThreadPool thread_pool{n};
-
-        if (launchASTAnalyzer){
-
-            thread_pool.add_task(
-                [&analyzers, &sem0]()
-                {
-                    analyzers[0]->analyze();
-                    delete analyzers[0];
-
-                    sem0.release();
-                }
-            );
-
-            thread_pool.add_task(
-                [&analyzers, &sem1]()
-                {
-                    analyzers[1]->analyze();
-                    delete analyzers[1];
-
-                    sem1.release();
-                }
-            );
-
-            thread_pool.add_task(
-                [&analyzers, &sem2]()
-                {
-                    analyzers[2]->analyze();
-                    delete analyzers[2];
-
-                    sem2.release();
-                }
-            );
-
-            thread_pool.add_task(
-                [&analyzers, &sem3]()
-                {
-                    analyzers[3]->analyze();
-                    delete analyzers[3];
-
-                    sem3.release();
-                }
-            );
-
-            thread_pool.add_task(
-                [&analyzers, &sem4]()
-                {
-                    analyzers[4]->analyze();
-                    delete analyzers[4];
-
-                    sem4.release();
-                }
-            );
-
-            thread_pool.add_task(
-                [&analyzers, &sem5]()
-                {
-                    analyzers[5]->analyze();
-                    delete analyzers[5];
-
-                    sem5.release();
-                }
-            );
-
-            thread_pool.add_task(
-                [&analyzers, &sem6]()
-                {
-                    analyzers[6]->analyze();
-                    delete analyzers[6];
-
-                    sem6.release();
-                }
-            );
-        }
-
-        if (launchDeGSA)
-            thread_pool.add_task(
-                [&sem7, &outputFile, &astBuildTotal]()
-                {
-                    DDG ddg(ast_, &outputFile);
-                    outputFile << "\nTime to build AST: " << (double)astBuildTotal / 1000000000 << " seconds" << std::endl;
-                    sem7.release();
-                }
-            );
+    for (auto a : analyzers) {
+        std::cerr << a->get_name() << std::endl;
+        a->analyze();
+        delete a;
     }
 
-    if (launchASTAnalyzer){
-        sem0.acquire();
-        sem1.acquire();
-        sem2.acquire();
-        sem3.acquire();
-        sem4.acquire();
-        sem5.acquire();
-        sem6.acquire();
-    }
-    if (launchDeGSA)
-        sem7.acquire();
+    std::ofstream o;
+    o.open("./reporter/found_errors.json");
 
-    std::cerr << reporter.get_errors();
+    if (o.is_open())
+    {
+        o << reporter.get_errors();
+    }
+
+    o.close();
+
     delete ast_;
     fclose(yyin);
 

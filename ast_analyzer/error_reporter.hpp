@@ -61,7 +61,7 @@ public:
     std::string get_errors() {
         std::stringstream ss;
 
-        ss << "{ \"error_list\": [";
+        ss << "[";
 
         size_t len = errors_msg.size();
 
@@ -70,7 +70,7 @@ public:
             ss << i << (j == len - 1 ? "" : ",");
         }
 
-        ss << "]}";
+        ss << "]";
 
         return ss.str();
     }

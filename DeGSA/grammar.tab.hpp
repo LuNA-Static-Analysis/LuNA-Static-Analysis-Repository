@@ -136,7 +136,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 34 "../parser/grammar.ypp"
+#line 31 "../parser/grammar.ypp"
 
     program *program_;
     sub_def *sub_def_;
