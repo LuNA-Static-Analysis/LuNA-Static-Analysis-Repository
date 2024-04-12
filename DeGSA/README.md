@@ -1,3 +1,5 @@
+Proper ADAPT launch sequence is described in directory up one level. This README is about DeGSA specifically. It can be launched separately using launch.sh script.
+
 In order for DeGSA to work, PATH envvar should have a path to:
 
 1. python3
@@ -22,7 +24,7 @@ Project structure:
 
 Other files:
 - output.txt: resulting information about vertices of a graph, declared identifiers, found errors and working time
-- temporary leftover files from launches of an analyzer (such as grammar.tab.hpp, which is required for Intellisense to work properly)
+- temporary leftover files from launches of an analyzer (such as grammar.tab.hpp, which is required for IntelliSense to work properly)
 
 External dependencies:
 - parser folder: used for parsing source LuNA code and create an AST out of it for using it in creation of a graph

@@ -22,16 +22,34 @@ def get_cf(cf): # argument is a map
         name = cf["name"], type = cf["type"], file = cf["file"], line = cf["line"]
     ) + "\n"
 
-json_file = open("found_errors.json", "r") # open the file with reports
-json_map = json.load(json_file) # load the file to local structure (map)
+def get_all_cfs(cfs): # argument is an array of maps
+    result = ""
+    for cf in cfs:
+        result += get_cf(cf)
+    return result
+
+def get_df(df): # arguments is a map
+    return "Name: {name}\nDeclaration callstacks:\n{decl}\nInitialization callstacks:\n{defs}\nUse callstacks:\n{uses}".format(
+        name = df["name"], decl = get_all_callstacks(df["declared"]), defs = get_all_callstacks(df["initialized"]), uses = get_all_callstacks(df["used"])
+    ) + "\n"
+
+def get_all_dfs(dfs): # argument is an array of maps
+    result = ""
+    for df in dfs:
+        result += get_df(df)
+    return result
 
 templates_file = open("report_templates.json", "r") # open the file with templates that must be filled with details
 templates_map = json.load(templates_file)
 
 output_file = open("adapt_output.txt", "w")
 
-error_list = json_map["error_list"] # this should be a list
-output_file.write("Found {error_count} errors:\n\n".format(error_count = len(error_list)))
+json_file = open("found_errors.json", "r") # open the file with reports
+error_list = json.load(json_file) # load the file to local structure (map); this must be an array
+if (len(error_list) != 0):
+    output_file.write("Found {error_count} errors:\n\n".format(error_count = len(error_list)))
+else:
+    output_file.write("No errors found.\n")
 
 error_number = 0
 for error_report in error_list:
@@ -39,9 +57,11 @@ for error_report in error_list:
     output_file.write("Error #" + str(error_number) + ":\n")
     error_code = error_report["error_code"][4:6] # getting an error number
     match int(error_code): # react according to what error it is exactly
-        case 1: #todo
-            output_file.write((templates_map[error_code] + "\n\n\n")
-                              
+        case 1:
+            output_file.write((templates_map[error_code] + "\n\n")
+                .replace("$cf_name", error_report["details"]["cf"]["name"])
+                .replace("$callstack_entry", get_cf(error_report["details"]["cf"]))
+                .replace("$cf", get_cf(error_report["details"]["cf"]))
             )
         case 2:
             output_file.write((templates_map[error_code] + "\n\n")
@@ -67,9 +87,11 @@ for error_report in error_list:
                 .replace("$uses_callstacks", get_all_callstacks(error_report["details"]["df"]["used"]))
                 .replace("$decl_callstacks", get_all_callstacks(error_report["details"]["df"]["declared"]))
             )
-        case 6: #todo
-            output_file.write((templates_map[error_code] + "\n\n\n")
-
+        case 6:
+            output_file.write((templates_map[error_code] + "\n\n")
+                .replace("$cf_name", error_report["details"]["cf"]["name"])
+                .replace("$callstack_entry", get_cf(error_report["details"]["cf"]))
+                .replace("$cf", get_cf(error_report["details"]["cf"]))
             )
         case 7:
             output_file.write((templates_map[error_code] + "\n\n")
@@ -90,12 +112,14 @@ for error_report in error_list:
             )
         case 11:
             output_file.write((templates_map[error_code] + "\n\n")
-                .replace("$cf", get_cf(error_report["details"]["cf"]))
+                .replace("$cfs", get_all_cfs(error_report["details"]["cfs"]))
             )
         case 12:
             output_file.write((templates_map[error_code] + "\n\n\n"))
-        case 13:#todo create new template + get dfs function
-            output_file.write((templates_map[error_code] + "\n\n\n"))
+        case 13:
+            output_file.write((templates_map[error_code] + "\n")
+                .replace("$dfs", get_all_dfs(error_report["details"]["dfs"]))
+            )
         case 14:
             output_file.write((templates_map[error_code] + "\n\n")
                 .replace("$df_name", error_report["details"]["df"]["name"])
@@ -106,10 +130,10 @@ for error_report in error_list:
             output_file.write((templates_map[error_code] + "\n\n\n")
 
             )
-        case 16: #todo perhaps change json format
+        case 16:
             output_file.write((templates_map[error_code] + "\n\n")
-                .replace("$cf_name", error_report["details"]["cf"]["name"])
-                .replace("$cf", get_cf(error_report["details"]["cf"]))
+                .replace("$cf_name", error_report["details"]["cfs"][0]["name"])
+                .replace("$cfs", get_all_cfs(error_report["details"]["cfs"]))
             )
         case 17:
             output_file.write((templates_map[error_code] + "\n\n")
@@ -125,21 +149,28 @@ for error_report in error_list:
             pass
         case 22: #todo
             pass
-        case 23: #todo add expression string to json?
+        case 23:
             output_file.write((templates_map[error_code] + "\n\n")
                 .replace("$bool", str(error_report["details"]["type"]))
+                .replace("$expr", str(error_report["details"]["condition"]))
                 .replace("$callstack_entry", get_callstack_entry(error_report["details"]["where"]))
             )
-        case 24: #todo
-            output_file.write((templates_map[error_code] + "\n\n\n")
-
-            )
-        case 25: #todo add expression string to json? what is arg_index?
-            output_file.write((templates_map[error_code] + "\n\n\n")
-
-            )
-        case 26: #todo add expression string to json?
+        case 24:
             output_file.write((templates_map[error_code] + "\n\n")
+                .replace("$bool", str(error_report["details"]["type"]))
+                .replace("$expr", str(error_report["details"]["condition"]))
+                .replace("$callstack_entry", get_callstack_entry(error_report["details"]["where"]))
+            )
+        case 25:
+            output_file.write((templates_map[error_code] + "\n\n")
+                .replace("$index", str(error_report["details"]["arg_index"]))
+                .replace("$expr", str(error_report["details"]["bad_expr"]))
+                .replace("$callstack_entry", get_callstack_entry(error_report["details"]["where"]))
+            )
+        case 26:
+            output_file.write((templates_map[error_code] + "\n\n")
+                .replace("$expr", str(error_report["details"]["expression"]))
+                .replace("$cf", get_cf(error_report["details"]["cf"]))
                 .replace("$callstack", get_callstack(error_report["details"]["callstack"]))
             )
         case 27: #todo
@@ -178,9 +209,10 @@ for error_report in error_list:
             output_file.write((templates_map[error_code] + "\n\n\n")
 
             )
-        case 36: #todo
-            output_file.write((templates_map[error_code] + "\n\n\n")
-
+        case 36:
+            output_file.write((templates_map[error_code] + "\n\n")
+                .replace("$expr", str(error_report["details"]["expression"]))
+                .replace("$callstack", get_callstack(error_report["details"]["callstack"]))
             )
         case 37: #todo
             output_file.write((templates_map[error_code] + "\n\n\n")
