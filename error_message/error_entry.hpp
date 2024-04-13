@@ -28,7 +28,7 @@ public:
   }
 };
 
-class init : public serializiable{
+class init : public serializiable {
 public:
   std::vector<int> lines;
 
@@ -49,7 +49,7 @@ public:
   }
 };
 
-class declared : public serializiable{
+class declared : public serializiable {
 public:
   std::vector<call_stack_entry> decls_;
 
@@ -80,19 +80,37 @@ public:
   }
 };
 
-class initialized : public serializiable{
+class call_stack : public serializiable {
 public:
-  std::vector<init> inits_;
+  std::vector<call_stack_entry> call_stack_entries_;
 
   std::string to_json() const override{
     std::stringstream s;
 
-    size_t len = inits_.size();
+    size_t len = call_stack_entries_.size();
+
+    for (int j = 0; j < len; j++) {
+        auto i = call_stack_entries_.at(j);
+        s << "{" << i.to_json() << "}" << (j == len - 1 ? "" : ",");
+    }
+
+    return s.str();
+  }
+};
+
+class initialized : public serializiable{
+public:
+  std::vector<call_stack> call_stacks_;
+
+  std::string to_json() const override{
+    std::stringstream s;
+
+    size_t len = call_stacks_.size();
     s << "\"initialized\" : [";
 
     for (int j = 0; j < len; j++) {
-        auto i = inits_.at(j);
-        s << "{" << i.to_json() << "}" << (j == len - 1 ? "" : ",");
+        auto i = call_stacks_.at(j);
+        s << "[" << i.to_json() << "]" << (j == len - 1 ? "" : ",");
     }
 
     s << "]";
@@ -101,20 +119,43 @@ public:
   }
 };
 
-class df : public serializiable{
+class used : public serializiable{
+public:
+  std::vector<call_stack> inits_;
+
+  std::string to_json() const override{
+    std::stringstream s;
+
+    size_t len = inits_.size();
+    s << "\"used\" : [";
+
+    for (int j = 0; j < len; j++) {
+        auto i = inits_.at(j);
+        s << "[" << i.to_json() << "]" << (j == len - 1 ? "" : ",");
+    }
+
+    s << "]";
+
+    return s.str();
+  }
+};
+
+class df : public serializiable {
 public:
   std::string name_;
   declared declared_;
   initialized initialized_;
+  used used_;
 
-  df(std::string name, declared d, initialized i) : name_(name), declared_(d), initialized_(i) {}
+  df(std::string name, declared d, initialized i, used u) : name_(name), declared_(d), initialized_(i), used_(u) {}
 
   std::string to_json() const override{
     std::stringstream s;
 
     s << "\"df\" : {"<< "\"name\" : " << "\"" << name_ << "\"" << ","
     << declared_.to_json() << ","
-    << initialized_.to_json()
+    << initialized_.to_json() << ","
+    << used_.to_json()
     << "}";
 
     return s.str();
@@ -197,7 +238,6 @@ public:
 
     return s.str();
   }
-
 
   std::string dfs_to_json() const {
     if (dfs.size() == 0) return "";
