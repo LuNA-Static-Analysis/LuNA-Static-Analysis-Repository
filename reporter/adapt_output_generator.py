@@ -65,9 +65,8 @@ for error_report in error_list:
             )
         case 2:
             output_file.write((templates_map[error_code] + "\n\n")
-                .replace("$cf_name", error_report["details"]["cf"]["name"])
-                .replace("$callstack_entry", get_cf(error_report["details"]["cf"]))
-                .replace("$cf", get_cf(error_report["details"]["cf"]))
+                .replace("$cf_name", error_report["details"]["call_stack_entry"]["name"])
+                .replace("$callstack_entry", get_callstack_entry(error_report["details"]["call_stack_entry"]))
             )
         case 3:
             output_file.write((templates_map[error_code] + "\n\n")

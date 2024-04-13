@@ -41,7 +41,9 @@ int main(int argc, char** argv) {
     auto astBuildTotal = std::chrono::duration_cast<ns>(astBuildEnd - astBuildStart).count();
 
     // &std::cout for console output
-    DDG ddg(ast_, &outputFile);
+    //todo
+    std::string fileName = "kekw";
+    DDG ddg(ast_, &outputFile, fileName);
     outputFile << "\nTime to build AST: " << (double)astBuildTotal / 1000000000 << " seconds" << std::endl;
 
     delete ast_;
