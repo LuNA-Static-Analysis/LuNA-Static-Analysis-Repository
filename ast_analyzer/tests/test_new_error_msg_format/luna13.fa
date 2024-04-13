@@ -1,0 +1,6 @@
+import init(name) as init;
+
+sub main(int x) {
+  df x;
+  init(x);
+}

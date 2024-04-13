@@ -133,7 +133,7 @@ public:
                         if (!is_define_in_scope(var, scope)) {
                             details detail = details("14");
                             declared declared_ = declared(call_stack_entry(get_file(), var->line_, current_cf));
-                            detail.add_df(df(var->to_string(), declared_, initialized()));
+                            detail.add_df(df(var->to_string(), declared_, initialized(), used()));
                             reporter_->report_json(detail);
                         }
                     }
@@ -158,7 +158,7 @@ public:
                     if (!is_define_in_scope(i, scope)) {
                         details detail = details("14");
                         declared declared_ = declared(call_stack_entry(get_file(), i->line_, current_cf));
-                        detail.add_df(df(i->to_string(), declared_, initialized()));
+                        detail.add_df(df(i->to_string(), declared_, initialized(), used()));
                         reporter_->report_json(detail);
                     }
                 }
@@ -186,7 +186,7 @@ public:
                     if (!is_define_in_scope(i, scope)) {
                         details detail = details("14");
                         declared declared_ = declared(call_stack_entry(get_file(), i->line_, current_cf));
-                        detail.add_df(df(i->to_string(), declared_, initialized()));
+                        detail.add_df(df(i->to_string(), declared_, initialized(), used()));
                         reporter_->report_json(detail);
                     }
                 }
@@ -212,7 +212,7 @@ public:
                     if (!is_define_in_scope(i, scope)) {
                         details detail = details("14");
                         declared declared_ = declared(call_stack_entry(get_file(), i->line_, current_cf));
-                        detail.add_df(df(i->to_string(), declared_, initialized()));
+                        detail.add_df(df(i->to_string(), declared_, initialized(), used()));
                         reporter_->report_json(detail);
                     }
                 }

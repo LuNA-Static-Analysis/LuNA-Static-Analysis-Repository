@@ -1,0 +1,6 @@
+import init() as init;
+
+sub main() {
+  df x;
+  init();
+}
