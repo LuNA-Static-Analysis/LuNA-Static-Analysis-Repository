@@ -1,0 +1,5 @@
+import init(name) as init;
+
+sub main() {
+  init(1);
+}

@@ -9,5 +9,5 @@ bison:./parser/grammar.ypp
 analyzer: ./parser/grammar.tab.cpp ./parser/lex.yy.cpp adapt.cpp
 	g++ -std=c++20 ./parser/lex.yy.cpp ./parser/grammar.tab.cpp adapt.cpp ./ast_analyzer/threadpool/threadpool.cpp -o adapt.out -O2 
 
-clean: 
+clean:
 	rm grammar.tab.cpp  grammar.tab.hpp lex.yy.cpp 

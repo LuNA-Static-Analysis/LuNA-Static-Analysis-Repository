@@ -2,7 +2,8 @@
 
 #include <cstring>
 #include <iostream>
-#include "error_message/error_entry.hpp" 
+#include <vector>
+#include "../error_message/error_entry.hpp" 
 
 
 enum ERROR_LEVEL {
@@ -13,7 +14,6 @@ enum ERROR_LEVEL {
 
 class error_reporter {
 public:
-
     void report(ERROR_LEVEL level,
         const std::string& error_msg,
         const std::string& error_line,
@@ -53,11 +53,30 @@ public:
         return errors_number != 0;
     }
 
-    void report_json(const int error_code, const details details) {
-        std::cerr << "{ \"error_code\" : \"LuNA_" + std::to_string(error_code) + "\", " + details.to_json() + "}" + "\n";
+    void report_json(const details details) {
+        std::string s = std::string("{ \"error_code\" : \"LuNA" + details.error_code + "\", " + details.to_json() + "}" + "\n");
+        errors_msg.push_back(s);
+    }
+
+    std::string get_errors() {
+        std::stringstream ss;
+
+        ss << "[";
+
+        size_t len = errors_msg.size();
+
+        for (int j = 0; j < len; j++) {
+            auto i = errors_msg.at(j);
+            ss << i << (j == len - 1 ? "" : ",");
+        }
+
+        ss << "]";
+
+        return ss.str();
     }
 
 private:
+    std::vector<std::string> errors_msg; 
     unsigned int errors_number = 0;
     const int LIMIT_ERRORS = 1000;
 };

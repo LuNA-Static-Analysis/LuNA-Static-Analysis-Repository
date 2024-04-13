@@ -1,7 +1,21 @@
-import printfl(real) as print;
-import c_init_float(real, name) as init;
+import printint(int) as print;
+import c_init_int(int, name) as init;
 sub main(){
-        df a;
-        init(1.0, a);
-        print(a);
+        df a, b, c, d, d;
+        nonexist();
+        init(1, a);
+        init(1, a);
+        init(1, c);
+        init(1, e);
+        print(b);
+        if (1){
+                df x;
+                init(1, x);
+                print(x);
+        }
+        if (0){
+                df x;
+                init(1, x);
+                print(x);
+        }
 }

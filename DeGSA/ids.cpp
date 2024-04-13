@@ -1,4 +1,5 @@
 #include "ids.hpp"
+#include "json_reporter.cpp"
 
 Vertex* Identifier::getVertex(){
     return this->vertex;
@@ -179,7 +180,8 @@ IndexedDFName::IndexedDFName(std::string name, Identifier* base, std::vector<Exp
         this->base = base;
     } else {
         this->base = nullptr;
-        errorReports->push_back("ERROR: indexation of an unsuitable Identifier\n");
+        errorReports->push_back(JsonReporter::create36(name, "[]"));//todo
+
         std::cout << "INTERNAL ERROR: indexation of an unsuitable Identifier" << std::endl;
     }
 
@@ -211,10 +213,17 @@ std::vector<std::string> ForIteratorName::markAsUse(Vertex* currentVertex, int s
 }
 
 std::vector<std::string> ForIteratorName::markAsDef(Vertex* currentVertex, int size){
-    std::cout << "For iterator " << this->getName() << " is being marked as defined" << std::endl;
+    std::cout << "INTERNAL ERROR: for iterator " << this->getName() << " is being marked as defined" << std::endl;
     // error (iterator should be marked as defined by ForVertex automatically)
     std::vector<std::string> reports = {};
-    reports.push_back("ERROR: markAsDef called on \"for\" iterator");
+    reports.push_back(JsonReporter::create26(//todo
+        this->getName(),
+        "",
+        "",
+        "",
+        0,
+        "[]"
+    ));
     return reports;
 }
 
@@ -263,11 +272,18 @@ std::vector<std::string> WhileIteratorName::markAsUse(Vertex* currentVertex, int
 }
 
 std::vector<std::string> WhileIteratorName::markAsDef(Vertex* currentVertex, int size){
-    std::cout << "While iterator " << this->getName() << " is being marked as defined" << std::endl;
+    std::cout << "INTERNAL ERROR: while iterator " << this->getName() << " is being marked as defined" << std::endl;
     // error (iterator should be marked as defined by WhileVertex automatically)
     std::vector<std::string> reports = {};
     //todo add line
-    reports.push_back("ERROR: markAsDef called on \"while\" iterator");
+    reports.push_back(JsonReporter::create26(//todo
+        this->getName(),
+        "",
+        "",
+        "",
+        0,
+        "[]"
+    ));
     return reports;
 }
 
@@ -331,7 +347,14 @@ std::vector<std::string> MainArgName::markAsUse(Vertex* currentVertex, int size)
 std::vector<std::string> MainArgName::markAsDef(Vertex* currentVertex, int size){
     std::cout << "Main arg name " << this->getName() << " is being marked as defined" << std::endl;
     std::vector<std::string> reports = {};
-    reports.push_back("INTERNAL ERROR: trying to mark argument of main() as def by vertex at line " + currentVertex->getLine());
+    reports.push_back(JsonReporter::create26(//todo
+        this->getName(),
+        "",
+        "",
+        "",
+        0,
+        "[]"
+    ));
     return reports;
 }
 
@@ -389,14 +412,22 @@ IndexedDFName* parseIndexedDFExpression(expr* expression, std::map<std::string, 
         return temp;
         } else {
             std::cout << "INTERNAL ERROR: aborted creating new IndexedDFName object -- base is not indexable: " << baseName << std::endl;
-            std::string report = "ERROR: not indexable name \"" + baseName + "\" indexed at line " + std::to_string(line) + "\n";
-            errorReports->push_back(report);
+            //std::string report = "ERROR: not indexable name \"" + baseName + "\" indexed at line " + std::to_string(line) + "\n";
+            errorReports->push_back(JsonReporter::create36(//todo
+                baseName,
+                "[]"
+            ));
             return nullptr;
         }
     } else {
         std::cout << "INTERNAL ERROR: aborted creating new IndexedDFName object -- no base name found visible: " << baseName << std::endl;
-        std::string report = "ERROR: no name \"" + baseName + "\" found at line " + std::to_string(line) + "\n";
-        errorReports->push_back(report);
+        //std::string report = "ERROR: no name \"" + baseName + "\" found at line " + std::to_string(line) + "\n";
+        errorReports->push_back(JsonReporter::create14(//todo
+            baseName,
+            "[]",
+            "[]",
+            "[]"
+        ));
         return nullptr;
     }
 }

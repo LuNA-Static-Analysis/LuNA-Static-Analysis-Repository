@@ -44,11 +44,16 @@ public:
 
             for (auto s : *scope) {
                 for (auto var : *s) {
-                    reporter_->report(ERROR_LEVEL::WARNING,
-                        "Name \"" + var->to_string() + "\" is never used",
-                        get_line_from_file(var->line_),
-                        var->line_
+                    details d = details("10");
+                    d.add_df(
+                        df(
+                            var->to_string(),
+                            declared(call_stack_entry(get_file(), var->line_, current_cf)),
+                            initialized(),
+                            used()
+                        )
                     );
+                    reporter_->report_json(d);
                 }
             }
 
@@ -133,20 +138,19 @@ public:
                     delete_var_from_scope(scope, i);
                 }
 
-                // for (auto s : *scope) {
-                //     for (auto j : *s) {
-                //         std::cerr << j->to_string() << std::endl;
-                //     }
-                // }
-
                 check_(scope, cur_if->block_);
                 
                 for (auto var : *(scope->back())) {
-                    reporter_->report(ERROR_LEVEL::WARNING,
-                        "Name \"" + var->to_string() + "\" is never used",
-                        get_line_from_file(var->line_),
-                        var->line_
+                    details d = details("10");
+                    d.add_df(
+                        df(
+                            var->to_string(),
+                            declared(call_stack_entry(get_file(), var->line_, current_cf)),
+                            initialized(),
+                            used()
+                        )
                     );
+                    reporter_->report_json(d);
                 }
 
                 scope->pop_back();
@@ -169,11 +173,16 @@ public:
                 check_(scope, cur_while->block_);
 
                 for (auto var : *(scope->back())) {
-                    reporter_->report(ERROR_LEVEL::WARNING,
-                        "Name \"" + var->to_string() + "\" is never used",
-                        get_line_from_file(var->line_),
-                        var->line_
+                    details d = details("10");
+                    d.add_df(
+                        df(
+                            var->to_string(),
+                            declared(call_stack_entry(get_file(), var->line_, current_cf)),
+                            initialized(),
+                            used()
+                        )
                     );
+                    reporter_->report_json(d);
                 }
 
                 scope->pop_back();
@@ -194,11 +203,16 @@ public:
                 check_(scope, cur_for->block_);
 
                 for (auto var : *(scope->back())) {
-                    reporter_->report(ERROR_LEVEL::WARNING,
-                        "Name \"" + var->to_string() + "\" is never used",
-                        get_line_from_file(var->line_),
-                        var->line_
+                    details d = details("10");
+                    d.add_df(
+                        df(
+                            var->to_string(),
+                            declared(call_stack_entry(get_file(), var->line_, current_cf)),
+                            initialized(),
+                            used()
+                        )
                     );
+                    reporter_->report_json(d);
                 }
 
                 scope->pop_back();

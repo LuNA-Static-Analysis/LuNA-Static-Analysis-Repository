@@ -1,7 +1,7 @@
 #pragma once
 #include "../parser/ast.hpp"
 #include "error_reporter.hpp"
-#include "error_message/error_entry.hpp"
+#include "../error_message/error_entry.hpp"
 
 #include <vector>
 #include <map>

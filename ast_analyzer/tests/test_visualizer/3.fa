@@ -1,0 +1,19 @@
+import c_init(int, name) as init;
+import c_iprint(int) as iprint;
+
+sub main()
+{
+	df x;
+
+	cf a: init(7, x) @ {
+		locator_cyclic: 1;
+	};
+
+	iprint(x) @ {
+		request x;
+		locator_cyclic: 2;
+	};
+
+} @ {
+	locator_cyclic x => 3;
+}

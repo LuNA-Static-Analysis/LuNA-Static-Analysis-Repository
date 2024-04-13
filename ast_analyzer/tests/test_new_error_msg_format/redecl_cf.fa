@@ -1,0 +1,11 @@
+import c_init(int i) as init;
+
+sub main() {
+  df i;
+  init(i);
+}
+
+sub main() {
+  df i;
+  init(i);
+}
