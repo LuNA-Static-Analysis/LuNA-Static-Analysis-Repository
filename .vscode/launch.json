@@ -1,20 +1,39 @@
 {
-    "version": "0.2.0",
-    "configurations": [{
-        "name": "debugger or whatever",
-        "type": "cppdbg",
-        "request": "launch",
-        "program": "${workspaceRoot}/a.out",
-        "args": [
-            "prepr.fa"
-        ],
-        "stopAtEntry": false,
-        "cwd": "${workspaceFolder}",
-        "environment": [],
-        "externalConsole": false,
-        "MIMode": "gdb", // requires gdb to be installed
-        "preLaunchTask": "compile"
-
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "debugger or whatever",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceRoot}/a.out",
+      "args": [
+        "prepr.fa"
+      ],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "preLaunchTask": "compile"
+    },
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "cppdbg",
+      "request": "launch",
+      "args": [],
+      "stopAtEntry": false,
+      "externalConsole": false,
+      "cwd": "/home/maxwell/LuNA-Static-Analysis-Repository",
+      "program": "/home/maxwell/LuNA-Static-Analysis-Repository/build/Debug/outDebug",
+      "MIMode": "gdb",
+      "miDebuggerPath": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
     }
-    ]
+  ]
 }
