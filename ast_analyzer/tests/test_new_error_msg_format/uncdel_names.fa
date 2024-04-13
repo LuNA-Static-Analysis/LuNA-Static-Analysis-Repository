@@ -1,0 +1,15 @@
+import c_init(int i) as init;
+
+sub main2() {
+  init(i);
+}
+
+sub main1() {
+  if (a == 1) {
+    init(i);
+  }
+
+  for i=1..N {
+    init(i);
+  }
+}

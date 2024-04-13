@@ -18,5 +18,6 @@ ast.json
 in.json
 adapt_output.txt
 degsa_output.txt
-found_errors copy.json
+found_errors.json
 temp.json
+.vscode

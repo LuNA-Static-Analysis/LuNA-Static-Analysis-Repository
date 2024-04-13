@@ -1,0 +1,8 @@
+import init() as init;
+
+sub main() {
+    df x;
+    if x[i][j] == x[1] {
+        init();
+    }
+}

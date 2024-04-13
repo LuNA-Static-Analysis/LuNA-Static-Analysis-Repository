@@ -1,0 +1,5 @@
+import c_init() as init;
+
+sub main1() {
+  init();
+}

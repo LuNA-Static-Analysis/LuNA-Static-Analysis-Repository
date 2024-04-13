@@ -2,7 +2,7 @@
 
 #include "../parser/ast.hpp"
 #include "error_reporter.hpp"
-#include "./error_message/error_entry.hpp"
+#include "../error_message/error_entry.hpp"
 
 class existance_main_analyzer : public base_analyzer {
 public:
@@ -39,7 +39,7 @@ public:
 
         if (has_main) return false;
 
-        reporter_->report_json(12, details());
+        reporter_->report_json(details("12"));
 
         return true;
     }

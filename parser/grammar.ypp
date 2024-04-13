@@ -1,6 +1,5 @@
 %{
 
-#include "../parser/error_reporter.hpp"
 #include "../parser/ast.hpp"
 
 #include <iostream>
@@ -26,8 +25,6 @@ extern string line, prev_line;
 
 int cur_position_in_line = 0;
 extern ast* ast_;
-
-error_reporter reporter;
 
 %}
 
@@ -347,11 +344,12 @@ statement:
     | if_statement { $$ = $1; }
 
     | error SCOLON {
-	    reporter.report(ERROR_LEVEL::ERROR,
-            "Unexpected token",
-            line,
-            @1.first_column,
-            "cf, if, let, for, while.");
+        std::cerr << "Syntax error: Unexpected token at line : " << @1.first_line << "\n" << line << "\nExpected: cf, if, let, for, while" << std::endl;
+	//    reporter.report(ERROR_LEVEL::ERROR,
+    //        "Unexpected token",
+    //        line,
+    //        @1.first_column,
+    //        "cf, if, let, for, while.");
         delete $$;
         $$ = nullptr;
     } 
@@ -641,11 +639,12 @@ opt_params:
     }
 
     | LB error RB {
-        reporter.report(ERROR_LEVEL::ERROR,
-            "Unexpected token",
-            line,
-            @1.first_column,
-            "int, name, value, real, string");
+        std::cerr << "Syntax error: Unexpected token at line : " << @1.first_line << "\n" << line << "\nExpected: int, name, value, real, string" << std::endl;
+//        reporter.report(ERROR_LEVEL::ERROR,
+//            "Unexpected token",
+//            line,
+//            @1.first_column,
+//            "int, name, value, real, string");
         delete $$;
         $$ = new opt_params(nullptr);
     }
