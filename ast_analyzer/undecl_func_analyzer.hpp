@@ -112,7 +112,7 @@ public:
                 has_such_cf = true;
 
                 if (func_decl.second->size() != call.second->size()) {
-                    details detail = details("04");
+                    details detail = details("06");
                     detail.add_call_stack_entry(call_stack_entry(get_file(), call.first.line_, current_cf));
                     detail.add_cf(cf(func_decl.first.to_string(), "extern", get_file(), func_decl.first.line_));
                     reporter_->report_json(detail);
@@ -137,7 +137,7 @@ public:
             }
 
             if (!has_such_cf) {
-                details detail = details("04");
+                details detail = details("02");
                 detail.add_call_stack_entry(call_stack_entry(get_file(), call.first.line_, current_cf));
                 reporter_->report_json(detail);
             }

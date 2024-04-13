@@ -19,7 +19,7 @@ public:
   std::string to_json() const override {
     std::stringstream s;
 
-    s << "\"call_stack_entry\" : {" << "\"file\" : " << "\"" << file << "\"" << ","
+    s << "{" << "\"file\" : " << "\"" << file << "\"" << ","
     << "\"line\" : " << std::to_string(line) << ","
     << "\"name\" : " << "\"" << name << "\""
     << "}";
@@ -28,7 +28,7 @@ public:
   }
 };
 
-class init : public serializiable{
+class init : public serializiable {
 public:
   std::vector<int> lines;
 
@@ -49,29 +49,57 @@ public:
   }
 };
 
-class declared : public serializiable{
-public:
-  std::vector<call_stack_entry> decls_;
 
-  void add_decl(call_stack_entry d) {
-    decls_.push_back(d);
+
+class call_stack : public serializiable {
+public:
+  std::vector<call_stack_entry> call_stack_entries_;
+
+  void add_call_stack_entry(call_stack_entry d) {
+    call_stack_entries_.push_back(d);
+  }
+
+  call_stack(call_stack_entry cse) {
+    add_call_stack_entry(cse);
+  }
+
+  std::string to_json() const override{
+    std::stringstream s;
+
+    size_t len = call_stack_entries_.size();
+
+    for (int j = 0; j < len; j++) {
+        auto i = call_stack_entries_.at(j);
+        s <<  i.to_json() << (j == len - 1 ? "" : ",");
+    }
+
+    return s.str();
+  }
+};
+
+class declared : public serializiable {
+public:
+  std::vector<call_stack> call_stacks_;
+
+  void add_decl(call_stack d) {
+    call_stacks_.push_back(d);
   }
 
   declared() = default;
 
-  declared(call_stack_entry d) : declared() {
+  declared(call_stack d) : declared() {
     add_decl(d);
   }
 
   std::string to_json() const override{
     std::stringstream s;
 
-    size_t len = decls_.size();
+    size_t len = call_stacks_.size();
     s << "\"declared\" : [";
 
     for (int j = 0; j < len; j++) {
-        auto i = decls_.at(j);
-        s << "{" << i.to_json() << "}" << (j == len - 1 ? "" : ",");
+        auto i = call_stacks_.at(j);
+        s << "[" << i.to_json() << "]" << (j == len - 1 ? "" : ",");
     }
 
     s << "]";
@@ -82,17 +110,17 @@ public:
 
 class initialized : public serializiable{
 public:
-  std::vector<init> inits_;
+  std::vector<call_stack> call_stacks_;
 
   std::string to_json() const override{
     std::stringstream s;
 
-    size_t len = inits_.size();
+    size_t len = call_stacks_.size();
     s << "\"initialized\" : [";
 
     for (int j = 0; j < len; j++) {
-        auto i = inits_.at(j);
-        s << "{" << i.to_json() << "}" << (j == len - 1 ? "" : ",");
+        auto i = call_stacks_.at(j);
+        s << "[" << i.to_json() << "]" << (j == len - 1 ? "" : ",");
     }
 
     s << "]";
@@ -101,20 +129,44 @@ public:
   }
 };
 
-class df : public serializiable{
+class used : public serializiable{
 public:
-  std::string name_;
-  declared declared_;
-  initialized initialized_;
-
-  df(std::string name, declared d, initialized i) : name_(name), declared_(d), initialized_(i) {}
+  std::vector<call_stack> inits_;
 
   std::string to_json() const override{
     std::stringstream s;
 
-    s << "\"df\" : {"<< "\"name\" : " << "\"" << name_ << "\"" << ","
+    size_t len = inits_.size();
+    s << "\"used\" : [";
+
+    for (int j = 0; j < len; j++) {
+        auto i = inits_.at(j);
+        s << "[" << i.to_json() << "]" << (j == len - 1 ? "" : ",");
+    }
+
+    s << "]";
+
+    return s.str();
+  }
+};
+
+class df : public serializiable {
+public:
+  std::string name_;
+  declared declared_;
+  initialized initialized_;
+  used used_;
+
+  df(std::string name, declared d, initialized i, used u) : name_(name), declared_(d), initialized_(i), used_(u) {}
+
+  std::string to_json() const override{
+    std::stringstream s;
+
+    s << "{"
+    << "\"name\" : " << "\"" << name_ << "\"" << ","
     << declared_.to_json() << ","
-    << initialized_.to_json()
+    << initialized_.to_json() << ","
+    << used_.to_json()
     << "}";
 
     return s.str();
@@ -133,7 +185,7 @@ public:
   std::string to_json() const override {
     std::stringstream s;
 
-    s << "\"cf\" : {" 
+    s << "{" 
     << "\"file\" : " << "\"" << file << "\"" << ","
     << "\"type\" : " << "\"" << type << "\"" << ","
     << "\"name\" : " << "\"" << name << "\"" << ","
@@ -186,7 +238,7 @@ public:
     s << (len != 0 && cse.size() != 0 ? "," : " ");
     len = cse.size();
 
-    s << (len != 0 ? cse.at(0).to_json() : "");
+    s << (len != 0 ? "\"call_stack_entry\" : " + cse.at(0).to_json() : "");
 
     s << (len != 0 && exprs.size() != 0 ? "," : " ");
 
@@ -198,19 +250,18 @@ public:
     return s.str();
   }
 
-
   std::string dfs_to_json() const {
     if (dfs.size() == 0) return "";
 
     if (error_code == "03" || error_code == "05" || error_code == "07" || error_code == "10" || error_code == "14") {
-      return dfs.at(0).to_json();
+      return "\"df\" :" + dfs.at(0).to_json();
     }
     else {
       std::stringstream s;
-      s << "\"dfs \" : [";
+      s << "\"dfs\" : [";
       for (int j = 0; j < dfs.size(); j++) {
           auto i = dfs.at(j);
-          s << "{" << i.to_json() << "}" << (j == dfs.size() - 1 ? "" : ",");
+          s << i.to_json() << (j == dfs.size() - 1 ? "" : ",");
       }
       s << "]";
       return s.str();
@@ -221,15 +272,15 @@ public:
   std::string cfs_to_json() const {
     if (cfs.size() == 0) return "";
 
-    if (error_code == "02" || error_code == "04" || error_code == "17") {
-      return cfs.at(0).to_json();
+    if (error_code == "02" || error_code == "04" || error_code == "06" || error_code == "17") {
+      return "\"cf\" :" + cfs.at(0).to_json();
     }
     else {
       std::stringstream s;
-      s << "\"cfs \" : [";
+      s << "\"cfs\" : [";
       for (int j = 0; j < cfs.size(); j++) {
           auto i = cfs.at(j);
-          s << "{" << i.to_json() << "}" << (j == cfs.size() - 1 ? "" : ",");
+          s << i.to_json() << (j == cfs.size() - 1 ? "" : ",");
       }
       s << "]";
       return s.str();

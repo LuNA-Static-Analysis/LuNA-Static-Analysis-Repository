@@ -2,10 +2,10 @@
   - git clone https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository.git
   - cd ast_analyzer
   - make
-  - ./a.out <file_name>
+  - ./ast_analyzer <file_name>
 
 ## Например:
-  ./a.out ./tests/test_analyzer/test_import.fa
+  ./ast_analyzer ./tests/test_analyzer/test_import.fa
 
 ## Важно иметь установленные flex и bison
   - sudo apt install flex bison

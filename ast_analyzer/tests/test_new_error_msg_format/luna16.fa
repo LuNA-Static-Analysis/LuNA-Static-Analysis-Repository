@@ -1,0 +1,9 @@
+import init() as init;
+
+sub main() {
+  init();
+}
+
+sub main() {
+  init();
+}
