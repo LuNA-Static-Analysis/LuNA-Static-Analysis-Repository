@@ -989,31 +989,37 @@ class DDG {
             map.insert(std::make_pair("key1", "value1"));
             std::cout << jsonReporter->createJson(map) << std::endl;*/
 
+            // global 
             std::string jsonOutputPath = "reporter/found_errors.json";
+            // local (for launch.sh)
+            //std::string jsonOutputPath = "found_errors.json";
 
             std::ifstream inFile(jsonOutputPath);
-            
+
             if (inFile.good()){ // file already exists
 
-                std::ifstream t(jsonOutputPath);
-                std::string existingReports(
-                    (std::istreambuf_iterator<char>(t)),
-                    std::istreambuf_iterator<char>()
-                );
+                if (errorReports.size() != 0){ // DeGSA found some errors
+                    std::ifstream t(jsonOutputPath);
+                    std::string existingReports(
+                        (std::istreambuf_iterator<char>(t)),
+                        std::istreambuf_iterator<char>()
+                    );
 
-                std::ofstream outFile(jsonOutputPath);
-                std::string newReports = JsonReporter::createArray(errorReports);
-                if (existingReports.size() < 10){ // no objects present; todo change this
-                    outFile << newReports;
-                } else {
-                    existingReports.pop_back();
-                    newReports[0] = ',';
-                    outFile << existingReports << newReports;
-                }
-                outFile.close();
+                    std::ofstream outFile(jsonOutputPath);
+                    std::string newReports = JsonReporter::createArray(errorReports);
+                    if (existingReports.size() < 10){ // no objects present; todo change this
+                        outFile << newReports;
+                    } else {
+                        existingReports.pop_back();
+                        newReports[0] = ',';
+                        outFile << existingReports << newReports;
+                    }
+                    outFile.close();
+                } // else we don't change existing file
                 
             } else { // file does not exist
                 inFile.close();
+                std::cout << 1 << std::endl;
                 std::ofstream outFile(jsonOutputPath);
                 outFile << JsonReporter::createArray(errorReports);
                 outFile.close();

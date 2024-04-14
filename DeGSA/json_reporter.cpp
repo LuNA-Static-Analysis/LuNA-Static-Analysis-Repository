@@ -33,7 +33,10 @@ public:
         for (auto jo: jsonObjects){
             result += (jo + ",");
         }
-        result[result.size() - 1] = ']';
+        if (jsonObjects.size() != 0)
+            result[result.size() - 1] = ']';
+        else
+            result += "]";
         return result;
         
     }
