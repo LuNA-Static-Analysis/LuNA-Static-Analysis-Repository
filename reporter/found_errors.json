@@ -1,2 +1,0 @@
-[{ "error_code" : "LuNA10", "details" : {"df" : {"name" : "c","declared" : [{"call_stack_entry" : {"file" : "todo.fa","line" : 4,"name" : ""}}],"initialized" : []}   }}
-,{"details": {"df": {"declared": [],"initialized": [],"name": "c","used": []}},"error_code": "LUNA10"}]
