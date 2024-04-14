@@ -4,6 +4,7 @@
 Запуск -- прописать в консоли, находясь в директории LuNA-Static-Analysis-Repository:
 
 make
+
 ./run.sh [путь к программе] [ключи запуска]
 
 Альтернатива make: ./compile.sh

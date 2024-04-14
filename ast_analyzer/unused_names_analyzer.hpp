@@ -49,7 +49,8 @@ public:
                         df(
                             var->to_string(),
                             declared(call_stack_entry(get_file(), var->line_, current_cf)),
-                            initialized()
+                            initialized(),
+                            used()
                         )
                     );
                     reporter_->report_json(d);
@@ -145,7 +146,8 @@ public:
                         df(
                             var->to_string(),
                             declared(call_stack_entry(get_file(), var->line_, current_cf)),
-                            initialized()
+                            initialized(),
+                            used()
                         )
                     );
                     reporter_->report_json(d);
@@ -176,7 +178,8 @@ public:
                         df(
                             var->to_string(),
                             declared(call_stack_entry(get_file(), var->line_, current_cf)),
-                            initialized()
+                            initialized(),
+                            used()
                         )
                     );
                     reporter_->report_json(d);
@@ -205,7 +208,8 @@ public:
                         df(
                             var->to_string(),
                             declared(call_stack_entry(get_file(), var->line_, current_cf)),
-                            initialized()
+                            initialized(),
+                            used()
                         )
                     );
                     reporter_->report_json(d);

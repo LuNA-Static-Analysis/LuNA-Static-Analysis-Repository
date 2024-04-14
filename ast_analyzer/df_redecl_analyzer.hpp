@@ -65,10 +65,10 @@ public:
             declared declared_ = declared();
 
             for (auto line : i.second) {
-                declared_.add_decl(call_stack_entry(get_file(), line, current_cf));
+                declared_.add_decl(call_stack(call_stack_entry(get_file(), line, current_cf)));
             }
 
-            detail.add_df(df(i.first, declared_, initialized()));
+            detail.add_df(df(i.first, declared_, initialized(), used()));
 
             reporter_->report_json(detail);
         }
