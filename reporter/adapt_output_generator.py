@@ -99,21 +99,21 @@ def report_error(
     match int(error_code):  # react according to what error it is exactly
         case 1:
             output_file.write(
-                (templates_map[error_code] + "\n\n")
+                (templates_map[error_code] + "\n")
                 .replace("$cf_name", error["details"]["cf"]["name"])
                 .replace("$callstack_entry", get_cf(error["details"]["cf"]))
                 .replace("$cf", get_cf(error["details"]["cf"]))
             )
         case 2:
             output_file.write(
-                (templates_map[error_code] + "\n\n")
+                (templates_map[error_code] + "\n")
                 .replace("$cf_name", error["details"]["call_stack_entry"]["name"])
                 .replace("$callstack_entry",
                          get_callstack_entry(error["details"]["call_stack_entry"]))
             )
         case 3:
             output_file.write(
-                (templates_map[error_code] + "\n\n")
+                (templates_map[error_code] + "\n")
                 .replace("$df_name", error["details"]["df"]["name"])
                 .replace("$decl_callstacks",
                          get_all_callstacks(error["details"]["df"]["declared"]))
@@ -124,40 +124,36 @@ def report_error(
             )
         case 4:
             output_file.write(
-                (templates_map[error_code] + "\n\n")
+                (templates_map[error_code] + "\n")
                 .replace("$callstack_entry",
                          get_callstack_entry(error["details"]["call_stack_entry"]))
                 .replace("$cf", get_cf(error["details"]["cf"]))
             )
         case 5:
             output_file.write(
-                (templates_map[error_code] + "\n\n")
-                .replace("$df_name", error["details"]["df"]["name"])
-                .replace("$uses_callstacks",
-                         get_all_callstacks(error["details"]["df"]["used"]))
-                .replace("$decl_callstacks",
-                         get_all_callstacks(error["details"]["df"]["declared"]))
+                (templates_map[error_code] + "\n")
+                .replace("$df", get_df(error['details']['df']))
             )
         case 6:
             output_file.write(
-                (templates_map[error_code] + "\n\n")
+                (templates_map[error_code] + "\n")
                 .replace("$cf_name", error["details"]["cf"]["name"])
                 .replace("$callstack_entry", get_cf(error["details"]["cf"]))
                 .replace("$cf", get_cf(error["details"]["cf"]))
             )
         case 7:
             output_file.write(
-                (templates_map[error_code] + "\n\n")
+                (templates_map[error_code] + "\n")
                 .replace("$decl_callstacks",
                          get_all_callstacks(error["details"]["df"]["declared"]))
             )
         case 8:
             pass  # no such error exists
         case 9:  # TODO
-            output_file.write((templates_map[error_code] + "\n\n\n"))
+            output_file.write((templates_map[error_code] + "\n\n"))
         case 10:
             output_file.write(
-                (templates_map[error_code] + "\n\n")
+                (templates_map[error_code] + "\n")
                 .replace("$df_name", error["details"]["df"]["name"])
                 .replace("$decl_callstacks",
                          get_all_callstacks(error["details"]["df"]["declared"]))
@@ -168,12 +164,12 @@ def report_error(
             )
         case 11:
             output_file.write(
-                (templates_map[error_code] + "\n\n")
+                (templates_map[error_code] + "\n")
                 .replace("$cfs", get_all_cfs(error["details"]["cfs"]))
             )
         case 12:
             output_file.write(
-                (templates_map[error_code] + "\n\n\n"))
+                (templates_map[error_code] + "\n\n"))
         case 13:
             output_file.write(
                 (templates_map[error_code] + "\n")
@@ -181,88 +177,84 @@ def report_error(
             )
         case 14:
             output_file.write(
-                (templates_map[error_code] + "\n\n")
-                .replace("$df_name", error["details"]["df"]["name"])
-                .replace("$uses_callstacks",
-                         get_all_callstacks(error["details"]["df"]["used"]))
-                .replace("$defs_callstacks",
-                         get_all_callstacks(error["details"]["df"]["initialized"]))
+                (templates_map[error_code] + "\n")
+                .replace("$df", get_df(error['details']['df']))
             )
         case 15:  # TODO
             output_file.write(
-                (templates_map[error_code] + "\n\n\n")
+                (templates_map[error_code] + "\n\n")
 
             )
         case 16:
             output_file.write(
-                (templates_map[error_code] + "\n\n")
+                (templates_map[error_code] + "\n")
                 .replace("$cf_name", error["details"]["cfs"][0]["name"])
                 .replace("$cfs", get_all_cfs(error["details"]["cfs"]))
             )
         case 17:
             output_file.write(
-                (templates_map[error_code] + "\n\n")
+                (templates_map[error_code] + "\n")
                 .replace("$cf", get_cf(error["details"]["cf"]))
             )
         case n if n in [18, 19, 20, 21, 22]:
             output_file.write(
-                (templates_map[error_code] + "\n\n")
+                (templates_map[error_code] + "\n")
                 .replace("$consumption_loop", get_index_range(error['details']['used']))
                 .replace("$initialization_loop", get_index_range(error['details']['initialized']))
             )
         case 23:
             output_file.write(
-                (templates_map[error_code] + "\n\n")
+                (templates_map[error_code] + "\n")
                 .replace("$bool", str(error["details"]["type"]))
                 .replace("$expr", str(error["details"]["condition"]))
                 .replace("$callstack_entry", get_callstack_entry(error["details"]["where"]))
             )
         case 24:
             output_file.write(
-                (templates_map[error_code] + "\n\n")
+                (templates_map[error_code] + "\n")
                 .replace("$bool", str(error["details"]["type"]))
                 .replace("$expr", str(error["details"]["condition"]))
                 .replace("$callstack_entry", get_callstack_entry(error["details"]["where"]))
             )
         case 25:
             output_file.write(
-                (templates_map[error_code] + "\n\n")
+                (templates_map[error_code] + "\n")
                 .replace("$index", str(error["details"]["arg_index"]))
                 .replace("$expr", str(error["details"]["bad_expr"]))
                 .replace("$callstack_entry", get_callstack_entry(error["details"]["where"]))
             )
         case 26:
             output_file.write(
-                (templates_map[error_code] + "\n\n")
+                (templates_map[error_code] + "\n")
                 .replace("$expr", str(error["details"]["expression"]))
                 .replace("$cf", get_cf(error["details"]["cf"]))
                 .replace("$callstack", get_callstack(error["details"]["callstack"]))
             )
         case 27:  # TODO
-            output_file.write((templates_map[error_code] + "\n\n\n"))
+            output_file.write((templates_map[error_code] + "\n\n"))
         case 28:  # TODO
-            output_file.write((templates_map[error_code] + "\n\n\n"))
+            output_file.write((templates_map[error_code] + "\n\n"))
         case 29:  # TODO
-            output_file.write((templates_map[error_code] + "\n\n\n"))
+            output_file.write((templates_map[error_code] + "\n\n"))
         case 30:  # TODO
-            output_file.write((templates_map[error_code] + "\n\n\n"))
+            output_file.write((templates_map[error_code] + "\n\n"))
         case 31:  # TODO
-            output_file.write((templates_map[error_code] + "\n\n\n"))
+            output_file.write((templates_map[error_code] + "\n\n"))
         case 32:  # TODO
-            output_file.write((templates_map[error_code] + "\n\n\n"))
+            output_file.write((templates_map[error_code] + "\n\n"))
         case 33:  # TODO
-            output_file.write((templates_map[error_code] + "\n\n\n"))
+            output_file.write((templates_map[error_code] + "\n\n"))
         case 34:  # TODO
-            output_file.write((templates_map[error_code] + "\n\n\n"))
+            output_file.write((templates_map[error_code] + "\n\n"))
         case 35:
             output_file.write(
-                (templates_map[error_code] + "\n\n")
+                (templates_map[error_code] + "\n")
                 .replace("$initialization_loop1", get_index_range(error['details']['ranges'][0]))
                 .replace("$initialization_loop2", get_index_range(error['details']['ranges'][1]))
             )
         case 36:
             output_file.write(
-                (templates_map[error_code] + "\n\n")
+                (templates_map[error_code] + "\n")
                 .replace("$expr", str(error["details"]["expression"]))
                 .replace("$callstack", get_callstack(error["details"]["callstack"]))
             )
@@ -281,7 +273,7 @@ def report_error(
                     .replace('$init_conditions', f' {init_conditions}' if init_conditions else '')
                     .replace('$initialization_loop', get_index_range(initialized))
                 )
-            output_file.write('\n\n')
+            output_file.write('\n')
         case _:
             print("INTERNAL ERROR: unknown error code encountered")
 
@@ -295,12 +287,12 @@ def report_errors(
         output_file.write("No errors found.\n")
         return
 
-    output_file.write(f'Found {len(error_list)} errors:\n\n')
+    output_file.write(f'Found {len(error_list)} errors:\n')
 
     error_number = 0
     for error in error_list:
         error_number += 1
-        output_file.write('Error #' + str(error_number) + ':\n')
+        output_file.write(f'({error_number}) ')
         report_error(output_file, templates_map, error)
 
 
