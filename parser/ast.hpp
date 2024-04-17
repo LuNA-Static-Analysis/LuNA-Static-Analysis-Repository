@@ -1237,8 +1237,8 @@ class for_statement : public statement {
 
         s << "\"for_statement\" : {\n"
         << rep << "\"name\" : {"  << (name_ == nullptr ? "" :name_->to_json(shift + 1)) << "}\n"
-        << (expr_1_ == nullptr ? "" : ",\n" + expr_1_->to_json(shift + 1)) 
-        << (expr_2_ == nullptr ? "" : ",\n" +expr_2_->to_json(shift + 1)) 
+        << (expr_1_ == nullptr ? "" : ", \"left\" : {" + expr_1_->to_json(shift + 1)) << "}" 
+        << (expr_2_ == nullptr ? "" : ", \"right\" :{" + expr_2_->to_json(shift + 1)) << "}"
         << (block_ == nullptr ? "" : ",\n" + block_->to_json(shift + 1)) 
         << (control_pragma_ == nullptr ? "" : ",\n" + control_pragma_->to_json(shift + 1))
         << "}"
@@ -1400,12 +1400,22 @@ class while_statement : public statement {
                 (id_ == nullptr ? "nullptr" :id_->to_string());
         }
 
-    std::string to_json(const uint shift) const override {
-        std::stringstream s;
-        std::string rep = std::string(shift, ' ');
+        std::string to_json(const uint shift) const override {
+            std::stringstream s;
+            std::string rep = std::string(shift, ' ');
 
-        return s.str();
-    }
+            s << "\"while_statement\" : {\n"
+            << rep << "\"id\" : {"  << (id_ == nullptr ? "" : id_->to_json(shift + 1)) << "}\n"
+            << (left_ == nullptr ? "" : ", \"left\" : {" + left_->to_json(shift + 1)) << "}" 
+            << (right_ == nullptr ? "" : ", \"right\" : {" + right_->to_json(shift + 1)) << "}"
+            << (expr_ == nullptr ? "" : ", \"expr\" : {" + expr_->to_json(shift + 1)) << "}"
+            << (block_ == nullptr ? "" : ",\n" + block_->to_json(shift + 1)) 
+            << (control_pragma_ == nullptr ? "" : ",\n" + control_pragma_->to_json(shift + 1))
+            << "}"
+            ;
+
+            return s.str();
+        }
 };
 
 class exprs_seq : public virtual_token {

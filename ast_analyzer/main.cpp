@@ -25,7 +25,7 @@ ast *ast_ = new ast();
 
 int main(int argc, char **argv) {
   if (argc != 2) {
-    std::cerr << "Bad number of args. Usage: ./a.out test.fa" << std::endl;
+    std::cerr << "Bad number of args. Usage: ./ast_analyzer test.fa" << std::endl;
     return EXIT_ERROR;
   }
 
