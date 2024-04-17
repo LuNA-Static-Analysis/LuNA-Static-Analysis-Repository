@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
 
     auto astBuildStart = std::chrono::steady_clock::now();
 
-    if (argc != 2) {
+    if (argc < 2) {
         std::cout << "INTERNAL ERROR: Bad number of args. Usage: ./a.out [LuNA program]" << std::endl;
         return EXIT_ERROR;
     }
@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
 
     // &std::cout for console output
     //todo
-    std::string fileName = "kekw";
+    std::string fileName = argv[2];
     DDG ddg(ast_, &outputFile, fileName);
     outputFile << "\nTime to build AST: " << (double)astBuildTotal / 1000000000 << " seconds" << std::endl;
 

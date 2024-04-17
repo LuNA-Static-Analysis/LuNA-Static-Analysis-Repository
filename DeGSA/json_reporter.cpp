@@ -1,6 +1,7 @@
 #pragma once
 
 #include "enums.hpp"
+#include "vertices.hpp"
 
 #include <vector>
 #include <map>
@@ -67,17 +68,46 @@ public:
         return createArray(callStackEntries);
     }
 
+    static std::string createCallstackFromVertex(
+        Vertex* vertex
+    ){
+        if (vertex == nullptr)
+            return "[]";
+        
+        std::vector<std::string> callstackEntries = {};
+        while(vertex != nullptr){
+            callstackEntries.push_back(JsonReporter::createCallStackEntry(
+                vertex->getFileName(),
+                std::to_string(vertex->getLine()),
+                vertex->getName()
+            ));
+            vertex = vertex->getParent();
+        }
+        return JsonReporter::createCallStack(callstackEntries);
+    }
+
     static std::string createDF(
-            std::string name,
-            std::string callStackDeclarations,
-            std::string callStackInitializations,
-            std::string callStackUses
+            Identifier* identifier
     ){
         std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("name", name));
-        map.insert(std::make_pair("declared", callStackDeclarations));
-        map.insert(std::make_pair("initialized", callStackInitializations));
-        map.insert(std::make_pair("used", callStackUses));
+        map.insert(std::make_pair("name", identifier->getName()));
+        // decl
+        std::vector<std::string> declCallstack = {};
+        declCallstack.push_back(createCallstackFromVertex(identifier->getVertex()));
+        // def
+        std::vector<std::string> defCallstack = {};
+        for (auto def: identifier->getDefSet()){
+            defCallstack.push_back(createCallstackFromVertex(def));
+        }
+        // use
+        std::vector<std::string> useCallstack = {};
+        for (auto use: identifier->getUseSet()){
+            useCallstack.push_back(createCallstackFromVertex(use));
+        }
+
+        map.insert(std::make_pair("declared", createArray(declCallstack)));
+        map.insert(std::make_pair("initialized", createArray(defCallstack)));
+        map.insert(std::make_pair("used", createArray(useCallstack)));
         return createJson(map);
     }
 
@@ -138,6 +168,7 @@ public:
     }
     //todo all of the above should be private
 
+    // non-existing LuNA function
     static std::string create2(
         std::string fileName,
         int line,
@@ -149,39 +180,33 @@ public:
         return createReport("LUNA02", createJson(map));
     }
 
+    // multiple DF initialization
     static std::string create3(
-        std::string dfName,
-        std::string declCallstack,
-        std::string defCallstack,
-        std::string useCallstack
+        Identifier* identifier
     ){
         // details: df
         std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("df", createDF(dfName, declCallstack, defCallstack, useCallstack)));
+        map.insert(std::make_pair("df", createDF(
+            identifier
+        )));
         return createReport("LUNA03", createJson(map));
     }
 
     static std::string create5(
-        std::string dfName,
-        std::string declCallstack,
-        std::string defCallstack,
-        std::string useCallstack
+        Identifier* identifier
     ){
         // details: df
         std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("df", createDF(dfName, declCallstack, defCallstack, useCallstack)));
+        map.insert(std::make_pair("df", createDF(identifier)));
         return createReport("LUNA05", createJson(map));
     }
 
     static std::string create10(
-        std::string dfName,
-        std::string declCallstack,
-        std::string defCallstack,
-        std::string useCallstack
+        Identifier* identifier
     ){
         // details: df
         std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("df", createDF(dfName, declCallstack, defCallstack, useCallstack)));
+        map.insert(std::make_pair("df", createDF(identifier)));
         return createReport("LUNA10", createJson(map));
     }
 
@@ -195,14 +220,11 @@ public:
     }
 
     static std::string create14(
-        std::string dfName,
-        std::string declCallstack,
-        std::string defCallstack,
-        std::string useCallstack
+        Identifier* identifier
     ){
         // details: df
         std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("df", createDF(dfName, declCallstack, defCallstack, useCallstack)));
+        map.insert(std::make_pair("df", createDF(identifier)));
         return createReport("LUNA14", createJson(map));
     }
 

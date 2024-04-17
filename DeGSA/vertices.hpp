@@ -57,9 +57,11 @@ class Vertex {
         std::set<Identifier*> def; // list of DFs that are defined in this vertex
 
         VertexType vertexType; // type of a vertex (VF type)
+        std::string name; // name of a vertex ("for", "while", ..., and CF names)
         int depth; // amount of blocks that this vertex is in
         int number; // unique number of a vertice
         int line; // line in code that this operator is in
+        std::string fileName;
 
     public:
         Vertex();
@@ -67,6 +69,10 @@ class Vertex {
         virtual ~Vertex();
 
         VertexType getVertexType();
+
+        std::string getName();
+
+        std::string getFileName();
 
         std::set<Identifier*> getUseSet();
 
@@ -118,17 +124,13 @@ class CFVertex: public Vertex {
 
     private:
 
-        std::string name; // name of an import/sub
         std::vector<Identifier*> argNames; // vector of SubArgNames/MainArgNames
 
     public:
 
         CFVertex(int depth, int number, int line,
-            std::string name, VertexType vertexType, Vertex* parent, std::vector<Identifier*> argNames);
-
-        std::string getName();
-
-        //todo getters
+            std::string name, VertexType vertexType, Vertex* parent, std::vector<Identifier*> argNames,
+            std::string fileName);
 
         void printInfo(std::ostream* outputTarget);
 
@@ -145,7 +147,8 @@ class ForVertex: public Vertex {
     public:
 
         ForVertex(int depth, int number, int line,
-            ForIteratorName* iterator, Expression* leftBorder, Expression* rightBorder, Vertex* parent);
+            ForIteratorName* iterator, Expression* leftBorder, Expression* rightBorder, Vertex* parent,
+            std::string fileName);
 
         ForIteratorName* getIterator();
 
@@ -169,7 +172,7 @@ class WhileVertex: public Vertex {
 
         WhileVertex(int depth, int number, int line,
             WhileIteratorName* iterator, Identifier* outName, Expression* conditionExpr, Expression* startExpr,
-            Vertex* parent);
+            Vertex* parent, std::string fileName);
 
         WhileIteratorName* getIterator();
 
@@ -193,7 +196,7 @@ class IfVertex: public Vertex {
 
         IfVertex(int depth, int number, int line,
             Expression* conditionExpr,
-            Vertex* parent);
+            Vertex* parent, std::string fileName);
 
         Expression* getConditionExpr();
 
@@ -211,7 +214,7 @@ class LetVertex: public Vertex {
 
         LetVertex(int depth, int number, int line,
             std::vector<LetName*>* letNamesVector,
-            Vertex* parent);
+            Vertex* parent, std::string fileName);
 
         std::vector<LetName*>* getLetNamesVector();
 
