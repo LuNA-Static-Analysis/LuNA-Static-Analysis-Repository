@@ -32,3 +32,5 @@ External dependencies:
 - bison, flex -- required for building AST, therefore are mandatory
 - python -- required for preprocessiong of LuNA source code, so needed to analyze the code
 - gdb -- required for debugging (at least in VSCode)
+
+mirror test text
