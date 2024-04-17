@@ -1,0 +1,12 @@
+#!/usr/bin/bash
+
+set -e
+
+if [[ -z "${PROLOG_ANALYZER_HOME}" ]]; then
+  echo "warning: PROLOG_ANALYZER_HOME is not set"
+  parent_dir="$(dirname -- "$(realpath -- "$0")")" # bin
+  PROLOG_ANALYZER_HOME="$(dirname -- "$parent_dir")"
+  echo "using PROLOG_ANALYZER_HOME=$PROLOG_ANALYZER_HOME"
+fi
+
+python3 "$PROLOG_ANALYZER_HOME"/src/py/prolog-analyzer.py "$@"
