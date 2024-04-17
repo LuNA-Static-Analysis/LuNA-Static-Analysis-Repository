@@ -131,9 +131,9 @@ class DDG {
                         // error code: 13
                         // df list
                         std::vector<std::string> dfList = {};
-                        dfList.push_back(JsonReporter::createDF(previousDF->getName(), "[]", "[]", "[]"));//todo callstacks
-                        dfList.push_back(JsonReporter::createDF(dfName, "[]", "[]", "[]"));//todo callstacks
-                        //todo find all duplicate dfs
+                        dfList.push_back(JsonReporter::createDF(previousDF));//todo callstacks
+                        //dfList.push_back(JsonReporter::createDF(dfName, "[]", "[]", "[]"));//todo callstacks
+                        //todo find all duplicate dfs (just create new and then immediately delete)
                         this->errorReports.push_back(JsonReporter::create13(
                             dfList
                         ));
@@ -207,8 +207,8 @@ class DDG {
                     // error code: 13
                     // df list
                     std::vector<std::string> dfList = {};
-                    dfList.push_back(JsonReporter::createDF(identifierName, "[]", "[]", "[]"));//todo callstacks
-                    dfList.push_back(JsonReporter::createDF(identifierName, "[]", "[]", "[]"));//todo callstacks
+                    dfList.push_back(JsonReporter::createDF(identifier));//todo callstacks
+                    //dfList.push_back(JsonReporter::createDF(identifierName, "[]", "[]", "[]"));//todo callstacks
                     //todo find all duplicate dfs
                     this->errorReports.push_back(JsonReporter::create13(
                         dfList
@@ -364,7 +364,7 @@ class DDG {
                 case importVF: {
 
                     vertices.insert(std::make_pair(vertexCount, new CFVertex(currentDepth, vertexCount, line,
-                        name, importVF, callerVertex, {})));
+                        name, importVF, callerVertex, {}, fileName)));
                     currentVertex = vertices.find(vertexCount)->second;
 
                     std::cout << "Import entered" << std::endl;
@@ -430,9 +430,9 @@ class DDG {
                                 declaredNamesVector.push_back(nullptr);//todo beware of this when parsing
                                 std::cout << "INTERNAL ERROR: created nullptr sub/main arg name because of name duplication" << std::endl;
 
-                                std::vector<std::string> dfList = {};
-                                dfList.push_back(JsonReporter::createDF(identifierDeclaredName, "[]", "[]", "[]"));//todo callstacks
-                                dfList.push_back(JsonReporter::createDF(identifierDeclaredName, "[]", "[]", "[]"));//todo callstacks
+                                std::vector<std::string> dfList = {};//todo
+                                //dfList.push_back(JsonReporter::createDF(identifierDeclaredName, "[]", "[]", "[]"));//todo callstacks
+                                //dfList.push_back(JsonReporter::createDF(identifierDeclaredName, "[]", "[]", "[]"));//todo callstacks
                                 this->errorReports.push_back(JsonReporter::create13(
                                     dfList
                                 ));
@@ -441,7 +441,7 @@ class DDG {
                         }
 
                         vertices.insert(std::make_pair(vertexCount, new CFVertex(currentDepth, vertexCount, line,
-                            name, subVF, callerVertex, declaredNamesVector)));
+                            name, subVF, callerVertex, declaredNamesVector, fileName)));
                         currentVertex = vertices.find(vertexCount)->second;
                     } else {
                         //std::cout << "ERROR: could not find sub with a name " << name << std::endl;
@@ -461,8 +461,9 @@ class DDG {
                     if (declaredOutsideIdsMap.find(forIteratorString) != declaredOutsideIdsMap.end()){
 
                         std::vector<std::string> dfList = {};
-                        dfList.push_back(JsonReporter::createDF(forIteratorString, "[]", "[]", "[]"));//todo callstacks
-                        dfList.push_back(JsonReporter::createDF(forIteratorString, "[]", "[]", "[]"));//todo callstacks
+                        Identifier* identifier = declaredOutsideIdsMap.find(forIteratorString)->second;
+                        dfList.push_back(JsonReporter::createDF(identifier));//todo callstacks
+                        //dfList.push_back(JsonReporter::createDF(forIteratorString, "[]", "[]", "[]"));//todo callstacks
                         //todo find all duplicate dfs
                         this->errorReports.push_back(JsonReporter::create13(
                             dfList
@@ -482,7 +483,7 @@ class DDG {
                     Expression* rightBorder = new Expression(innerStatementForVF->expr_2_, declaredOutsideIdsMap, &errorReports, currentVertex);
 
                     vertices.insert(std::make_pair(vertexCount, new ForVertex(currentDepth, vertexCount, line,
-                        forIterator, leftBorder, rightBorder, callerVertex)));
+                        forIterator, leftBorder, rightBorder, callerVertex, fileName)));
                     currentVertex = vertices.find(vertexCount)->second;
                     forIterator->setVertex(currentVertex);
 
@@ -504,8 +505,9 @@ class DDG {
                     if (declaredOutsideIdsMap.find(whileIteratorString) != declaredOutsideIdsMap.end()){
 
                         std::vector<std::string> dfList = {};
-                        dfList.push_back(JsonReporter::createDF(whileIteratorString, "[]", "[]", "[]"));//todo callstacks
-                        dfList.push_back(JsonReporter::createDF(whileIteratorString, "[]", "[]", "[]"));//todo callstacks
+                        Identifier* identifier = declaredOutsideIdsMap.find(whileIteratorString)->second;
+                        dfList.push_back(JsonReporter::createDF(identifier));//todo callstacks
+                        //dfList.push_back(JsonReporter::createDF(whileIteratorString, "[]", "[]", "[]"));//todo callstacks
                         //todo find all duplicate dfs
                         this->errorReports.push_back(JsonReporter::create13(
                             dfList
@@ -546,7 +548,7 @@ class DDG {
 
                     vertices.insert(std::make_pair(vertexCount, new WhileVertex(currentDepth, vertexCount, line,
                         whileIterator, whileOutName, conditionExpression, startExpression,
-                        callerVertex)));
+                        callerVertex, fileName)));
                     currentVertex = vertices.find(vertexCount)->second;
                     whileIterator->setVertex(currentVertex);
 
@@ -571,7 +573,7 @@ class DDG {
                     Expression* conditionExpression = new Expression(innerStatementIfVF->expr_, declaredOutsideIdsMap, &errorReports, currentVertex);
 
                     vertices.insert(std::make_pair(vertexCount, new IfVertex(currentDepth, vertexCount, line,
-                        conditionExpression, callerVertex)));
+                        conditionExpression, callerVertex, fileName)));
                     currentVertex = vertices.find(vertexCount)->second;
 
                     // all identifiers inside "if" expression must be marked as "used"
@@ -596,8 +598,9 @@ class DDG {
                         if (declaredOutsideIdsMap.find(letString) != declaredOutsideIdsMap.end()){
 
                             std::vector<std::string> dfList = {};
-                            dfList.push_back(JsonReporter::createDF(letString, "[]", "[]", "[]"));//todo callstacks
-                            dfList.push_back(JsonReporter::createDF(letString, "[]", "[]", "[]"));//todo callstacks
+                            Identifier* identifier = declaredOutsideIdsMap.find(letString)->second;
+                            dfList.push_back(JsonReporter::createDF(identifier));//todo callstacks
+                            //dfList.push_back(JsonReporter::createDF(letString, "[]", "[]", "[]"));//todo callstacks
                             //todo find all duplicate dfs
                             this->errorReports.push_back(JsonReporter::create13(dfList));
 
@@ -612,7 +615,7 @@ class DDG {
                     }
 
                     vertices.insert(std::make_pair(vertexCount, new LetVertex(currentDepth, vertexCount, line,
-                        letNamesVector, callerVertex)));
+                        letNamesVector, callerVertex, fileName)));
                     currentVertex = vertices.find(vertexCount)->second;
                     for (auto ln: *letNamesVector){
                         ln->setVertex(currentVertex);
@@ -688,10 +691,7 @@ class DDG {
                             // details: df
                             //todo callstacks
                             this->errorReports.push_back(JsonReporter::create3(
-                                bn->getName(),
-                                "[]",
-                                "[]",
-                                "[]"
+                                bn
                             ));
                         }
                     } else { // indexed DFs
@@ -707,10 +707,7 @@ class DDG {
                         // details: df
                         //todo callstacks
                         this->errorReports.push_back(JsonReporter::create10(
-                            bn->getName(),
-                            "[]",
-                            "[]",
-                            "[]"
+                            bn
                         ));
                     } else {
                         // using uninitialized DFs
@@ -726,10 +723,7 @@ class DDG {
                             // details: df
                             //todo callstacks
                             this->errorReports.push_back(JsonReporter::create5(
-                                bn->getName(),
-                                "[]",
-                                "[]",
-                                "[]"
+                                bn
                             ));
                         }
                     }
@@ -741,10 +735,7 @@ class DDG {
                     // details: df
                     //todo callstacks
                     this->errorReports.push_back(JsonReporter::create10(
-                        bn->getName(),
-                        "[]",
-                        "[]",
-                        "[]"
+                        bn
                     ));
                 }
             }
@@ -989,10 +980,10 @@ class DDG {
             map.insert(std::make_pair("key1", "value1"));
             std::cout << jsonReporter->createJson(map) << std::endl;*/
 
-            // global 
-            std::string jsonOutputPath = "reporter/found_errors.json";
-            // local (for launch.sh)
-            //std::string jsonOutputPath = "found_errors.json";
+            // launch.sh (local)
+            //std::string jsonOutputPath = "../reporter/found_errors.json";
+            // run.sh (adapt)
+            std::string jsonOutputPath = "./reporter/found_errors.json";
 
             std::ifstream inFile(jsonOutputPath);
 
@@ -1019,7 +1010,6 @@ class DDG {
                 
             } else { // file does not exist
                 inFile.close();
-                std::cout << 1 << std::endl;
                 std::ofstream outFile(jsonOutputPath);
                 outFile << JsonReporter::createArray(errorReports);
                 outFile.close();

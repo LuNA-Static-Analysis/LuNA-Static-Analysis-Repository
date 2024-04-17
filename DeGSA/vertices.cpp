@@ -33,6 +33,10 @@ VertexType Vertex::getVertexType(){
     return vertexType;
 }
 
+std::string Vertex::getName(){
+    return name;
+}
+
 std::set<Identifier*> Vertex::getUseSet(){
     return use;
 }
@@ -110,6 +114,10 @@ Vertex* Vertex::getParent(){
     return this->parent;
 }
 
+std::string Vertex::getFileName(){
+    return this->fileName;
+}
+
 void Vertex::setDeclaredInsideIdsMap(std::map<std::string, Identifier*> declaredInsideIdsMap){
     this->declaredInsideIdsMap = declaredInsideIdsMap;
 }
@@ -132,12 +140,14 @@ void Vertex::printCallStack(std::ostream* outputTarget){
 }
 
 CFVertex::CFVertex(int depth, int number, int line,
-    std::string name, VertexType vertexType, Vertex* parent, std::vector<Identifier*> argNames){
+    std::string name, VertexType vertexType, Vertex* parent, std::vector<Identifier*> argNames,
+    std::string fileName){
 
     this->depth = depth;
     this->number = number;
     this->line = line;
     this->parent = parent;
+    this->fileName = fileName;
     this->argNames = argNames;
 
     this->name = name;
@@ -145,10 +155,6 @@ CFVertex::CFVertex(int depth, int number, int line,
 
     this->in = {};
     this->out = {};
-}
-
-std::string CFVertex::getName(){
-    return name;
 }
 
 void CFVertex::printInfo(std::ostream* outputTarget) {
@@ -217,14 +223,16 @@ void CFVertex::printInfo(std::ostream* outputTarget) {
 
 ForVertex::ForVertex(int depth, int number, int line,
     ForIteratorName* iterator, Expression* leftBorder, Expression* rightBorder,
-    Vertex* parent){
+    Vertex* parent, std::string fileName){
 
     this->vertexType = forVF;
+    this->name = "for";
 
     this->depth = depth;
     this->number = number;
     this->line = line;
     this->parent = parent;
+    this->fileName = fileName;
 
     this->iterator = iterator;
     this->leftBorder = leftBorder;
@@ -305,14 +313,16 @@ void ForVertex::printInfo(std::ostream* outputTarget){
 
 WhileVertex::WhileVertex(int depth, int number, int line,
     WhileIteratorName* iterator, Identifier* outName, Expression* conditionExpr, Expression* startExpr,
-    Vertex* parent){
+    Vertex* parent, std::string fileName){
 
     this->vertexType = whileVF;
+    this->name = "while";
 
     this->depth = depth;
     this->number = number;
     this->line = line;
     this->parent = parent;
+    this->fileName = fileName;
 
     this->iterator = iterator;
     this->outName = outName;
@@ -397,14 +407,16 @@ void WhileVertex::printInfo(std::ostream* outputTarget){
 
 IfVertex::IfVertex(int depth, int number, int line,
     Expression* conditionExpr,
-    Vertex* parent){
+    Vertex* parent, std::string fileName){
 
     this->vertexType = ifVF;
+    this->name = "if";
 
     this->depth = depth;
     this->number = number;
     this->line = line;
     this->parent = parent;
+    this->fileName = fileName;
 
     this->conditionExpr = conditionExpr;
 
@@ -471,14 +483,16 @@ void IfVertex::printInfo(std::ostream* outputTarget){
 
 LetVertex::LetVertex(int depth, int number, int line,
     std::vector<LetName*>* letNamesVector,
-    Vertex* parent){
+    Vertex* parent, std::string fileName){
 
     this->vertexType = letVF;
+    this->name = "let";
 
     this->depth = depth;
     this->number = number;
     this->line = line;
     this->parent = parent;
+    this->fileName = fileName;
 
     this->letNamesVector = letNamesVector;
 

@@ -169,12 +169,12 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
                         break;
                 }
             } else {
-                errorReports->push_back(JsonReporter::create14(
+                /*errorReports->push_back(JsonReporter::create14(
                     simpleDFName,
                     "[]",
                     "[]",
                     "[]"
-                ));//todo callstacks
+                ));//todo callstacks*/
             }
 
             return;

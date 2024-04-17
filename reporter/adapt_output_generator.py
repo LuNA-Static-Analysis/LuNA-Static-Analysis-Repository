@@ -17,7 +17,7 @@ def get_callstack(callstack: list[dict[str, Any]]) -> str:
 def get_all_callstacks(callstacks: list[list[dict[str, Any]]]) -> str:
     result = ''
     for callstack in callstacks:
-        result += get_callstack(callstack)
+        result += get_callstack(callstack) + "\n"
     return result
 
 

@@ -42,10 +42,12 @@ Expression* SubArgName::getReference(){
 }
 
 std::vector<std::string> SubArgName::markAsUse(Vertex* currentVertex, int size){
+    useSet.insert(currentVertex);
     return reference->markAsUse(currentVertex, size);
 }
 
 std::vector<std::string> SubArgName::markAsDef(Vertex* currentVertex, int size){
+    defSet.insert(currentVertex);
     return reference->markAsDef(currentVertex, size);
 }
 
@@ -62,6 +64,7 @@ SubArgName::SubArgName(std::string name, Expression* reference){
 SubArgName::~SubArgName(){}
 
 std::vector<std::string> BaseDFName::markAsUse(Vertex* vertex, int size){
+    useSet.insert(vertex);
 
     std::cout << "Base DF name " << this->getName() << " is being marked as used" << std::endl;
 
@@ -84,6 +87,7 @@ std::vector<std::string> BaseDFName::markAsUse(Vertex* vertex, int size){
 }
 
 std::vector<std::string> BaseDFName::markAsDef(Vertex* vertex, int size){
+    defSet.insert(vertex);
 
     std::cout << "Base DF name " << this->getName() << " is being marked as defined" << std::endl;
 
@@ -130,6 +134,7 @@ std::vector<Expression*> IndexedDFName::getExpressionsVector(){
 }
 
 std::vector<std::string> IndexedDFName::markAsUse(Vertex* currentVertex, int size){
+    useSet.insert(currentVertex);
     std::cout << "Indexed DF name " << this->getName() << " of size " << this->getExpressionsVector().size() << " is being marked as used" << std::endl;
     std::vector<std::string> reports = {};
     for (auto exp: expressionsVector){
@@ -147,6 +152,7 @@ std::vector<std::string> IndexedDFName::markAsUse(Vertex* currentVertex, int siz
 }
 
 std::vector<std::string> IndexedDFName::markAsDef(Vertex* currentVertex, int size){
+    defSet.insert(currentVertex);
     std::cout << "Indexed DF name " << this->getName() << " of size " << this->getExpressionsVector().size() << " is being marked as defined" << std::endl;
     std::vector<std::string> reports = {};
     for (auto exp: expressionsVector){
@@ -207,12 +213,14 @@ Expression* ForIteratorName::getRightBorder(){
 }
 
 std::vector<std::string> ForIteratorName::markAsUse(Vertex* currentVertex, int size){
+    useSet.insert(currentVertex);
     std::cout << "For iterator " << this->getName() << " is being marked as used" << std::endl;
     this->useSet.insert(currentVertex);
     return {};
 }
 
 std::vector<std::string> ForIteratorName::markAsDef(Vertex* currentVertex, int size){
+    defSet.insert(currentVertex);
     std::cout << "INTERNAL ERROR: for iterator " << this->getName() << " is being marked as defined" << std::endl;
     // error (iterator should be marked as defined by ForVertex automatically)
     std::vector<std::string> reports = {};
@@ -266,12 +274,14 @@ Expression* WhileIteratorName::getStartExpr(){
 }
 
 std::vector<std::string> WhileIteratorName::markAsUse(Vertex* currentVertex, int size){
+    useSet.insert(currentVertex);
     std::cout << "While iterator " << this->getName() << " is being marked as used" << std::endl;
     this->useSet.insert(currentVertex);
     return {};
 }
 
 std::vector<std::string> WhileIteratorName::markAsDef(Vertex* currentVertex, int size){
+    defSet.insert(currentVertex);
     std::cout << "INTERNAL ERROR: while iterator " << this->getName() << " is being marked as defined" << std::endl;
     // error (iterator should be marked as defined by WhileVertex automatically)
     std::vector<std::string> reports = {};
@@ -314,11 +324,13 @@ Expression* LetName::getReference(){
 }
 
 std::vector<std::string> LetName::markAsUse(Vertex* currentVertex, int size){
+    useSet.insert(currentVertex);
     std::cout << "Let name " << this->getName() << " is being marked as used" << std::endl;
     return this->reference->markAsUse(currentVertex, size);
 }
 
 std::vector<std::string> LetName::markAsDef(Vertex* currentVertex, int size){
+    defSet.insert(currentVertex);
     std::cout << "Let name " << this->getName() << " is being marked as defined" << std::endl;
     return this->reference->markAsDef(currentVertex, size);
 }
@@ -339,12 +351,14 @@ LetName::LetName(std::string name, Expression* assignedExpression){
 LetName::~LetName(){}
 
 std::vector<std::string> MainArgName::markAsUse(Vertex* currentVertex, int size){
+    useSet.insert(currentVertex);
     std::cout << "Main arg name " << this->getName() << " is being marked as used" << std::endl;
     this->useSet.insert(currentVertex);
     return {};
 }
 
 std::vector<std::string> MainArgName::markAsDef(Vertex* currentVertex, int size){
+    defSet.insert(currentVertex);
     std::cout << "Main arg name " << this->getName() << " is being marked as defined" << std::endl;
     std::vector<std::string> reports = {};
     reports.push_back(JsonReporter::create26(//todo
@@ -423,10 +437,7 @@ IndexedDFName* parseIndexedDFExpression(expr* expression, std::map<std::string, 
         std::cout << "INTERNAL ERROR: aborted creating new IndexedDFName object -- no base name found visible: " << baseName << std::endl;
         //std::string report = "ERROR: no name \"" + baseName + "\" found at line " + std::to_string(line) + "\n";
         errorReports->push_back(JsonReporter::create14(//todo
-            baseName,
-            "[]",
-            "[]",
-            "[]"
+            base->second
         ));
         return nullptr;
     }
