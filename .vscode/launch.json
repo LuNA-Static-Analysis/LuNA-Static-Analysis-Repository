@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "debugger or whatever",
+      "name": "DeGSA debugger",
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceRoot}/a.out",
@@ -14,7 +14,22 @@
       "environment": [],
       "externalConsole": false,
       "MIMode": "gdb",
-      "preLaunchTask": "compile"
+      "preLaunchTask": "DeGSA_compile"
+    },
+    {
+      "name": "ADAPT debugger",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceRoot}/adapt.out",
+      "args": [
+        "prepr.fa"
+      ],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "preLaunchTask": "ADAPT_compile"
     },
     {
       "name": "C/C++ Runner: Debug Session",
