@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import click
@@ -20,9 +21,22 @@ import click
     )
 )
 @click.option(
+    '--build-dir',
+    required=False,
+    show_default=True,
+    default=Path('build'),
+    help='LuNA project build directory.',
+    type=click.Path(
+        file_okay=False,
+        resolve_path=True,
+        path_type=Path,
+    )
+)
+@click.option(
     '--output-dir',
     required=False,
-    default=None,
+    show_default=True,
+    default=Path('.prolog-analyzer'),
     help='Directory for program output.',
     type=click.Path(
         file_okay=False,
@@ -33,6 +47,7 @@ import click
 @click.option(
     '--errors-file',
     required=False,
+    show_default=True,
     default=None,
     help='Append errors list to existing file or create a new errors file.',
     type=click.Path(
@@ -45,23 +60,34 @@ import click
     '--no-cleanup',
     is_flag=True,
     required=False,
+    show_default=True,
     default=False,
     help='Do not delete generated files.'
 )
-@click.argument('luna-src', nargs=-1)
+@click.argument(
+    'luna-src',
+    nargs=-1,
+    type=click.Path(
+        dir_okay=False,
+        resolve_path=True,
+        path_type=Path,
+    )
+)
 def main(
         project_dir: Path,
+        build_dir: Path,
         output_dir: Path,
         errors_file: Path | None,
         no_cleanup: bool,
-        luna_src: tuple[str]
+        luna_src: tuple[Path]
 ) -> None:
     prolog_analyzer_home = Path(os.environ.get('PROLOG_ANALYZER_HOME', str(Path.cwd())))
 
-    build_dir = project_dir / 'build'
-    if output_dir is None:
-        output_dir = project_dir / '.prolog-analyzer'
     output_dir.mkdir(exist_ok=True, parents=True)
+
+    if errors_file is None:
+        errors_file = output_dir / 'errors.json'
+    errors_file.parent.mkdir(exist_ok=True)
 
     facts_file = output_dir / 'program_facts.pro'
     new_errors_file = output_dir / 'errors.json'
@@ -75,67 +101,76 @@ def main(
     else:
         new_errors_file = errors_file
 
-    print('\rCompiling LuNA program', end='')
+    exit_code = 0
+    try:
+        print('\rCompiling LuNA program\r', end='')
+        subprocess.run(
+            args=[
+                'luna',
+                '-q',
+                '--compile-only',
+                f'--build-dir={str(build_dir)}',
+                *map(lambda it: it.resolve().name, luna_src)
+            ],
+            cwd=project_dir,
+            capture_output=True,
+            check=True
+        )
 
-    subprocess.run(
-        args=[
-            'luna',
-            '-q',
-            '--compile-only',
-            f'--build-dir={str(build_dir)}',
-            *luna_src
-        ],
-        capture_output=True,
-        check=True,
-    )
+        print('\rGenerating facts      \r', end='')
+        subprocess.run(
+            args=[
+                'python3',
+                prolog_analyzer_home / 'src' / 'py' / 'luna2pro.py',
+                '--json-algorithm', build_dir / 'program_recom.ja',
+                '--text-info', build_dir / 'preprocessed.fa.ti',
+                '-o', facts_file
+            ],
+            capture_output=True,
+            check=True
+        )
 
-    print('\rGenerating facts      \r', end='')
+        print('\rAnalyzing             \r', end='')
+        subprocess.run(
+            args=[
+                'swipl',
+                '-q',
+                '--on-error=halt',
+                '-t', 'main',
+                'src/pro/run.pro',
+                '--',
+                facts_file, new_errors_file
+            ],
+            cwd=str(prolog_analyzer_home),
+            capture_output=True,
+            check=True
+        )
 
-    subprocess.run(
-        args=[
-            'python3',
-            str(prolog_analyzer_home / 'src' / 'py' / 'luna2pro.py'),
-            '--project-dir', str(project_dir),
-            '--build-dir', str(build_dir),
-            '-o', str(facts_file)
-        ],
-        capture_output=True,
-        check=True
-    )
+        with new_errors_file.open('rt') as new_errors_file_:
+            new_errors = json.load(new_errors_file_)
+        with errors_file.open('wt') as dst_errors_file_:
+            json.dump(base_errors + new_errors, dst_errors_file_)
 
-    print('\rAnalyzing             \r', end='')
+        print(f'\rResults have been written to {errors_file}')
+    except subprocess.CalledProcessError as e:
+        print(
+            f'ERROR: {" ".join(map(str, e.cmd))} '
+            f'failed with exit code {e.returncode}:\n'
+            f'{e.stderr.decode("utf-8")}',
+            file=sys.stderr
+        )
 
-    subprocess.run(
-        args=[
-            'swipl',
-            '-q',
-            '--on-error=halt',
-            '-t', 'main',
-            'src/pro/run.pro',
-            '--',
-            str(facts_file), str(new_errors_file)
-        ],
-        cwd=str(prolog_analyzer_home),
-        capture_output=True,
-        check=True
-    )
+        exit_code = 1
+    finally:
+        if not no_cleanup:
+            shutil.rmtree(build_dir, ignore_errors=True)
 
-    with new_errors_file.open('rt') as new_errors_file_:
-        new_errors = json.load(new_errors_file_)
-    with errors_file.open('wt') as dst_errors_file_:
-        json.dump(base_errors + new_errors, dst_errors_file_)
+            if output_dir != errors_file.parent:
+                shutil.rmtree(output_dir, ignore_errors=True)
+            else:
+                facts_file.unlink(missing_ok=True)
 
-    if not no_cleanup:
-        print('\rCleaning up           \r', end='')
-
-        shutil.rmtree(build_dir)
-
-        if output_dir != errors_file.parent:
-            shutil.rmtree(output_dir)
-        else:
-            facts_file.unlink(missing_ok=True)
-
-    print(f'\rResults have been written to {errors_file}')
+    exit(exit_code)
 
 
 if __name__ == '__main__':
