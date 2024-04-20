@@ -13,21 +13,27 @@ std::string Expression::getConstant(){
     return this->constant;
 }
 
-Expression::Expression(std::string constant, ExpressionType type){
+Vertex* Expression::getVertex(){
+    return this->vertex;
+}
+
+Expression::Expression(std::string constant, ExpressionType type, Vertex* currentVertex){
     this->ASTexpr = nullptr;
     this->constant = constant;
     this->identifier = nullptr;
     this->leftExpr = nullptr;
     this->rightExpr = nullptr;
     this->type = type;
+    this->vertex = currentVertex;
 }
 
-Expression::Expression(expr* ASTexpr){
+Expression::Expression(expr* ASTexpr, Vertex* currentVertex){
     this->ASTexpr = ASTexpr;
     this->constant = "";
     this->identifier = nullptr;
     this->leftExpr = nullptr;
     this->rightExpr = nullptr;
+    this->vertex = currentVertex;
 }
 
 /* 
@@ -48,6 +54,7 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
     this->leftExpr = nullptr;
     this->rightExpr = nullptr;
     this->type = noneNode;
+    this->vertex = currentVertex;
 
     luna_string* lunaString = dynamic_cast<luna_string*>(ASTexpr);
     if (lunaString != NULL){
@@ -153,7 +160,7 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
 
                 switch(identifierName->second->getType()){
                     case baseDFNameType: // simple DF (no indices)
-                        this->identifier = new IndexedDFName(simpleDFName, identifierName->second, {}, errorReports);
+                        this->identifier = new IndexedDFName(simpleDFName, identifierName->second, {}, errorReports, currentVertex);
                         this->identifier->setVertex(currentVertex);
                         break;
                     case subArgNameType: // argument of a sub
@@ -211,25 +218,25 @@ Expression Expression::binOp(){
         double l = std::stod(left.constant);
         double r = std::stod(right.constant);
         switch(this->type){
-            case addNode: return Expression(std::to_string(l + r), realNode);
-            case subtractNode: return Expression(std::to_string(l - r), realNode);
-            case multiplyNode: return Expression(std::to_string(l * r), realNode);
-            case divideNode: return Expression(std::to_string(l / r), realNode);
+            case addNode: return Expression(std::to_string(l + r), realNode, nullptr);
+            case subtractNode: return Expression(std::to_string(l - r), realNode, nullptr);
+            case multiplyNode: return Expression(std::to_string(l * r), realNode, nullptr);
+            case divideNode: return Expression(std::to_string(l / r), realNode, nullptr);
             case modulusNode: 
                 std::cout << "INTERNAL ERROR: attempt to use modulus with double" << std::endl;
-                return Expression("", noneNode);
-            case greaterNode: return Expression(std::to_string(l > r), intNode);
-            case greaterOrEqualNode: return Expression(std::to_string(l >= r), intNode);
-            case lesserNode: return Expression(std::to_string(l < r), intNode);
-            case lesserOrEqualNode: return Expression(std::to_string(l <= r), intNode);
-            case equalNode: return Expression(std::to_string(l == r), intNode);
-            case nonEqualNode: return Expression(std::to_string(l != r), intNode);
-            case andNode: return Expression(std::to_string(l && r), intNode);
-            case orNode: return Expression(std::to_string(l || r), intNode);
+                return Expression("", noneNode, nullptr);
+            case greaterNode: return Expression(std::to_string(l > r), intNode, nullptr);
+            case greaterOrEqualNode: return Expression(std::to_string(l >= r), intNode, nullptr);
+            case lesserNode: return Expression(std::to_string(l < r), intNode, nullptr);
+            case lesserOrEqualNode: return Expression(std::to_string(l <= r), intNode, nullptr);
+            case equalNode: return Expression(std::to_string(l == r), intNode, nullptr);
+            case nonEqualNode: return Expression(std::to_string(l != r), intNode, nullptr);
+            case andNode: return Expression(std::to_string(l && r), intNode, nullptr);
+            case orNode: return Expression(std::to_string(l || r), intNode, nullptr);
 
             default:
                 std::cout << "INTERNAL ERROR: binOp reached default in switch" << std::endl;
-                return Expression("", noneNode);
+                return Expression("", noneNode, nullptr);
         }
             
     } else if (left.type == intNode && left.type == intNode){ // result is int
@@ -237,29 +244,29 @@ Expression Expression::binOp(){
         int l = std::stoi(left.constant);
         int r = std::stoi(right.constant);
         switch(this->type){
-            case addNode: return Expression(std::to_string(l + r), intNode);
-            case subtractNode: return Expression(std::to_string(l - r), intNode);
-            case multiplyNode: return Expression(std::to_string(l * r), intNode);
-            case divideNode: return Expression(std::to_string(l / r), intNode);
-            case modulusNode: return Expression(std::to_string(l % r), intNode);
-            case greaterNode: return Expression(std::to_string(l > r), intNode);
-            case greaterOrEqualNode: return Expression(std::to_string(l >= r), intNode);
-            case lesserNode: return Expression(std::to_string(l < r), intNode);
-            case lesserOrEqualNode: return Expression(std::to_string(l <= r), intNode);
-            case equalNode: return Expression(std::to_string(l == r), intNode);
-            case nonEqualNode: return Expression(std::to_string(l != r), intNode);
-            case andNode: return Expression(std::to_string(l && r), intNode);
-            case orNode: return Expression(std::to_string(l || r), intNode);
+            case addNode: return Expression(std::to_string(l + r), intNode, nullptr);
+            case subtractNode: return Expression(std::to_string(l - r), intNode, nullptr);
+            case multiplyNode: return Expression(std::to_string(l * r), intNode, nullptr);
+            case divideNode: return Expression(std::to_string(l / r), intNode, nullptr);
+            case modulusNode: return Expression(std::to_string(l % r), intNode, nullptr);
+            case greaterNode: return Expression(std::to_string(l > r), intNode, nullptr);
+            case greaterOrEqualNode: return Expression(std::to_string(l >= r), intNode, nullptr);
+            case lesserNode: return Expression(std::to_string(l < r), intNode, nullptr);
+            case lesserOrEqualNode: return Expression(std::to_string(l <= r), intNode, nullptr);
+            case equalNode: return Expression(std::to_string(l == r), intNode, nullptr);
+            case nonEqualNode: return Expression(std::to_string(l != r), intNode, nullptr);
+            case andNode: return Expression(std::to_string(l && r), intNode, nullptr);
+            case orNode: return Expression(std::to_string(l || r), intNode, nullptr);
             
             default:
                 std::cout << "INTERNAL ERROR: binOp reached default in switch" << std::endl;
-                return Expression("", noneNode);
+                return Expression("", noneNode, nullptr);
         }
 
     } else {
         std::cout << "INTERNAL ERROR: binOp calculation used with unsuitable type:" << std::endl;
         std::cout << "Left: " << left.type << "; right: " << right.type << std::endl;
-        return Expression("", noneNode);
+        return Expression("", noneNode, nullptr);
     }
 }
 
@@ -294,11 +301,11 @@ Expression Expression::getAsConstant(){
         
         // constants
         case intNode:
-            return Expression(this->constant, intNode);
+            return Expression(this->constant, intNode, nullptr);
         case stringNode:
-            return Expression(this->constant, stringNode);
+            return Expression(this->constant, stringNode, nullptr);
         case realNode:
-            return Expression(this->constant, realNode);
+            return Expression(this->constant, realNode, nullptr);
 
         case identifierNode: {
             // in case of a let or sub, we can try to get value
@@ -311,9 +318,9 @@ Expression Expression::getAsConstant(){
                 if (subArgName != nullptr){
                     return subArgName->getReference()->getAsConstant();
                 }
-                return Expression("", noneNode);//todo temporary
+                return Expression("", noneNode, nullptr);//todo temporary
             } else {
-                return Expression("", noneNode);
+                return Expression("", noneNode, nullptr);
             }
         }
 
@@ -321,24 +328,24 @@ Expression Expression::getAsConstant(){
             Expression insideExpression = this->leftExpr->getAsConstant();
             switch(insideExpression.type){
                 case intNode: return insideExpression;
-                case realNode: return Expression(std::to_string((int)std::stod(insideExpression.constant)), intNode);
-                default: return Expression("", noneNode);
+                case realNode: return Expression(std::to_string((int)std::stod(insideExpression.constant)), intNode, nullptr);
+                default: return Expression("", noneNode, nullptr);
             }
         }
 
         case realCastNode: {
             Expression insideExpression = this->leftExpr->getAsConstant();
             switch(insideExpression.type){
-                case intNode: return Expression(std::to_string((double)std::stoi(insideExpression.constant)), realNode);
+                case intNode: return Expression(std::to_string((double)std::stoi(insideExpression.constant)), realNode, nullptr);
                 case realNode: return insideExpression;
-                default: return Expression("", noneNode);
+                default: return Expression("", noneNode, nullptr);
             }
         }
 
         // expression unsuitable for being a constant
         default:
             std::cout << "INTERNAL ERROR: getAsConstant returned noneNode (default)" << std::endl;
-            return Expression("", noneNode);
+            return Expression("", noneNode, nullptr);
     }
 }
 
@@ -408,13 +415,9 @@ std::vector<std::string> Expression::markAsDef(Vertex* currentVertex, int size){
         case nonEqualNode:
         case andNode:
         case orNode:{
-            reports.push_back(JsonReporter::create26(//todo
+            reports.push_back(JsonReporter::create26(
                 this->getExpr()->to_string(),
-                "",
-                "",
-                "",
-                currentVertex->getLine(),
-                "[]"
+                currentVertex
             ));
             return reports;
         }
@@ -440,25 +443,17 @@ std::vector<std::string> Expression::markAsDef(Vertex* currentVertex, int size){
                     return reports;
                 }
                 case forIteratorNameType: {//error
-                    reports.push_back(JsonReporter::create26(//todo
+                    reports.push_back(JsonReporter::create26(
                         this->getExpr()->to_string(),
-                        "",
-                        "",
-                        "",
-                        currentVertex->getLine(),
-                        "[]"
+                        currentVertex
                     ));
                     return reports;
                 }
                 
                 case whileIteratorNameType:{ //error
-                    reports.push_back(JsonReporter::create26(//todo
+                    reports.push_back(JsonReporter::create26(
                         this->getExpr()->to_string(),
-                        "",
-                        "",
-                        "",
-                        currentVertex->getLine(),
-                        "[]"
+                        currentVertex
                     ));
                     return reports;
                 }
@@ -472,13 +467,9 @@ std::vector<std::string> Expression::markAsDef(Vertex* currentVertex, int size){
                     return reports;
                 }
                 case mainArgNameType: {
-                    reports.push_back(JsonReporter::create26(//todo
+                    reports.push_back(JsonReporter::create26(
                         this->getExpr()->to_string(),
-                        "",
-                        "",
-                        "",
-                        currentVertex->getLine(),
-                        "[]"
+                        currentVertex
                     ));
                     return reports;
                 }
@@ -495,13 +486,9 @@ std::vector<std::string> Expression::markAsDef(Vertex* currentVertex, int size){
         case intCastNode:
         case realCastNode:
         case stringCastNode:
-            reports.push_back(JsonReporter::create26(//todo
+            reports.push_back(JsonReporter::create26(
                 this->getExpr()->to_string(),
-                "",
-                "",
-                "",
-                currentVertex->getLine(),
-                "[]"
+                currentVertex
             ));
             return reports;
 

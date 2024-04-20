@@ -175,7 +175,7 @@ bool IndexedDFName::isIndexable(){
     return true;
 }
 
-IndexedDFName::IndexedDFName(std::string name, Identifier* base, std::vector<Expression*> expressionsVector, std::vector<std::string>* errorReports){
+IndexedDFName::IndexedDFName(std::string name, Identifier* base, std::vector<Expression*> expressionsVector, std::vector<std::string>* errorReports, Vertex* currentVertex){
     this->name = name;
     this->type = indexedDFNameType;
 
@@ -186,7 +186,7 @@ IndexedDFName::IndexedDFName(std::string name, Identifier* base, std::vector<Exp
         this->base = base;
     } else {
         this->base = nullptr;
-        errorReports->push_back(JsonReporter::create36(name, "[]"));//todo
+        errorReports->push_back(JsonReporter::create36(name, currentVertex));
 
         std::cout << "INTERNAL ERROR: indexation of an unsuitable Identifier" << std::endl;
     }
@@ -224,13 +224,9 @@ std::vector<std::string> ForIteratorName::markAsDef(Vertex* currentVertex, int s
     std::cout << "INTERNAL ERROR: for iterator " << this->getName() << " is being marked as defined" << std::endl;
     // error (iterator should be marked as defined by ForVertex automatically)
     std::vector<std::string> reports = {};
-    reports.push_back(JsonReporter::create26(//todo
+    reports.push_back(JsonReporter::create26(
         this->getName(),
-        "",
-        "",
-        "",
-        0,
-        "[]"
+        currentVertex
     ));
     return reports;
 }
@@ -285,14 +281,9 @@ std::vector<std::string> WhileIteratorName::markAsDef(Vertex* currentVertex, int
     std::cout << "INTERNAL ERROR: while iterator " << this->getName() << " is being marked as defined" << std::endl;
     // error (iterator should be marked as defined by WhileVertex automatically)
     std::vector<std::string> reports = {};
-    //todo add line
-    reports.push_back(JsonReporter::create26(//todo
+    reports.push_back(JsonReporter::create26(
         this->getName(),
-        "",
-        "",
-        "",
-        0,
-        "[]"
+        currentVertex
     ));
     return reports;
 }
@@ -361,13 +352,9 @@ std::vector<std::string> MainArgName::markAsDef(Vertex* currentVertex, int size)
     defSet.insert(currentVertex);
     std::cout << "Main arg name " << this->getName() << " is being marked as defined" << std::endl;
     std::vector<std::string> reports = {};
-    reports.push_back(JsonReporter::create26(//todo
+    reports.push_back(JsonReporter::create26(
         this->getName(),
-        "",
-        "",
-        "",
-        0,
-        "[]"
+        currentVertex
     ));
     return reports;
 }
@@ -416,7 +403,7 @@ IndexedDFName* parseIndexedDFExpression(expr* expression, std::map<std::string, 
     if (base != nameTable.end()){
 
         if (base->second->isIndexable()){
-            IndexedDFName* temp = new IndexedDFName(baseName, base->second, expressionsVector, errorReports);
+            IndexedDFName* temp = new IndexedDFName(baseName, base->second, expressionsVector, errorReports, currentVertex);
             std::cout << "Created new IndexedDFName object with base name " << baseName << " and expressionsVector: ";
             std::cout << std::flush;
             for (auto e: temp->getExpressionsVector()){
@@ -427,9 +414,9 @@ IndexedDFName* parseIndexedDFExpression(expr* expression, std::map<std::string, 
         } else {
             std::cout << "INTERNAL ERROR: aborted creating new IndexedDFName object -- base is not indexable: " << baseName << std::endl;
             //std::string report = "ERROR: not indexable name \"" + baseName + "\" indexed at line " + std::to_string(line) + "\n";
-            errorReports->push_back(JsonReporter::create36(//todo
+            errorReports->push_back(JsonReporter::create36(
                 baseName,
-                "[]"
+                currentVertex
             ));
             return nullptr;
         }

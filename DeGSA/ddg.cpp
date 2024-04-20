@@ -244,18 +244,18 @@ class DDG {
                     else
                         rawArguments = {};
 
-
                     // create Expression objects for call args
-                    std::vector<Expression*> callArgs = {};
+                    /*std::vector<Expression*> callArgs = {};
                     for (int i = 0; i < rawArguments.size(); i++){
-                        Expression* expression = new Expression(rawArguments[i], declaredBothIdsMap, &errorReports, nullptr); // todo this is not cool
+                        //todo wrong vertex
+                        Expression* expression = new Expression(rawArguments[i], declaredBothIdsMap, &errorReports, vertex?);
                         callArgs.push_back(expression);
-                    }
+                    }*/
 
                     if (imports.find(nextCFName) != imports.end()){ // import VF
                         std::cout << "import" << std::endl;
 
-                        tempVertex = enterVF(declaredBothIdsMap, callArgs, nullptr, currentDepth + 1,
+                        tempVertex = enterVF(declaredBothIdsMap, rawArguments, nullptr, currentDepth + 1,
                             importVF, nextCFName, innerStatement->line_,
                             /* callerVertex */ currentVertex, innerStatement);
                         
@@ -265,7 +265,7 @@ class DDG {
                         auto m = subNameToArgsVector.find(nextCFName);
                         if (m != subNameToArgsVector.end()){
                             
-                            tempVertex = enterVF(declaredBothIdsMap, callArgs, (this->subNameToBlock)[nextCFName], currentDepth + 1,
+                            tempVertex = enterVF(declaredBothIdsMap, rawArguments, (this->subNameToBlock)[nextCFName], currentDepth + 1,
                                 subVF, nextCFName, innerStatement->line_,
                                 /* callerVertex */ currentVertex, innerStatement);
                             
@@ -350,13 +350,15 @@ class DDG {
         // enterVF must be called on a vertex (initially main() vertex). It parses imports and saves information about subs (using enterBlock());
         // for other VFs simply calls enterBlock(). enterVF() creats a corresponding vertex for each VF and keeps track of what DFs are use and defined and where exactly, and storing
         // this information in Use and Def sets of a vertice (this is later used in bindVertices() to fully create a graph)
-        // Name objects (except for SubArgNames) are being created in enterBlock(), Vertex objects are being created in enterVF()
-        Vertex* enterVF(std::map<std::string, Identifier*> declaredOutsideIdsMap, std::vector<Expression*> callArgs,
+        // Identifier objects (except for SubArgNames) and Expressions are being created in enterBlock(), Vertex objects are being created in enterVF()
+        Vertex* enterVF(std::map<std::string, Identifier*> declaredOutsideIdsMap, std::vector<expr*> callArgs,
                         block* currentBlock, int currentDepth, VertexType vertexType,
                         std::string name, int line, Vertex* callerVertex, statement* innerStatement){
 
             Vertex* currentVertex;
             vertexCount++; // we will create a Vertex itself later in a switch
+
+            std::vector<Expression*> expressionCallArgs = {};
 
             switch(vertexType){
 
@@ -370,13 +372,21 @@ class DDG {
                     std::cout << "Import entered" << std::endl;
                     for (int i = 0; i < callArgs.size(); i++){
 
+                        Expression* expression = new Expression(
+                            callArgs[i],
+                            declaredOutsideIdsMap,
+                            &errorReports,
+                            currentVertex
+                        );
+                        expressionCallArgs.push_back(expression);
+
                         switch(importAndPositionToUseDef[name][i + 1]){ // i + 1 because map's indices start from 1
                             case use:
-                                if (callArgs[i] != nullptr)
-                                    for (auto r: callArgs[i]->markAsUse(currentVertex, 0)) { errorReports.push_back(r); } break;
+                                if (expression != nullptr)
+                                    for (auto r: expression->markAsUse(currentVertex, 0)) { errorReports.push_back(r); } break;
                             case def:
-                                if (callArgs[i] != nullptr)
-                                    for (auto r: callArgs[i]->markAsDef(currentVertex, 0)) { errorReports.push_back(r); } break;
+                                if (expression != nullptr)
+                                    for (auto r: expression->markAsDef(currentVertex, 0)) { errorReports.push_back(r); } break;
                             default:
                                 std::cout << "INTERNAL ERROR: enterVF -- import: found DF with unexpected UseDef!" << std::endl;
                         }
@@ -421,7 +431,15 @@ class DDG {
                                     declaredNamesVector.push_back(mainArgName);
                                     nextDeclaredOutsideIdsMap.insert(std::make_pair(identifierDeclaredName, mainArgName));
                                 } else {
-                                    SubArgName* subArgName = new SubArgName(identifierDeclaredName, callArgs[i]);
+                                    Expression* expression = new Expression(
+                                        callArgs[i],
+                                        declaredOutsideIdsMap,
+                                        &errorReports,
+                                        currentVertex
+                                    );
+                                    expressionCallArgs.push_back(expression);
+
+                                    SubArgName* subArgName = new SubArgName(identifierDeclaredName, expression);
                                     subArgName->setVertex(currentVertex);
                                     declaredNamesVector.push_back(subArgName);
                                     nextDeclaredOutsideIdsMap.insert(std::make_pair(identifierDeclaredName, subArgName));
@@ -449,7 +467,7 @@ class DDG {
                     }
 
                     return enterBlock(subVF, currentBlock, currentVertex, nextDeclaredOutsideIdsMap,
-                        currentDepth, callArgs, declaredNamesVector, name);
+                        currentDepth, expressionCallArgs, declaredNamesVector, name);
                 }
 
                 case forVF: {
@@ -526,18 +544,7 @@ class DDG {
                         ((whileOutName->getType() != indexedDFNameType) && (whileOutName->getType() != subArgNameType))){
 
                         std::cout << "INTERNAL ERROR: unsuitable expression at while out name leads to nullpointer" << std::endl;
-
-                        this->errorReports.push_back(JsonReporter::create26(
-                            whileOutNameExpr->getExpr()->to_string(),
-                            "while",
-                            "struct",
-                            fileName,
-                            line,
-                            "[]"//todo callstack
-                        ));
-
                         whileOutName = nullptr;
-
                     }
 
                     // "while" out name is an IndexedDF that must be marked as "def"
@@ -561,6 +568,12 @@ class DDG {
                     if (whileOutName != nullptr){
                         for (auto r: whileOutName->markAsDef(currentVertex, 0)) { errorReports.push_back(r); }
                     }
+
+                    if (whileOutName == nullptr)
+                        this->errorReports.push_back(JsonReporter::create26(
+                            whileOutNameExpr->getExpr()->to_string(),
+                            currentVertex
+                        ));
 
                     return enterBlock(whileVF, currentBlock, currentVertex, declaredOutsideIdsMap,
                         currentDepth, {}, {}, "for");

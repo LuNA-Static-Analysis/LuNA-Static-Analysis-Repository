@@ -127,7 +127,13 @@ public:
 
     bool isIndexable();
 
-    IndexedDFName(std::string name, Identifier* base, std::vector<Expression*> expressionsVector, std::vector<std::string>* errorReports);
+    IndexedDFName(
+        std::string name,
+        Identifier* base,
+        std::vector<Expression*> expressionsVector,
+        std::vector<std::string>* errorReports,
+        Vertex* currentVertex
+    );
 
     ~IndexedDFName();
 

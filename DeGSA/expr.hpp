@@ -20,6 +20,7 @@ class Expression {
         Identifier* identifier; // nullptr if not an identifier (type will also be not "identifierNode")
         std::string constant; // int, string, real LuNA constant
         expr* ASTexpr;
+        Vertex* vertex;
 
     public:
 
@@ -35,15 +36,17 @@ class Expression {
 
         Expression getAsConstant();
 
+        Vertex* getVertex();
+
         std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
 
         std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
 
         bool isIndexable();
 
-        Expression(std::string constant, ExpressionType type);
+        Expression(std::string constant, ExpressionType type, Vertex* currentVertex);
 
-        Expression(expr* ASTexpr);
+        Expression(expr* ASTexpr, Vertex* currentVertex);
 
         Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTable, std::vector<std::string>* errorReports, Vertex* currentVertex);
 

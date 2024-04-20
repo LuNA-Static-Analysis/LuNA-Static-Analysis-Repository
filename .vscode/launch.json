@@ -6,7 +6,8 @@
         "request": "launch",
         "program": "${workspaceRoot}/a.out",
         "args": [
-            "prepr.fa"
+            "prepr.fa",
+            "debugPath/source.fa"
         ],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}",
