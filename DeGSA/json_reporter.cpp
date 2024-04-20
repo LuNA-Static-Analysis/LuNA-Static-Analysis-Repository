@@ -166,7 +166,6 @@ public:
         map.insert(std::make_pair("where", callStack));
         return createJson(map);
     }
-    //todo all of the above should be private
 
     // non-existing LuNA function
     static std::string create2(
@@ -236,7 +235,10 @@ public:
         std::string cfName
     ){
         std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("type", std::to_string(type)));//todo it works?
+        if (type)
+            map.insert(std::make_pair("type", "true"));
+        else
+            map.insert(std::make_pair("type", "false"));
         map.insert(std::make_pair("condition", condition));
         map.insert(std::make_pair("where", createCallStackEntry(fileName, std::to_string(line), cfName)));
         return createReport("LUNA23", createJson(map));
@@ -244,26 +246,35 @@ public:
 
     static std::string create26(
         std::string expression,
-        std::string cfName,
-        std::string cfType,
-        std::string fileName,
-        int line,
-        std::string callstack
+        Vertex* vertex
     ){
         std::map<std::string, std::string> map = {};
         map.insert(std::make_pair("expression", expression));
-        map.insert(std::make_pair("cf", createCF(cfName, cfType, fileName, line)));
-        map.insert(std::make_pair("callstack", callstack));
+        if(vertex->getVertexType() == importVF)
+            map.insert(std::make_pair("cf", createCF(
+                vertex->getName(),
+                "extern",
+                vertex->getFileName(),
+                vertex->getLine()
+            )));
+        else
+            map.insert(std::make_pair("cf", createCF(
+                vertex->getName(),
+                "struct",
+                vertex->getFileName(),
+                vertex->getLine()
+            )));
+        map.insert(std::make_pair("callstack", createCallstackFromVertex(vertex)));
         return createReport("LUNA26", createJson(map));
     }
 
     static std::string create36(
         std::string expression,
-        std::string callstack
+        Vertex* vertex
     ){
         std::map<std::string, std::string> map = {};
         map.insert(std::make_pair("expression", expression));
-        map.insert(std::make_pair("callstack", callstack));
+        map.insert(std::make_pair("callstack", createCallstackFromVertex(vertex)));
         return createReport("LUNA36", createJson(map));
     }
 

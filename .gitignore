@@ -21,3 +21,9 @@ found_errors.json
 temp.json
 c_cpp_properties.json
 settings.json
+.adapt
+.luna-build
+.prolog-analyzer
+a.out
+build
+bin
