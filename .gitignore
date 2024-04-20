@@ -6,7 +6,7 @@ DeGSA/grammar.tab.hpp
 DeGSA/lex.yy.c
 DeGSA/lex.yy.cpp
 DeGSA/output.txt
-adapt.out
+bin/ast-ddg-analyzer
 grammar.tab.cpp
 grammar.tab.hpp
 lex.yy.c

@@ -17,10 +17,8 @@ Expression = NewType('Expression', dict[str, Any])
 
 
 class TextInfo:
-    def __init__(self, project_dir: Path, text_info_json: dict) -> None:
-        self._project_dir: Path = project_dir
+    def __init__(self, text_info_json: dict) -> None:
         self._text_info: dict = text_info_json
-        self._source_lines: dict[Path, list[str]] = {}
 
     def file_name(self, position: int) -> str:
         fid, _, _, _ = self._text_info['text'][position]
@@ -31,17 +29,6 @@ class TextInfo:
     def line_number(self, position: int) -> int:
         _, ln, _, _ = self._text_info['text'][position]
         return ln + 1
-
-    def code_line(self, position: int) -> str:
-        path = self._project_dir / self.file_name(position)
-        line_index = self.line_number(position) - 1
-
-        if path not in self._source_lines:
-            with path.open(mode='rt') as f:
-                self._source_lines[path] = f.readlines()
-
-        line = self._source_lines[path][line_index].strip().strip('{;').strip().strip('@')
-        return line
 
     def file_and_line(self, position: int) -> (str, int):
         return self.file_name(position), self.line_number(position)
@@ -375,54 +362,49 @@ def ja2pro(ja: JsonAlgorithm, text_info: TextInfo) -> Iterable[str]:
     )
 
 
-PROGRAM_FILE_NAME: Final = 'program_recom.ja'
-TEXT_INFO_FILE_NAME: Final = 'preprocessed.fa.ti'
-
-
 @click.command()
 @click.option(
-    '--project-dir',
+    '--json-algorithm',
     required=True,
-    help='LuNA project directory.',
-    type=Path
+    help='LuNA program in .ja format.',
+    type=click.Path(
+        exists=True,
+        dir_okay=False,
+        path_type=Path
+    ),
 )
 @click.option(
-    '--build-dir',
-    required=False,
-    help='LuNA project build directory.',
-    type=Path,
-    default=Path('bin')
+    '--text-info',
+    required=True,
+    help='Text info file.',
+    type=click.Path(
+        exists=True,
+        dir_okay=False,
+        path_type=Path
+    ),
 )
 @click.option(
     '-o',
     required=False,
+    show_default=True,
     help='Output file.',
     type=Path,
     default=Path('generated') / 'out.pro'
 )
 def main(
-        project_dir: Path,
-        build_dir: Path,
+        json_algorithm: Path,
+        text_info: Path,
         o: Path
 ) -> None:
-    if not build_dir.is_absolute():
-        build_dir = project_dir / build_dir
-
-    if not build_dir.exists():
-        exit(f'Build directory "{build_dir.absolute()}" does not exist')
-
-    if not build_dir.is_dir():
-        exit(f'"{build_dir.absolute()}" is not a directory')
-
-    with (build_dir / PROGRAM_FILE_NAME).open(mode='rt', encoding='utf-8') as program_file:
+    with json_algorithm.open(mode='rt', encoding='utf-8') as program_file:
         program: JsonAlgorithm = json.load(program_file)
 
-    with (build_dir / TEXT_INFO_FILE_NAME).open(mode='rt', encoding='utf-8') as text_info_file:
-        text_info = TextInfo(project_dir, json.load(text_info_file))
+    with text_info.open(mode='rt', encoding='utf-8') as text_info_file:
+        ti = TextInfo(json.load(text_info_file))
 
     o.parent.mkdir(parents=True, exist_ok=True)
     with o.open(mode='wt') as f:
-        for fact in ja2pro(program, text_info):
+        for fact in ja2pro(program, ti):
             print(fact, file=f)
 
 
