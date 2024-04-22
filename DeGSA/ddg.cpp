@@ -78,25 +78,27 @@ class DDG {
                     std::cout << importName << std::endl;
                     (this->imports).insert(importName); // save import for using it later
 
-                    std::vector<code_df_param*>* importArgs = importDecl->params_->seq_->params_;
-                    int argPosition = 0;
-                    for (auto arg: *importArgs){
+                    if (importDecl->params_->seq_ != nullptr){
+                        std::vector<code_df_param*>* importArgs = importDecl->params_->seq_->params_;
+                        int argPosition = 0;
+                        for (auto arg: *importArgs){
 
-                        argPosition++; // importAndPositionToUseDef's positions start with 1
-                        std::string argType = arg->type_->to_string();
+                            argPosition++; // importAndPositionToUseDef's positions start with 1
+                            std::string argType = arg->type_->to_string();
 
-                        if (argType == "name") { // def
+                            if (argType == "name") { // def
 
-                            std::cout << argPosition << " arg is def-arg\n";
-                            importAndPositionToUseDef[importName][argPosition] = def;
+                                std::cout << argPosition << " arg is def-arg\n";
+                                importAndPositionToUseDef[importName][argPosition] = def;
 
-                        } else { // use
+                            } else { // use
 
-                            std::cout << argPosition << " arg is use-arg\n";
-                            importAndPositionToUseDef[importName][argPosition] = use;
+                                std::cout << argPosition << " arg is use-arg\n";
+                                importAndPositionToUseDef[importName][argPosition] = use;
 
+                            }
+                            
                         }
-                        
                     }
 
                 } else {

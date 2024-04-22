@@ -1,27 +1,16 @@
-import printfl(real) as print;
-import c_init_float(real, name) as init;
-sub main(real mainArg){
-        df a;
-        print(mainArg);
-        foo(a);
-}
-
-sub foo(real f){
-        df one;
-        for i = 1..2 {
-                df two;
-                while (128 < 129), j = 0 .. out f {
-                        df three;
-                        if 11 < 22 {
-                                df four;
-                                let x = f[j] {
-                                        df five;
-                                        init(1, x);
-                                        print(x);
-                                        init(1, x[i]);
-                                        print(x[i]);
-                                }
-                        }
-                }
+import printint(int) as print;
+import c_init_int(int, name) as init;
+sub main(){
+        df duplicateDef, nonDefUsed, unused, sameName, sameName;
+        nonexisting();
+        init(1, duplicateDef);
+        init(2, duplicateDef);
+        print(nonDefUsed);
+        if(1){
+                init(3, undeclared);
+        }
+        let unindexable = 1, uninitializable = 1{
+                init(1, uninitializable);
+                print(unindexable[1]);
         }
 }
