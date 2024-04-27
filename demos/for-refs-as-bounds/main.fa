@@ -1,0 +1,19 @@
+import c_init(name, int) as init;
+import c_print(int) as print;
+
+sub init_1(name arr, int ind) {     
+    init(arr[ind], 0);                     
+}
+
+sub main() {                            
+    df x, y, z, t, k, N, LOWER, UPPER;
+
+    for i = N[LOWER]..N[UPPER] { init_1(x, 5*i+5); }
+    for i = N[UPPER]..N[UPPER]+10 { init_1(x, 5*i+5); }
+
+    for j = N[LOWER]-1..N[UPPER]+1 {
+        for n = x[j]..x[j]+5 {
+            print(n);
+        }
+    }
+}

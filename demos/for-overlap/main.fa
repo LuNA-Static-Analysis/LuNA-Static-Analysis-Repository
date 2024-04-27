@@ -1,0 +1,25 @@
+import c_init(name, int) as init;
+import c_print(value) as print;
+
+sub init_1(name arr, int ind) {     
+    init(arr[ind], 0);                     
+}
+
+sub main() {                            
+    df x, y, z, t, k, N, M;
+
+    for i = 0..10 { init_1(x, 5*i+5); }
+    for i = 11..20 { init_1(x, 5*i+5); }
+
+    for i = 0..N { init_1(k, 5*i+5); }
+    for i = M..20 { init_1(k, 5*i+5); }
+
+    for i = N..N+100 { init_1(t, i); }
+    for j = N+101..N+200 { init_1(t, j); }
+
+    for i = 0..N { init_1(y, i + 1); }
+    for i = N+1..N+10 { init_1(y, i); }
+
+    for i = N..N+10 { init(z[2*i+3], 0); }
+    for j = N+11..N+20 { init(z[j], 0); }
+}

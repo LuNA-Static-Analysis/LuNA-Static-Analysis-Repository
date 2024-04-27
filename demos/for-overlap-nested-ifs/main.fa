@@ -1,0 +1,28 @@
+import c_print(int) as print;
+import c_init(name, int) as init;
+
+sub maybe_init_greater(int N, int thresh, name x) {
+    if N > thresh {
+        for i = 0..N {
+            init(x[i], 2*i);
+        }
+    }
+}
+
+sub maybe_init_less_or_equal(int val, int maxVal, name n) {
+    if val <= maxVal {
+        for j = 0..val {
+            init(n[j], 2*j);
+        }
+    }
+}
+
+sub main() {
+    df x, y, N;
+
+    if x { maybe_init_greater(N, 10, x); }
+    if x { maybe_init_less_or_equal(N, 10, x); }
+
+    if y { maybe_init_greater(N, 15, y); }
+    if y { maybe_init_less_or_equal(N, 7, y); }
+}
