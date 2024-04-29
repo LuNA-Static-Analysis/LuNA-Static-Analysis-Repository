@@ -96,13 +96,13 @@ int main(int argc, char **argv){
         error_reporter reporter = error_reporter();
 
         std::vector<base_analyzer *> analyzers = {
-            new undeclarated_names_analyzer(ast_, yyin, &reporter),
-            new unused_names_analyzer(ast_, yyin, &reporter),
-            new shadow_import_analyzer(ast_, yyin, &reporter),
-            new existance_main_analyzer(ast_, yyin, &reporter),
-            new cf_redecl_analyzer(ast_, yyin, &reporter),
-            new undecl_func_analyzer(ast_, yyin, &reporter),
-            new df_redecl_analyzer(ast_, yyin, &reporter)
+            new undeclarated_names_analyzer(ast_, yyin, &reporter, realLunaSource),
+            new unused_names_analyzer(ast_, yyin, &reporter, realLunaSource),
+            new shadow_import_analyzer(ast_, yyin, &reporter, realLunaSource),
+            new existance_main_analyzer(ast_, yyin, &reporter, realLunaSource),
+            new cf_redecl_analyzer(ast_, yyin, &reporter, realLunaSource),
+            new undecl_func_analyzer(ast_, yyin, &reporter, realLunaSource),
+            new df_redecl_analyzer(ast_, yyin, &reporter, realLunaSource)
         };
 
         for (auto a : analyzers) {

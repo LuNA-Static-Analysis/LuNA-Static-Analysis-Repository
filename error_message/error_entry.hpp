@@ -49,8 +49,6 @@ public:
   }
 };
 
-
-
 class call_stack : public serializiable {
 public:
   std::vector<call_stack_entry> call_stack_entries_;
@@ -62,6 +60,9 @@ public:
   call_stack(call_stack_entry cse) {
     add_call_stack_entry(cse);
   }
+
+  call_stack() = default;
+
 
   std::string to_json() const override{
     std::stringstream s;
@@ -150,6 +151,7 @@ public:
   }
 };
 
+
 class df : public serializiable {
 public:
   std::string name_;
@@ -196,12 +198,42 @@ public:
   }
 };
 
-class details : public serializiable{
+class for_entry : public serializiable {
+public:
+  std::string var;
+  std::string first;
+  std::string last;
+  call_stack where;
+
+  for_entry(std::string var, std::string first, std::string last, call_stack cs) : 
+          var(var), 
+          first(first), 
+          last(last), 
+          where(cs) {}
+
+  for_entry() = default; 
+
+  std::string to_json() const override {
+    std::stringstream s;
+
+    s << "{" 
+    << "\"var\" : " << "\"" << var << "\"" << ","
+    << "\"first\" : " << "\"" << first << "\"" << ","
+    << "\"last\" : " << "\"" << last << "\"" << ","
+    << "\"where\" : [" << where.to_json() << "]"
+    << "}";
+
+    return s.str();
+  }
+};
+
+class details : public serializiable {
 public:
   std::vector<df> dfs;
   std::vector<cf> cfs;
   std::vector<call_stack_entry> cse;
   std::vector<std::string> exprs;
+  for_entry f;
   std::string error_code;
 
   void add_df(df d) {
@@ -218,6 +250,10 @@ public:
 
   void add_expression(std::string e) {
     exprs.push_back(e);
+  }
+
+  void set_for(for_entry f) {
+    this->f = f;
   }
 
   details() = default;
@@ -244,6 +280,9 @@ public:
 
     len = exprs.size();
     s << (len != 0 ? "\"expr\" : " + exprs.at(0) : "");
+
+    s << (f.var != "" && len != 0 ? "," : " ");
+    s << (f.var != "" ? ("\"for\" :" + f.to_json()) : "");
 
     s << "}";
 

@@ -1,0 +1,22 @@
+import c_a() as a;
+import c_b() as a;
+
+import c_bad_types(int a) as bad_types;
+import c_bad_number_of_args(int) as bad_number_of_args;
+
+sub main() {
+  no_such_cf();
+
+  main();
+
+  for i=10..1 {
+    main();
+  }
+
+  bad_types("hello");
+}
+
+sub main() {
+  df x;
+  main(x);
+}
