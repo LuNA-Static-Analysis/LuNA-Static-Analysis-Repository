@@ -1,0 +1,7 @@
+import c_init() as init;
+
+sub main() {
+  for i=1.1..N {
+    init();
+  } 
+}

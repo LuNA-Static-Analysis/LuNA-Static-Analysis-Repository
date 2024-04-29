@@ -6,10 +6,11 @@
 
 class shadow_import_analyzer : public base_analyzer {
 public:
-    shadow_import_analyzer(ast* ast_, FILE* yyin, error_reporter* reporter)  {
+    shadow_import_analyzer(ast* ast_, FILE* yyin, error_reporter* reporter, std::string luna_source)  {
         this->ast_ = ast_;
         this->file_ = yyin;
         this->reporter_ = reporter;
+        this->real_luna_source_ = luna_source;
     }
 
     bool analyze() override {
