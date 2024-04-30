@@ -1,0 +1,64 @@
+import c_init(name, int) as init;
+import c_print(int) as print;
+
+sub init_if(name a, int low, int high, int cond) {
+    if cond {
+        for idx = low..high {
+            init(a[idx], idx);
+        }
+    }
+}
+
+sub main() {
+    df x, y, z, t, N, M;
+
+    // x - missing indices are always initialized
+    init(x[0], 0);
+    init(x[1], 1);
+
+    init(x[N], N);
+
+    for i = 2..N-1 { init(x[i], i); }
+    for j = 0..N { print(x[j]); }
+
+    // z - missing indices are initialized under the same/weaker condition
+    if N > 42 || x[0] == 7 {
+        init(z[2*N], 0);
+    }
+
+    if 120/3+2 < N+0*y {
+        init(z[(2*N+2)-1], 1);
+        init(z[2*N+2], 2);
+    }
+
+    init_if(z, 2*N+3, 2*N+10, 42 < N && y);
+
+    if y && N > 42 {
+        for j = 2*N..2*N+10 { print(z[j]); }
+    }
+
+    // y - some indices are not initialized
+    init(y[0], 0);
+    init(y[5], 5);
+    init(y[M], M);
+
+    for k = 2..N-1 { init(y[k], k); }
+    for t = 0..N { print(y[t]); }
+
+    // t - some indices are initialized under different/stronger conditions
+    if x && y && x[0] != y[0] {
+        init(t[0], 0);
+    }
+
+    if z {
+        init(t[M], M);
+    }
+
+    if x {
+        init_if(t, 1, M-1, y);
+    }
+
+    if y && x {
+        for j = 0..M { print(t[j]); }
+    }
+}

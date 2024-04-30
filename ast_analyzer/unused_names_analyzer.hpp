@@ -4,8 +4,8 @@
 class unused_names_analyzer : public undeclarated_names_analyzer {
 
 public:
-    unused_names_analyzer(ast* ast_, FILE* yyin, error_reporter* reporter) 
-                : undeclarated_names_analyzer(ast_, yyin, reporter) {}
+    unused_names_analyzer(ast* ast_, FILE* yyin, error_reporter* reporter, std::string luna_source) 
+                : undeclarated_names_analyzer(ast_, yyin, reporter, luna_source) {}
 
     bool analyze() override {
         return analyze_unused_variables();

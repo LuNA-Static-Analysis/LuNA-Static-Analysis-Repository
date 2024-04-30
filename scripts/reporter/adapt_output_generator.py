@@ -283,8 +283,11 @@ def report_error(
             output_file.write((templates_map[error_code] + "\n\n"))
         case 33:  # TODO
             output_file.write((templates_map[error_code] + "\n\n"))
-        case 34:  # TODO
-            output_file.write((templates_map[error_code] + "\n\n"))
+        case 34: 
+            output_file.write(
+                (templates_map[error_code] + '\n')
+                .replace('$callstack', get_callstack_entry(error['details']['call_stack_entry'], text_info))
+            )
         case 35:
             output_file.write(
                 (templates_map[error_code] + '\n')
@@ -315,6 +318,23 @@ def report_error(
                     .replace('$initialization_loop', get_index_range(initialized, text_info))
                 )
             output_file.write('\n')
+
+        case 38:
+            output_file.write(
+                (templates_map[error_code] + '\n')
+                .replace('$callstack', get_callstack(error['details']['for']['where'], text_info))
+                .replace('$var', error['details']['for']['var'])
+                .replace('$first', error['details']['for']['first'])
+                .replace('$last', error['details']['for']['last'])
+            )
+        case 39:
+            output_file.write(
+                (templates_map[error_code] + '\n')
+                .replace('$callstack', get_callstack(error['details']['for']['where'], text_info))
+                .replace('$var', error['details']['for']['var'])
+                .replace('$first', error['details']['for']['first'])
+                .replace('$last', error['details']['for']['last'])
+            )
         case _:
             print("INTERNAL ERROR: unknown error code encountered")
 

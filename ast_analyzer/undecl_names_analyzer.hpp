@@ -9,10 +9,11 @@
 
 class undeclarated_names_analyzer : public base_analyzer {
 public:
-    undeclarated_names_analyzer(ast* ast_, FILE* yyin, error_reporter* reporter) {
+    undeclarated_names_analyzer(ast* ast_, FILE* yyin, error_reporter* reporter, std::string luna_source) {
         this->ast_ = ast_;
         this->file_ = yyin;
         this->reporter_ = reporter;
+        this->real_luna_source_ = luna_source;
     }
 
     std::string get_name() override {
@@ -268,9 +269,14 @@ public:
         expr* e2 = for_stat->expr_2_;
 
         if (is_real(e2->to_string()) || is_string(e2->to_string()) || is_real(e1->to_string()) || is_string(e1->to_string())) {
-            details d = details("00");
-            d.add_expression(e1->to_string());
-            d.add_expression(e2->to_string());
+            details d = details("39");
+
+            d.set_for(for_entry(
+                for_stat->name_->to_string(), 
+                e1->to_string(), 
+                e2->to_string(),
+                call_stack(call_stack_entry(get_file(), for_stat->line_, ""))
+            ));
             reporter_->report_json(d);
         }
 
@@ -279,9 +285,13 @@ public:
             int r = std::stoi(e2->to_string());
 
             if (r < l) {
-                details d = details("00");
-                d.add_expression(e1->to_string());
-                d.add_expression(e2->to_string());
+                details d = details("38");
+                d.set_for(for_entry(
+                    for_stat->name_->to_string(), 
+                    e1->to_string(), 
+                    e2->to_string(),
+                    call_stack(call_stack_entry(get_file(), for_stat->line_, ""))
+                ));
                 reporter_->report_json(d);
             }
         }

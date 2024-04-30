@@ -15,17 +15,17 @@ public:
     virtual ~base_analyzer() {}
     virtual std::string get_name() = 0;
 
-
 protected:
     static const int FSEEK_ERROR = -1;
     FILE* file_;
     ast* ast_;
     error_reporter* reporter_;
+    std::string real_luna_source_;
 
     std::string current_cf;
 
     std::string get_file() {
-        return "todo.fa";
+        return real_luna_source_;
     }
 
     std::string get_line_from_file(uint num) {

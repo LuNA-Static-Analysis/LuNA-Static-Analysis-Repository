@@ -1,0 +1,6 @@
+sub main() {
+  main();
+  for i=1..N {
+    main();
+  } 
+}

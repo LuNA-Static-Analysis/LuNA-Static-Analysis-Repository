@@ -31,8 +31,11 @@
   "31": "error[LUNA31]: No \"nfparam\" value given.",
   "32": "error[LUNA32]: Attempt to request DF from node where it is not present.",
   "33": "error[LUNA33]: Unfitting parameter for \"nfparam\".",
-  "34": "error[LUNA34]: Unconditional recursion.",
+  "34": "error[LUNA34]: Unconditional recursion.\n- Callstack:\n$callstack",
   "35": "warning[LUNA35]: Possible overlap of initialization loops for DF $df_name.\nInitialized:\n$initialization_loop1Also here:\n$initialization_loop2",
   "36": "error[LUNA36]: Attempt to index an identifier $expr that is not a DF.\n- Callstack:\n$callstack",
-  "37": "warning[LUNA37]: No guaranteed initialization loop for DF $df_name.\nUsed$use_conditions:\n$consumption_loop"
+  "37": "warning[LUNA37]: No guaranteed initialization loop for DF $df_name.\nUsed$use_conditions:\n$consumption_loop",
+  "38": "warning[LUNA38]: Invalid loop boundaries. \n -For: It: \"$var\". First: \"$first\". Last: \"$last\". \n- Callstack:\n$callstack",
+  "39": "warning[LUNA39]: Using non-integer variables within loop boundaries. \n- For: It: \"$var\". First: \"$first\". Last: \"$last\". \n- Callstack:\n$callstack"
+   
 }

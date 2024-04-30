@@ -2,22 +2,26 @@
 
 ## Установка
 
-#### 1. Установка зависимостей
+#### 1. Клонирование репозитория
+   1. `git clone [URL данного репозитория]`
+
+#### 2. Установка зависимостей
+   0. `apt-get update` (рекомендуется)
    1. flex (`sudo apt-get install flex`)
    2. bison (`sudo apt-get install bison`)
    3. `g++` с поддержкой `C++20` или выше (`sudo apt-get install g++`)
-   4. [SWI-Prolog](https://www.swi-prolog.org/download/stable)
-   5. [LuNA](https://gitlab.ssd.sscc.ru/luna/luna)
-   6. [Python3.10+](https://www.python.org/downloads/)
+   4. [SWI-Prolog](https://www.swi-prolog.org/download/stable) (`sudo apt-get install swi-prolog`)
+   5. [LuNA](https://gitlab.ssd.sscc.ru/luna/luna) TODO получше описать
+   6. [Python3.10+](https://www.python.org/downloads/) TODO получше описать 
    7. [requirements.txt](requirements.txt) (`python3 -m pip install -r requirements.txt`) 
 
-#### 2. Сборка проекта 
+#### 3. Сборка проекта 
 
 В корне проекта выполнить `make`.
 
-#### 3. Переменные окружения
-   1. Установить `ADAPT_HOME` в путь к проекту;
-   2. Добавить `$ADAPT_HOME/bin` в `PATH`.
+#### 4. Переменные окружения
+   1. Установить `ADAPT_HOME` в путь к проекту; TODO получше описать
+   2. Добавить `$ADAPT_HOME/bin` в `PATH`. TODO получше описать
 
 ## Использование
 

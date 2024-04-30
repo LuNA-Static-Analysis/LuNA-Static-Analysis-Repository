@@ -3,10 +3,11 @@
 
 class undecl_func_analyzer : public base_analyzer {
 public:
-    undecl_func_analyzer(ast* ast_, FILE* yyin, error_reporter* reporter)  {
+    undecl_func_analyzer(ast* ast_, FILE* yyin, error_reporter* reporter, std::string luna_source)  {
         this->ast_ = ast_;
         this->file_ = yyin;
         this->reporter_ = reporter;
+        this->real_luna_source_ = luna_source;
     }
 
     bool analyze() override {
@@ -64,7 +65,7 @@ public:
                 std::vector<luna_string> cfs = get_cfs(luna_sub_def_decl->block_);
                 for (auto i : cfs) {
                     if (i.to_string() == luna_sub_def_decl->code_id_->to_string()) {
-                        details detail = details("00");
+                        details detail = details("34");
                         detail.add_call_stack_entry(call_stack_entry(get_file(), i.line_, current_cf));
                         reporter_->report_json(detail);
                     }
