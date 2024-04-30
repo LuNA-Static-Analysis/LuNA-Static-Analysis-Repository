@@ -1,0 +1,19 @@
+import c_print(int) as print;
+import c_init(name, int) as init;
+
+sub main() {
+    df x, y, N;
+
+    init(x, 42);
+    init(N, 10);
+
+    if 0 < x < N {
+        print(x);
+    }
+
+    init(N, 1 + x[42][x < y][7 * (y == x)]);
+
+    if 0 < x && x < N {
+        print(x);
+    }
+}
