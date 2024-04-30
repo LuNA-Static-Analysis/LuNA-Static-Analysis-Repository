@@ -1,6 +1,17 @@
-import c_foo() as foo;
-
-sub main() {
-        df x; // warning
-        foo();
+import printint(int) as print;
+import c_init_int(int, name) as init;
+sub main(){
+        df duplicateInitName, nonDefUsedName, unusedName;
+        init(1, duplicateInitName);
+        init(2, duplicateInitName);
+        print(nonDefUsedName);
+        let constOne = 1, nonIndexableName = 2{
+                foo(constOne);
+                init(1, nonIndexableName[1]);
+        }
+}
+sub foo(name f){
+    if (f){
+        print(f);
+    }
 }
