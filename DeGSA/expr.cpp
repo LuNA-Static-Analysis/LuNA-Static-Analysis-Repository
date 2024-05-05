@@ -239,8 +239,7 @@ Expression Expression::binOp(){
                 return Expression("", noneNode, nullptr);
         }
             
-    } else if (left.type == intNode && left.type == intNode){ // result is int
-
+    } else if (left.type == intNode && right.type == intNode){ // result is int
         int l = std::stoi(left.constant);
         int r = std::stoi(right.constant);
         switch(this->type){
@@ -336,7 +335,9 @@ Expression Expression::getAsConstant(){
         case realCastNode: {
             Expression insideExpression = this->leftExpr->getAsConstant();
             switch(insideExpression.type){
-                case intNode: return Expression(std::to_string((double)std::stoi(insideExpression.constant)), realNode, nullptr);
+                case intNode: {
+                    return Expression(std::to_string((double)std::stoi(insideExpression.constant)), realNode, nullptr);
+                }
                 case realNode: return insideExpression;
                 default: return Expression("", noneNode, nullptr);
             }

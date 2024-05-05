@@ -123,7 +123,7 @@ int main(int argc, char **argv){
     }
 
     if (launchDeGSA){
-        std::ofstream degsaOutputFile("degsa_output.txt");
+        std::ofstream degsaOutputFile("adapt_degsa_output.txt");
         DDG ddg(ast_, &degsaOutputFile, realLunaSource);
         degsaOutputFile << "\nTime to build AST: " << (double)astBuildTotal / 1000000000 << " seconds" << std::endl;
     }

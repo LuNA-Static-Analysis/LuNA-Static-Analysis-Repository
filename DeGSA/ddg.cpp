@@ -766,7 +766,7 @@ class DDG {
                     Expression conditionConstant = ifVertex->getConditionExpr()->getAsConstant();
                     if (conditionConstant.getType() != noneNode){
                         switch(conditionConstant.getType()){
-                            case realNode:
+                            case realNode: {
                                 if (std::stod(conditionConstant.getConstant()) == 0){
                                     this->errorReports.push_back(JsonReporter::create23(
                                         false,
@@ -785,8 +785,10 @@ class DDG {
                                     ));
                                 }
                                 continue;
-                            case intNode:
-                                if (std::stoi(conditionConstant.getConstant()) == 0) {
+                            }
+                            case intNode: {
+                                std::string conditionConstantString = conditionConstant.getConstant();
+                                if (std::stoi(conditionConstantString) == 0) {
                                     this->errorReports.push_back(JsonReporter::create23(
                                         false,
                                         ifVertex->getConditionExpr()->getExpr()->to_string(),
@@ -804,6 +806,7 @@ class DDG {
                                     ));
                                 }
                                 continue;
+                            }
                             default:
                                 std::cout << "INTERNAL ERROR: checkConstantConditions reached default at if" << std::endl;
                         }
@@ -834,8 +837,9 @@ class DDG {
                                     ));
                                 }
                                 continue;
-                            case intNode:
-                                if (std::stoi(conditionConstant.getConstant()) == 0) {
+                            case intNode: {
+                                std::string conditionConstantString = conditionConstant.getConstant();
+                                if (std::stoi(conditionConstantString) == 0) {
                                     this->errorReports.push_back(JsonReporter::create23(
                                         false,
                                         whileVertex->getConditionExpr()->getExpr()->to_string(),
@@ -853,6 +857,7 @@ class DDG {
                                     ));
                                 }
                                 continue;
+                            }
                             default:
                                 std::cout << "INTERNAL ERROR: checkConstantConditions reached default at while" << std::endl;
                         }

@@ -19,7 +19,7 @@ ast* ast_ = new ast();
 
 int main(int argc, char** argv) {
 
-    std::ofstream outputFile("output.txt");
+    std::ofstream outputFile("debug_launch_degsa_output.txt");
 
     auto astBuildStart = std::chrono::steady_clock::now();
 
