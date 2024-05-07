@@ -23,6 +23,8 @@ class TextInfo:
 
     def line_number(self, position: int) -> int:
         _, ln, _, _ = self._text_info['text'][position]
+        if ln is None:
+            ln = 0
         return ln + 1
 
     def code_line(self, line_number: int) -> str:
