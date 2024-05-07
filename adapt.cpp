@@ -65,6 +65,7 @@ int main(int argc, char **argv){
     std::ofstream outputFile(outputFileName);//todo perhaps need to add name check
 
     auto astBuildStart = std::chrono::steady_clock::now();
+    auto astBuildStartSystem = std::chrono::system_clock::now();
 
     yyin = fopen(inputFileName, "r");
 
@@ -77,8 +78,10 @@ int main(int argc, char **argv){
     yyparse();
 
     auto astBuildEnd = std::chrono::steady_clock::now();
+    auto astBuildEndSystem = std::chrono::system_clock::now();
 
     auto astBuildTotal = std::chrono::duration_cast<ns>(astBuildEnd - astBuildStart).count();
+    auto astBuildTotalSystem = std::chrono::duration_cast<ns>(astBuildEndSystem - astBuildStartSystem).count();
 
     std::cerr << "Parse successfully completed" << std::endl;
 
@@ -126,6 +129,7 @@ int main(int argc, char **argv){
         std::ofstream degsaOutputFile("adapt_degsa_output.txt");
         DDG ddg(ast_, &degsaOutputFile, realLunaSource);
         degsaOutputFile << "\nTime to build AST: " << (double)astBuildTotal / 1000000000 << " seconds" << std::endl;
+        degsaOutputFile << "\nTime to build AST (system): " << (double)astBuildTotalSystem / 1000000000 << " seconds" << std::endl;
     }
 
     delete ast_;

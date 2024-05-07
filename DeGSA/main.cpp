@@ -22,6 +22,7 @@ int main(int argc, char** argv) {
     std::ofstream outputFile("debug_launch_degsa_output.txt");
 
     auto astBuildStart = std::chrono::steady_clock::now();
+    auto astBuildStartSystem = std::chrono::system_clock::now();
 
     if (argc < 2) {
         std::cout << "INTERNAL ERROR: Bad number of args. Usage: ./a.out [LuNA program]" << std::endl;
@@ -38,13 +39,16 @@ int main(int argc, char** argv) {
     yyparse();
 
     auto astBuildEnd = std::chrono::steady_clock::now();
+    auto astBuildEndSystem = std::chrono::system_clock::now();
     auto astBuildTotal = std::chrono::duration_cast<ns>(astBuildEnd - astBuildStart).count();
+    auto astBuildTotalSystem = std::chrono::duration_cast<ns>(astBuildEndSystem - astBuildStartSystem).count();
 
     // &std::cout for console output
     //todo
     std::string fileName = argv[2];
     DDG ddg(ast_, &outputFile, fileName);
     outputFile << "\nTime to build AST: " << (double)astBuildTotal / 1000000000 << " seconds" << std::endl;
+    outputFile << "\nTime to build AST (system): " << (double)astBuildTotalSystem / 1000000000 << " seconds" << std::endl;
 
     delete ast_;
     fclose(yyin);

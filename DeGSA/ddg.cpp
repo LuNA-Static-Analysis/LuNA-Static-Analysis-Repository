@@ -885,6 +885,7 @@ class DDG {
         DDG(ast* astObjectIn, std::ostream* outputTarget, std::string fileName){
 
             auto graphBuildStart = std::chrono::steady_clock::now();
+            auto graphBuildStartSystem = std::chrono::system_clock::now();
 
             this->fileName = fileName;
             
@@ -929,8 +930,10 @@ class DDG {
             bindVertices(mainVertex);
 
             auto graphBuildEnd = std::chrono::steady_clock::now();
+            auto graphBuildEndSystem = std::chrono::system_clock::now();
 
             auto graphBuildTotal = std::chrono::duration_cast<ns>(graphBuildEnd - graphBuildStart).count();
+            auto graphBuildTotalSystem = std::chrono::duration_cast<ns>(graphBuildEndSystem - graphBuildStartSystem).count();
 
             // printing out information does not count towards time to use and build graph
             *outputTarget << "Total vertices: " << vertexCount << std::endl << std::endl; 
@@ -975,11 +978,14 @@ class DDG {
             *outputTarget << "\n======== Searching for errors ========\n" << std::endl;
 
             auto errorsFindStart = std::chrono::steady_clock::now();
+            auto errorsFindStartSystem = std::chrono::system_clock::now();
 
             findErrors();
 
             auto errorsFindEnd = std::chrono::steady_clock::now();
+            auto errorsFindEndSystem = std::chrono::system_clock::now();
             auto errorsFindTotal = std::chrono::duration_cast<ns>(errorsFindEnd - errorsFindStart).count();
+            auto errorsFindTotalSystem = std::chrono::duration_cast<ns>(errorsFindEndSystem - errorsFindStartSystem).count();
 
             // printing out information does not count towards time to find errors
             if (errorReports.size() == 0){
@@ -991,14 +997,10 @@ class DDG {
             }
 
             *outputTarget << "\nTime to find errors: " << (double)errorsFindTotal / 1000000000 << " seconds" << std::endl;
+            *outputTarget << "\nTime to find errors (system): " << (double)errorsFindTotalSystem / 1000000000 << " seconds" << std::endl;
 
             *outputTarget << "\nTime to build DDG: " << (double)graphBuildTotal / 1000000000 << " seconds" << std::endl;
-
-            /*JsonReporter* jsonReporter = new JsonReporter();
-            std::map<std::string, std::string> map = {};
-            map.insert(std::make_pair("key", "value"));
-            map.insert(std::make_pair("key1", "value1"));
-            std::cout << jsonReporter->createJson(map) << std::endl;*/
+            *outputTarget << "\nTime to build DDG (system): " << (double)graphBuildTotalSystem / 1000000000 << " seconds" << std::endl;
 
             // launch.sh (local)
             //std::string jsonOutputPath = "../reporter/found_errors.json";
