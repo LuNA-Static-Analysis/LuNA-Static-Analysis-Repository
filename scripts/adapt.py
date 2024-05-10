@@ -108,6 +108,7 @@ def main(
                     '--project-dir', project_dir,
                     '--build-dir', build_dir,
                     '--errors-file', errors_file,
+                    '--output-dir', prolog_analyzer_output_dir,
                     '--no-cleanup',
                     luna_src
                 ],
