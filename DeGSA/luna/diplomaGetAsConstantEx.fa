@@ -1,0 +1,10 @@
+import printfl(real) as print;
+sub main(){
+    let b = 1.0 {
+        foo(b);
+    }
+}
+sub foo(real f){
+    print(f + 1.0);
+}
+

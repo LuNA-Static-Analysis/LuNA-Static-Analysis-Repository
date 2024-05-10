@@ -199,7 +199,7 @@ class LetName: public Identifier {
 
 private:
 
-    Vertex* letVertex;
+    Vertex* letVertex;//todo remove this
 
     // reference shows, which expression this name was assigned
     Expression* reference;
@@ -220,11 +220,11 @@ public:
 
 };
 
-class MainArgName: public Identifier {
+class MainArgName: public Identifier {//todo remove that and just make SubArgName defineable or not
 
 private:
 
-    Vertex* mainVertex;
+    Vertex* mainVertex;//todo remove this
 
 public:
 

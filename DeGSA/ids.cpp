@@ -220,7 +220,7 @@ std::vector<std::string> ForIteratorName::markAsUse(Vertex* currentVertex, int s
 }
 
 std::vector<std::string> ForIteratorName::markAsDef(Vertex* currentVertex, int size){
-    defSet.insert(currentVertex);
+    defSet.insert(currentVertex);//todo is it ok?
     std::cout << "INTERNAL ERROR: for iterator " << this->getName() << " is being marked as defined" << std::endl;
     // error (iterator should be marked as defined by ForVertex automatically)
     std::vector<std::string> reports = {};
@@ -277,7 +277,7 @@ std::vector<std::string> WhileIteratorName::markAsUse(Vertex* currentVertex, int
 }
 
 std::vector<std::string> WhileIteratorName::markAsDef(Vertex* currentVertex, int size){
-    defSet.insert(currentVertex);
+    defSet.insert(currentVertex);//todo is it ok?
     std::cout << "INTERNAL ERROR: while iterator " << this->getName() << " is being marked as defined" << std::endl;
     // error (iterator should be marked as defined by WhileVertex automatically)
     std::vector<std::string> reports = {};

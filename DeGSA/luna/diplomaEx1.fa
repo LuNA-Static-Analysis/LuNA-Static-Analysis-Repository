@@ -4,6 +4,7 @@ sub main(){
         df multipleInitName, nonInitUsedName, unusedName;
         init(1, multipleInitName);
         init(2, multipleInitName);
+        print(multipleInitName);
         print(nonInitUsedName);
         let constOne = 1, nonIndexableName = 2 {
                 foo(constOne);
