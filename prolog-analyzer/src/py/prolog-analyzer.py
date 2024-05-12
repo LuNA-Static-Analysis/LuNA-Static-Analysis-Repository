@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from timeit import default_timer as timer
 
 import click
 
@@ -104,6 +105,7 @@ def main(
     exit_code = 0
     try:
         print('\rCompiling LuNA program\r', end='')
+        start = timer()
         subprocess.run(
             args=[
                 'luna',
@@ -116,8 +118,10 @@ def main(
             capture_output=True,
             check=True
         )
+        print(f'\nDone in {timer() - start:.4f}s')
 
         print('\rGenerating facts      \r', end='')
+        start = timer()
         subprocess.run(
             args=[
                 'python3',
@@ -129,14 +133,16 @@ def main(
             capture_output=True,
             check=True
         )
+        print(f'\nDone in {timer() - start:.4f}s')
 
         print('\rAnalyzing             \r', end='')
-        subprocess.run(
+        start = timer()
+        p = subprocess.run(
             args=[
                 'swipl',
                 '-q',
                 '--on-error=halt',
-                '-t', 'main',
+                '-g', '(call_time(main,T),writef("%t",[T]),nl,halt)',
                 'src/pro/run.pro',
                 '--',
                 facts_file, new_errors_file
@@ -145,6 +151,8 @@ def main(
             capture_output=True,
             check=True
         )
+        print(f'\nDone in {timer() - start:.4f}s')
+        (output_dir / 'swipl-output').write_text(p.stdout.decode('utf-8') + '\n' + p.stderr.decode('utf-8'))
 
         with new_errors_file.open('rt') as new_errors_file_:
             new_errors = json.load(new_errors_file_)

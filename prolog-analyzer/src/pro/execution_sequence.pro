@@ -58,6 +58,9 @@ walk(Body, Aliases, CallStack, ExecutionSequenceAcc,  ExecutionSequence) :-
 
     ja:exec(StatementId, Callee, ActualArgs),
     ja:subroutine(CalleeSubId, Callee, struct),
+
+    \+ member([_, exec, _, _, Callee], ExecutionSequenceAcc),
+
     ja:body(CalleeSubId, CalleeBody),
     ja:arg_names(Callee, FormalArgNames),
 
