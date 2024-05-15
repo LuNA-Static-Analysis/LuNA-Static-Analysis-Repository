@@ -1,0 +1,22 @@
+{
+  "arrange": [],
+  "act": {
+    "command": "adapt --run prolog main.fa"
+  },
+  "assert": {
+    "stdout": {
+      "match_lines": [
+        "wc:Found 5 errors",
+        "wc:0*<*x*<*N*index 0",
+        "wc:x[42][*x*<*y*]*index 1",
+        "wc:(y*==*x)*7*index 0",
+        "wc:N*+*x*<*y*index 1",
+        "wc:y*==*N*+*N*index 0"
+      ]
+    },
+    "stderr": {
+      "empty": true
+    },
+    "save": ["stderr", "stdout"]
+  }
+}

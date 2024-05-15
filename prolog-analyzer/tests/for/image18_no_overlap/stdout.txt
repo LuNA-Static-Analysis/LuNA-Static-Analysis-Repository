@@ -1,0 +1,108 @@
+
+Running preprocessor
+
+Running prolog-analyzer         
+
+Generating output
+
+                                
+Found 3 errors:
+(1) warning[LUNA35]: Possible overlap of initialization loops for DF x.
+Initialized:
+DF x[(2 * i)] as arr[ind] in:
+  File "./main.fa", line 12, in main
+    sub main()
+  File "./main.fa", line 14, in for
+    for i = 0..10
+  File "./main.fa", line 15, in init_1
+    init_1(x, 2*i)
+  File "./main.fa", line 5, in init
+    init(arr[ind], 0)
+
+With i from 0 to 10, step 2 and offset 0
+Note: x declared in:
+  File "./main.fa", line 12, in main
+    sub main()
+
+Also here:
+DF x[(((2 * i) + 1) - 1)] as arr[(ind - 1)] in:
+  File "./main.fa", line 12, in main
+    sub main()
+  File "./main.fa", line 14, in for
+    for i = 0..10
+  File "./main.fa", line 19, in init_2
+    init_2(x, 2*i+1)
+  File "./main.fa", line 9, in init
+    init(arr[ind-1], 1)
+
+With i from 0 to 10, step 2 and offset 0
+Note: x declared in:
+  File "./main.fa", line 12, in main
+    sub main()
+
+
+(2) error[LUNA21]: Upper bound of consumption loop is always greater than upper bound of initialization loop for DF x.
+Used:
+DF x[((2 * i) + 1)] as x[((2 * i) + 1)] in:
+  File "./main.fa", line 12, in main
+    sub main()
+  File "./main.fa", line 14, in for
+    for i = 0..10
+  File "./main.fa", line 20, in print
+    print(x[2*i+1]) 
+
+With i from 0 to 10, step 2 and offset 1
+Note: x declared in:
+  File "./main.fa", line 12, in main
+    sub main()
+
+Initialized:
+DF x[(2 * i)] as arr[ind] in:
+  File "./main.fa", line 12, in main
+    sub main()
+  File "./main.fa", line 14, in for
+    for i = 0..10
+  File "./main.fa", line 15, in init_1
+    init_1(x, 2*i)
+  File "./main.fa", line 5, in init
+    init(arr[ind], 0)
+
+With i from 0 to 10, step 2 and offset 0
+Note: x declared in:
+  File "./main.fa", line 12, in main
+    sub main()
+
+
+(3) error[LUNA21]: Upper bound of consumption loop is always greater than upper bound of initialization loop for DF x.
+Used:
+DF x[((2 * i) + 1)] as x[((2 * i) + 1)] in:
+  File "./main.fa", line 12, in main
+    sub main()
+  File "./main.fa", line 14, in for
+    for i = 0..10
+  File "./main.fa", line 20, in print
+    print(x[2*i+1]) 
+
+With i from 0 to 10, step 2 and offset 1
+Note: x declared in:
+  File "./main.fa", line 12, in main
+    sub main()
+
+Initialized:
+DF x[(((2 * i) + 1) - 1)] as arr[(ind - 1)] in:
+  File "./main.fa", line 12, in main
+    sub main()
+  File "./main.fa", line 14, in for
+    for i = 0..10
+  File "./main.fa", line 19, in init_2
+    init_2(x, 2*i+1)
+  File "./main.fa", line 9, in init
+    init(arr[ind-1], 1)
+
+With i from 0 to 10, step 2 and offset 0
+Note: x declared in:
+  File "./main.fa", line 12, in main
+    sub main()
+
+
+

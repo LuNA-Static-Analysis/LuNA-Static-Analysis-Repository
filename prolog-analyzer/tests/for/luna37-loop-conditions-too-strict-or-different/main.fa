@@ -1,0 +1,55 @@
+import c_init(name, int) as init;
+import c_print(value) as print;
+
+sub init_1(name arr, int ind) {     
+    init(arr[ind], 0);                     
+}
+
+sub init_range(name a, int from, int to) {
+    if (to - from) > 0 {
+        for k = from..to { init(a[k], k); }
+    }
+}
+
+sub init_if(name a, int from, int to, int cond) {
+    if cond {
+        for k = from..to { init(a[k], k); }
+    }
+}
+
+sub main() {                            
+    df x, y, z, t, k, a, N, M;
+
+    if N > 7 {
+        for i = 0..10 { init_1(x, 5*i+5); }
+    }
+
+    if N > 0 {
+        for i = 0..10 { print(x[5*i+5]); }
+    }
+
+    init_if(z, 1, N, x && y);
+    if y && x || N > 0 {
+        for j = 1..N { print(z[j]); }
+    }
+
+    if N > 0 { init_if(t, 0, M, x[0] + y[0] > z[0]); }
+    if z[0] < x[7-7] + y[N*0] {
+        for j = 0..M { print(t[j]); }
+    }
+
+    if x && y { init_if(k, 0, 100, z[0] < 10); }
+    if x && 10 > z[0] {
+        for idx = 10..20 { print(k[idx]); }
+    }
+    if z[0] < 10 && t[42] && x {
+        for idx = 30..50 { print(k[idx]); }
+    }
+
+    if N > 0 {
+        for i = 0..N { init(a[i], i); }
+    }
+    if N <= 0 {
+        for i = 0..N { print(a[i]); }
+    }
+}
