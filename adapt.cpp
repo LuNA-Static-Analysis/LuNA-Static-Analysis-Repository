@@ -25,6 +25,8 @@ ast *ast_ = new ast();
 
 int main(int argc, char **argv){
 
+    /*auto realStart = std::chrono::steady_clock::now();
+
     bool launchASTAnalyzer = false;
     bool launchDeGSA = false;
     char* inputFileName = argv[1];
@@ -93,9 +95,15 @@ int main(int argc, char **argv){
         out << ast_->to_json();
     }
 
-    out.close();
+    out.close();*/
+//wip
+    std::ofstream o;
+        o.open("./reporter/found_errors.json");
+o << "[]";
 
-    if (launchASTAnalyzer){
+        o.close();
+
+    /*if (launchASTAnalyzer){
         error_reporter reporter = error_reporter();
 
         std::vector<base_analyzer *> analyzers = {
@@ -130,10 +138,13 @@ int main(int argc, char **argv){
         DDG ddg(ast_, &degsaOutputFile, realLunaSource);
         degsaOutputFile << "\nTime to build AST: " << (double)astBuildTotal / 1000000000 << " seconds" << std::endl;
         degsaOutputFile << "\nTime to build AST (system): " << (double)astBuildTotalSystem / 1000000000 << " seconds" << std::endl;
-    }
+        auto realEnd = std::chrono::steady_clock::now();
+        auto realTotal = std::chrono::duration_cast<ns>(realEnd - realStart).count();
+        degsaOutputFile << "\nTime real: " << (double)realTotal / 1000000000 << " seconds" << std::endl;
+    }*/
 
-    delete ast_;
-    fclose(yyin);
+    //delete ast_;
+    //fclose(yyin);
 
     return EXIT_SUCCESS;
 }

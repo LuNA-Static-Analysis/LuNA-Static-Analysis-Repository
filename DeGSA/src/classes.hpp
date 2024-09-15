@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../error_message/error_entry.hpp"
+//#include "../error_message/error_entry.hpp"
 
 class Vertex;
 

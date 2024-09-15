@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "enums.hpp"
-#include "../parser/ast.hpp"
+#include "../../parser/ast.hpp"
 #include "ids.hpp"
 
 // this class represents a vertex in a DDG

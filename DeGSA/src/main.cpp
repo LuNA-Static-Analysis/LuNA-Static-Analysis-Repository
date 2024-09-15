@@ -2,8 +2,8 @@
 // 1. use g++ -std=gnu++0x lex.yy.c grammar.tab.cpp main.cpp ast_analyzer.cpp -o a.out (g++11 does not work for some reason)
 // 2. use _fileno() instead for Windows (did not try though)
 
-#include "../parser/ast.hpp"
-#include "grammar.tab.hpp"
+#include "../../parser/ast.hpp"
+#include "../grammar.tab.hpp"
 #include <fstream>
 #include "ddg.cpp"
 

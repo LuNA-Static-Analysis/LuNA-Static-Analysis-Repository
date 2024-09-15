@@ -176,17 +176,17 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
                         break;
                 }
             } else {
-                /*errorReports->push_back(JsonReporter::create14(
-                    simpleDFName,
-                    "[]",
-                    "[]",
-                    "[]"
-                ));//todo callstacks*/
+                //todo fake Id to use it in report
+                Identifier* nonExistingIdentifier = new ForIteratorName(simpleDFName);
+                nonExistingIdentifier->markAsUse(currentVertex, 0);
+                errorReports->push_back(JsonReporter::create14(
+                    nonExistingIdentifier
+                ));
             }
 
             return;
         }
-
+        
         complex_id* complexDF = dynamic_cast<complex_id*>(ASTexpr);
         if (complexDF != NULL){
 

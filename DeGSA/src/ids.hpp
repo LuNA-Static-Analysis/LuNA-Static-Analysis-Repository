@@ -4,7 +4,7 @@
 
 #include "enums.hpp"
 #include "vertices.hpp"
-#include "../parser/ast.hpp"
+#include "../../parser/ast.hpp"
 #include "expr.hpp"
 
 //todo use smart pointers (shared ones)

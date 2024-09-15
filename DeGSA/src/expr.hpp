@@ -2,7 +2,7 @@
 
 #include "enums.hpp"
 #include "ids.hpp"
-#include "../parser/ast.hpp"
+#include "../../parser/ast.hpp"
 
 #include <regex>
 
