@@ -12,7 +12,7 @@
 #include "./ast_analyzer/undecl_func_analyzer.hpp"
 #include "./ast_analyzer/df_redecl_analyzer.hpp"
 #include "./ast_analyzer/threadpool/threadpool.h"
-#include "./DeGSA/ddg.cpp"
+#include "./DeGSA/src/ddg.cpp"
 
 const int EXIT_ERROR = 1;
 
@@ -23,9 +23,10 @@ std::string line, prev_line;
 uint tokens = 0;
 ast *ast_ = new ast();
 
+//todo wip: check and redo all of this, perhaps merge with master and overwrite
 int main(int argc, char **argv){
 
-    /*auto realStart = std::chrono::steady_clock::now();
+    auto realStart = std::chrono::steady_clock::now();
 
     bool launchASTAnalyzer = false;
     bool launchDeGSA = false;
@@ -95,7 +96,7 @@ int main(int argc, char **argv){
         out << ast_->to_json();
     }
 
-    out.close();*/
+    out.close();
 //wip
     std::ofstream o;
         o.open("./reporter/found_errors.json");
@@ -103,7 +104,7 @@ o << "[]";
 
         o.close();
 
-    /*if (launchASTAnalyzer){
+    if (launchASTAnalyzer){
         error_reporter reporter = error_reporter();
 
         std::vector<base_analyzer *> analyzers = {
@@ -141,10 +142,10 @@ o << "[]";
         auto realEnd = std::chrono::steady_clock::now();
         auto realTotal = std::chrono::duration_cast<ns>(realEnd - realStart).count();
         degsaOutputFile << "\nTime real: " << (double)realTotal / 1000000000 << " seconds" << std::endl;
-    }*/
+    }
 
-    //delete ast_;
-    //fclose(yyin);
+    delete ast_;
+    fclose(yyin);
 
     return EXIT_SUCCESS;
 }

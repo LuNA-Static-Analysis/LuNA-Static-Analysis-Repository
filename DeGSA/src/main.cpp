@@ -1,13 +1,10 @@
-// for "no fileno" problem (this problem was on Windows at least):
-// 1. use g++ -std=gnu++0x lex.yy.c grammar.tab.cpp main.cpp ast_analyzer.cpp -o a.out (g++11 does not work for some reason)
-// 2. use _fileno() instead for Windows (did not try though)
-
 #include "../../parser/ast.hpp"
 #include "../grammar.tab.hpp"
 #include <fstream>
 #include "ddg.cpp"
 
 const int EXIT_ERROR = 1;
+const int NANOSECONDS_IN_SECOND = 1000000000;
 
 extern int yyparse();
 extern FILE *yyin;
@@ -25,7 +22,7 @@ int main(int argc, char** argv) {
     auto astBuildStartSystem = std::chrono::system_clock::now();
 
     if (argc < 2) {
-        std::cout << "INTERNAL ERROR: Bad number of args. Usage: ./a.out [LuNA program]" << std::endl;
+        std::cout << "INTERNAL ERROR: bad number of args. Usage: ./[executable] [LuNA program]" << std::endl;
         return EXIT_ERROR;
     }
 
@@ -43,12 +40,10 @@ int main(int argc, char** argv) {
     auto astBuildTotal = std::chrono::duration_cast<ns>(astBuildEnd - astBuildStart).count();
     auto astBuildTotalSystem = std::chrono::duration_cast<ns>(astBuildEndSystem - astBuildStartSystem).count();
 
-    // &std::cout for console output
-    //todo
     std::string fileName = argv[2];
     DDG ddg(ast_, &outputFile, fileName);
-    outputFile << "\nTime to build AST: " << (double)astBuildTotal / 1000000000 << " seconds" << std::endl;
-    outputFile << "\nTime to build AST (system): " << (double)astBuildTotalSystem / 1000000000 << " seconds" << std::endl;
+    outputFile << "\nTime to build AST: " << (double)astBuildTotal / NANOSECONDS_IN_SECOND << " seconds" << std::endl;
+    outputFile << "\nTime to build AST (system): " << (double)astBuildTotalSystem / NANOSECONDS_IN_SECOND << " seconds" << std::endl;
 
     delete ast_;
     fclose(yyin);

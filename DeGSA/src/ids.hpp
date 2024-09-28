@@ -7,9 +7,6 @@
 #include "../../parser/ast.hpp"
 #include "expr.hpp"
 
-//todo use smart pointers (shared ones)
-// but there should not be much leaks already
-
 class BaseDFName;
 
 class Identifier {
