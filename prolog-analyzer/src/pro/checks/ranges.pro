@@ -354,6 +354,14 @@ index_range_missmatch_check_errors(InitRange, UseRange, Error) :-
         }
     }.
 
+% idea (input: use_range):
+% ranges = {r | r is implied by use_range}
+% while not r covers use_range for r in ranges:
+%     select r1 != r2 from ranges ranges
+%     if lower(r1) == upper(r2) then ranges = ranges \ {concat(r2, r1)}
+%     else if lower(r2) == upper(r1) then ranges = ranges \ {concat(r1, r2)}
+%     else break
+
 index_range_missmatch(RootCtx, Error) :-
     df_use_loop_of(RootCtx, BaseName, UseRange),
     bagof(
