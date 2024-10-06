@@ -265,7 +265,7 @@ index_range_merge_ordered(Range1, Range2, Union) :-
         'ranges': [Range1, Range2]
     }.
 
-% FIXME may create duplicate choice points?
+% FIXME may create duplicate results?
 index_range_merge_all([], []).
 index_range_merge_all([X], [X]).
 
@@ -287,7 +287,7 @@ index_range_merge_all(RangesIn, RangesOut) :-
     ),
     RangesOut = RangesIn.
 
-
+% FIXME remove
 index_range_missing_covered_by_single(InitRange, Var, Low, High, Step) :-
     index_range_df_base_name(InitRange, BaseName),
     forall(
@@ -302,6 +302,7 @@ index_range_missing_covered_by_single(InitRange, Var, Low, High, Step) :-
         )
     ).
 
+% FIXME remove
 index_range_missing_indices(UseBoudnary, InitBoudnary, Var, Low, High, Step) :-
     arithmetic:linear_expression(UseBoudnary, Var, Step, UseOffset),
     arithmetic:linear_expression(InitBoudnary, Var, Step, InitOffset),
@@ -433,6 +434,7 @@ index_range_missmatch_check_errors(InitRange, UseRange, Error) :-
 %     else if lower(r2) == upper(r1) then ranges = ranges \ {concat(r1, r2)}
 %     else break
 
+% FIXME remove or refactor for it to be usable in index_range_missmatch
 inits(RootCtx, BaseName, Inits) :-
     bagof(
         Init,
