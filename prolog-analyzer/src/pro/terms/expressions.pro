@@ -77,6 +77,7 @@ expression_string(Expression, _) :-
     atomics_to_string(["expression_string/2: Unexpected expression format: ", ExpressionStr], "", Message),
     throw(Message).
 
+% TODO make private, add an implementation in ref that would rewrite without refs first 
 % Comparing expressions using CLP(FD)
 expression_compare(Sign, Lhs, Rhs) :-
     expression_string(Lhs, LhsStr),
