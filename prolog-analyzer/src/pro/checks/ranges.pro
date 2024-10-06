@@ -189,7 +189,7 @@ df_init_loop(RootCtx, IndexRange) :- df_loop(RootCtx, output_df, IndexRange).
 df_use_loop(RootCtx, IndexRange) :- df_loop(RootCtx, input_df, IndexRange).
 
 df_single(RootCtx, GetDf, SingleInit) :-
-    SingleInit = single_init{
+    SingleInit = single_index{
         'df': Df,
         'var': Var,
         'step': Step,
@@ -222,10 +222,71 @@ index_range_df_base_name(IndexRange, BaseName) :-
     get_dict('true', Df, luna_ref([BaseName|_])).
 
 index_range_unpack(IndexRange, Lower, Upper, Step) :-
-    _{'step': Step, 'offset': Offset, 'loop': Loop} :< IndexRange,
+    index_range{'step': Step, 'offset': Offset, 'loop': Loop} :< IndexRange,
     _{'first': First, 'last': Last} :< Loop,
     linear_expression(Lower, First, Step, Offset),
     linear_expression(Upper, Last, Step, Offset).
+
+index_range_unpack(IndexRange, Lower, Upper, 0) :-
+    single_index{'step': IndexStep, 'offset': IndexOffset, 'var': IndexVar} :< IndexRange,
+    linear_expression(Lower, IndexVar, IndexStep, IndexOffset),
+    Upper = Lower.
+
+index_range_unpack(IndexRange, Lower, Upper, Step) :-
+    index_range_union{
+        'lower': Lower, 
+        'upper': Upper, 
+        'step': Step
+    } :< IndexRange.
+
+% Union = concat(Range1, Range2)
+index_range_merge_ordered(Range1, Range2, Union) :-
+    index_range_unpack(Range1, Lower1, Upper1, Step1),
+    index_range_unpack(Range2, Lower2, Upper2, Step2),
+    (ref:expressions_equivalent(Step1, Step2); Step1 = 0),
+    ref:expressions_equivalent(["+", Upper1, Step2], Lower2),
+    Union = index_range_union{
+        'lower': Lower1,
+        'upper': Upper2,
+        'step': Step2,
+        'ranges': [Range1, Range2]
+    }.
+
+% Union = concat(Range1, Range2)
+index_range_merge_ordered(Range1, Range2, Union) :-
+    index_range_unpack(Range1, Lower1, Upper1, Step1),
+    index_range_unpack(Range2, Lower2, Upper2, Step2),
+    (ref:expressions_equivalent(Step1, Step2); Step2 = 0),
+    ref:expressions_equivalent(["+", Upper1, Step1], Lower2),
+    Union = index_range_union{
+        'lower': Lower1,
+        'upper': Upper2,
+        'step': Step1,
+        'ranges': [Range1, Range2]
+    }.
+
+% FIXME may create duplicate choice points?
+index_range_merge_all([], []).
+index_range_merge_all([X], [X]).
+
+index_range_merge_all(RangesIn, RangesOut) :-
+    append([L1, [Range1], L2, [Range2], L3], RangesIn),
+    (
+        index_range_merge_ordered(Range1, Range2, Union12)
+    ;   index_range_merge_ordered(Range2, Range1, Union12)
+    ),
+    append([L1, L2, L3, [Union12]], NextRangesIn),
+    index_range_merge_all(NextRangesIn, RangesOut)
+    , !
+    .
+
+index_range_merge_all(RangesIn, RangesOut) :-
+    \+ (
+        append([_, [Range1], _, [Range2], _], RangesIn),
+        index_range_merge_ordered(Range1, Range2, _)
+    ),
+    RangesOut = RangesIn.
+
 
 index_range_missing_covered_by_single(InitRange, Var, Low, High, Step) :-
     index_range_df_base_name(InitRange, BaseName),
@@ -294,30 +355,36 @@ index_range_covers_lower(InitRange, UseRange) :-
     index_range_unpack(UseRange, UseLowerBound, _, _),
 
     % Lower boudnary
-    (   never(UseLowerBound, "#<", InitLowerBound)
-        *-> true
-        ; (
-            never(UseLowerBound, "#>=", InitLowerBound),
-            index_range_missing_indices(UseLowerBound, InitLowerBound, Var, Low, High, Step),
-            High1 is High - 1,
-            index_range_missing_covered_by_single(InitRange, Var, Low, High1, Step)
-        )
-    ).
+    never(UseLowerBound, "#<", InitLowerBound)
+    % FIXME test and remove
+    % (   never(UseLowerBound, "#<", InitLowerBound)
+    %     *-> true
+    %     ; (
+    %         never(UseLowerBound, "#>=", InitLowerBound),
+    %         index_range_missing_indices(UseLowerBound, InitLowerBound, Var, Low, High, Step),
+    %         High1 is High - 1,
+    %         index_range_missing_covered_by_single(InitRange, Var, Low, High1, Step)
+    %     )
+    % )
+    .
 
 index_range_covers_upper(InitRange, UseRange) :-
     index_range_unpack(InitRange, _, InitUpperBound, _),
     index_range_unpack(UseRange, _, UseUpperBound, _),
 
     % Upper boundary
-    (   never(UseUpperBound, "#>", InitUpperBound)
-        *-> true
-        ; (
-            never(UseUpperBound, "#=<", InitUpperBound),
-            index_range_missing_indices(UseUpperBound, InitUpperBound, Var, Low, High, Step),
-            Low1 is Low + 1,
-            index_range_missing_covered_by_single(InitRange, Var, Low1, High, Step)
-        )
-    ).
+    never(UseUpperBound, "#>", InitUpperBound)
+    % FIXME test and remove
+    % (   never(UseUpperBound, "#>", InitUpperBound)
+    %     *-> true
+    %     ; (
+    %         never(UseUpperBound, "#=<", InitUpperBound),
+    %         index_range_missing_indices(UseUpperBound, InitUpperBound, Var, Low, High, Step),
+    %         Low1 is Low + 1,
+    %         index_range_missing_covered_by_single(InitRange, Var, Low1, High, Step)
+    %     )
+    % )
+    .
 
 index_range_covers(InitRange, UseRange) :-
     index_range_unpack(InitRange, _, _, InitStep),
@@ -335,6 +402,10 @@ df_use_loop_of(RootCtx, BaseName, UseRange) :-
     df_use_loop(RootCtx, UseRange),
         get_dict('df', UseRange, ConsumedDf),
         get_dict('true', ConsumedDf, luna_ref([BaseName|_])).
+
+df_single_init_of(RootCtx, BaseName, SingleInit) :-
+    df_init_single(RootCtx, SingleInit),
+    SingleInit.df.true = luna_ref([BaseName|_]).
 
 index_range_missmatch_check_errors(InitRange, UseRange, Error) :-
     ErrorTypes = [
@@ -362,21 +433,35 @@ index_range_missmatch_check_errors(InitRange, UseRange, Error) :-
 %     else if lower(r2) == upper(r1) then ranges = ranges \ {concat(r1, r2)}
 %     else break
 
+inits(RootCtx, BaseName, Inits) :-
+    bagof(
+        Init,
+        (
+            df_init_loop_of(RootCtx, BaseName, Init)
+        ;   df_single_init_of(RootCtx, BaseName, Init)
+        ),
+        Inits
+    ).
+
 index_range_missmatch(RootCtx, Error) :-
     df_use_loop_of(RootCtx, BaseName, UseRange),
     bagof(
         InitRange,
         (
-            df_init_loop_of(RootCtx, BaseName, InitRange),
+            (
+                df_init_loop_of(RootCtx, BaseName, InitRange)
+            ;   df_single_init_of(RootCtx, BaseName, InitRange)
+            ),
             index_range_implies(UseRange, InitRange)
         ),
         InitRanges
     ),
     \+ (
-        member(InitRange, InitRanges),
+        index_range_merge_all(InitRanges, InitRangesMerged),
+        member(InitRange, InitRangesMerged),
         index_range_covers(InitRange, UseRange)
     ),
-    member(InitRange, InitRanges),
+    member(InitRange, InitRanges), index_range{} :< InitRange,
     (   index_range_missmatch_check_errors(InitRange, UseRange, Error)
     *-> true
     ;   writef("UseRange=%t\nInitRange=%t\n", [UseRange, InitRange])
