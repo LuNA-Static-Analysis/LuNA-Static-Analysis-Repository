@@ -1,0 +1,29 @@
+{
+  "arrange": [],
+  "act": {
+    "command": "adapt --run prolog main.fa",
+    "can_fail": false
+  },
+  "assert": {
+    "stdout": {
+      "match_lines": [
+        "wc:Found 3 error*",
+        "wc:warning[LUNA18]*DF x",
+        "wc:warning[LUNA18]*DF y",
+        "wc:error[LUNA21]*DF y",
+        "wc:from*N*-*10",
+        "wc:from M",
+        "wc:from x",
+        "wc:from N",
+        "wc:to M",
+        "wc:to*M*+*1",
+        "wc:y[i] as it[i]",
+        "wc:x[i] as it[i]"
+      ]
+    },
+    "stderr": {
+      "empty": true
+    },
+    "save": ["stderr", "stdout"]
+  }
+}

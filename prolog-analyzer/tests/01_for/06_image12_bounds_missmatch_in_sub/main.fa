@@ -1,0 +1,19 @@
+C++ sub assign_int(name x, int val) ${{ x = val; $}}
+C++ sub print_int(int v) ${{ std::printf("%d\n", v); $}}
+
+sub sum(name a, int n, name result) {
+    df acc;
+    assign_int(acc[1], a[1]);
+    assign_int(result, acc[n]);
+    for i = 2..n {
+        assign_int(acc[i], acc[i - 1] + a[i]);
+    }
+}
+
+sub main() {
+    df x, s, N;
+    print_int(s);
+    assign_int(N, 5);
+    for i = 0..N-1 { assign_int(x[i], 1 + i); }
+    sum(x, N, s);
+}

@@ -1,0 +1,24 @@
+import c_init( name, int) as init;
+import c_print( value) as print;
+
+sub init_1(name arr, int ind) {
+    init(arr[ind], 0);
+}
+
+sub init_2(name arr, int ind) {
+    init(arr[ind-1], 1);
+}
+
+sub main() {
+    df x;
+    for i = 0..250 {
+        init_1(x, 2*i);
+        print(x[2*i]) @{
+            delete x[2*i];
+        };
+        init_2(x, 2*i+1);
+        print(x[2*i+1]) @{
+            delete x[2*i+1];
+        };
+    }
+}
