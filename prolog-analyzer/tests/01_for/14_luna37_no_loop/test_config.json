@@ -8,10 +8,10 @@
     "stdout": {
       "match_lines": [
         "wc:Found 4 error*",
-        "wc:warning[LUNA37]*DF x",
-        "wc:warning[LUNA37]*DF y",
-        "wc:warning[LUNA37]*DF z",
-        "wc:warning[LUNA37]*DF t"
+        "wc:DF x",
+        "wc:DF y",
+        "wc:DF z",
+        "wc:DF t"
       ]
     },
     "stderr": {

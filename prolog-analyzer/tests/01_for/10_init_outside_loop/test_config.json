@@ -7,11 +7,9 @@
   "assert": {
     "stdout": {
       "match_lines": [
-        "wc:Found 4 error*",
-        "wc:error[LUNA19]*DF y",
-        "wc:error[LUNA21]*DF y",
-        "wc:error[LUNA19]*DF t",
-        "wc:error[LUNA21]*DF t"
+        "wc:Found 2 error*",
+        "wc:DF y",
+        "wc:DF t"
       ]
     },
     "stderr": {

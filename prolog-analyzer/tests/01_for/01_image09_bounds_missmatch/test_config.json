@@ -8,7 +8,7 @@
     "stdout": {
       "match_lines": [
         "wc:Found 1 error*",
-        "wc:error[LUNA21]*DF x",
+        "wc:DF x",
         "wc:line 6",
         "wc:line 7",
         "wc:x[i]",

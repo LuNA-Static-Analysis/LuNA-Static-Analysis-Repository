@@ -238,6 +238,9 @@ def collect_tests(
         test_name_pattern: re.Pattern,
         name_prefix: str = ''
 ) -> list[tuple[str, Path]]:
+    if (test_root / TEST_CONFIG_FILE_NAME).exists():
+        return [(f'{name_prefix}{test_root.name}', test_root)]
+
     tests: list[tuple[str, Path]] = []
 
     for path in sorted(test_root.iterdir()):
