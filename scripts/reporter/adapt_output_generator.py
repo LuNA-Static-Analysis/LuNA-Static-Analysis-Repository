@@ -43,6 +43,7 @@ class TextInfo:
 
 
 def get_callstack_entry(call: dict[str, Any], text_info: TextInfo) -> str:
+    assert isinstance(call, dict), str(type(call))
     return f'  File "{call["file"]}", line {call["line"]}, in {call["name"]}\n' \
            f'    {text_info.code_line(int(call["line"]))}\n'
 
@@ -102,9 +103,10 @@ def get_for(for_: dict[str, Any], text_info: TextInfo) -> str:
 
 
 def get_df_ref(df_ref: dict[str, Any], text_info: TextInfo) -> str:
+    name_str = f'{df_ref["true"]} as {df_ref["local"]}' if df_ref['true'] != df_ref['local'] else df_ref['local']
+    
     return (
-            f'DF:\n{get_df(df_ref["df"], text_info)}\n'
-            + f'{df_ref["true"]} as {df_ref["local"]}\n'
+            f'DF {name_str}\n'
             + f'in:\n{get_callstack(df_ref["where"], text_info)}'
     )
 
@@ -115,10 +117,11 @@ def get_index_range(index_range: dict[str, Any], text_info: TextInfo) -> str:
     loop: dict[str, Any] = index_range['loop']
 
     return (
-            f'DF {df_ref["true"]} as {df_ref["local"]} in:\n{get_callstack(df_ref["where"], text_info)}\n'
-            + f'With {loop["var"]} from {loop["first"]} to {loop["last"]},'
-            + f' step {index_range["step"]} and offset {index_range["offset"]}\n'
-            + f'Note: {df["name"]} declared in:\n{get_callstack(df["declared"], text_info)}\n'
+            f'{get_df_ref(df_ref, text_info)}\n'
+            + f'from {index_range["true_lower"]} to {index_range["true_upper"]} with step {index_range["step"]}'
+            + f' (with {loop["var"]} from {loop["first"]} to {loop["last"]},'
+            + f' step {index_range["step"]} and offset {index_range["offset"]})\n'
+            + f'Note: {df["name"]} declared in:\n{get_callstack(df["declared"][0], text_info)}'
     )
 
 
@@ -236,13 +239,6 @@ def report_error(
                 (templates_map[error_code] + "\n")
                 .replace("$cf", get_cf(error["details"]["cf"]))
             )
-        case n if n in [18, 19, 20, 21, 22]:
-            output_file.write(
-                (templates_map[error_code] + '\n')
-                .replace('$df_name', error['details']['used']['df']['df']['name'])
-                .replace('$consumption_loop', get_index_range(error['details']['used'], text_info))
-                .replace('$initialization_loop', get_index_range(error['details']['initialized'], text_info))
-            )
         case 23:
             output_file.write(
                 (templates_map[error_code] + "\n")
@@ -303,24 +299,6 @@ def report_error(
                 .replace("$expr", str(error["details"]["expression"]))
                 .replace("$callstack", get_callstack(error["details"]["callstack"], text_info))
             )
-        case 37:
-            use_conditions = get_conditions(error['details'].get('use_conditions', []))
-            output_file.write(
-                templates_map[error_code]
-                .replace('$df_name', error['details']['used']['df']['df']['name'])
-                .replace('$use_conditions', f' {use_conditions}' if use_conditions else '')
-                .replace('$consumption_loop', get_index_range(error['details']['used'], text_info))
-            )
-            # TODO should probably split into two errors since single template does not cover both varianst
-            if initialized := error['details'].get('initialized'):
-                init_conditions = get_conditions(error['details'].get('init_conditions', []))
-                output_file.write(
-                    'Initialized$init_conditions:\n$initialization_loop'
-                    .replace('$init_conditions', f' {init_conditions}' if init_conditions else '')
-                    .replace('$initialization_loop', get_index_range(initialized, text_info))
-                )
-            output_file.write('\n')
-
         case 38:
             output_file.write(
                 (templates_map[error_code] + '\n')
@@ -337,6 +315,35 @@ def report_error(
                 .replace('$first', error['details']['for']['first'])
                 .replace('$last', error['details']['for']['last'])
             )
+        case 99:
+            use_conditions = get_conditions(error['details'].get('use_conditions', []))
+            output_file.write(
+                templates_map[error_code]
+                .replace('$df_name', error['details']['used']['df']['df']['name'])
+                .replace('$use_conditions', f' {use_conditions}' if use_conditions else '')
+                .replace('$consumption_loop', get_index_range(error['details']['used'], text_info))
+            )
+            output_file.write('\n')
+            
+            for init, conditions in error['details']['initialized']:
+                conditions_str = get_conditions(conditions)
+                match init:
+                    case {'loop': _, **unused}:
+                        init_str = get_index_range(init, text_info)
+                    case {'df': _, 'true': _,'local': _, 'where': _, **unused}:
+                        init_str = get_df_ref(init, text_info)
+                        # init_str = str(init)
+                    case _:
+                        raise NotImplementedError()
+                
+                output_file.write(
+                    f'Initialized$init_conditions:\n$init'
+                    .replace('$init_conditions', f' {conditions_str}' if conditions_str else '')
+                    .replace('$init', init_str)
+                )
+                output_file.write('\n')
+            
+            output_file.write('\n')
         case _:
             print("INTERNAL ERROR: unknown error code encountered")
 

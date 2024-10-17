@@ -36,9 +36,8 @@ write_errors_json(OutputFileName) :-
     findall(Error, tautology_error_json(Error), Errors1),
     findall(Error, bool_used_as_number_error_json(Error), Errors2),
     findall(Error, index_range_overlap_error_json(Error), Errors3),
-    findall(Error, index_range_missmatch_error_json(Error), Errors4),
     findall(Error, index_range_not_initialized_error_json(Error), Errors5),
-    append([Errors1, Errors2, Errors3, Errors4, Errors5], Errors),
+    append([Errors1, Errors2, Errors3, Errors5], Errors),
     open(OutputFileName, write, Out, [create([default])]),
     json_write_dict(Out, Errors),
     close(Out).
