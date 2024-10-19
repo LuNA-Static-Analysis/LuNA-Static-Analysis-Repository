@@ -501,58 +501,80 @@ err>
 
 # Семантические ошибки
 
-## 13. Использование ФД неправильного типа в качестве аргумента при вызове ФК - **обнаруживает RTS**
+## 13. Использование ФД неправильного типа в качестве аргумента при вызове ФК
 
-[В старой классификации]()
+[В старой классификации](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#4-%D0%BD%D0%B5%D1%81%D0%BE%D0%BE%D1%82%D0%B2%D0%B5%D1%82%D1%81%D1%82%D0%B2%D0%B8%D0%B5-%D1%82%D0%B8%D0%BF%D0%BE%D0%B2-%D0%B0%D1%80%D0%B3%D1%83%D0%BC%D0%B5%D0%BD%D1%82%D0%BE%D0%B2-luna-%D0%BF%D1%80%D0%B8-%D0%B2%D1%8B%D0%B7%D0%BE%D0%B2%D0%B5-%D0%B0%D1%82%D0%BE%D0%BC%D0%B0%D1%80%D0%BD%D0%BE%D0%B3%D0%BE-%D1%84%D0%BA)
 
-**Обнаруживает компилятор.**     
+**Обнаруживает RTS (не для всех типов).** 
 
-Пример:
+Пример 1:
 ```
+C++ sub empty() ${{$}}
 
+C++ sub int_set(name x, int v) ${{ x = v; $}}
+
+sub foo(string s) {
+    empty();
+}
+
+sub main() {
+    df s;
+    int_set(s, 42);
+    foo(s);
+}
+```
+Вывод luna: нет реакции, программа завершается успешно.
+
+Пример 2:
+```
+C++ sub empty() ${{$}}
+
+C++ sub int_set(name x, int v) ${{ x = v; $}}
+
+sub foo(real s) {
+    empty();
+}
+
+sub main() {
+    df s;
+    int_set(s, 42);
+    foo(s);
+}
 ```
 Вывод luna:
 ```
-
+luna: fatal error: run-time error: errcode=-6
+err> 0 ERROR:  get_real failed for type int ./src/rts/df.cpp:176
+err> 0 ABORT 
+err> terminate called after throwing an instance of 'RuntimeError'
+err>   what():  std::exception
+err> [DESKTOP-CPJS18K:89639] *** Process received signal ***
+err> [DESKTOP-CPJS18K:89639] Signal: Aborted (6)
+err> [DESKTOP-CPJS18K:89639] Signal code:  (-6)
+err> [DESKTOP-CPJS18K:89639] [ 0] /lib/x86_64-linux-gnu/libc.so.6(+0x42520)[0x7f28a09f3520]
+err> [DESKTOP-CPJS18K:89639] [ 1] /lib/x86_64-linux-gnu/libc.so.6(pthread_kill+0x12c)[0x7f28a0a479fc]      
+err> [DESKTOP-CPJS18K:89639] [ 2] /lib/x86_64-linux-gnu/libc.so.6(raise+0x16)[0x7f28a09f3476]
+err> [DESKTOP-CPJS18K:89639] [ 3] /lib/x86_64-linux-gnu/libc.so.6(abort+0xd3)[0x7f28a09d97f3]
+err> [DESKTOP-CPJS18K:89639] [ 4] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xa2b9e)[0x7f28a0c9eb9e]
+err> [DESKTOP-CPJS18K:89639] [ 5] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xae20c)[0x7f28a0caa20c]
+err> [DESKTOP-CPJS18K:89639] [ 6] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xae277)[0x7f28a0caa277]
+err> [DESKTOP-CPJS18K:89639] [ 7] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xae4d8)[0x7f28a0caa4d8]
+err> [DESKTOP-CPJS18K:89639] [ 8] /mnt/c/Users/misha/luna/lib/librts.so(+0x1dbac)[0x7f28a0f9cbac]
+err> [DESKTOP-CPJS18K:89639] [ 9] /mnt/c/Users/misha/luna/build/programs/mnt/c/Users/misha/Projects/luna/Extraterrestrial/adapt/errors/demos/new/luna13.fa/libucodes.so(_Z7block_7R2CF+0x7c)[0x7f289d549c7c]
+err> [DESKTOP-CPJS18K:89639] [10] /mnt/c/Users/misha/luna/lib/librts.so(+0x43963)[0x7f28a0fc2963]
+err> [DESKTOP-CPJS18K:89639] [11] /mnt/c/Users/misha/luna/lib/librts.so(_ZN10ThreadPool7routineEv+0x17d)[0x7f28a0fd28ed]
+err> [DESKTOP-CPJS18K:89639] [12] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xdc253)[0x7f28a0cd8253]
+err> [DESKTOP-CPJS18K:89639] [13] /lib/x86_64-linux-gnu/libc.so.6(+0x94ac3)[0x7f28a0a45ac3]
+err> [DESKTOP-CPJS18K:89639] [14] /lib/x86_64-linux-gnu/libc.so.6(+0x126850)[0x7f28a0ad7850]
+err> [DESKTOP-CPJS18K:89639] *** End of error message ***
+err>
 ```
 
-В старой базе:
+## 14. Повторная инициализация ФД
 
-[(1) Несоответствие типов аргументов LuNA типам C++ при вызове атомарного ФК (типы аргуаментов известны)](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#1-%D0%BD%D0%B5%D1%81%D0%BE%D0%BE%D1%82%D0%B2%D0%B5%D1%82%D1%81%D1%82%D0%B2%D0%B8%D0%B5-%D1%82%D0%B8%D0%BF%D0%BE%D0%B2-%D0%B0%D1%80%D0%B3%D1%83%D0%BC%D0%B5%D0%BD%D1%82%D0%BE%D0%B2-luna-%D1%82%D0%B8%D0%BF%D0%B0%D0%BC-c-%D0%BF%D1%80%D0%B8-%D0%B2%D1%8B%D0%B7%D0%BE%D0%B2%D0%B5-%D0%B0%D1%82%D0%BE%D0%BC%D0%B0%D1%80%D0%BD%D0%BE%D0%B3%D0%BE-%D1%84%D0%BA)
+[В старой классификации](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#3-%D0%BF%D0%BE%D0%B2%D1%82%D0%BE%D1%80%D0%BD%D0%B0%D1%8F-%D0%B8%D0%BD%D0%B8%D1%86%D0%B8%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-%D1%84%D0%B4)
 
-[(4) Несоответствие типов аргументов LuNA при вызове атомарного ФК](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#4-%D0%BD%D0%B5%D1%81%D0%BE%D0%BE%D1%82%D0%B2%D0%B5%D1%82%D1%81%D1%82%D0%B2%D0%B8%D0%B5-%D1%82%D0%B8%D0%BF%D0%BE%D0%B2-%D0%B0%D1%80%D0%B3%D1%83%D0%BC%D0%B5%D0%BD%D1%82%D0%BE%D0%B2-luna-%D0%BF%D1%80%D0%B8-%D0%B2%D1%8B%D0%B7%D0%BE%D0%B2%D0%B5-%D0%B0%D1%82%D0%BE%D0%BC%D0%B0%D1%80%D0%BD%D0%BE%D0%B3%D0%BE-%D1%84%D0%BA)
-
-Примеры программ:
-
-[1.2-err.fa](errors/demos/1.2-err.fa) - ошибка в рантайме
-
-    luna: fatal error: run-time error: errcode=-6
-    err> 0 ERROR:  get_int failed for type real ./src/rts/df.cpp:165
-    err> 0 ABORT 
-    err> terminate called after throwing an instance of 'RuntimeError'
-    err>   what():  std::exception
-    err> [DESKTOP-CPJS18K:129901] *** Process received signal ***
-    err> [DESKTOP-CPJS18K:129901] Signal: Aborted (6)
-    err> [DESKTOP-CPJS18K:129901] Signal code:  (-6)
-    err> [DESKTOP-CPJS18K:129901] [ 0] /lib/x86_64-linux-gnu/libc.so.6(+0x42520)[0x7f8dcfbf4520]
-    err> [DESKTOP-CPJS18K:129901] [ 1] /lib/x86_64-linux-gnu/libc.so.6(pthread_kill+0x12c)[0x7f8dcfc489fc]
-    err> [DESKTOP-CPJS18K:129901] [ 2] /lib/x86_64-linux-gnu/libc.so.6(raise+0x16)[0x7f8dcfbf4476]
-    err> [DESKTOP-CPJS18K:129901] [ 3] /lib/x86_64-linux-gnu/libc.so.6(abort+0xd3)[0x7f8dcfbda7f3]
-    err> [DESKTOP-CPJS18K:129901] [ 4] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xa2b9e)[0x7f8dcfe9fb9e]
-    err> [DESKTOP-CPJS18K:129901] [ 5] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xae20c)[0x7f8dcfeab20c]
-    err> [DESKTOP-CPJS18K:129901] [ 6] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xae277)[0x7f8dcfeab277]
-    err> [DESKTOP-CPJS18K:129901] [ 7] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xae4d8)[0x7f8dcfeab4d8]
-    err> [DESKTOP-CPJS18K:129901] [ 8] /home/reworu/luna/lib/librts.so(+0x1db48)[0x7f8dd019db48]
-    err> [DESKTOP-CPJS18K:129901] [ 9] /home/reworu/luna/build/programs/mnt/c/Users/misha/Projects/luna/Extraterrestrial/adapt/errors/demos/1.2-err.fa/libucodes.so(_Z7block_5R2CF+0x3e)[0x7f8dcc8fc89e]
-    err> [DESKTOP-CPJS18K:129901] [10] /home/reworu/luna/lib/librts.so(+0x43963)[0x7f8dd01c3963]
-    err> [DESKTOP-CPJS18K:129901] [11] /home/reworu/luna/lib/librts.so(_ZN10ThreadPool7routineEv+0x17d)[0x7f8dd01d38ed]
-    err> [DESKTOP-CPJS18K:129901] [12] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xdc253)[0x7f8dcfed9253]
-    err> [DESKTOP-CPJS18K:129901] [13] /lib/x86_64-linux-gnu/libc.so.6(+0x94ac3)[0x7f8dcfc46ac3]
-    err> [DESKTOP-CPJS18K:129901] [14] /lib/x86_64-linux-gnu/libc.so.6(+0x126850)[0x7f8dcfcd8850]
-    err> [DESKTOP-CPJS18K:129901] *** End of error message ***
-    err>
-
-## 14. [(3) Повторная инициализация ФД](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#3-%D0%BF%D0%BE%D0%B2%D1%82%D0%BE%D1%80%D0%BD%D0%B0%D1%8F-%D0%B8%D0%BD%D0%B8%D1%86%D0%B8%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F-%D1%84%D0%B4) - **В некоторых случаях обнаруживает RTS**
+**В некоторых случаях обнаруживает RTS.**
 
 Может быть обнаружено в рантайме, но можно сделать так, что не будет (например, с помощью delete):
 
@@ -564,125 +586,389 @@ print(x) @ { delete x; };
 ```
 Если между выполнением двух `init_after_random_delay(x)` выполнится `print(x) @ { delete x; };`, повторная инициализация не будет обнаружена. 
 
-### 14.1. [(35) Пересечение диапазонов инициализируемых индексов](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#35-%D0%BF%D0%B5%D1%80%D0%B5%D1%81%D0%B5%D1%87%D0%B5%D0%BD%D0%B8%D0%B5-%D0%B4%D0%B8%D0%B0%D0%BF%D0%B0%D0%B7%D0%BE%D0%BD%D0%BE%D0%B2-%D0%B8%D0%BD%D0%B8%D1%86%D0%B8%D0%B0%D0%BB%D0%B8%D0%B7%D0%B8%D1%80%D1%83%D0%B5%D0%BC%D1%8B%D1%85-%D0%B8%D0%BD%D0%B4%D0%B5%D0%BA%D1%81%D0%BE%D0%B2)
-
-[В старой классификации]()
-
-**Обнаруживает компилятор.**     
+### 14.1. ФД не инициализируются в цикле (индексы не содержат счетчиков циклов)
 
 Пример:
 ```
+C++ sub int_set(name x, int v) ${{ x = v; $}}
 
+sub main() {
+    df x, i;
+    int_set(i, 0);
+    int_set(x[i], 1);
+    int_set(x[i], 2);
+}
 ```
 Вывод luna:
 ```
-
+luna: fatal error: run-time error: errcode=-6
+err> 0 ERROR:  Duplicate id in post: ID<0, 1, 0> ./src/rts/rts.cpp:661
+err> 0 ABORT 
+err> terminate called after throwing an instance of 'RuntimeError'
+err>   what():  std::exception
+err> [DESKTOP-CPJS18K:93672] *** Process received signal ***
+err> [DESKTOP-CPJS18K:93672] Signal: Aborted (6)
+err> [DESKTOP-CPJS18K:93672] Signal code:  (-6)
+err> [DESKTOP-CPJS18K:93672] [ 0] /lib/x86_64-linux-gnu/libc.so.6(+0x42520)[0x7fbd61c80520]
+err> [DESKTOP-CPJS18K:93672] [ 1] /lib/x86_64-linux-gnu/libc.so.6(pthread_kill+0x12c)[0x7fbd61cd49fc]      
+err> [DESKTOP-CPJS18K:93672] [ 2] /lib/x86_64-linux-gnu/libc.so.6(raise+0x16)[0x7fbd61c80476]
+err> [DESKTOP-CPJS18K:93672] [ 3] /lib/x86_64-linux-gnu/libc.so.6(abort+0xd3)[0x7fbd61c667f3]
+err> [DESKTOP-CPJS18K:93672] [ 4] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xa2b9e)[0x7fbd61f2bb9e]
+err> [DESKTOP-CPJS18K:93672] [ 5] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xae20c)[0x7fbd61f3720c]
+err> [DESKTOP-CPJS18K:93672] [ 6] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xae277)[0x7fbd61f37277]
+err> [DESKTOP-CPJS18K:93672] [ 7] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xae4d8)[0x7fbd61f374d8]
+err> [DESKTOP-CPJS18K:93672] [ 8] /mnt/c/Users/misha/luna/lib/librts.so(+0x21010)[0x7fbd6222d010]
+err> [DESKTOP-CPJS18K:93672] [ 9] /mnt/c/Users/misha/luna/build/programs/mnt/c/Users/misha/Projects/luna/Extraterrestrial/adapt/errors/demos/new/tmpfile/libucodes.so(_Z7block_8R2CF+0x1ae)[0x7fbd58bb4eae]
+err> [DESKTOP-CPJS18K:93672] [10] /mnt/c/Users/misha/luna/lib/librts.so(+0x43963)[0x7fbd6224f963]
+err> [DESKTOP-CPJS18K:93672] [11] /mnt/c/Users/misha/luna/lib/librts.so(_ZN10ThreadPool7routineEv+0x17d)[0x7fbd6225f8ed]
+err> [DESKTOP-CPJS18K:93672] [12] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xdc253)[0x7fbd61f65253]
+err> [DESKTOP-CPJS18K:93672] [13] /lib/x86_64-linux-gnu/libc.so.6(+0x94ac3)[0x7fbd61cd2ac3]
+err> [DESKTOP-CPJS18K:93672] [14] /lib/x86_64-linux-gnu/libc.so.6(+0x126850)[0x7fbd61d64850]
+err> [DESKTOP-CPJS18K:93672] *** End of error message ***
+err>
 ```
 
-## 15. [(5) Попытка использования неинициализированного ФД](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#5-%D0%BF%D0%BE%D0%BF%D1%8B%D1%82%D0%BA%D0%B0-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F-%D0%BD%D0%B5%D0%B8%D0%BD%D0%B8%D1%86%D0%B8%D0%B0%D0%BB%D0%B8%D0%B7%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D0%B3%D0%BE-%D1%84%D0%B4)
+### 14.2. Пересечение диапазонов инициализируемых индексов
 
-[В старой классификации]()
+[В старой классификации](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#35-%D0%BF%D0%B5%D1%80%D0%B5%D1%81%D0%B5%D1%87%D0%B5%D0%BD%D0%B8%D0%B5-%D0%B4%D0%B8%D0%B0%D0%BF%D0%B0%D0%B7%D0%BE%D0%BD%D0%BE%D0%B2-%D0%B8%D0%BD%D0%B8%D1%86%D0%B8%D0%B0%D0%BB%D0%B8%D0%B7%D0%B8%D1%80%D1%83%D0%B5%D0%BC%D1%8B%D1%85-%D0%B8%D0%BD%D0%B4%D0%B5%D0%BA%D1%81%D0%BE%D0%B2)
 
-**Обнаруживает компилятор.**     
+**Не обнаруживается LuNA.**     
 
 Пример:
 ```
+C++ sub init(name x, int v) ${{ x = v; $}}
 
+sub init_1(name arr, int ind) {     
+    init(arr[ind], 0);                     
+}
+
+sub init_2(name arr, int ind) {
+    init(arr[ind-1], 1);
+}
+
+sub main() {                            
+    df x;                               
+    for i = 0..1250 {
+        init_1(x, 2*i);
+        init_2(x, 2*i+1);
+    }
+}
 ```
 Вывод luna:
 ```
-
+luna: fatal error: run-time error: errcode=-6
+err> 0 ERROR:  Duplicate id in post: ID<0, 0, 4> ./src/rts/rts.cpp:661
+err> 0 ABORT 
+err> terminate called after throwing an instance of 'RuntimeError'
+err>   what():  std::exception
+err> [DESKTOP-CPJS18K:94936] *** Process received signal ***
+err> [DESKTOP-CPJS18K:94936] Signal: Aborted (6)
+err> [DESKTOP-CPJS18K:94936] Signal code:  (-6)
+err> [DESKTOP-CPJS18K:94936] [ 0] /lib/x86_64-linux-gnu/libc.so.6(+0x42520)[0x7fa88afe3520]
+err> [DESKTOP-CPJS18K:94936] [ 1] /lib/x86_64-linux-gnu/libc.so.6(pthread_kill+0x12c)[0x7fa88b0379fc]
+err> [DESKTOP-CPJS18K:94936] [ 2] /lib/x86_64-linux-gnu/libc.so.6(raise+0x16)[0x7fa88afe3476]
+err> [DESKTOP-CPJS18K:94936] [ 3] /lib/x86_64-linux-gnu/libc.so.6(abort+0xd3)[0x7fa88afc97f3]
+err> [DESKTOP-CPJS18K:94936] [ 4] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xa2b9e)[0x7fa88b28eb9e]
+err> [DESKTOP-CPJS18K:94936] [ 5] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xae20c)[0x7fa88b29a20c]
+err> [DESKTOP-CPJS18K:94936] [ 6] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xae277)[0x7fa88b29a277]
+err> [DESKTOP-CPJS18K:94936] [ 7] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xae4d8)[0x7fa88b29a4d8]
+err> [DESKTOP-CPJS18K:94936] [ 8] /mnt/c/Users/misha/luna/lib/librts.so(+0x21010)[0x7fa88b590010]
+err> [DESKTOP-CPJS18K:94936] [ 9] /mnt/c/Users/misha/luna/build/programs/mnt/c/Users/misha/Projects/luna/Extraterrestrial/adapt/errors/demos/new/tmpfile/libucodes.so(_Z7block_2R2CF+0x1a7)[0x7fa8880179b7]
+err> [DESKTOP-CPJS18K:94936] [10] /mnt/c/Users/misha/luna/lib/librts.so(+0x43963)[0x7fa88b5b2963]
+err> [DESKTOP-CPJS18K:94936] [11] /mnt/c/Users/misha/luna/lib/librts.so(_ZN10ThreadPool7routineEv+0x17d)[0x7fa88b5c28ed]
+err> [DESKTOP-CPJS18K:94936] [12] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xdc253)[0x7fa88b2c8253]
+err> [DESKTOP-CPJS18K:94936] [13] /lib/x86_64-linux-gnu/libc.so.6(+0x94ac3)[0x7fa88b035ac3]
+err> [DESKTOP-CPJS18K:94936] [14] /lib/x86_64-linux-gnu/libc.so.6(+0x126850)[0x7fa88b0c7850]
+err> [DESKTOP-CPJS18K:94936] *** End of error message ***
+err>
 ```
 
-### 15.1. [(15) Циклическая зависимость по данным](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#15-%D1%86%D0%B8%D0%BA%D0%BB%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%B0%D1%8F-%D0%B7%D0%B0%D0%B2%D0%B8%D1%81%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D1%8C-%D0%BF%D0%BE-%D0%B4%D0%B0%D0%BD%D0%BD%D1%8B%D0%BC) - **зависание RTS**
+## 15. Попытка использования неинициализированного ФД
 
-### 15.2. [(18) Несоответствие границ циклов инициалиации и использования - Нижняя граница цикла использования может быть как больше, так и меньше нижней границы цикла инициализации](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#18-%D0%BD%D0%B5%D1%81%D0%BE%D0%BE%D1%82%D0%B2%D0%B5%D1%82%D1%81%D1%82%D0%B2%D0%B8%D0%B5-%D0%B3%D1%80%D0%B0%D0%BD%D0%B8%D1%86-%D1%86%D0%B8%D0%BA%D0%BB%D0%BE%D0%B2-%D0%B8%D0%BD%D0%B8%D1%86%D0%B8%D0%B0%D0%BB%D0%B8%D0%B0%D1%86%D0%B8%D0%B8-%D0%B8-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F---%D0%BD%D0%B8%D0%B6%D0%BD%D1%8F%D1%8F-%D0%B3%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D0%B0-%D1%86%D0%B8%D0%BA%D0%BB%D0%B0-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F-%D0%BC%D0%BE%D0%B6%D0%B5%D1%82-%D0%B1%D1%8B%D1%82%D1%8C-%D0%BA%D0%B0%D0%BA-%D0%B1%D0%BE%D0%BB%D1%8C%D1%88%D0%B5-%D1%82%D0%B0%D0%BA-%D0%B8-%D0%BC%D0%B5%D0%BD%D1%8C%D1%88%D0%B5-%D0%BD%D0%B8%D0%B6%D0%BD%D0%B5%D0%B9-%D0%B3%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D1%8B-%D1%86%D0%B8%D0%BA%D0%BB%D0%B0-%D0%B8%D0%BD%D0%B8%D1%86%D0%B8%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D0%B8) - **возможно зависание RTS**
+**Не обнаруживается LuNA (в текущей версии), приводит к зависанию во время выполнения.**     
 
-### 15.3. [(19) Несоответствие границ циклов инициалиации и использования - Нижняя граница цикла использования строго меньше нижней границы цикла инициализации](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#19-%D0%BD%D0%B5%D1%81%D0%BE%D0%BE%D1%82%D0%B2%D0%B5%D1%82%D1%81%D1%82%D0%B2%D0%B8%D0%B5-%D0%B3%D1%80%D0%B0%D0%BD%D0%B8%D1%86-%D1%86%D0%B8%D0%BA%D0%BB%D0%BE%D0%B2-%D0%B8%D0%BD%D0%B8%D1%86%D0%B8%D0%B0%D0%BB%D0%B8%D0%B0%D1%86%D0%B8%D0%B8-%D0%B8-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F---%D0%BD%D0%B8%D0%B6%D0%BD%D1%8F%D1%8F-%D0%B3%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D0%B0-%D1%86%D0%B8%D0%BA%D0%BB%D0%B0-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F-%D1%81%D1%82%D1%80%D0%BE%D0%B3%D0%BE-%D0%BC%D0%B5%D0%BD%D1%8C%D1%88%D0%B5-%D0%BD%D0%B8%D0%B6%D0%BD%D0%B5%D0%B9-%D0%B3%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D1%8B-%D1%86%D0%B8%D0%BA%D0%BB%D0%B0-%D0%B8%D0%BD%D0%B8%D1%86%D0%B8%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D0%B8) - **зависание RTS**
+### 15.1. ФД не используется в цикле (индексы не содержат счетчиков циклов)
 
-### 15.4. [(20) Несоответствие границ циклов инициалиации и использования - Верхняя граница цикла использования может быть как меньше, так и больше верхней границы цикла инициализации](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#20-%D0%BD%D0%B5%D1%81%D0%BE%D0%BE%D1%82%D0%B2%D0%B5%D1%82%D1%81%D1%82%D0%B2%D0%B8%D0%B5-%D0%B3%D1%80%D0%B0%D0%BD%D0%B8%D1%86-%D1%86%D0%B8%D0%BA%D0%BB%D0%BE%D0%B2-%D0%B8%D0%BD%D0%B8%D1%86%D0%B8%D0%B0%D0%BB%D0%B8%D0%B0%D1%86%D0%B8%D0%B8-%D0%B8-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F---%D0%B2%D0%B5%D1%80%D1%85%D0%BD%D1%8F%D1%8F-%D0%B3%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D0%B0-%D1%86%D0%B8%D0%BA%D0%BB%D0%B0-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F-%D0%BC%D0%BE%D0%B6%D0%B5%D1%82-%D0%B1%D1%8B%D1%82%D1%8C-%D0%BA%D0%B0%D0%BA-%D0%BC%D0%B5%D0%BD%D1%8C%D1%88%D0%B5-%D1%82%D0%B0%D0%BA-%D0%B8-%D0%B1%D0%BE%D0%BB%D1%8C%D1%88%D0%B5-%D0%B2%D0%B5%D1%80%D1%85%D0%BD%D0%B5%D0%B9-%D0%B3%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D1%8B-%D1%86%D0%B8%D0%BA%D0%BB%D0%B0-%D0%B8%D0%BD%D0%B8%D1%86%D0%B8%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D0%B8) - **возможно зависание RTS**
+[В старой классификации](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#5-%D0%BF%D0%BE%D0%BF%D1%8B%D1%82%D0%BA%D0%B0-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F-%D0%BD%D0%B5%D0%B8%D0%BD%D0%B8%D1%86%D0%B8%D0%B0%D0%BB%D0%B8%D0%B7%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D0%B3%D0%BE-%D1%84%D0%B4)
 
-### 15.5. [(21) Несоответствие границ циклов инициалиации и использования - Верхняя граница цикла использования строго больше верхней границы цикла инициализации](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#21-%D0%BD%D0%B5%D1%81%D0%BE%D0%BE%D1%82%D0%B2%D0%B5%D1%82%D1%81%D1%82%D0%B2%D0%B8%D0%B5-%D0%B3%D1%80%D0%B0%D0%BD%D0%B8%D1%86-%D1%86%D0%B8%D0%BA%D0%BB%D0%BE%D0%B2-%D0%B8%D0%BD%D0%B8%D1%86%D0%B8%D0%B0%D0%BB%D0%B8%D0%B0%D1%86%D0%B8%D0%B8-%D0%B8-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F---%D0%B2%D0%B5%D1%80%D1%85%D0%BD%D1%8F%D1%8F-%D0%B3%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D0%B0-%D1%86%D0%B8%D0%BA%D0%BB%D0%B0-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F-%D1%81%D1%82%D1%80%D0%BE%D0%B3%D0%BE-%D0%B1%D0%BE%D0%BB%D1%8C%D1%88%D0%B5-%D0%B2%D0%B5%D1%80%D1%85%D0%BD%D0%B5%D0%B9-%D0%B3%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D1%8B-%D1%86%D0%B8%D0%BA%D0%BB%D0%B0-%D0%B8%D0%BD%D0%B8%D1%86%D0%B8%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D0%B8) - **зависание RTS**
+Пример:
+```
+C++ sub empty(int x) ${{$}}
 
-### 15.6. [(22) Шаг цикла использования не кратен шагу цикла инициализации](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#22-%D1%88%D0%B0%D0%B3-%D1%86%D0%B8%D0%BA%D0%BB%D0%B0-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F-%D0%BD%D0%B5-%D0%BA%D1%80%D0%B0%D1%82%D0%B5%D0%BD-%D1%88%D0%B0%D0%B3%D1%83-%D1%86%D0%B8%D0%BA%D0%BB%D0%B0-%D0%B8%D0%BD%D0%B8%D1%86%D0%B8%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D0%B8) - **зависание RTS**
+sub main() {
+    df x;
+    empty(x);
+}
+```
+Вывод luna: программа зависает.
 
-### 15.7. [(37) Нет (гарантированного) цикла инициализации](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#37-%D0%BD%D0%B5%D1%82-%D0%B3%D0%B0%D1%80%D0%B0%D0%BD%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D0%B3%D0%BE-%D1%86%D0%B8%D0%BA%D0%BB%D0%B0-%D0%B8%D0%BD%D0%B8%D1%86%D0%B8%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D0%B8) - **возможно зависание RTS**
+### 15.2. Циклическая зависимость по данным
+
+[В старой классификации](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#15-%D1%86%D0%B8%D0%BA%D0%BB%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%B0%D1%8F-%D0%B7%D0%B0%D0%B2%D0%B8%D1%81%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D1%8C-%D0%BF%D0%BE-%D0%B4%D0%B0%D0%BD%D0%BD%D1%8B%D0%BC)
+
+Пример:
+```
+C++ sub int_set(name x, int v) ${{ x = v; $}}
+
+sub main() {
+    df x, y;
+    int_set(x, y);
+    int_set(y, x);
+}
+```
+Вывод luna: программа зависает.
+
+### 15.3. Диапазон используемых индексов не инициализирован полностью
+
+Рассматриваются диапазоны индексов, задаваемые циклами `for`.
+
+В старой классификации: [LUNA18](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#18-%D0%BD%D0%B5%D1%81%D0%BE%D0%BE%D1%82%D0%B2%D0%B5%D1%82%D1%81%D1%82%D0%B2%D0%B8%D0%B5-%D0%B3%D1%80%D0%B0%D0%BD%D0%B8%D1%86-%D1%86%D0%B8%D0%BA%D0%BB%D0%BE%D0%B2-%D0%B8%D0%BD%D0%B8%D1%86%D0%B8%D0%B0%D0%BB%D0%B8%D0%B0%D1%86%D0%B8%D0%B8-%D0%B8-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F---%D0%BD%D0%B8%D0%B6%D0%BD%D1%8F%D1%8F-%D0%B3%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D0%B0-%D1%86%D0%B8%D0%BA%D0%BB%D0%B0-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F-%D0%BC%D0%BE%D0%B6%D0%B5%D1%82-%D0%B1%D1%8B%D1%82%D1%8C-%D0%BA%D0%B0%D0%BA-%D0%B1%D0%BE%D0%BB%D1%8C%D1%88%D0%B5-%D1%82%D0%B0%D0%BA-%D0%B8-%D0%BC%D0%B5%D0%BD%D1%8C%D1%88%D0%B5-%D0%BD%D0%B8%D0%B6%D0%BD%D0%B5%D0%B9-%D0%B3%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D1%8B-%D1%86%D0%B8%D0%BA%D0%BB%D0%B0-%D0%B8%D0%BD%D0%B8%D1%86%D0%B8%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D0%B8),
+[LUNA19](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#19-%D0%BD%D0%B5%D1%81%D0%BE%D0%BE%D1%82%D0%B2%D0%B5%D1%82%D1%81%D1%82%D0%B2%D0%B8%D0%B5-%D0%B3%D1%80%D0%B0%D0%BD%D0%B8%D1%86-%D1%86%D0%B8%D0%BA%D0%BB%D0%BE%D0%B2-%D0%B8%D0%BD%D0%B8%D1%86%D0%B8%D0%B0%D0%BB%D0%B8%D0%B0%D1%86%D0%B8%D0%B8-%D0%B8-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F---%D0%BD%D0%B8%D0%B6%D0%BD%D1%8F%D1%8F-%D0%B3%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D0%B0-%D1%86%D0%B8%D0%BA%D0%BB%D0%B0-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F-%D1%81%D1%82%D1%80%D0%BE%D0%B3%D0%BE-%D0%BC%D0%B5%D0%BD%D1%8C%D1%88%D0%B5-%D0%BD%D0%B8%D0%B6%D0%BD%D0%B5%D0%B9-%D0%B3%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D1%8B-%D1%86%D0%B8%D0%BA%D0%BB%D0%B0-%D0%B8%D0%BD%D0%B8%D1%86%D0%B8%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D0%B8),
+[LUNA20](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#20-%D0%BD%D0%B5%D1%81%D0%BE%D0%BE%D1%82%D0%B2%D0%B5%D1%82%D1%81%D1%82%D0%B2%D0%B8%D0%B5-%D0%B3%D1%80%D0%B0%D0%BD%D0%B8%D1%86-%D1%86%D0%B8%D0%BA%D0%BB%D0%BE%D0%B2-%D0%B8%D0%BD%D0%B8%D1%86%D0%B8%D0%B0%D0%BB%D0%B8%D0%B0%D1%86%D0%B8%D0%B8-%D0%B8-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F---%D0%B2%D0%B5%D1%80%D1%85%D0%BD%D1%8F%D1%8F-%D0%B3%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D0%B0-%D1%86%D0%B8%D0%BA%D0%BB%D0%B0-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F-%D0%BC%D0%BE%D0%B6%D0%B5%D1%82-%D0%B1%D1%8B%D1%82%D1%8C-%D0%BA%D0%B0%D0%BA-%D0%BC%D0%B5%D0%BD%D1%8C%D1%88%D0%B5-%D1%82%D0%B0%D0%BA-%D0%B8-%D0%B1%D0%BE%D0%BB%D1%8C%D1%88%D0%B5-%D0%B2%D0%B5%D1%80%D1%85%D0%BD%D0%B5%D0%B9-%D0%B3%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D1%8B-%D1%86%D0%B8%D0%BA%D0%BB%D0%B0-%D0%B8%D0%BD%D0%B8%D1%86%D0%B8%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D0%B8),
+[LUNA21](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#21-%D0%BD%D0%B5%D1%81%D0%BE%D0%BE%D1%82%D0%B2%D0%B5%D1%82%D1%81%D1%82%D0%B2%D0%B8%D0%B5-%D0%B3%D1%80%D0%B0%D0%BD%D0%B8%D1%86-%D1%86%D0%B8%D0%BA%D0%BB%D0%BE%D0%B2-%D0%B8%D0%BD%D0%B8%D1%86%D0%B8%D0%B0%D0%BB%D0%B8%D0%B0%D1%86%D0%B8%D0%B8-%D0%B8-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F---%D0%B2%D0%B5%D1%80%D1%85%D0%BD%D1%8F%D1%8F-%D0%B3%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D0%B0-%D1%86%D0%B8%D0%BA%D0%BB%D0%B0-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F-%D1%81%D1%82%D1%80%D0%BE%D0%B3%D0%BE-%D0%B1%D0%BE%D0%BB%D1%8C%D1%88%D0%B5-%D0%B2%D0%B5%D1%80%D1%85%D0%BD%D0%B5%D0%B9-%D0%B3%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D1%8B-%D1%86%D0%B8%D0%BA%D0%BB%D0%B0-%D0%B8%D0%BD%D0%B8%D1%86%D0%B8%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D0%B8),
+[LUNA22](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#22-%D1%88%D0%B0%D0%B3-%D1%86%D0%B8%D0%BA%D0%BB%D0%B0-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F-%D0%BD%D0%B5-%D0%BA%D1%80%D0%B0%D1%82%D0%B5%D0%BD-%D1%88%D0%B0%D0%B3%D1%83-%D1%86%D0%B8%D0%BA%D0%BB%D0%B0-%D0%B8%D0%BD%D0%B8%D1%86%D0%B8%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D0%B8),
+[LUNA37](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#37-%D0%BD%D0%B5%D1%82-%D0%B3%D0%B0%D1%80%D0%B0%D0%BD%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D0%B3%D0%BE-%D1%86%D0%B8%D0%BA%D0%BB%D0%B0-%D0%B8%D0%BD%D0%B8%D1%86%D0%B8%D0%B0%D0%BB%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D0%B8)
+
+Пример 1 - шаг цикла использования не кратен шагу цикла инициализации:
+```
+C++ sub init(name x, int v) ${{ x = v; $}}
+C++ sub print(int x) ${{$}}
+
+sub main() {                            
+    df x;                               
+    for i = 0..100 {
+        init(x[2*i+1], 2 * i + 1);
+    }
+
+    for i = 0..66 {
+        print(x[3*i+1]);
+    }
+}
+```
+
+Пример 2 - выход за границу цикла инициализации:
+```
+C++ sub init(name x, int v) ${{ x = v; $}}
+C++ sub print(int x) ${{$}}
+
+sub main() {                            
+    df x;                               
+    for i = 0..100 {
+        init(x[i], i);
+    }
+
+    for i = 0..101 {
+        print(x[i]);
+    }
+}
+```
+
+Пример 3 - нет цикла инициализации:
+```
+C++ sub init(name x, int v) ${{ x = v; $}}
+C++ sub print(int x) ${{$}}
+
+sub main() {                            
+    df x;
+
+    for i = 0..101 {
+        print(x[i]);
+    }
+}
+```
 
 Реакция RTS зависит от того, будут ли инициализированы необходимые индексированные ФД. 
 
-### 15.8. [(27) Попытка запросить неинициализированный ФД при помощи request](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#27-%D0%BF%D0%BE%D0%BF%D1%8B%D1%82%D0%BA%D0%B0-%D0%B7%D0%B0%D0%BF%D1%80%D0%BE%D1%81%D0%B8%D1%82%D1%8C-%D0%BD%D0%B5%D0%B8%D0%BD%D0%B8%D1%86%D0%B8%D0%B0%D0%BB%D0%B8%D0%B7%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D1%8B%D0%B9-%D1%84%D0%B4-%D0%BF%D1%80%D0%B8-%D0%BF%D0%BE%D0%BC%D0%BE%D1%89%D0%B8-request) - **зависание RTS**
+Пример, где ошибки нет:
+```
+C++ sub init(name x, int v) ${{ x = v; $}}
+C++ sub print(int x) ${{$}}
 
-### 15.9. [(28) Попытка использования ФД после превышения допустимого числа запросов](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#28-%D0%BF%D0%BE%D0%BF%D1%8B%D1%82%D0%BA%D0%B0-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F-%D1%84%D0%B4-%D0%BF%D0%BE%D1%81%D0%BB%D0%B5-%D0%BF%D1%80%D0%B5%D0%B2%D1%8B%D1%88%D0%B5%D0%BD%D0%B8%D1%8F-%D0%B4%D0%BE%D0%BF%D1%83%D1%81%D1%82%D0%B8%D0%BC%D0%BE%D0%B3%D0%BE-%D1%87%D0%B8%D1%81%D0%BB%D0%B0-%D0%B7%D0%B0%D0%BF%D1%80%D0%BE%D1%81%D0%BE%D0%B2) - **зависание RTS**
+sub main() {                            
+    df x;
+    
+    init(x[0], 0);
+    init(x[5], 5);
+    
+    for i = 1..4 {
+        init(x[i], i);
+    }
+    
+    for i = 6..10 {
+        init(x[i], i);
+    }
+    
+    for i = 0..10 {
+        print(x[i]);
+    }
+}
+```
 
-### 15.10. [(29) Использование ФД после его удаления при помощи соответствующего оператора](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#29-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5-%D1%84%D0%B4-%D0%BF%D0%BE%D1%81%D0%BB%D0%B5-%D0%B5%D0%B3%D0%BE-%D1%83%D0%B4%D0%B0%D0%BB%D0%B5%D0%BD%D0%B8%D1%8F-%D0%BF%D1%80%D0%B8-%D0%BF%D0%BE%D0%BC%D0%BE%D1%89%D0%B8-%D1%81%D0%BE%D0%BE%D1%82%D0%B2%D0%B5%D1%82%D1%81%D1%82%D0%B2%D1%83%D1%8E%D1%89%D0%B5%D0%B3%D0%BE-%D0%BE%D0%BF%D0%B5%D1%80%D0%B0%D1%82%D0%BE%D1%80%D0%B0) - **зависание RTS**
+### 15.4. Попытка запросить неинициализированный ФД при помощи request
 
-## 16. [(9) Использование ФД после его удаления](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#9-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5-%D1%84%D0%B4-%D0%BF%D0%BE%D1%81%D0%BB%D0%B5-%D0%B5%D0%B3%D0%BE-%D1%83%D0%B4%D0%B0%D0%BB%D0%B5%D0%BD%D0%B8%D1%8F) - **?**
+[В старой классификации](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#27-%D0%BF%D0%BE%D0%BF%D1%8B%D1%82%D0%BA%D0%B0-%D0%B7%D0%B0%D0%BF%D1%80%D0%BE%D1%81%D0%B8%D1%82%D1%8C-%D0%BD%D0%B5%D0%B8%D0%BD%D0%B8%D1%86%D0%B8%D0%B0%D0%BB%D0%B8%D0%B7%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D1%8B%D0%B9-%D1%84%D0%B4-%D0%BF%D1%80%D0%B8-%D0%BF%D0%BE%D0%BC%D0%BE%D1%89%D0%B8-request)
 
-[В старой классификации]()
+**Зависание RTS.**
 
-**Обнаруживает компилятор.**     
+### 15.9. [(28) Попытка использования ФД после превышения допустимого числа запросов]
+
+[В старой классификации](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#28-%D0%BF%D0%BE%D0%BF%D1%8B%D1%82%D0%BA%D0%B0-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F-%D1%84%D0%B4-%D0%BF%D0%BE%D1%81%D0%BB%D0%B5-%D0%BF%D1%80%D0%B5%D0%B2%D1%8B%D1%88%D0%B5%D0%BD%D0%B8%D1%8F-%D0%B4%D0%BE%D0%BF%D1%83%D1%81%D1%82%D0%B8%D0%BC%D0%BE%D0%B3%D0%BE-%D1%87%D0%B8%D1%81%D0%BB%D0%B0-%D0%B7%D0%B0%D0%BF%D1%80%D0%BE%D1%81%D0%BE%D0%B2)
+
+**Зависание RTS.**
+
+### 15.10. Использование ФД после его удаления
+
+В старой классификации: [LUNA29](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#29-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5-%D1%84%D0%B4-%D0%BF%D0%BE%D1%81%D0%BB%D0%B5-%D0%B5%D0%B3%D0%BE-%D1%83%D0%B4%D0%B0%D0%BB%D0%B5%D0%BD%D0%B8%D1%8F-%D0%BF%D1%80%D0%B8-%D0%BF%D0%BE%D0%BC%D0%BE%D1%89%D0%B8-%D1%81%D0%BE%D0%BE%D1%82%D0%B2%D0%B5%D1%82%D1%81%D1%82%D0%B2%D1%83%D1%8E%D1%89%D0%B5%D0%B3%D0%BE-%D0%BE%D0%BF%D0%B5%D1%80%D0%B0%D1%82%D0%BE%D1%80%D0%B0), [LUNA9](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#9-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5-%D1%84%D0%B4-%D0%BF%D0%BE%D1%81%D0%BB%D0%B5-%D0%B5%D0%B3%D0%BE-%D1%83%D0%B4%D0%B0%D0%BB%D0%B5%D0%BD%D0%B8%D1%8F)
+
+**Зависание RTS / Ошибка времени выполнения.**
+
+Пример 1 - оператор `delete`:
+```
+C++ sub init(name x, int v) ${{ x = v; $}}
+C++ sub print(int x) ${{$}}
+
+sub main() {
+    df x;
+    init(x, 1) @ { delete x; };
+    print(x);
+}
+```
+
+Вывод luna:
+```
+luna: fatal error: run-time error: errcode=-6
+err> 0 ERROR:  Request(s) present at destroy ./src/rts/rts.cpp:708
+err> 0 ABORT 
+err> terminate called after throwing an instance of 'RuntimeError'
+err>   what():  std::exception
+err> [DESKTOP-CPJS18K:103293] *** Process received signal ***
+err> [DESKTOP-CPJS18K:103293] Signal: Aborted (6)
+err> [DESKTOP-CPJS18K:103293] Signal code:  (-6)
+err> [DESKTOP-CPJS18K:103293] [ 0] /lib/x86_64-linux-gnu/libc.so.6(+0x42520)[0x7fbb5a8ed520]
+err> [DESKTOP-CPJS18K:103293] [ 1] /lib/x86_64-linux-gnu/libc.so.6(pthread_kill+0x12c)[0x7fbb5a9419fc]
+err> [DESKTOP-CPJS18K:103293] [ 2] /lib/x86_64-linux-gnu/libc.so.6(raise+0x16)[0x7fbb5a8ed476]
+err> [DESKTOP-CPJS18K:103293] [ 3] /lib/x86_64-linux-gnu/libc.so.6(abort+0xd3)[0x7fbb5a8d37f3]
+err> [DESKTOP-CPJS18K:103293] [ 4] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xa2b9e)[0x7fbb5ab98b9e]
+err> [DESKTOP-CPJS18K:103293] [ 5] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xae20c)[0x7fbb5aba420c]
+err> [DESKTOP-CPJS18K:103293] [ 6] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xae277)[0x7fbb5aba4277]
+err> [DESKTOP-CPJS18K:103293] [ 7] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xae4d8)[0x7fbb5aba44d8]
+err> [DESKTOP-CPJS18K:103293] [ 8] /mnt/c/Users/misha/luna/lib/librts.so(+0x20ae3)[0x7fbb5ae99ae3]
+err> [DESKTOP-CPJS18K:103293] [ 9] /mnt/c/Users/misha/luna/build/programs/mnt/c/Users/misha/Projects/luna/Extraterrestrial/adapt/errors/demos/new/tmpfile/libucodes.so(_Z7block_2R2CF+0xd5)[0x7fbb518217a5]
+err> [DESKTOP-CPJS18K:103293] [10] /mnt/c/Users/misha/luna/lib/librts.so(+0x43963)[0x7fbb5aebc963]
+err> [DESKTOP-CPJS18K:103293] [11] /mnt/c/Users/misha/luna/lib/librts.so(_ZN10ThreadPool7routineEv+0x17d)[0x7fbb5aecc8ed]
+err> [DESKTOP-CPJS18K:103293] [12] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xdc253)[0x7fbb5abd2253]
+err> [DESKTOP-CPJS18K:103293] [13] /lib/x86_64-linux-gnu/libc.so.6(+0x94ac3)[0x7fbb5a93fac3]
+err> [DESKTOP-CPJS18K:103293] [14] /lib/x86_64-linux-gnu/libc.so.6(+0x126850)[0x7fbb5a9d1850]
+err> [DESKTOP-CPJS18K:103293] *** End of error message ***
+err>
+```
+
+Пример 2 - оператор `-->`:
+```
+C++ sub init(name x, int v) ${{ x = v; $}}
+C++ sub print(int x) ${{$}}
+
+sub main() {
+    df x;
+    init(x, 1) --> (x);
+    print(x);
+}
+```
+
+Вывод luna:
+```
+luna: fatal error: run-time error: errcode=-6
+err> 0 ERROR:  Request(s) present at destroy ./src/rts/rts.cpp:708
+err> 0 ABORT 
+err> terminate called after throwing an instance of 'RuntimeError'
+err>   what():  std::exception
+err> [DESKTOP-CPJS18K:103821] *** Process received signal ***
+err> [DESKTOP-CPJS18K:103821] Signal: Aborted (6)
+err> [DESKTOP-CPJS18K:103821] Signal code:  (-6)
+err> [DESKTOP-CPJS18K:103821] [ 0] /lib/x86_64-linux-gnu/libc.so.6(+0x42520)[0x7f996ff94520]
+err> [DESKTOP-CPJS18K:103821] [ 1] /lib/x86_64-linux-gnu/libc.so.6(pthread_kill+0x12c)[0x7f996ffe89fc]
+err> [DESKTOP-CPJS18K:103821] [ 2] /lib/x86_64-linux-gnu/libc.so.6(raise+0x16)[0x7f996ff94476]
+err> [DESKTOP-CPJS18K:103821] [ 3] /lib/x86_64-linux-gnu/libc.so.6(abort+0xd3)[0x7f996ff7a7f3]
+err> [DESKTOP-CPJS18K:103821] [ 4] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xa2b9e)[0x7f997023fb9e]
+err> [DESKTOP-CPJS18K:103821] [ 5] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xae20c)[0x7f997024b20c]
+err> [DESKTOP-CPJS18K:103821] [ 6] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xae277)[0x7f997024b277]
+err> [DESKTOP-CPJS18K:103821] [ 7] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xae4d8)[0x7f997024b4d8]
+err> [DESKTOP-CPJS18K:103821] [ 8] /mnt/c/Users/misha/luna/lib/librts.so(+0x20ae3)[0x7f9970540ae3]
+err> [DESKTOP-CPJS18K:103821] [ 9] /mnt/c/Users/misha/luna/build/programs/mnt/c/Users/misha/Projects/luna/Extraterrestrial/adapt/errors/demos/new/tmpfile/libucodes.so(_Z7block_2R2CF+0xd5)[0x7f996caea7a5]
+err> [DESKTOP-CPJS18K:103821] [10] /mnt/c/Users/misha/luna/lib/librts.so(+0x43963)[0x7f9970563963]
+err> [DESKTOP-CPJS18K:103821] [11] /mnt/c/Users/misha/luna/lib/librts.so(_ZN10ThreadPool7routineEv+0x17d)[0x7f99705738ed]
+err> [DESKTOP-CPJS18K:103821] [12] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xdc253)[0x7f9970279253]
+err> [DESKTOP-CPJS18K:103821] [13] /lib/x86_64-linux-gnu/libc.so.6(+0x94ac3)[0x7f996ffe6ac3]
+err> [DESKTOP-CPJS18K:103821] [14] /lib/x86_64-linux-gnu/libc.so.6(+0x126850)[0x7f9970078850]
+err> [DESKTOP-CPJS18K:103821] *** End of error message ***
+err>
+```
+
+## 16. Неиспользуемый ФД
+
+[В старой классификации](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#10-%D0%BD%D0%B5%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D1%83%D0%B5%D0%BC%D1%8B%D0%B9-%D1%84%D0%B4)
+
+**Не обнаруживается LuNA.** 
+
+ФД инициализируется, но не используется как входной.
 
 Пример:
 ```
+C++ sub init(name x, int v) ${{ x = v; $}}
 
+sub main() {
+    df x;
+    init(x, 1);
+}
 ```
-Вывод luna:
-```
 
-```
+## 17. Формула в if тождественно истинна/ложна
 
-## 17. [(10) Неиспользуемый ФД](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#10-%D0%BD%D0%B5%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D1%83%D0%B5%D0%BC%D1%8B%D0%B9-%D1%84%D0%B4) - **Не обнаруживается LuNA**
+[В старой классификации](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#23-%D1%84%D0%BE%D1%80%D0%BC%D1%83%D0%BB%D0%B0-%D0%B2-if-%D1%82%D0%BE%D0%B6%D0%B4%D0%B5%D1%81%D1%82%D0%B2%D0%B5%D0%BD%D0%BD%D0%BE-%D0%B8%D1%81%D1%82%D0%B8%D0%BD%D0%BD%D0%B0%D0%BB%D0%BE%D0%B6%D0%BD%D0%B0)
 
-ФД инициализируется, но не используется как входной
-
-[8-ok-initialized-never-consumed.fa](errors/demos/8.3-ok-initialized-never-consumed.fa) - ошибки нет
-
-
-[В старой классификации]()
-
-**Обнаруживает компилятор.**     
+**Не обнаруживается LuNA.** 
 
 Пример:
 ```
+C++ sub real_set(name x, real v) ${{ x = v; $}}
 
+sub main(){
+    df a, x, y;
+    real_set(x[0], 1.0);
+    real_set(y, 2.0);
+    if x[0] <= y || x[0] > y {
+        real_set(a, 3.0);
+    }
+}
 ```
-Вывод luna:
-```
 
-```
+## 18. Формула в if истинна/ложна во всех путях выполнения
 
+[В старой классификации](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#24-%D1%84%D0%BE%D1%80%D0%BC%D1%83%D0%BB%D0%B0-%D0%B2-if-%D0%B8%D1%81%D1%82%D0%B8%D0%BD%D0%BD%D0%B0%D0%BB%D0%BE%D0%B6%D0%BD%D0%B0-%D0%B2%D0%BE-%D0%B2%D1%81%D0%B5%D1%85-%D0%BF%D1%83%D1%82%D1%8F%D1%85-%D0%B2%D1%8B%D0%BF%D0%BE%D0%BB%D0%BD%D0%B5%D0%BD%D0%B8%D1%8F)
 
-## 18. [(23) Формула в if тождественно истинна/ложна](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#23-%D1%84%D0%BE%D1%80%D0%BC%D1%83%D0%BB%D0%B0-%D0%B2-if-%D1%82%D0%BE%D0%B6%D0%B4%D0%B5%D1%81%D1%82%D0%B2%D0%B5%D0%BD%D0%BD%D0%BE-%D0%B8%D1%81%D1%82%D0%B8%D0%BD%D0%BD%D0%B0%D0%BB%D0%BE%D0%B6%D0%BD%D0%B0) - **Не обнаруживается LuNA**
-
-[В старой классификации]()
-
-**Обнаруживает компилятор.**     
+**Не обнаруживается LuNA.**  
 
 Пример:
 ```
+C++ sub print(int x) ${{$}}
 
-```
-Вывод luna:
-```
+sub print_if_gt_5(int n) {
+    if n > 5 {
+        print(n);
+    }
+}
 
-```
-
-## 19. [(24) Формула в if истинна/ложна во всех путях выполнения](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#24-%D1%84%D0%BE%D1%80%D0%BC%D1%83%D0%BB%D0%B0-%D0%B2-if-%D0%B8%D1%81%D1%82%D0%B8%D0%BD%D0%BD%D0%B0%D0%BB%D0%BE%D0%B6%D0%BD%D0%B0-%D0%B2%D0%BE-%D0%B2%D1%81%D0%B5%D1%85-%D0%BF%D1%83%D1%82%D1%8F%D1%85-%D0%B2%D1%8B%D0%BF%D0%BE%D0%BB%D0%BD%D0%B5%D0%BD%D0%B8%D1%8F) - **Не обнаруживается LuNA**
-
-[В старой классификации]()
-
-**Обнаруживает компилятор.**     
-
-Пример:
+sub main() {
+    print_if_gt_5(7); // -> if 7 > 5
+    print_if_gt_5(8); // -> if 8 > 5
+}
 ```
 
-```
-Вывод luna:
-```
+## 19. Безусловная рекурсия
 
-```
+[В старой классификации](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#34-%D0%B1%D0%B5%D0%B7%D1%83%D1%81%D0%BB%D0%BE%D0%B2%D0%BD%D0%B0%D1%8F-%D1%80%D0%B5%D0%BA%D1%83%D1%80%D1%81%D0%B8%D1%8F)
 
-## 20. [(34) Безусловная рекурсия](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#34-%D0%B1%D0%B5%D0%B7%D1%83%D1%81%D0%BB%D0%BE%D0%B2%D0%BD%D0%B0%D1%8F-%D1%80%D0%B5%D0%BA%D1%83%D1%80%D1%81%D0%B8%D1%8F) - **зависание RTS**
+**Зависание RTS.**
 
 Рассматриваются только рекурсивные вызовы вида:
 ```
@@ -691,7 +977,7 @@ sub f(...) {
 }
 ```
 
-В примере, приведенном выше, RTS просто завсинет:
+В примере, приведенном выше, RTS просто зависнет:
 
     1. Создается ФВ f
     2. Выполняется ФВ f
@@ -700,66 +986,104 @@ sub f(...) {
     2.3. Удаляется ФВ f (внешний)
     3. Возврат к п. 2
 
-Таким образом, бесконенчная рекурсия работает за O(1) по памяти. Эксперимент показал, что использование памяти процессом luna за 6+ минут не изменилось.
+Таким образом, бесконечная рекурсия работает за O(1) по памяти. Эксперимент показал, что использование памяти процессом luna за 6+ минут не изменилось.
 
-Случаи, когда рекурсивный вызов находится под усливием, которое 1) тождественно истинно или 2) истинно для всех рекурсивных вызовов при использованных начальных параметрах, рассматриваются как ошибки 14 и 15 соответственно. 
+Случаи, когда рекурсивный вызов находится под условием, которое 1) тождественно истинно или 2) истинно для всех рекурсивных вызовов при использованных начальных параметрах, рассматриваются как ошибки 14 и 15 соответственно. 
 
-## 21. TODO непонятно [(30) Использование оператора информационной зависимости для структурированного ФК](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#30-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5-%D0%BE%D0%BF%D0%B5%D1%80%D0%B0%D1%82%D0%BE%D1%80%D0%B0-%D0%B8%D0%BD%D1%84%D0%BE%D1%80%D0%BC%D0%B0%D1%86%D0%B8%D0%BE%D0%BD%D0%BD%D0%BE%D0%B9-%D0%B7%D0%B0%D0%B2%D0%B8%D1%81%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D0%B8-%D0%B4%D0%BB%D1%8F-%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%82%D1%83%D1%80%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D0%B3%D0%BE-%D1%84%D0%BA) - **зависание RTS**
+## 20. Использование оператора информационной зависимости для структурированного ФК
 
-[В старой классификации]()
+[В старой классификации](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#30-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5-%D0%BE%D0%BF%D0%B5%D1%80%D0%B0%D1%82%D0%BE%D1%80%D0%B0-%D0%B8%D0%BD%D1%84%D0%BE%D1%80%D0%BC%D0%B0%D1%86%D0%B8%D0%BE%D0%BD%D0%BD%D0%BE%D0%B9-%D0%B7%D0%B0%D0%B2%D0%B8%D1%81%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D0%B8-%D0%B4%D0%BB%D1%8F-%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%82%D1%83%D1%80%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%BD%D0%BE%D0%B3%D0%BE-%D1%84%D0%BA)
 
-**Обнаруживает компилятор.**     
-
-Пример:
-```
-
-```
-Вывод luna:
-```
-
-```
-
-## 22. [(31) Не передать значение для nfparam](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#31-%D0%BD%D0%B5-%D0%BF%D0%B5%D1%80%D0%B5%D0%B4%D0%B0%D1%82%D1%8C-%D0%B7%D0%BD%D0%B0%D1%87%D0%B5%D0%BD%D0%B8%D0%B5-%D0%B4%D0%BB%D1%8F-nfparam) - **обнаруживает RTS**
-
-[В старой классификации]()
-
-**Обнаруживает компилятор.**     
+**Зависание RTS.**
 
 Пример:
 ```
+C++ sub init(name x, int v) ${{ x = v; $}}
+C++ sub print(int x) ${{$}}
 
+sub foo(name x, int v) {
+    init(x, v);
+}
+
+sub main() {
+    df x, y;
+    foo(x, 1) >> (y);
+    if y {
+        print(x);
+    }
+}
 ```
-Вывод luna:
-```
 
-```
+## 21. Не передать значение для nfparam
 
-## 23. TODO непонятно [(32) Попытка запросить ФД из узла, где его нет](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#32-%D0%BF%D0%BE%D0%BF%D1%8B%D1%82%D0%BA%D0%B0-%D0%B7%D0%B0%D0%BF%D1%80%D0%BE%D1%81%D0%B8%D1%82%D1%8C-%D1%84%D0%B4-%D0%B8%D0%B7-%D1%83%D0%B7%D0%BB%D0%B0-%D0%B3%D0%B4%D0%B5-%D0%B5%D0%B3%D0%BE-%D0%BD%D0%B5%D1%82) - **зависание RTS**
+[В старой классификации](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#31-%D0%BD%D0%B5-%D0%BF%D0%B5%D1%80%D0%B5%D0%B4%D0%B0%D1%82%D1%8C-%D0%B7%D0%BD%D0%B0%D1%87%D0%B5%D0%BD%D0%B8%D0%B5-%D0%B4%D0%BB%D1%8F-nfparam)
 
-[В старой классификации]()
-
-**Обнаруживает компилятор.**     
+**Обнаруживает RTS.**  
 
 Пример:
 ```
+C++ sub init(name x, int v) ${{ x = v; $}}
+C++ sub print(int x) ${{$}}
 
+sub foo(name x, int v) {
+    init(x, v);
+} @ {
+    nfparam n;
+    locator_cyclic x => n;
+}
+
+sub main() {
+    df x, y;
+    foo(x, 1);
+}
 ```
 Вывод luna:
 ```
-
+luna: fatal error: run-time error: errcode=-6
+err> 0 ERROR:  get_int failed for type (unset) ./src/rts/df.cpp:165
+err> 0 ABORT 
+err> terminate called after throwing an instance of 'RuntimeError'
+err>   what():  std::exception
+err> [DESKTOP-CPJS18K:107485] *** Process received signal ***
+err> [DESKTOP-CPJS18K:107485] Signal: Aborted (6)
+err> [DESKTOP-CPJS18K:107485] Signal code:  (-6)
+err> [DESKTOP-CPJS18K:107485] [ 0] /lib/x86_64-linux-gnu/libc.so.6(+0x42520)[0x7f1473b9f520]
+err> [DESKTOP-CPJS18K:107485] [ 1] /lib/x86_64-linux-gnu/libc.so.6(pthread_kill+0x12c)[0x7f1473bf39fc]
+err> [DESKTOP-CPJS18K:107485] [ 2] /lib/x86_64-linux-gnu/libc.so.6(raise+0x16)[0x7f1473b9f476]
+err> [DESKTOP-CPJS18K:107485] [ 3] /lib/x86_64-linux-gnu/libc.so.6(abort+0xd3)[0x7f1473b857f3]
+err> [DESKTOP-CPJS18K:107485] [ 4] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xa2b9e)[0x7f1473e4ab9e]
+err> [DESKTOP-CPJS18K:107485] [ 5] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xae20c)[0x7f1473e5620c]
+err> [DESKTOP-CPJS18K:107485] [ 6] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xae277)[0x7f1473e56277]
+err> [DESKTOP-CPJS18K:107485] [ 7] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xae4d8)[0x7f1473e564d8]
+err> [DESKTOP-CPJS18K:107485] [ 8] /mnt/c/Users/misha/luna/lib/librts.so(+0x1db48)[0x7f1474148b48]
+err> [DESKTOP-CPJS18K:107485] [ 9] /mnt/c/Users/misha/luna/build/programs/mnt/c/Users/misha/Projects/luna/Extraterrestrial/adapt/errors/demos/new/tmpfile/libucodes.so(_Z7block_1R2CF+0x94)[0x7f14708a7b94]
+err> [DESKTOP-CPJS18K:107485] [10] /mnt/c/Users/misha/luna/lib/librts.so(+0x43963)[0x7f147416e963]
+err> [DESKTOP-CPJS18K:107485] [11] /mnt/c/Users/misha/luna/lib/librts.so(_ZN10ThreadPool7routineEv+0x17d)[0x7f147417e8ed]
+err> [DESKTOP-CPJS18K:107485] [12] /lib/x86_64-linux-gnu/libstdc++.so.6(+0xdc253)[0x7f1473e84253]
+err> [DESKTOP-CPJS18K:107485] [13] /lib/x86_64-linux-gnu/libc.so.6(+0x94ac3)[0x7f1473bf1ac3]
+err> [DESKTOP-CPJS18K:107485] [14] /lib/x86_64-linux-gnu/libc.so.6(+0x126850)[0x7f1473c83850]
+err> [DESKTOP-CPJS18K:107485] *** End of error message ***
+err>
 ```
 
-## 24. TODO непонятно [(33) Неправильный параметр для nfparam](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#33-%D0%BD%D0%B5%D0%BF%D1%80%D0%B0%D0%B2%D0%B8%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9-%D0%BF%D0%B0%D1%80%D0%B0%D0%BC%D0%B5%D1%82%D1%80-%D0%B4%D0%BB%D1%8F-nfparam) - **зависание RTS**
+## 22. Попытка запросить ФД из узла, где его нет
 
-[В старой классификации]()
+В старой классификации: [LUNA32](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#32-%D0%BF%D0%BE%D0%BF%D1%8B%D1%82%D0%BA%D0%B0-%D0%B7%D0%B0%D0%BF%D1%80%D0%BE%D1%81%D0%B8%D1%82%D1%8C-%D1%84%D0%B4-%D0%B8%D0%B7-%D1%83%D0%B7%D0%BB%D0%B0-%D0%B3%D0%B4%D0%B5-%D0%B5%D0%B3%D0%BE-%D0%BD%D0%B5%D1%82),
+[LUNA33](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#33-%D0%BD%D0%B5%D0%BF%D1%80%D0%B0%D0%B2%D0%B8%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9-%D0%BF%D0%B0%D1%80%D0%B0%D0%BC%D0%B5%D1%82%D1%80-%D0%B4%D0%BB%D1%8F-nfparam)
 
-**Обнаруживает компилятор.**     
+**Зависание RTS.**
+
+Ошибка характерна только для приложений с числом узлов больше 1. Стоит отметить, что значение ФД будет корректно установлено, в чём можно убедиться, выполнив ФВ, где значение номера узла будет верным.
 
 Пример:
 ```
+C++ sub init(name x, int v) ${{ x = v; $}}
+C++ sub print(int x) ${{ printf("%d\n", x); $}}
 
+sub main() {
+    df x;
+    init(x, 1) @ { locator_cyclic x => 1; };
+    print(x) @ { locator_cyclic x => 0; };
+}
 ```
-Вывод luna:
-```
-
-```
+Вывод luna: при запуске 2 или более MPI-процессов программа зависнет.
