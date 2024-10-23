@@ -1,6 +1,6 @@
 #pragma once
 
-#include "classes.hpp"
+#include "global.hpp"
 
 #include "enums.hpp"
 #include "vertices.hpp"
@@ -13,62 +13,54 @@ class Identifier {
 
 protected:
 
-    Vertex* vertex; // vertex where name was declared
-    std::string name;
-    IdentifierType type;
-    std::set<Vertex*> useSet;//todo init
-    std::set<Vertex*> defSet;//todo init
+    std::string m_name;
+    Expression* m_reference; // expression that is assigned to this variable (if possible)
+    Vertex* m_vertex; // vertex where name was declared
+    IdentifierClass m_identifierClass;
+    IdentifierType m_identifierType;
+    std::set<Vertex*> m_useSet = {};
+    std::set<Vertex*> m_defSet = {};
 
 public:
 
-    Vertex* getVertex();
+    Vertex* getVertex() { return m_vertex; };
 
-    std::string getName();
+    Expression* getReference() { return m_reference; };
 
-    IdentifierType getType();
+    std::string getName() { return m_name; };
 
-    std::set<Vertex*> getUseSet();
+    IdentifierType getType() { return m_identifierType; };
 
-    std::set<Vertex*> getDefSet();
+    IdentifierClass getClass() { return m_identifierClass; };
 
+    //todo check how this works actuaaly; perhaps use const &; also returning and creating a lot if string reports is retarded
+    std::set<Vertex*> getUseSet() { return m_useSet; };
+
+    std::set<Vertex*> getDefSet() { return m_defSet; };
+
+    //todo wth is this
     int getLine();
 
-    virtual void setVertex(Vertex* currentVertex);
+    //void setVertex(Vertex* currentVertex) { m_vertex = currentVertex; };
 
-    // pure ( = 0) virtual method, i.e. it must be initialized in every derived class so they are not abstract
-    virtual std::vector<std::string> markAsUse(Vertex* currentVertex, int size) = 0;
+    /* 
+       recursively marks every referenced identifiers as used
+       initializes global reports array
+    */
+    virtual void markAsUse(Vertex* currentVertex, int size) = 0;
 
-    virtual std::vector<std::string> markAsDef(Vertex* currentVertex, int size) = 0;
+    /* 
+       recursively marks every referenced identifiers as defined, if it is allowed
+       initializes global reports array
+    */
+    virtual void markAsDef(Vertex* currentVertex, int size) = 0;
 
     virtual bool isIndexable() = 0;
 
-    Identifier();
+    Identifier(std::string name, Expression* reference, Vertex* vertex, IdentifierClass identifierClass, IdentifierType identifierType)
+      : m_name(name), m_reference(reference), m_vertex(vertex), m_identifierClass(identifierClass), m_identifierType(identifierType) {};
 
-    virtual ~Identifier();
-
-};
-
-class SubArgName: public Identifier {
-
-private:
-
-    // reference is an expression that is used as a call arg mapped to current name inside a sub
-    Expression* reference;
-
-public:
-
-    Expression* getReference();
-
-    std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
-
-    std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
-
-    bool isIndexable();
-
-    SubArgName(std::string name, Expression* reference);
-
-    ~SubArgName();
-
+    virtual ~Identifier() {};
 };
 
 // this class' objects are created at DF declaration line (not as args of a sub!)
@@ -77,25 +69,25 @@ class BaseDFName: public Identifier {
 
 private:
 
-    // this map has information about what indexed/simple DFs and with how many indices
-    // are used and defined in what vertices
-    //basically: map(int size, pair<vector use, vector def>);
-    std::map<int, std::pair<std::vector<Vertex*>*, std::vector<Vertex*>*>> sizeToUseDefVectors;
+    // this map has information about what indexed/simple DFs there is and with how many indices
+    // they are used and defined in what vertices
+    // basically: map(int size, pair<vector use, vector def>);
+    std::map<int, std::pair<std::vector<Vertex*>*, std::vector<Vertex*>*>> _sizeToUseDefVectors = {};
 
 public:
 
-    std::map<int, std::pair<std::vector<Vertex*>*, std::vector<Vertex*>*>> getMap();
+    std::map<int, std::pair<std::vector<Vertex*>*, std::vector<Vertex*>*>> getMap() { return _sizeToUseDefVectors; };
 
-    std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
+    void markAsUse(Vertex* currentVertex, int size);
 
-    std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
+    void markAsDef(Vertex* currentVertex, int size);
 
-    bool isIndexable();
+    // obviously BaseDFName is always indexable
+    bool isIndexable() { return true; };
 
-    BaseDFName(std::string name);
+    BaseDFName(std::string name, Vertex* vertex) : Identifier(name, nullptr, vertex, baseDFNameClass, noneType) {};
 
-    ~BaseDFName();
-
+    ~BaseDFName() {};
 };
 
 // this class' objects are created at finding any DF in an expression
@@ -105,35 +97,31 @@ class IndexedDFName: public Identifier {
 private:
 
     // pointer to the base name
-    Identifier* base;
+    Identifier* _base;
 
     // this array shows, at what positions (inside "[]") are what expressions (in "ast.hpp" terms)
     // in this indexed DF (starting from 0)
     // if expressionsVector is empty, then it is a simple DF with no indices
-    std::vector<Expression*> expressionsVector;
+    std::vector<Expression*> _expressionsVector;
 
 public:
 
-    Identifier* getBase();
+    Identifier* getBase() { return _base; };
 
-    std::vector<Expression*> getExpressionsVector();
+    std::vector<Expression*> getExpressionsVector() { return _expressionsVector; };
 
-    std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
+    void markAsUse(Vertex* currentVertex, int size);
 
-    std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
+    void markAsDef(Vertex* currentVertex, int size);
 
+    /* all indexed DFs are checked at construction, so already constucted
+    ones are definetely indexable*/
     bool isIndexable();
 
-    IndexedDFName(
-        std::string name,
-        Identifier* base,
-        std::vector<Expression*> expressionsVector,
-        std::vector<std::string>* errorReports,
-        Vertex* currentVertex
-    );
+    //todo this is wrong, see .cpp
+    IndexedDFName(std::string name, Vertex* currentVertex, Identifier* base, std::vector<Expression*> expressionsVector);
 
-    ~IndexedDFName();
-
+    ~IndexedDFName() {};
 };
 
 class ForIteratorName: public Identifier {
@@ -144,18 +132,15 @@ public:
 
     Expression* getRightBorder();
 
-    std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
+    void markAsUse(Vertex* currentVertex, int size);
 
-    std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
+    void markAsDef(Vertex* currentVertex, int size);
 
-    bool isIndexable();
+    bool isIndexable() { return false; };
 
-    void setVertex(Vertex* vertex);
+    ForIteratorName(std::string name, Vertex* currentVertex) : Identifier(name, nullptr /* todo what to do here?*/, currentVertex, forIteratorNameClass, intType) {};
 
-    ForIteratorName(std::string name);
-
-    ~ForIteratorName();
-
+    ~ForIteratorName() {};
 };
 
 class WhileIteratorName: public Identifier {
@@ -166,22 +151,19 @@ public:
 
     Expression* getStartExpr();
 
-    std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
+    void markAsUse(Vertex* currentVertex, int size);
 
-    std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
+    void markAsDef(Vertex* currentVertex, int size);
 
-    bool isIndexable();
+    bool isIndexable() { return false; };
 
-    void setVertex(Vertex* vertex);
+    WhileIteratorName(std::string name, Vertex* currentVertex) : Identifier(name, nullptr /* todo what to do here?*/, currentVertex, whileIteratorNameClass, intType) {};
 
-    WhileIteratorName(std::string name);
-
-    ~WhileIteratorName();
-
+    ~WhileIteratorName() {};
 };
 
 //TODO
-class ValueId: public Identifier {//todo rename this
+class ValueName: public Identifier {
 
 private:
 
@@ -194,49 +176,63 @@ public:
 
 class LetName: public Identifier {
 
-private:
+public:
 
-    Vertex* letVertex;//todo remove this
+    void markAsUse(Vertex* currentVertex, int size);
 
-    // reference shows, which expression this name was assigned
-    Expression* reference;
+    void markAsDef(Vertex* currentVertex, int size);
+
+    bool isIndexable() { return m_reference->isIndexable(); };
+
+    LetName(std::string name, Expression* reference, Vertex* currentVertex) : Identifier(name, reference, currentVertex, letNameClass, noneType /* todo calculate the type using reference*/) {};
+
+    ~LetName() {};
+};
+
+
+/*
+1. mutableargname (don't have type (so just "name"), mutable, indexed DF basically)
+   it will have a pointer to an expression, which is used as an actual argument;
+   this is necessary, as arguments could be unsuitable -- so, this is a type error:
+   we can not assign expressions and immutable variables to "name" arguments
+   is indexable in all situations whenever it is used properly
+
+2. immutableargname (have type ("int", "string"), immutable) -- also will have a pointer to an expression
+   it's never indexable!
+*/
+
+class MutableArgName: public Identifier {
 
 public:
 
-    Expression* getReference();
+    void markAsUse(Vertex* currentVertex, int size);
 
-    std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
+    void markAsDef(Vertex* currentVertex, int size);
 
-    std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
+    bool isIndexable() { return true; }
 
-    bool isIndexable();
+    MutableArgName(std::string name, Expression* reference, Vertex* currentVertex, IdentifierType type) : Identifier(name, reference, currentVertex, immutableArgNameClass, type/*todo calculate later dynamically*/) {};
 
-    LetName(std::string name, Expression* assignedExpression);
-
-    ~LetName();
-
+    ~MutableArgName() {};
 };
 
-class MainArgName: public Identifier {//todo remove that and just make SubArgName defineable or not
-
-private:
-
-    Vertex* mainVertex;//todo remove this
+class ImmutableArgName: public Identifier {
 
 public:
 
-    std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
+    void markAsUse(Vertex* currentVertex, int size);
 
-    std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
+    void markAsDef(Vertex* currentVertex, int size);
 
-    bool isIndexable();
+    bool isIndexable() { return false; }
 
-    MainArgName(std::string name);
+    // in case of a "main()" function argument Expression reference must be nullptr
+    // this will tell us that we can not predict its value
+    // todo: use this philosophy everywhere else
+    ImmutableArgName(std::string name, Expression* reference, Vertex* currentVertex, IdentifierType type) : Identifier(name, reference, currentVertex, mutableArgNameClass, type) {}
 
-    ~MainArgName();
-
+    ~ImmutableArgName() {};
 };
 
-// it is used inside Expression constructor when engaging indexed name
-IndexedDFName* parseIndexedDFExpression(expr* expression, std::map<std::string, Identifier*> nameTable, int line,
-            std::vector<std::string>* errorReports, Vertex* currentVertex);
+// it is used inside Expression constructor when encountering indexed name
+IndexedDFName* parseIndexedDFExpression(expr* expression, std::map<std::string, Identifier*> nameTable, int line, Vertex* currentVertex);

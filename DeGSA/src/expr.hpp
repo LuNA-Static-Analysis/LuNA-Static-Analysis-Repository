@@ -13,41 +13,39 @@ class Expression {
 
     private:
 
-        ExpressionType type; // type of a node [operation] (i.e. add, subtract, assign, identifier, ... )
-        Expression* leftExpr; // left operand
-        Expression* rightExpr; // right operand
-        Expression* ternaryOperatorCondition; // extra expression serving as ternary operator condition
-        Identifier* identifier; // nullptr if not an identifier (type will also be not "identifierNode")
-        std::string constant; // int, string, real LuNA constant
-        expr* ASTexpr;
-        Vertex* vertex;
+        ExpressionType _type; // type of a node [operation] (i.e. add, subtract, assign, identifier, ... )
+        Expression* _leftExpr; // left operand
+        Expression* _rightExpr; // right operand
+        Identifier* _identifier; // nullptr if not an identifier (type will also be not "identifierNode")
+        std::string _constant; // int, string, real LuNA constant
+        expr* _ASTexpr;
+        Vertex* _vertex;
 
     public:
 
-        ExpressionType getType();
+        ExpressionType getType() { return _type; };
 
-        expr* getExpr();
+        expr* getASTExpr() { return _ASTexpr; };
 
-        std::string getConstant();
+        std::string getConstant() { return _constant; };
 
-        Expression binOp();
+        Expression binOp(); //todo rename
 
         Identifier* getAsIdentifier();
 
         Expression getAsConstant();
 
-        Vertex* getVertex();
+        Vertex* getVertex() { return _vertex; };
 
-        std::vector<std::string> markAsUse(Vertex* currentVertex, int size);
+        void markAsUse(Vertex* currentVertex, int size);
 
-        std::vector<std::string> markAsDef(Vertex* currentVertex, int size);
+        void markAsDef(Vertex* currentVertex, int size);
 
         bool isIndexable();
 
-        Expression(std::string constant, ExpressionType type, Vertex* currentVertex);
+        Expression(std::string constant, ExpressionType type, Vertex* currentVertex) :
+          _ASTexpr(nullptr), _constant(constant), _identifier(nullptr), _leftExpr(nullptr), _rightExpr(nullptr), _type(type), _vertex(currentVertex) {};
 
-        Expression(expr* ASTexpr, Vertex* currentVertex);
-
-        Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTable, std::vector<std::string>* errorReports, Vertex* currentVertex);
+        Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTable, Vertex* currentVertex);//todo
 
 };

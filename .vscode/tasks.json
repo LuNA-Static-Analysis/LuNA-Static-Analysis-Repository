@@ -29,7 +29,7 @@
             "command": "python3",
             "args": [
                 "${workspaceFolder}/parser/pp.py",
-                "${workspaceFolder}/DeGSA/luna/source.fa",
+                "${workspaceFolder}/DeGSA/luna/launchable/source.fa",
                 "-o",
                 "prepr.fa"
             ]
@@ -48,7 +48,7 @@
                 "-std=gnu++0x", // todo change version?
                 "lex.yy.c",
                 "grammar.tab.cpp",
-                "${workspaceFolder}/DeGSA/main.cpp",
+                "${workspaceFolder}/DeGSA/src/main.cpp",
                 "-o",
                 "a.out"
             ],
