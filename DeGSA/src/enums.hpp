@@ -1,19 +1,31 @@
 #pragma once
 
-enum IdentifierType {
+enum IdentifierClass {
 
-    subArgNameType = 1,
-    baseDFNameType = 2,
-    indexedDFNameType = 3,
-    forIteratorNameType = 4,
-    whileIteratorNameType = 5,
-    valueNameType = 6,
-    letNameType = 7,
-    mainArgNameType = 8
+    baseDFNameClass = 1,
+    indexedDFNameClass = 2,
+    forIteratorNameClass = 3,
+    whileIteratorNameClass = 4,
+    valueNameClass = 5,
+    letNameClass = 6,
+    mutableArgNameClass = 7,
+    immutableArgNameClass = 8
 
 };
 
-enum VertexType {
+// used for Identifiers and DeclaredArgs structs (as LuNA types)
+enum IdentifierType {
+
+    intType = 1,
+    realType = 2,
+    stringType = 3,
+    valueType = 4,
+    nameType = 5,
+    noneType = 6 // used for BaseDFName for example
+
+};
+
+enum VertexType {//todo rename this stupid ass shit
 
     forVF = 1,
     ifVF = 2,
@@ -63,5 +75,12 @@ enum UseDef {
     use = 1,
     def = 2,
     useAndDef = 3
+
+};
+
+enum CFType {
+
+    subCF = 1,
+    importCF = 2
 
 };

@@ -1,0 +1,14 @@
+import printint(int) as print;
+import printfl(real) as printf;
+import c_init_int(int, name) as init;
+sub main(){
+        df c;
+        let b = a + 1 {
+            foo(a);
+        }
+}
+sub foo(name f){
+    init(1, f);
+    printf(f);
+}
+

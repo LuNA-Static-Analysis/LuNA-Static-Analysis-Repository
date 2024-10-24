@@ -1,0 +1,12 @@
+import printfl(real) as print;
+import c_init_int(int, name) as init;
+sub main(){
+    df a;
+    for i = 1..2 {
+        let b = a + 5.0 {
+            init(1, a);
+            print(a + b * i);
+        }
+    }
+}
+

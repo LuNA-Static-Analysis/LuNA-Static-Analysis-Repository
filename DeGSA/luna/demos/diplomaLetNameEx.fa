@@ -1,0 +1,11 @@
+import printfl(real) as print;
+import c_init_int(int, name) as init;
+sub main(){
+    df a;
+    let b = a, c = a + 1.0 {
+        init(1, b);
+        print(b);
+        print(c);
+    }
+}
+

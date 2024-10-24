@@ -1,0 +1,9 @@
+import printint(int) as print;
+sub main(){
+        foo(1);
+}
+sub foo(int f){
+        let a = f + 1 {
+                print(a[0]);
+        }
+}
