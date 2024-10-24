@@ -198,20 +198,30 @@ void MutableArgName::markAsUse(Vertex* currentVertex, int size){
     m_useSet.insert(currentVertex);
 
     std::cout << "Mutable arg name name " << m_name << " is being marked as used" << std::endl;
-    m_reference->markAsUse(currentVertex, size);
+    if (m_reference != nullptr)
+        m_reference->markAsUse(currentVertex, size);
+    else
+        std::cout << "INTERNAL ERROR: nullptr at m_reference marking as used in a mutable arg name" << std::endl;
 }
 
 void MutableArgName::markAsDef(Vertex* currentVertex, int size){
     m_defSet.insert(currentVertex);
 
-    std::cout << "Mutable arg name name " << m_name << " is being marked as used" << std::endl;
-    m_reference->markAsDef(currentVertex, size);
+    std::cout << "Mutable arg name name " << m_name << " is being marked as defined" << std::endl;
+    if (m_reference != nullptr)
+        m_reference->markAsDef(currentVertex, size);
+    else
+        std::cout << "INTERNAL ERROR: nullptr at m_reference marking as defined in a mutable arg name" << std::endl;
 }
 
 void ImmutableArgName::markAsUse(Vertex* currentVertex, int size){
     m_useSet.insert(currentVertex);
 
     std::cout << "Immutable arg name " << m_name << " is being marked as used" << std::endl;
+    if (m_reference != nullptr)
+        m_reference->markAsUse(currentVertex, size);
+    else
+        std::cout << "INTERNAL ERROR: nullptr at m_reference marking as used in an immutable arg name" << std::endl;
 }
 
 void ImmutableArgName::markAsDef(Vertex* currentVertex, int size){

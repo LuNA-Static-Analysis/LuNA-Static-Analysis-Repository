@@ -81,12 +81,18 @@ void Vertex::printGenericInfo(std::ostream* outputTarget) {
 
 void SubVertex::initializeVertex() {
     _arguments = {};
+    m_declaredBothIdsMap = {};
+    m_declaredInsideIdsMap = {};
+    m_declaredOutsideIdsMap = {};
+
+    if (_callArgs.size() != _declaredArgs.size() && m_name != "main") {
+        //todo wip report error (old code luna06)
+        //REPORTS.push_back(JsonReporter::create06());
+        std::cout << "INTERNAL ERROR: call args size and declared args size are not equal in call " << m_name << " at line " << m_line << std::endl;
+        return;
+    }
 
     std::vector<Identifier*> declaredNamesVector = {};
-    std::set<std::string> declaredNamesSet = {}; // used to check for duplicate names at declaration
-
-    // this is a name table used to store declared arguments to use inside enterBlock
-    std::map<std::string, Identifier*> nextDeclaredOutsideIdsMap = {};
 
     // in case of a "sub": add args as an inside Ids and map them to call args
     // IMPORTANT EXCEPTION: no mapping done to args of main(); also these names cannot be initialized and
@@ -99,18 +105,26 @@ void SubVertex::initializeVertex() {
         // name of a declared argument
         std::string identifierDeclaredName = declaredArg.name;
 
-        if (declaredNamesSet.find(identifierDeclaredName) == declaredNamesSet.end()){
-
-            declaredNamesSet.insert(identifierDeclaredName);
-
-            //todo check for main
+        if (m_declaredBothIdsMap.find(identifierDeclaredName) == m_declaredBothIdsMap.end()){
             Identifier* argName = nullptr;
-            if (declaredArg.type == nameType) {
-                argName = new MutableArgName(identifierDeclaredName, _callArgs[i], this, nameType/*todo calculate later dynamically*/);
+            if (m_name == "main") {
+                if (declaredArg.type == nameType) {
+                    argName = new MutableArgName(identifierDeclaredName, nullptr, this, nameType);
+                } else {
+                    argName = new ImmutableArgName(identifierDeclaredName, nullptr, this, declaredArg.type);
+                }
             } else {
-                argName = new ImmutableArgName(identifierDeclaredName, _callArgs[i], this, declaredArg.type);
+                if (declaredArg.type == nameType) {
+                    argName = new MutableArgName(identifierDeclaredName, _callArgs[i], this, nameType/*todo calculate later dynamically*/);
+                } else {
+                    argName = new ImmutableArgName(identifierDeclaredName, _callArgs[i], this, declaredArg.type);
+                }
             }
+
             _arguments.push_back(argName);
+            m_declaredBothIdsMap.insert( { identifierDeclaredName, argName } );
+            m_declaredInsideIdsMap.insert( { identifierDeclaredName, argName } );
+
         } else {
             std::cout << "INTERNAL ERROR: created nullptr sub/main arg name because of name duplication" << std::endl;
 
@@ -175,6 +189,7 @@ void ForVertex::initializeVertex() {
     _iterator = new ForIteratorName(forIteratorString, this);
 
     m_declaredOutsideIdsMap.insert( { forIteratorString, _iterator } );
+    m_declaredBothIdsMap.insert( { forIteratorString, _iterator } );
 
     // all names inside "for" expressions must be marked as used
     _leftBorder = new Expression(innerStatementForVF->expr_1_, m_declaredOutsideIdsMap, this);
@@ -211,6 +226,7 @@ void WhileVertex::initializeVertex() {
 
     _iterator = new WhileIteratorName(whileIteratorString, this);
     m_declaredOutsideIdsMap.insert( { whileIteratorString, _iterator } );
+    m_declaredBothIdsMap.insert( { whileIteratorString, _iterator } );
 
     Expression* whileOutNameExpr = new Expression(innerStatementWhileVF->id_, m_declaredOutsideIdsMap, this);
     _outName = whileOutNameExpr->getAsIdentifier();
@@ -282,6 +298,7 @@ void LetVertex::initializeVertex() {
         Expression* letExpr = new Expression(assignment->expr_, m_declaredOutsideIdsMap, this);
         LetName* letName = new LetName(*(assignment->name_->get_value()), letExpr, this);
         m_declaredOutsideIdsMap.insert( { letString, letName } );
+        m_declaredBothIdsMap.insert( { letString, letName } );
         letNamesVector->push_back(letName);
     }
 
@@ -312,9 +329,10 @@ void Vertex::scanForDFDecls() {
             std::string nextDFName = *(nextLunaDFName->value_);
             auto previousDFIterator = m_declaredBothIdsMap.find(nextDFName);
             if (previousDFIterator == m_declaredBothIdsMap.end()){
-                BaseDFName* newBaseDFName = new BaseDFName(nextDFName, this);
+                BaseDFName* newBaseDFName = new BaseDFName(nextDFName, this, m_block->opt_dfdecls_->dfdecls_->line_);
                 m_declaredInsideIdsMap.insert( { nextDFName, newBaseDFName } );
                 m_declaredBothIdsMap.insert( { nextDFName, newBaseDFName } );
+                BASENAMES.insert(newBaseDFName);
             } else {
                 Identifier* previousDF = previousDFIterator->second;
                 // error code: 13
@@ -441,7 +459,7 @@ void Vertex::handleImport(cf_statement* cfStatement) {
     std::vector<Expression*> callArgs = {};
 
     for (auto rawArgument : *rawArguments)
-        callArgs.push_back(new Expression(rawArgument, m_declaredBothIdsMap, this));//TODO WIP this is wrong, create Identifier and send it
+        callArgs.push_back(new Expression(rawArgument, m_declaredBothIdsMap, this));//TODO WIP this is wrong, create Identifier and send it (update 23.10.2024 what the fuck does that mean)
 
     CFDeclaration cfDeclaration = CFDECLARATIONS.find(calledImportName)->second;//todo this object will be deleted, do pointers
     ImportVertex* nextVertex = new ImportVertex(calledImportName, this, importVF, m_depth + 1, cfStatement->line_, m_fileName, cfStatement->block_, cfStatement, m_declaredBothIdsMap, callArgs, cfDeclaration.declaredArgs);

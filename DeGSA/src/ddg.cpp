@@ -134,9 +134,9 @@ class DDG {
         }
 
         // this function goes through BASENAMES and finds few types of errors:
-        // 1. multiple DF initialization
-        // 2. using uninitialized DFs
-        // 3. unused DF
+        // 1. multiple DF initialization (03)
+        // 2. using uninitialized DFs (05)
+        // 3. unused DF (10)
         void checkBaseNameSet(){
 
             for (BaseDFName* bn: BASENAMES){

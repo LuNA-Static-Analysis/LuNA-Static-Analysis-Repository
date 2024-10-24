@@ -274,20 +274,27 @@ Expression Expression::getAsConstant(){
         case identifierNode: {
             // in case of a let or sub, we can try to get value
             //todo redo this using some generic Identifier thing
-            /*if (_identifier != nullptr){
+            if (_identifier != nullptr) {
                 LetName* letName = dynamic_cast<LetName*>(_identifier);
-                if (letName != nullptr){
+                if (letName != nullptr) {
                     return letName->getReference()->getAsConstant();
                 }
-                SubArgName* subArgName = dynamic_cast<SubArgName*>(this->identifier);
-                if (subArgName != nullptr){
-                    return subArgName->getReference()->getAsConstant();
+                ImmutableArgName* immutableArgName = dynamic_cast<ImmutableArgName*>(_identifier);
+                if (immutableArgName != nullptr) {
+                    auto reference = immutableArgName->getReference();
+                    if (reference != nullptr) {
+                        return reference->getAsConstant();
+                    }
+                    std::cout << "INTERNAL ERROR: getAsConstant returned noneNode from immutableArgName" << std::endl;
+                    return Expression("", noneNode, nullptr);
+                }
+                MutableArgName* mutableArgName = dynamic_cast<MutableArgName*>(_identifier);
+                if (mutableArgName != nullptr) {
+                    return mutableArgName->getReference()->getAsConstant();//todo wip do this much later
                 }
                 return Expression("", noneNode, nullptr);//todo temporary
-            } else {
-                return Expression("", noneNode, nullptr);
-            }*/
-           return Expression("", noneNode, nullptr);
+            }
+            return Expression("", noneNode, nullptr);
         }
 
         case intCastNode: {

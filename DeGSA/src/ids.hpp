@@ -39,7 +39,7 @@ public:
     std::set<Vertex*> getDefSet() { return m_defSet; };
 
     //todo wth is this
-    int getLine();
+    virtual int getLine();
 
     //void setVertex(Vertex* currentVertex) { m_vertex = currentVertex; };
 
@@ -73,10 +73,13 @@ private:
     // they are used and defined in what vertices
     // basically: map(int size, pair<vector use, vector def>);
     std::map<int, std::pair<std::vector<Vertex*>*, std::vector<Vertex*>*>> _sizeToUseDefVectors = {};
+    int _line;
 
 public:
 
     std::map<int, std::pair<std::vector<Vertex*>*, std::vector<Vertex*>*>> getMap() { return _sizeToUseDefVectors; };
+
+    int getLine() { return _line; }
 
     void markAsUse(Vertex* currentVertex, int size);
 
@@ -85,7 +88,7 @@ public:
     // obviously BaseDFName is always indexable
     bool isIndexable() { return true; };
 
-    BaseDFName(std::string name, Vertex* vertex) : Identifier(name, nullptr, vertex, baseDFNameClass, noneType) {};
+    BaseDFName(std::string name, Vertex* vertex, int line) : Identifier(name, nullptr, vertex, baseDFNameClass, noneType), _line(line) {};
 
     ~BaseDFName() {};
 };
@@ -211,7 +214,7 @@ public:
 
     bool isIndexable() { return true; }
 
-    MutableArgName(std::string name, Expression* reference, Vertex* currentVertex, IdentifierType type) : Identifier(name, reference, currentVertex, immutableArgNameClass, type/*todo calculate later dynamically*/) {};
+    MutableArgName(std::string name, Expression* reference, Vertex* currentVertex, IdentifierType type) : Identifier(name, reference, currentVertex, mutableArgNameClass, type/*todo calculate later dynamically*/) {};
 
     ~MutableArgName() {};
 };
@@ -229,7 +232,7 @@ public:
     // in case of a "main()" function argument Expression reference must be nullptr
     // this will tell us that we can not predict its value
     // todo: use this philosophy everywhere else
-    ImmutableArgName(std::string name, Expression* reference, Vertex* currentVertex, IdentifierType type) : Identifier(name, reference, currentVertex, mutableArgNameClass, type) {}
+    ImmutableArgName(std::string name, Expression* reference, Vertex* currentVertex, IdentifierType type) : Identifier(name, reference, currentVertex, immutableArgNameClass, type) {}
 
     ~ImmutableArgName() {};
 };
