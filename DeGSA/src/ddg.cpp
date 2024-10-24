@@ -39,7 +39,7 @@ class DDG {
                     std::vector<DeclaredArg> declaredArgs = {};
                     if (subDecl->params_->param_seq_ != nullptr){
                         for (auto arg : *(subDecl->params_->param_seq_->params_)) {
-                            IdentifierType type;
+                            LunaType type;
                             std::string lunaType = *(arg->type_->value_);
                             if (lunaType == "int") { //todo check all this
                                 type = intType;
@@ -73,7 +73,7 @@ class DDG {
                     std::vector<DeclaredArg> declaredArgs = {};
                     if (importDecl->params_->seq_ != nullptr){
                         for (auto arg : *(importDecl->params_->seq_->params_)) {
-                            IdentifierType type;
+                            LunaType type;
                             std::string lunaType = *(arg->type_->value_);
                             if (lunaType == "int") { //todo check all this
                                 type = intType;

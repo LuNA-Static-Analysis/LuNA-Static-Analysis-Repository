@@ -191,6 +191,20 @@ public:
         return createReport("LUNA03", createJson(map));
     }
 
+    static std::string create4(
+        Vertex* vertex
+    ){
+        std::map<std::string, std::string> map = {};
+        map.insert(std::make_pair("cf", createCF(
+                vertex->getName(),
+                "extern",
+                vertex->getFileName(),
+                vertex->getLine()
+            )));
+        map.insert(std::make_pair("call_stack_entry", createCallStackEntry(vertex->getFileName(), std::to_string(vertex->getLine()), vertex->getName())));
+        return createReport("LUNA04", createJson(map));
+    }
+
     static std::string create5(
         Identifier* identifier
     ){
@@ -198,6 +212,20 @@ public:
         std::map<std::string, std::string> map = {};
         map.insert(std::make_pair("df", createDF(identifier)));
         return createReport("LUNA05", createJson(map));
+    }
+
+    static std::string create6(
+        Vertex* vertex
+    ){
+        std::map<std::string, std::string> map = {};
+        map.insert(std::make_pair("cf", createCF(
+                vertex->getName(),
+                "extern",
+                vertex->getFileName(),
+                vertex->getLine()
+            )));
+        map.insert(std::make_pair("call_stack_entry", createCallStackEntry(vertex->getFileName(), std::to_string(vertex->getLine()), vertex->getName())));
+        return createReport("LUNA06", createJson(map));
     }
 
     static std::string create10(

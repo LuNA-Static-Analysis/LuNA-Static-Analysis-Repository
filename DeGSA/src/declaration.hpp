@@ -11,9 +11,9 @@
 // every argument has a name and a type in LuNA
 struct DeclaredArg {
     std::string name;
-    IdentifierType type;
+    LunaType type;
 
-    DeclaredArg(std::string iName, IdentifierType iType) : name(iName), type(iType) {};
+    DeclaredArg(std::string iName, LunaType iType) : name(iName), type(iType) {};
 };
 
 struct CFDeclaration {

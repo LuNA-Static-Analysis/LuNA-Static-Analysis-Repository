@@ -440,7 +440,24 @@ void Vertex::handleSub(cf_statement* cfStatement) {
         callArgs.push_back(new Expression(rawArgument, m_declaredBothIdsMap, this));
 
     CFDeclaration cfDeclaration = CFDECLARATIONS.find(calledSubName)->second;//todo this object will be deleted, do pointers
+    
     SubVertex* nextVertex = new SubVertex(calledSubName, this, subVF, m_depth + 1, cfStatement->line_, m_fileName, cfDeclaration.cfBlock, cfStatement, m_declaredBothIdsMap, callArgs, cfDeclaration.declaredArgs);
+    //todo wip check for LUNA04 and LUNA06
+    if (cfDeclaration.declaredArgs.size() != callArgs.size()) {
+        REPORTS.push_back(JsonReporter::create6(nextVertex));
+        std::cout << "INTERNAL ERROR: call of CF " << calledSubName << " has wrong amount of args" << std::endl;
+        return;
+    } else {
+        for (int i = 0; i < cfDeclaration.declaredArgs.size(); i++) {
+            if (callArgs[i]->getType() != cfDeclaration.declaredArgs[i].type) {
+                //todo wip this is different enums somehow
+                //get expression VALUE type: create method getValueType, and recursively evaluate through every reference, what type do we have here, if possible
+                //then create4()
+                //then return???
+            }
+        }
+    }
+    
     VERTICES.push_back(nextVertex);
     addInside(nextVertex);
     nextVertex->initializeVertex();
@@ -462,7 +479,24 @@ void Vertex::handleImport(cf_statement* cfStatement) {
         callArgs.push_back(new Expression(rawArgument, m_declaredBothIdsMap, this));//TODO WIP this is wrong, create Identifier and send it (update 23.10.2024 what the fuck does that mean)
 
     CFDeclaration cfDeclaration = CFDECLARATIONS.find(calledImportName)->second;//todo this object will be deleted, do pointers
+
     ImportVertex* nextVertex = new ImportVertex(calledImportName, this, importVF, m_depth + 1, cfStatement->line_, m_fileName, cfStatement->block_, cfStatement, m_declaredBothIdsMap, callArgs, cfDeclaration.declaredArgs);
+    //todo wip check for LUNA04 and LUNA06
+    if (cfDeclaration.declaredArgs.size() != callArgs.size()) {
+        REPORTS.push_back(JsonReporter::create6(nextVertex));
+        std::cout << "INTERNAL ERROR: call of CF " << calledImportName << " has wrong amount of args" << std::endl;
+        return;
+    } else {
+        for (int i = 0; i < cfDeclaration.declaredArgs.size(); i++) {
+            if (callArgs[i]->getType() != cfDeclaration.declaredArgs[i].type) {
+                //todo wip this is different enums somehow
+                //get expression VALUE type: create method getValueType, and recursively evaluate through every reference, what type do we have here, if possible
+                //then create4()
+                //then return???
+            }
+        }
+    }
+
     VERTICES.push_back(nextVertex);
     addInside(nextVertex);
     nextVertex->initializeVertex();

@@ -14,7 +14,7 @@ enum IdentifierClass {
 };
 
 // used for Identifiers and DeclaredArgs structs (as LuNA types)
-enum IdentifierType {
+enum LunaType {
 
     intType = 1,
     realType = 2,

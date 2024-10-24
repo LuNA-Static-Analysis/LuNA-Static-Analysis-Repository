@@ -1,4 +1,5 @@
 #!/bin/bash
+rm debug_launch_degsa_output.txt
 
 bison -d ../parser/grammar.ypp
 flex ../parser/lexics.l
