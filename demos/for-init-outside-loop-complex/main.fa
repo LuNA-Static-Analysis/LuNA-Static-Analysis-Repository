@@ -1,0 +1,64 @@
+import c_init(name, int) as init;
+import c_print(int) as print;
+
+#define Z_STEP 5
+
+sub main() {
+    df x, y, z, N;
+
+    // z
+    for i = 0..N {
+        print(z[$Z_STEP * i]);
+    }
+
+    for i = 0..N-5 {
+        init(z[$Z_STEP * i], i);
+    }
+
+    init(z[$Z_STEP * N - $Z_STEP * 4], $Z_STEP * N - 8);
+    init(z[$Z_STEP * N - $Z_STEP * 3], $Z_STEP * N - 6);
+    init(z[$Z_STEP * N - $Z_STEP * 2], $Z_STEP * N - 3);
+    init(z[$Z_STEP * N - $Z_STEP * 1], $Z_STEP * N - 2);
+    init(z[$Z_STEP * N], $Z_STEP * N);
+
+    // y
+    for j = 1..3 {
+        print(y[2 * j + 3]);
+    }
+    
+    if x[0] {
+        init(y[3], 2);
+    }
+    init(y[5], 1);
+    init(y[7], 1);
+    init(y[9], 3);
+
+    // x
+    if y {
+        for i = 0..20 {
+            print(x[i]);
+        }
+    }
+
+    init(x[0], 0);
+
+    if x || y {
+        for j = 1..9 {
+            init(x[j], j);
+        }
+    }
+
+    init(x[10], 10);
+    init(x[11], 11);
+
+    for k = 12..14 {
+        init(x[k], k);
+    }
+
+    for k = 15..18 {
+        init(x[k], k);
+    }
+
+    init(x[19], 19);
+    init(x[20], 20);
+}

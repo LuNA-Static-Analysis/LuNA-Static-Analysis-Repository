@@ -14,11 +14,9 @@
 :- use_module('src/pro/call_stack.pro', [to_string/2]).
 
 :- use_module('src/pro/checks/ranges.pro', [
-    index_range_missmatch_error_json/1,
     index_range_not_initialized_error_json/1,
     index_range_overlap_error_json/1,
 
-    index_range_missmatch/2,
     index_range_not_initialized/2,
     index_range_overlap/2,
     input_df/2,
@@ -36,7 +34,7 @@
 
 %:- use_module('src/pro/reporting.pro').
 
-:- consult("generated/out.pro").
+:- consult("tests/01_for/14_luna37_no_loop/.prolog-analyzer/program_facts.pro").
 
 % consult("src/pro/demo.pro").
 
@@ -45,9 +43,8 @@ errors_json(FileName) :-
     findall(Error, tautology_error_json(Error), Errors1),
     findall(Error, bool_used_as_number_error_json(Error), Errors2),
     findall(Error, index_range_overlap_error_json(Error), Errors3),
-    findall(Error, index_range_missmatch_error_json(Error), Errors4),
     findall(Error, index_range_not_initialized_error_json(Error), Errors5),
-    append([Errors1, Errors2, Errors3, Errors4, Errors5], Errors),
+    append([Errors1, Errors2, Errors3, Errors5], Errors),
     json_write_dict(Out, Errors),
     close(Out).
 
@@ -111,13 +108,6 @@ index_range_print(Range) :-
 
     writef:writef("In %s:\n  from %t to %t with step %t\n", [WhereCsChars, LowerRepr, UpperRepr, StepRepr]).
 
-index_range_missmatch_print_all() :-
-    main_root_ctx(RootCtx),
-    forall(
-        ranges:index_range_missmatch(RootCtx, Error),
-        error_print(Error)
-    ).
-
 index_range_not_initialized_print_all() :-
     main_root_ctx(RootCtx),
     forall(
@@ -145,7 +135,6 @@ bool_used_as_number_error_print_all() :-
     ).
 
 print_all_errors() :-
-    index_range_missmatch_print_all(),
     index_range_not_initialized_print_all(),
     index_range_overlap_print_all(),
     condition_tautology_print_all(),

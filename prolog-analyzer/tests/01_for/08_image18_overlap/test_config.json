@@ -1,0 +1,25 @@
+{
+  "arrange": [],
+  "act": {
+    "command": "adapt --run prolog main.fa",
+    "can_fail": false
+  },
+  "assert": {
+    "stdout": {
+      "match_lines": [
+        "wc:Found 2 error*",
+        "wc:warning[LUNA35]*DF x",
+        "wc:1 to 501*step 2",
+        "wc:0 to 500*step 2",
+        "wc:line 14",
+        "wc:x[*2*i*+*1*]",
+        "wc:x[*2*i*] as arr[ind]",
+        "wc:x[*2*i*-*1*] as arr[*ind*-*1*]"
+      ]
+    },
+    "stderr": {
+      "empty": true
+    },
+    "save": ["stderr", "stdout"]
+  }
+}

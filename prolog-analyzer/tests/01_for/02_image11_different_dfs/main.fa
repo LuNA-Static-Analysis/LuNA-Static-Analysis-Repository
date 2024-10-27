@@ -1,0 +1,16 @@
+C++ sub assign_int(name x, int val) ${{ x = val; $}}
+
+sub main() {
+    df x, N, M;
+    assign_int(x[0], 7);
+    if x [0] > 0 {
+        for i = 1..N { 
+            assign_int(x[i], i * i);
+        }
+    }
+    if x[0] <= 10 {
+        for i = M..10 { 
+            assign_int(x[i], i * i); 
+        }
+    }
+}
