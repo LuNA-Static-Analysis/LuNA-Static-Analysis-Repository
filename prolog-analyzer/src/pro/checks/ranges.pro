@@ -228,6 +228,37 @@ index_range_concat_ordered(Range1, Range2, Step, Result) :-
     }.
 
 index_range_concat_ordered(Range1, Range2, Step, Result) :-
+    index_range_unpack(Range1, Lower1, Upper1, Step),
+    index_range_unpack(Range2, Lower2, Upper2, Step),
+
+    % Lower2 <= Upper1
+    never(Lower2, "#>", Upper1),
+    % never(Upper1, "#>", Upper2),
+
+    Upper1AsLinear = ["+", ["*", "N2", Step], Lower2],
+    ref:rewrite_without_refs(Upper1AsLinear, _{}, U1LinearRefs, Upper1AsLinearWithoutRefs),
+    expressions:expression_string(Upper1AsLinearWithoutRefs, Upper1AsLinearStr),
+    ref:rewrite_without_refs(Upper1, U1LinearRefs, U1Refs, Upper1WithoutRefs),
+    expressions:expression_string(Upper1WithoutRefs, Upper1Str),
+    ref:rewrite_without_refs(Upper2, U1Refs, _, Upper2WithoutRefs),
+    expressions:expression_string(Upper2WithoutRefs, Upper2Str),
+    atomics_to_string([
+        "(#>=(N2, 0), ",
+        "#=(", Upper1AsLinearStr, ", ", Upper1Str, "), ",
+        "#=<(", Upper1AsLinearStr, ", ", Upper2Str, "))"
+    ], "", ClpfdTermStr),
+    % throw(ClpfdTermStr),
+    term_string(ClpfdTerm, ClpfdTermStr),
+    ClpfdTerm,
+
+    Result = index_range_union{
+        'lower': Lower1,
+        'upper': Upper2,
+        'step': Step,
+        'ranges': [Range1, Range2]
+    }.
+
+index_range_concat_ordered(Range1, Range2, Step, Result) :-
     index_range_unpack(Range1, Index1, Index1, 0),
     index_range_unpack(Range2, Lower2, Upper2, Step),
     ref:expressions_equivalent(["+", Index1, Step], Lower2),
@@ -260,26 +291,13 @@ index_range_concat_ordered(Range1, Range2, Step, Result) :-
         'ranges': [Range1, Range2]
     }.
 
-% FIXME may create duplicate results?
-index_range_merge_all([], []).
-index_range_merge_all([X], [X]).
-
-index_range_merge_all(RangesIn, Step, RangesOut) :-
+index_range_merge_once(RangesIn, Step, Union, Rest) :-
     append([L1, [Range1], L2, [Range2], L3], RangesIn),
     (
-        index_range_concat_ordered(Range1, Range2, Step, Union12)
-    ;   index_range_concat_ordered(Range2, Range1, Step, Union12)
+        index_range_concat_ordered(Range1, Range2, Step, Union)
+    ;   index_range_concat_ordered(Range2, Range1, Step, Union)
     ),
-    append([L1, L2, L3, [Union12]], NextRangesIn),
-    index_range_merge_all(NextRangesIn, Step, RangesOut), 
-    !.
-
-index_range_merge_all(RangesIn, Step, RangesOut) :-
-    \+ (
-        append([_, [Range1], _, [Range2], _], RangesIn),
-        index_range_concat_ordered(Range1, Range2, Step, _)
-    ),
-    RangesOut = RangesIn.
+    append([L1, L2, L3], Rest).
 
 index_range_conditions(Range, Conditions) :-
     get_dict('df', Range, Df),
@@ -317,6 +335,16 @@ index_range_covers(InitRange, UseRange) :-
     index_range_covers_lower(InitRange, UseRange),
     index_range_covers_upper(InitRange, UseRange).
 
+index_range_is_covered(UseRange, InitRanges) :-
+    member(InitRange, InitRanges),
+    index_range_covers(InitRange, UseRange),
+    !.
+
+index_range_is_covered(UseRange, InitRanges) :-
+    index_range_unpack(UseRange, _, _, UseStep),
+    index_range_merge_once(InitRanges, UseStep, Union, Rest),
+    index_range_is_covered(UseRange, [Union|Rest]).
+
 df_init_loop_of(RootCtx, BaseName, InitRange) :-
     df_init_loop(RootCtx, InitRange),
         get_dict('df', InitRange, InitializedDf),
@@ -345,11 +373,7 @@ index_range_not_initialized(RootCtx, Error) :-
         InitRanges
     ),
     include(index_range_implies(UseRange), InitRanges, ImpliedInits),
-    \+ (
-        index_range_merge_all(ImpliedInits, UseStep, InitRangesMerged),
-        member(InitRange, InitRangesMerged),
-        index_range_covers(InitRange, UseRange)
-    ),
+    \+ index_range_is_covered(UseRange, ImpliedInits),
     Error = error{
         'error_code': "LUNA99",
         'details': details{
