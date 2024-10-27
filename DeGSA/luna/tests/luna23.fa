@@ -1,0 +1,11 @@
+import printint(int) as print;
+sub main(){
+        let a = 1 + 2 {
+                foo(a);
+        }
+}
+sub foo(int f){
+        if (f > 1){
+                print(f);
+        }
+}

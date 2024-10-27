@@ -17,6 +17,7 @@ ast.json
 in.json
 adapt_output.txt
 degsa_output.txt
+debug_launch_degsa_output.txt
 found_errors.json
 temp.json
 c_cpp_properties.json

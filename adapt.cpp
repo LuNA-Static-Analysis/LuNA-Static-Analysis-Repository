@@ -12,7 +12,7 @@
 #include "./ast_analyzer/undecl_func_analyzer.hpp"
 #include "./ast_analyzer/df_redecl_analyzer.hpp"
 #include "./ast_analyzer/threadpool/threadpool.h"
-#include "./DeGSA/ddg.cpp"
+#include "./DeGSA/src/ddg.cpp"
 
 const int EXIT_ERROR = 1;
 
@@ -23,7 +23,10 @@ std::string line, prev_line;
 uint tokens = 0;
 ast *ast_ = new ast();
 
+//todo wip: check and redo all of this, perhaps merge with master and overwrite
 int main(int argc, char **argv){
+
+    auto realStart = std::chrono::steady_clock::now();
 
     bool launchASTAnalyzer = false;
     bool launchDeGSA = false;
@@ -65,6 +68,7 @@ int main(int argc, char **argv){
     std::ofstream outputFile(outputFileName);//todo perhaps need to add name check
 
     auto astBuildStart = std::chrono::steady_clock::now();
+    auto astBuildStartSystem = std::chrono::system_clock::now();
 
     yyin = fopen(inputFileName, "r");
 
@@ -77,8 +81,10 @@ int main(int argc, char **argv){
     yyparse();
 
     auto astBuildEnd = std::chrono::steady_clock::now();
+    auto astBuildEndSystem = std::chrono::system_clock::now();
 
     auto astBuildTotal = std::chrono::duration_cast<ns>(astBuildEnd - astBuildStart).count();
+    auto astBuildTotalSystem = std::chrono::duration_cast<ns>(astBuildEndSystem - astBuildStartSystem).count();
 
     std::cerr << "Parse successfully completed" << std::endl;
 
@@ -91,6 +97,12 @@ int main(int argc, char **argv){
     }
 
     out.close();
+//wip
+    std::ofstream o;
+        o.open("./reporter/found_errors.json");
+o << "[]";
+
+        o.close();
 
     if (launchASTAnalyzer){
         error_reporter reporter = error_reporter();
@@ -123,9 +135,13 @@ int main(int argc, char **argv){
     }
 
     if (launchDeGSA){
-        std::ofstream degsaOutputFile("degsa_output.txt");
+        std::ofstream degsaOutputFile("adapt_degsa_output.txt");
         DDG ddg(ast_, &degsaOutputFile, realLunaSource);
         degsaOutputFile << "\nTime to build AST: " << (double)astBuildTotal / 1000000000 << " seconds" << std::endl;
+        degsaOutputFile << "\nTime to build AST (system): " << (double)astBuildTotalSystem / 1000000000 << " seconds" << std::endl;
+        auto realEnd = std::chrono::steady_clock::now();
+        auto realTotal = std::chrono::duration_cast<ns>(realEnd - realStart).count();
+        degsaOutputFile << "\nTime real: " << (double)realTotal / 1000000000 << " seconds" << std::endl;
     }
 
     delete ast_;

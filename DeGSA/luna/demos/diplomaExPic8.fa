@@ -1,0 +1,19 @@
+import printfl(real) as print;
+import c_init_int(int, name) as init;
+sub main(){
+        df a, b, c;
+        init(1, a);
+        foo(a);
+        for iterator = 1..2 {
+                let index = iterator {
+                        init(iterator, b[index]);
+                        print(b[index]);
+                }
+        }
+}
+sub foo(name f){
+        if (f < 5){
+                print(f);
+        }
+}
+

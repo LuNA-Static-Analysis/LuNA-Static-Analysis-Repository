@@ -1,41 +1,6 @@
 #include "expr.hpp"
 #include "json_reporter.cpp"
 
-ExpressionType Expression::getType(){
-    return this->type;
-}
-
-expr* Expression::getExpr(){
-    return this->ASTexpr;
-}
-
-std::string Expression::getConstant(){
-    return this->constant;
-}
-
-Vertex* Expression::getVertex(){
-    return this->vertex;
-}
-
-Expression::Expression(std::string constant, ExpressionType type, Vertex* currentVertex){
-    this->ASTexpr = nullptr;
-    this->constant = constant;
-    this->identifier = nullptr;
-    this->leftExpr = nullptr;
-    this->rightExpr = nullptr;
-    this->type = type;
-    this->vertex = currentVertex;
-}
-
-Expression::Expression(expr* ASTexpr, Vertex* currentVertex){
-    this->ASTexpr = ASTexpr;
-    this->constant = "";
-    this->identifier = nullptr;
-    this->leftExpr = nullptr;
-    this->rightExpr = nullptr;
-    this->vertex = currentVertex;
-}
-
 /* 
     this function gets an expression, recursively goes through it and
     returns an obejct of type Expression, plus creates objects for IndexedDFs
@@ -44,33 +9,33 @@ Expression::Expression(expr* ASTexpr, Vertex* currentVertex){
     if there is no required Identifiers, then it's an error
 */
 //TODO stop parsing strings and use jsons or inheritance
-Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTable, std::vector<std::string>* errorReports, Vertex* currentVertex){
+Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTable, Vertex* currentVertex){
 
-    this->ASTexpr = ASTexpr;
+    this->_ASTexpr = ASTexpr;
 
     // default initialization
-    this->constant = "";
-    this->identifier = nullptr;
-    this->leftExpr = nullptr;
-    this->rightExpr = nullptr;
-    this->type = noneNode;
-    this->vertex = currentVertex;
+    this->_constant = "";
+    this->_identifier = nullptr;
+    this->_leftExpr = nullptr;
+    this->_rightExpr = nullptr;
+    this->_type = noneNode;
+    this->_vertex = currentVertex;
 
     luna_string* lunaString = dynamic_cast<luna_string*>(ASTexpr);
     if (lunaString != NULL){
 
         std::string s = *(lunaString->get_value());
         if (std::regex_match(s, std::regex("[0-9]+"))){ // int
-            this->type = intNode;
+            this->_type = intNode;
         }
         if (std::regex_match(s, std::regex("[0-9]+[.][0-9]+"))){ // real
-            this->type = realNode;
+            this->_type = realNode;
         }
         if (std::regex_match(s, std::regex("\"[^\"]*\""))){ // string
-            this->type = stringNode;
+            this->_type = stringNode;
         }
 
-        this->constant = s;
+        this->_constant = s;
         return;
     }
 
@@ -79,17 +44,17 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
 
         to_int* intCast = dynamic_cast<to_int*>(lunaCast);
         if (intCast != nullptr)
-            this->type = intCastNode;
+            this->_type = intCastNode;
         
         to_real* realCast = dynamic_cast<to_real*>(lunaCast);
         if (realCast != nullptr)
-            this->type = realCastNode;
+            this->_type = realCastNode;
 
         to_str* stringCast = dynamic_cast<to_str*>(lunaCast);
         if (stringCast != nullptr)
-            this->type = stringCastNode;
+            this->_type = stringCastNode;
 
-        this->leftExpr = new Expression(lunaCast->expr_, nameTable, errorReports, currentVertex);
+        this->_leftExpr = new Expression(lunaCast->expr_, nameTable, currentVertex);
         return;
     }
 
@@ -103,96 +68,95 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
             op = op.substr(1, op.size() - 1);
         }
         switch(op[0]){
-            case '+': this->type = addNode; break;
-            case '-': this->type = subtractNode; break;
-            case '*': this->type = multiplyNode; break;
-            case '/': this->type = divideNode; break;
-            case '%': this->type = modulusNode; break;
+            case '+': _type = addNode; break;
+            case '-': _type = subtractNode; break;
+            case '*': _type = multiplyNode; break;
+            case '/': _type = divideNode; break;
+            case '%': _type = modulusNode; break;
             case '>':
                 if (op.size() > 1 && op[1] == '=') {
-                    this->type = greaterOrEqualNode; break;
+                    _type = greaterOrEqualNode; break;
                 } else {
-                    this->type = greaterNode; break;
+                    _type = greaterNode; break;
                 }
             case '<':
                 if (op.size() > 1 && op[1] == '=') {
-                    this->type = lesserOrEqualNode; break;
+                    _type = lesserOrEqualNode; break;
                 } else {
-                    this->type = lesserNode; break;
+                    _type = lesserNode; break;
                 }
-            case '=': if (op.size() > 1 && op[1] == '=') {this->type = equalNode; break;}
-            case '!': if (op.size() > 1 && op[1] == '=') {this->type = nonEqualNode; break;}
+            case '=': if (op.size() > 1 && op[1] == '=') { _type = equalNode; break; }
+            case '!': if (op.size() > 1 && op[1] == '=') { _type = nonEqualNode; break; }
             case '&':
                 if (op.size() > 1 && op[1] == '&') {
-                    this->type = andNode;
+                    _type = andNode;
                 }
                 break;
             case '|':
                 if (op.size() > 1 && op[1] == '|') {
-                    this->type = andNode;
+                    _type = andNode;
                 }
                 break;
             default: std::cout << "INTERNAL ERROR: unknown operation in Expression constructor at line " << ASTexpr->line_ << ": " << op[0] << std::endl;
-                this->type = noneNode;
+                _type = noneNode;
         }
 
-        this->leftExpr = new Expression(lunaBinOp->left_, nameTable, errorReports, currentVertex);
-        this->rightExpr = new Expression(lunaBinOp->right_, nameTable, errorReports, currentVertex);
+        _leftExpr = new Expression(lunaBinOp->left_, nameTable, currentVertex);
+        _rightExpr = new Expression(lunaBinOp->right_, nameTable, currentVertex);
         return;
     }
-
-    //todo ternary operator
 
     // name found
     id* df = dynamic_cast<id*>(ASTexpr);
     if (df != NULL){
 
-        this->type = identifierNode;
+        _type = identifierNode;
 
         simple_id* simpleDF = dynamic_cast<simple_id*>(ASTexpr);
         // this is whatever name -- for iterator, while iterator, DF...
-        // it is not necessarily a correct expression! it could be indexed "for" iterator, for example
+        // it is not necessarily a correct expression! it could be an indexed "for" iterator, for example
         if (simpleDF != NULL){
 
             std::string simpleDFName = *(simpleDF->value_->value_);
             auto identifierName = nameTable.find(simpleDFName);
             if (identifierName != nameTable.end()){
 
-                switch(identifierName->second->getType()){
-                    case baseDFNameType: // simple DF (no indices)
-                        this->identifier = new IndexedDFName(simpleDFName, identifierName->second, {}, errorReports, currentVertex);
-                        this->identifier->setVertex(currentVertex);
+                switch(identifierName->second->getClass()){
+                    case baseDFNameClass: // simple DF (no indices)
+                        _identifier = new IndexedDFName(simpleDFName, currentVertex, identifierName->second, {});
                         break;
-                    case subArgNameType: // argument of a sub
-                    case forIteratorNameType:
-                    case whileIteratorNameType:
-                    case valueNameType:
-                    case letNameType:
-                    case mainArgNameType: // argument of a main
-                        this->identifier = identifierName->second;
+                    case forIteratorNameClass:
+                    case whileIteratorNameClass:
+                    case valueNameClass:
+                    case letNameClass:
+                    case mutableArgNameClass:
+                    case immutableArgNameClass:
+                        _identifier = identifierName->second;
                         break;
                     default:
-                        std::cout << "INTERNAL ERROR: UNKNOWN IDENTIFIER TYPE" << std::endl;
+                        std::cout << "INTERNAL ERROR: unknown identifier type" << std::endl;
                         break;
                 }
             } else {
-                /*errorReports->push_back(JsonReporter::create14(
-                    simpleDFName,
-                    "[]",
-                    "[]",
-                    "[]"
-                ));//todo callstacks*/
+                //todo fake Id to use it in report
+                //todo what is this even
+                Identifier* nonExistingIdentifier = new ForIteratorName(simpleDFName, _vertex);
+                //nonExistingIdentifier->markAsUse(currentVertex, 0);
+                //todo
+                REPORTS.push_back(JsonReporter::create14(
+                    nonExistingIdentifier
+                ));
             }
 
             return;
         }
-
+        
         complex_id* complexDF = dynamic_cast<complex_id*>(ASTexpr);
         if (complexDF != NULL){
 
-            IndexedDFName* temp = parseIndexedDFExpression(complexDF, nameTable, ASTexpr->line_, errorReports, currentVertex);
+            IndexedDFName* temp = parseIndexedDFExpression(complexDF, nameTable, ASTexpr->line_, currentVertex);
             if (temp != nullptr){
-                this->identifier = temp;
+                _identifier = temp;
             } else {
                 std::cout << "INTERNAL ERROR: creating Expression object (IndexedDFName) at line " + std::to_string(ASTexpr->line_) + "\n";
             }
@@ -208,21 +172,22 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
 }
 
 Expression Expression::binOp(){
-    Expression left = this->leftExpr->getAsConstant();
-    Expression right = this->rightExpr->getAsConstant();
+    Expression left = _leftExpr->getAsConstant();
+    Expression right = _rightExpr->getAsConstant();
 
-    if (left.type == realNode && right.type == realNode ||
-        left.type == intNode && right.type == realNode || 
-        left.type == realNode && right.type == intNode){ // result is double
+    if (left._type == realNode && right._type == realNode ||
+        left._type == intNode && right._type == realNode || 
+        left._type == realNode && right._type == intNode){ // result is double
 
-        double l = std::stod(left.constant);
-        double r = std::stod(right.constant);
-        switch(this->type){
+        double l = std::stod(left._constant);
+        double r = std::stod(right._constant);
+        switch(_type){
             case addNode: return Expression(std::to_string(l + r), realNode, nullptr);
             case subtractNode: return Expression(std::to_string(l - r), realNode, nullptr);
             case multiplyNode: return Expression(std::to_string(l * r), realNode, nullptr);
             case divideNode: return Expression(std::to_string(l / r), realNode, nullptr);
-            case modulusNode: 
+            case modulusNode:
+                //todo how is this an error?
                 std::cout << "INTERNAL ERROR: attempt to use modulus with double" << std::endl;
                 return Expression("", noneNode, nullptr);
             case greaterNode: return Expression(std::to_string(l > r), intNode, nullptr);
@@ -239,11 +204,10 @@ Expression Expression::binOp(){
                 return Expression("", noneNode, nullptr);
         }
             
-    } else if (left.type == intNode && left.type == intNode){ // result is int
-
-        int l = std::stoi(left.constant);
-        int r = std::stoi(right.constant);
-        switch(this->type){
+    } else if (left._type == intNode && right._type == intNode){ // result is int
+        int l = std::stoi(left._constant);
+        int r = std::stoi(right._constant);
+        switch(_type){
             case addNode: return Expression(std::to_string(l + r), intNode, nullptr);
             case subtractNode: return Expression(std::to_string(l - r), intNode, nullptr);
             case multiplyNode: return Expression(std::to_string(l * r), intNode, nullptr);
@@ -265,14 +229,14 @@ Expression Expression::binOp(){
 
     } else {
         std::cout << "INTERNAL ERROR: binOp calculation used with unsuitable type:" << std::endl;
-        std::cout << "Left: " << left.type << "; right: " << right.type << std::endl;
+        std::cout << "Left: " << left._type << "; right: " << right._type << std::endl;
         return Expression("", noneNode, nullptr);
     }
 }
 
 Identifier* Expression::getAsIdentifier(){
-    if (this->type == identifierNode){
-        return this->identifier;
+    if (_type == identifierNode){
+        return _identifier;
     } else {
         return nullptr;
     }
@@ -281,7 +245,7 @@ Identifier* Expression::getAsIdentifier(){
 // naive implementation: returns noneNode once encounters an identifier
 // creates new object and returns a pointer; never return already existing object!
 Expression Expression::getAsConstant(){
-    switch (this->type){
+    switch (_type){
 
         // binary operations
         case addNode:
@@ -297,46 +261,57 @@ Expression Expression::getAsConstant(){
         case nonEqualNode:
         case andNode:
         case orNode:
-            return this->binOp();
+            return binOp();
         
         // constants
         case intNode:
-            return Expression(this->constant, intNode, nullptr);
+            return Expression(_constant, intNode, nullptr);
         case stringNode:
-            return Expression(this->constant, stringNode, nullptr);
+            return Expression(_constant, stringNode, nullptr);
         case realNode:
-            return Expression(this->constant, realNode, nullptr);
+            return Expression(_constant, realNode, nullptr);
 
         case identifierNode: {
             // in case of a let or sub, we can try to get value
-            if (this->identifier != nullptr){
-                LetName* letName = dynamic_cast<LetName*>(this->identifier);
-                if (letName != nullptr){
+            //todo redo this using some generic Identifier thing
+            if (_identifier != nullptr) {
+                LetName* letName = dynamic_cast<LetName*>(_identifier);
+                if (letName != nullptr) {
                     return letName->getReference()->getAsConstant();
                 }
-                SubArgName* subArgName = dynamic_cast<SubArgName*>(this->identifier);
-                if (subArgName != nullptr){
-                    return subArgName->getReference()->getAsConstant();
+                ImmutableArgName* immutableArgName = dynamic_cast<ImmutableArgName*>(_identifier);
+                if (immutableArgName != nullptr) {
+                    auto reference = immutableArgName->getReference();
+                    if (reference != nullptr) {
+                        return reference->getAsConstant();
+                    }
+                    std::cout << "INTERNAL ERROR: getAsConstant returned noneNode from immutableArgName" << std::endl;
+                    return Expression("", noneNode, nullptr);
+                }
+                MutableArgName* mutableArgName = dynamic_cast<MutableArgName*>(_identifier);
+                if (mutableArgName != nullptr) {
+                    return mutableArgName->getReference()->getAsConstant();//todo wip do this much later
                 }
                 return Expression("", noneNode, nullptr);//todo temporary
-            } else {
-                return Expression("", noneNode, nullptr);
             }
+            return Expression("", noneNode, nullptr);
         }
 
         case intCastNode: {
-            Expression insideExpression = this->leftExpr->getAsConstant();
-            switch(insideExpression.type){
+            Expression insideExpression = _leftExpr->getAsConstant();
+            switch(insideExpression._type){
                 case intNode: return insideExpression;
-                case realNode: return Expression(std::to_string((int)std::stod(insideExpression.constant)), intNode, nullptr);
+                case realNode: return Expression(std::to_string((int)std::stod(insideExpression._constant)), intNode, nullptr);
                 default: return Expression("", noneNode, nullptr);
             }
         }
 
         case realCastNode: {
-            Expression insideExpression = this->leftExpr->getAsConstant();
-            switch(insideExpression.type){
-                case intNode: return Expression(std::to_string((double)std::stoi(insideExpression.constant)), realNode, nullptr);
+            Expression insideExpression = _leftExpr->getAsConstant();
+            switch(insideExpression._type){
+                case intNode: {
+                    return Expression(std::to_string((double)std::stoi(insideExpression._constant)), realNode, nullptr);
+                }
                 case realNode: return insideExpression;
                 default: return Expression("", noneNode, nullptr);
             }
@@ -349,10 +324,9 @@ Expression Expression::getAsConstant(){
     }
 }
 
-std::vector<std::string> Expression::markAsUse(Vertex* currentVertex, int size){
-    std::vector<std::string> reports = {};
-    std::cout << "Expression " << this->getExpr()->to_string() << " is being marked as used" << std::endl;
-    switch(type){
+void Expression::markAsUse(Vertex* currentVertex, int size){
+    std::cout << "Expression " << _ASTexpr->to_string() << " is being marked as used" << std::endl;
+    switch(_type){
 
         case addNode:
         case subtractNode:
@@ -367,41 +341,40 @@ std::vector<std::string> Expression::markAsUse(Vertex* currentVertex, int size){
         case nonEqualNode:
         case andNode:
         case orNode:
-            if (leftExpr != nullptr)
-                for (auto r: leftExpr->markAsUse(currentVertex, size)) reports.push_back(r);
-            if (rightExpr != nullptr)
-                for (auto r: rightExpr->markAsUse(currentVertex, size)) reports.push_back(r);
-            return reports;
+            if (_leftExpr != nullptr)
+                _leftExpr->markAsUse(currentVertex, size);
+            if (_rightExpr != nullptr)
+                _rightExpr->markAsUse(currentVertex, size);
+            return;
         
         case identifierNode:
-            if (identifier != nullptr)
-                for (auto r: identifier->markAsUse(currentVertex, size)) reports.push_back(r);
-            return reports;
+            if (_identifier != nullptr)
+                _identifier->markAsUse(currentVertex, size);
+            return;
         
         case stringNode:
         case intNode:
         case realNode: 
-            return reports;
+            return;
 
         case realCastNode: 
         case intCastNode:
         case stringCastNode:
-            if (leftExpr != nullptr)
-                for (auto r: leftExpr->markAsUse(currentVertex, size)) reports.push_back(r);
-            return reports;
+            if (_leftExpr != nullptr)
+                _leftExpr->markAsUse(currentVertex, size);
+            return;
         
         // only noneNode must be left
         default: std::cout << "INTERNAL ERROR: Expression.markAsUse ended as \"default\"" << std::endl;
 
     }
 
-    return reports;
+    return;
 }
 
-std::vector<std::string> Expression::markAsDef(Vertex* currentVertex, int size){
-    std::vector<std::string> reports = {};
-    std::cout << "Expression " << this->getExpr()->to_string() << " is being marked as defined" << std::endl;
-    switch(type){
+void Expression::markAsDef(Vertex* currentVertex, int size){
+    std::cout << "Expression " << _ASTexpr->to_string() << " is being marked as defined" << std::endl;
+    switch(_type){
         case addNode:
         case subtractNode:
         case multiplyNode:
@@ -415,68 +388,68 @@ std::vector<std::string> Expression::markAsDef(Vertex* currentVertex, int size){
         case nonEqualNode:
         case andNode:
         case orNode:{
-            reports.push_back(JsonReporter::create26(
-                this->getExpr()->to_string(),
+            REPORTS.push_back(JsonReporter::create26(
+                this->getASTExpr()->to_string(),
                 currentVertex
             ));
-            return reports;
+            return;
         }
         
         case identifierNode:
 
-            if (identifier != nullptr)
-            switch(identifier->getType()){
+            if (_identifier != nullptr)
+            switch(_identifier->getClass()){
 
-                case subArgNameType: { //ok
-                    SubArgName* subArgName = dynamic_cast<SubArgName*>(identifier);
-                    for (auto r: subArgName->getReference()->markAsDef(currentVertex, size)) reports.push_back(r);
-                    return reports;
+                case mutableArgNameClass: { //ok
+                    MutableArgName* mutableArgName = dynamic_cast<MutableArgName*>(_identifier);
+                    mutableArgName->getReference()->markAsDef(currentVertex, size);
+                    return;
                 }
-                case baseDFNameType: {//ok
-                    BaseDFName* baseDFName = dynamic_cast<BaseDFName*>(identifier);
-                    for (auto r: baseDFName->markAsDef(currentVertex, size)) reports.push_back(r);
-                    return reports;
+                case baseDFNameClass: {//ok
+                    BaseDFName* baseDFName = dynamic_cast<BaseDFName*>(_identifier);
+                    baseDFName->markAsDef(currentVertex, size);
+                    return;
                 }
-                case indexedDFNameType: {//ok
-                    IndexedDFName* indexedDFName = dynamic_cast<IndexedDFName*>(identifier);
+                case indexedDFNameClass: {//ok
+                    IndexedDFName* indexedDFName = dynamic_cast<IndexedDFName*>(_identifier);
                     indexedDFName->markAsDef(currentVertex, size);
-                    return reports;
+                    return;
                 }
-                case forIteratorNameType: {//error
-                    reports.push_back(JsonReporter::create26(
-                        this->getExpr()->to_string(),
+                case forIteratorNameClass: {//error
+                    REPORTS.push_back(JsonReporter::create26(
+                        this->getASTExpr()->to_string(),
                         currentVertex
                     ));
-                    return reports;
+                    return;
                 }
                 
-                case whileIteratorNameType:{ //error
-                    reports.push_back(JsonReporter::create26(
-                        this->getExpr()->to_string(),
+                case whileIteratorNameClass:{ //error
+                    REPORTS.push_back(JsonReporter::create26(
+                        this->getASTExpr()->to_string(),
                         currentVertex
                     ));
-                    return reports;
+                    return;
                 }
                 
-                case valueNameType://todo
-                    return reports;
+                case valueNameClass://todo
+                    return;
                 
-                case letNameType: {//ok
-                    LetName* letName = dynamic_cast<LetName*>(identifier);
-                    for (auto r: letName->getReference()->markAsDef(currentVertex, size)) reports.push_back(r);
-                    return reports;
+                case letNameClass: {//ok
+                    LetName* letName = dynamic_cast<LetName*>(_identifier);
+                    letName->getReference()->markAsDef(currentVertex, size);
+                    return;
                 }
-                case mainArgNameType: {
-                    reports.push_back(JsonReporter::create26(
-                        this->getExpr()->to_string(),
+                case immutableArgNameClass: {
+                    REPORTS.push_back(JsonReporter::create26(
+                        this->getASTExpr()->to_string(),
                         currentVertex
                     ));
-                    return reports;
+                    return;
                 }
                 
                 default:
                     std::cout << "INTERNAL ERROR (WARNING): Expression.markAsDef() ended by default at identifier node" << std::endl;
-                    return reports;
+                    return;
                 
             }
         
@@ -486,25 +459,25 @@ std::vector<std::string> Expression::markAsDef(Vertex* currentVertex, int size){
         case intCastNode:
         case realCastNode:
         case stringCastNode:
-            reports.push_back(JsonReporter::create26(
-                this->getExpr()->to_string(),
+            REPORTS.push_back(JsonReporter::create26(
+                _ASTexpr->to_string(),
                 currentVertex
             ));
-            return reports;
+            return;
 
         // only noneNode must be left
         default: 
-            std::cout << "WARNING: Expression.markAsDef ended as \"default\"" << std::endl;
-            return reports;
+            std::cout << "INTERNAL ERROR (WARNING): Expression.markAsDef ended as \"default\"" << std::endl;
+            return;
     }
 
-    return reports;
+    return;
 }
 
 bool Expression::isIndexable(){
     // only identifiers are indexable
-    if (type == identifierNode){
-        return identifier->isIndexable();
+    if (_type == identifierNode){
+        return _identifier->isIndexable();
     } else {
         return false;
     }

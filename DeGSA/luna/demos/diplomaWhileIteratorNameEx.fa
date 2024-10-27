@@ -1,0 +1,8 @@
+import printint(int) as print;
+sub main(){
+    df a;
+    while (i < 10), i = 0 .. out a {
+        print(i + 1);
+    }
+}
+

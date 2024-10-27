@@ -1,0 +1,20 @@
+import printfl(real) as print;
+import c_init_int(int, name) as init;
+sub main(real mainArg){
+    df a, b;
+    init(5, b);
+    for i = 1..2 {
+        let b = a + 5.0 {
+            init(1, a);
+            print(a + b * i);
+        }
+    }
+    foo(a);
+    while (i < 10), i = 0 .. out a {
+        print(i + 1);
+    }
+}
+sub foo(name f){
+    print(f);
+}
+

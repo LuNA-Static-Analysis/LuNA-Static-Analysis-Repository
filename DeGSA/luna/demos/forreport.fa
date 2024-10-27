@@ -1,0 +1,13 @@
+import printfl(real) as print;
+import c_init_float(real, name) as init;
+sub main(){
+        df a;
+        let b = a {
+            init(1.0, b);
+            foo(b);
+        }
+}
+sub foo(name c){
+    print(c + 10.0);
+}
+

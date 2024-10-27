@@ -12,7 +12,7 @@ so the launch script could run(run: bash launch.sh).
 Project structure:
 
 - luna subfolder: contains LuNA source codes to analyze; script automatically pickups "source.fa"; ucodes.cpp contains C++ modules in order for LuNA code to run, but it does basically nothing
-- classes.hpp: forward class declaration needed for some modules
+- global.hpp: forward class declaration needed for some modules + global variables
 - compile.sh: script for compilation of analyzer without running it
 - launch.sh: same as compile.sh, but also launches analyzer
 - ddg.cpp: module with main class consisting of all graph construction and initialization algorithms

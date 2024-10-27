@@ -1,0 +1,8 @@
+import printint(int) as print;
+sub main(){
+        foo(1 * 2);
+}
+sub foo(int f){
+        print(f + 3 + 4.0);
+}
+
