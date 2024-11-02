@@ -1,0 +1,83 @@
+import c_init(name, int) as init;
+import c_print(int) as print;
+
+#define Z_STEP 5
+
+sub main() {
+    df x, y, z, t, k, N, M;
+
+    // x - intersection union
+    for i = 0..N { 
+        init(x[i], i);
+    }
+
+    for i = N-2..M {
+        init(x[i], i);
+    }
+
+    for i = 0..M {
+        print(x[i]);
+    }
+
+    // y - intersecting union, step is greater than one
+    for i = 0..N { 
+        init(y[2*i], i);
+    }
+
+    for i = N-3..M {
+        init(y[2*i], i);
+    }
+
+    for i = 0..M {
+        print(y[2*i]);
+    }
+
+    // z - single init + intersecting union
+    init(z[0], 0);
+
+    for i = 1..N { 
+        init(z[2*i], i);
+    }
+
+    for i = N..100 { 
+        init(z[2*i], i);
+    }
+
+    for i = 0..100 {
+        print(z[2*i]);
+    }
+
+    // t - cannot merge init loops if overalp is only possible
+    for i = 0..N { 
+        init(t[2*i], i);
+    }
+
+    for i = M..100 { 
+        init(t[2*i], i);
+    }
+
+    for i = 0..100 {
+        print(t[2*i]);
+    }
+
+    // k - both individual init loops and union are required, union does not cover neither individual loop
+    for i = 0..N { 
+        init(k[2*i], i);
+    }
+
+    for i = N..M { 
+        init(k[2*i], i);
+    }
+
+    for i = 0..N {
+        print(k[2*i]);
+    }
+
+    for i = N..M {
+        print(k[2*i]);
+    }
+
+    for i = 0..M {
+        print(k[2*i]);
+    }
+}

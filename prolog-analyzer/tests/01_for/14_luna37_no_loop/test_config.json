@@ -8,10 +8,10 @@
     "stdout": {
       "match_lines": [
         "wc:Found 4 error*",
-        "wc:DF x",
-        "wc:DF y",
-        "wc:DF z",
-        "wc:DF t"
+        "wc:warning[SEM3.3]*DF x",
+        "wc:warning[SEM3.3]*DF y",
+        "wc:warning[SEM3.3]*DF z",
+        "wc:warning[SEM3.3]*DF t"
       ]
     },
     "stderr": {

@@ -8,8 +8,8 @@
     "stdout": {
       "match_lines": [
         "wc:Found 2 error*",
-        "wc:DF x",
-        "wc:DF y",
+        "wc:warning[SEM3.3]*DF x",
+        "wc:warning[SEM3.3]*DF y",
         "wc:M to N with step 1",
         "wc:*N*-*10*to N with step 1",
         "wc:x to*M*+*1*with step 1",

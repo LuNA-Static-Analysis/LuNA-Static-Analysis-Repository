@@ -71,7 +71,7 @@ format_range_and_conditions(Range, RangeAndConditioins) :-
 index_range_not_initialized_error_json(ErrorJson) :-
     execution_sequence:main_root_ctx(RootCtx),
     index_range_not_initialized(RootCtx, error{
-        'error_code': "LUNA99",
+        'error_code': "SEM3.3",
         'details': details{
             'used': UseRange,
             'initialized': InitRanges
@@ -82,7 +82,7 @@ index_range_not_initialized_error_json(ErrorJson) :-
     maplist(reporting:format_expression_decode, UseConditions, UseConditionsDicts),
     maplist(format_range_and_conditions, InitRanges, InitRangesFormatted),
     ErrorJson = error{
-        'error_code': "LUNA99",
+        'error_code': "SEM3.3",
         'details': details{
             'used': UseRangeDict,
             'use_conditions': UseConditionsDicts,
@@ -93,7 +93,7 @@ index_range_not_initialized_error_json(ErrorJson) :-
 index_range_overlap_error_json(ErrorJson) :-
     execution_sequence:main_root_ctx(RootCtx),
     index_range_overlap(RootCtx, error{
-        'error_code': "LUNA35",
+        'error_code': "SEM2.2",
         'details': details{
             'ranges': [InitRange1, InitRange2]
         }
@@ -101,7 +101,7 @@ index_range_overlap_error_json(ErrorJson) :-
     reporting:format_index_range(InitRange1, InitRangeDict1),
     reporting:format_index_range(InitRange2, InitRangeDict2),
     ErrorJson = error{
-        'error_code': "LUNA35",
+        'error_code': "SEM2.2",
         'details': details{
             'ranges': [InitRangeDict1, InitRangeDict2]
         }
@@ -375,7 +375,7 @@ index_range_not_initialized(RootCtx, Error) :-
     include(index_range_implies(UseRange), InitRanges, ImpliedInits),
     \+ index_range_is_covered(UseRange, ImpliedInits),
     Error = error{
-        'error_code': "LUNA99",
+        'error_code': "SEM3.3",
         'details': details{
             'used': UseRange,
             'initialized': InitRanges
@@ -432,7 +432,7 @@ index_range_overlap(RootCtx, Error) :-
 
     index_range_overlaps_with(InitRange1, InitRange2),
     Error = error{
-        'error_code': "LUNA35",
+        'error_code': "SEM2.2",
         'details': details{
             'ranges': [InitRange1, InitRange2]
         }

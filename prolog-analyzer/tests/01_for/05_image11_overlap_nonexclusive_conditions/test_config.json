@@ -8,7 +8,7 @@
     "stdout": {
       "match_lines": [
         "wc:Found 1 error*",
-        "wc:warning[LUNA35]*DF x",
+        "wc:warning[SEM2.2]*DF x",
         "wc:line 9",
         "wc:line 13",
         "wc:x[i]",
