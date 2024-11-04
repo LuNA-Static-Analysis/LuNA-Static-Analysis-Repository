@@ -1,0 +1,21 @@
+{
+  "arrange": [],
+  "act": {
+    "command": "adapt --run prolog main.fa",
+    "can_fail": false
+  },
+  "assert": {
+    "stdout": {
+      "match_lines": [
+        "wc:Found*3*error*",
+        "wc:warning[SEM3.3]*DF x",
+        "wc:warning[SEM3.3]*DF y",
+        "wc:warning[SEM3.3]*DF z"
+      ]
+    },
+    "stderr": {
+      "empty": true
+    },
+    "save": ["stderr", "stdout"]
+  }
+}

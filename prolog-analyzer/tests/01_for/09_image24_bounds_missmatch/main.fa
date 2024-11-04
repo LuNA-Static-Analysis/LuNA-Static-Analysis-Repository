@@ -1,0 +1,29 @@
+import c_init(name, int) as set_int;
+import c_print(value) as print;
+
+sub init(name it, int from, name to) {
+    for i = from..to {
+        set_int(it[i], i);
+    }
+}
+
+sub use(name it, name from, int to) {
+    for i = from..to {
+        print(it[i]);
+    }
+}
+
+sub main() {
+    df x, y, N, M;
+
+    set_int(N, 10);
+    set_int(M, 10);
+
+    // Initialization
+    init(x, N - 10, N);
+    init(y, N, M);
+
+    // Consumption
+    use(x, M, N);
+    use(y, x, M + 1);
+}

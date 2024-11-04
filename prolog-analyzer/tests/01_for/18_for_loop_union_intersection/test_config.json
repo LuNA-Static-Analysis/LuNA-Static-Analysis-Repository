@@ -1,0 +1,24 @@
+{
+  "arrange": [],
+  "act": {
+    "command": "adapt --run prolog main.fa",
+    "can_fail": false
+  },
+  "assert": {
+    "stdout": {
+      "match_lines": [
+        "wc:Found 6 errors",
+        "wc:warning[SEM2.2]*overlap*DF x",
+        "wc:warning[SEM2.2]*overlap*DF y",
+        "wc:warning[SEM2.2]*overlap*DF z",
+        "wc:warning[SEM2.2]*overlap*DF t",
+        "wc:warning[SEM2.2]*overlap*DF k",
+        "wc:warning[SEM3.3]*not*initialized*DF t"
+      ]
+    },
+    "stderr": {
+      "empty": true
+    },
+    "save": ["stderr", "stdout"]
+  }
+}

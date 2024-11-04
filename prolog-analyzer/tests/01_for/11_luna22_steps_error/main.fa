@@ -1,0 +1,17 @@
+import c_init( name, int) as init;
+import c_print( value) as print;
+
+sub init_1(name arr, int ind) {     
+    init(arr[ind], 0);                     
+}
+
+sub main() {                            
+    df x;                               
+    for i = 0..100 {
+        init_1(x, 2*i+1);
+    }
+
+    for i = 0..66 {
+        print(x[3*i+1]);
+    }
+}

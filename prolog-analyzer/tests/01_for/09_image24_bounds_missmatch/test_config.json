@@ -1,0 +1,26 @@
+{
+  "arrange": [],
+  "act": {
+    "command": "adapt --run prolog main.fa",
+    "can_fail": false
+  },
+  "assert": {
+    "stdout": {
+      "match_lines": [
+        "wc:Found 2 error*",
+        "wc:warning[SEM3.3]*DF x",
+        "wc:warning[SEM3.3]*DF y",
+        "wc:M to N with step 1",
+        "wc:*N*-*10*to N with step 1",
+        "wc:x to*M*+*1*with step 1",
+        "wc:N to M with step 1",
+        "wc:y[i] as it[i]",
+        "wc:x[i] as it[i]"
+      ]
+    },
+    "stderr": {
+      "empty": true
+    },
+    "save": ["stderr", "stdout"]
+  }
+}

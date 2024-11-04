@@ -79,7 +79,7 @@ def main(
         output_dir: Path,
         errors_file: Path | None,
         no_cleanup: bool,
-        luna_src: tuple[Path]
+        luna_src: tuple[Path, ...]
 ) -> None:
     prolog_analyzer_home = Path(os.environ.get('PROLOG_ANALYZER_HOME', str(Path.cwd())))
 
@@ -104,18 +104,31 @@ def main(
     exit_code = 0
     try:
         print('\rCompiling LuNA program\r', end='')
-        subprocess.run(
-            args=[
-                'luna',
-                '-q',
-                '--compile-only',
-                f'--build-dir={str(build_dir)}',
-                *map(lambda it: it.resolve().name, luna_src)
-            ],
-            cwd=project_dir,
-            capture_output=True,
-            check=True
-        )
+        try:
+            subprocess.run(
+                args=[
+                    'python3',
+                    prolog_analyzer_home / 'src' / 'py' / 'luna-ja-only.py',
+                    '--no-cleanup',
+                    f'--build-dir={str(build_dir.absolute())}',
+                    *map(lambda it: it.resolve().name, luna_src)
+                ],
+                cwd=project_dir,
+                check=True
+            )
+        except subprocess.CalledProcessError:
+            subprocess.run(
+                args=[
+                    'luna',
+                    '-q',
+                    '--compile-only',
+                    f'--build-dir={str(build_dir)}',
+                    *map(lambda it: it.resolve().name, luna_src)
+                ],
+                cwd=project_dir,
+                capture_output=True,
+                check=True
+            )
 
         print('\rGenerating facts      \r', end='')
         subprocess.run(

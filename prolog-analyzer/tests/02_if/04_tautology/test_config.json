@@ -1,0 +1,28 @@
+{
+  "arrange": [],
+  "act": {
+    "command": "adapt --run prolog main.fa"
+  },
+  "assert": {
+    "stdout": {
+      "match_lines": [
+        "wc:Found 11 errors",
+        "wc:*warning[SEM5]*1 is always True*",
+        "wc:*warning[SEM5]*7*+*0*N*True*",
+        "wc:*warning[SEM5]*42*-*(42*+*0*z[7]*)*False*",
+        "wc:*warning[SEM5]*z[i]*-*z[*i*+*(7*-*7)*j*]*False*",
+        "wc:*warning[SEM5]*0 is always False*",
+        "wc:*warning[SEM5]*x*||*1*True*",
+        "wc:*warning[SEM5]*0*&&*y*False*",
+        "wc:*warning[SEM5]*x*<=*0*||*x*>*0*||*y*==*42*True*",
+        "wc:*warning[SEM5]*x*>=*y*||*x*<*y*True*",
+        "wc:*warning[SEM5]*x*<*y*+*1*||*y*+*1*<*x*||*x*==*y*+*1*True*",
+        "wc:*warning[SEM5]*(x[N]*>=*y*+*1*&&*x[*N*+*y*0*]*<*1*+*y*)*&&*y*>*5*False*"
+      ]
+    },
+    "stderr": {
+      "empty": true
+    },
+    "save": ["stderr", "stdout"]
+  }
+}

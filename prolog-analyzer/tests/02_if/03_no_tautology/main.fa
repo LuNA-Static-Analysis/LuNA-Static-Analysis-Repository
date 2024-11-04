@@ -1,0 +1,17 @@
+import c_print(int) as print;
+
+sub main() {
+    df x, y, z, i, j, N;
+
+    if x { print(x); }
+
+    if x && 7 { print(x); }
+
+    if y || 0 { print(x); }
+
+    if y || (3 - 3) { print(x); }
+
+    if x != 0 && N == 0 {
+        print(x);
+    }
+}

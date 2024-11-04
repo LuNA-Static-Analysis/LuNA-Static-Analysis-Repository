@@ -13,7 +13,7 @@
 
 bool_used_as_number_error_json(ErrorJson) :-
     bool_used_as_number(error{
-        'error_code': "LUNA25",
+        'error_code': "SEM7",
         'details': details{
             'bad_expr': BadExpr,
             'arg_index': ArgIndex,
@@ -23,7 +23,7 @@ bool_used_as_number_error_json(ErrorJson) :-
     call_stack:entry_from_id(Id, Entry),
     reporting:format_expression_no_decode(BadExpr, BadExprDict),
     ErrorJson = error{
-        'error_code': "LUNA25",
+        'error_code': "SEM7",
         'details': details{
             'bad_expr': BadExprDict,
             'arg_index': ArgIndex,
@@ -33,7 +33,7 @@ bool_used_as_number_error_json(ErrorJson) :-
 
 tautology_error_json(ErrorJson) :-
     tautology(error{
-        'error_code': "LUNA23",
+        'error_code': "SEM5",
         'details': details{
             'type': T,
             'cond': Cond,
@@ -43,7 +43,7 @@ tautology_error_json(ErrorJson) :-
     call_stack:entry_from_id(Id, Entry),
     reporting:format_expression_no_decode(Cond, CondDict),
     ErrorJson = error{
-        'error_code': "LUNA23",
+        'error_code': "SEM5",
         'details': details{
             'type': T,
             'condition': CondDict,
@@ -55,7 +55,7 @@ bool_used_as_number(Error) :-
     ja:if(Id, Cond),
     logic:bool_used_as_number(Cond, BadExpr, ArgIndex),
     Error = error{
-        'error_code': "LUNA25",
+        'error_code': "SEM7",
         'details': details{
             'bad_expr': BadExpr,
             'arg_index': ArgIndex,
@@ -67,7 +67,7 @@ bool_used_as_number(Error) :-
     ja:for(Id, _, First, _),
     logic:bool_used_as_number(First, BadExpr, ArgIndex),
     Error = error{
-        'error_code': "LUNA25",
+        'error_code': "SEM7",
         'details': details{
             'bad_expr': BadExpr,
             'arg_index': ArgIndex,
@@ -79,7 +79,7 @@ bool_used_as_number(Error) :-
     ja:for(Id, _, _, Last),
     logic:bool_used_as_number(Last, BadExpr, ArgIndex),
     Error = error{
-        'error_code': "LUNA25",
+        'error_code': "SEM7",
         'details': details{
             'bad_expr': BadExpr,
             'arg_index': ArgIndex,
@@ -92,7 +92,7 @@ bool_used_as_number(Error) :-
     member(Arg, Args),
     logic:bool_used_as_number(Arg, BadExpr, ArgIndex),
     Error = error{
-        'error_code': "LUNA25",
+        'error_code': "SEM7",
         'details': details{
             'bad_expr': BadExpr,
             'arg_index': ArgIndex,
@@ -104,7 +104,7 @@ tautology(Error) :-
     ja:if(Id, Cond),
     logic:tautology(Cond, T),
     Error = error{
-        'error_code': "LUNA23",
+        'error_code': "SEM5",
         'details': details{
             'type': T,
             'cond': Cond,

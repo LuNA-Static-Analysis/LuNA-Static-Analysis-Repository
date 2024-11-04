@@ -10,6 +10,7 @@
 :- use_module('src/pro/call_stack.pro', [from_ids/2]).
 :- use_module('src/pro/execution_sequence.pro', [to_call_stack/2]).
 :- use_module('src/pro/terms/expressions.pro', [repr/2, identifier/1]).
+:- use_module('src/pro/terms/arithmetic.pro', [linear_expression/4]).
 
 expression_strip_luna_prefix(Expr, Expr) :-
     number(Expr),
@@ -73,11 +74,17 @@ format_index_range(Range, FormattedRange) :-
     format_for(Loop, FormattedFor),
     format_expression_decode(Step, StepDict),
     format_expression_decode(Offset, OffsetDict),
+    arithmetic:linear_expression(TrueLower, Loop.'first', Step, Offset),
+    format_expression_decode(TrueLower, TrueLowerRepr),
+    arithmetic:linear_expression(TrueUpper, Loop.'last', Step, Offset),
+    format_expression_decode(TrueUpper, TrueUpperRepr),
     FormattedRange = index_range{
         'df': FormattedDf,
         'loop': FormattedFor,
         'step': StepDict,
-        'offset': OffsetDict
+        'offset': OffsetDict,
+        'true_lower': TrueLowerRepr,
+        'true_upper': TrueUpperRepr
     }.
 
 base_name(BaseName, BaseName) :- identifier(BaseName), !.
@@ -102,7 +109,7 @@ format_df(Df, FormattedDf) :-
     FormattedDf = df_ref{
         'df': df{
             'name': FormattedBaseName,
-            'declared': DeclaredCs
+            'declared': [DeclaredCs]
         },
         'local': LocalDict,
         'true': TrueDict,
