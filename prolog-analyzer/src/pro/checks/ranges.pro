@@ -204,10 +204,15 @@ index_range_unpack(IndexRange, Lower, Upper, Step) :-
     linear_expression(Lower, First, Step, Offset),
     linear_expression(Upper, Last, Step, Offset).
 
-index_range_unpack(IndexRange, Lower, Upper, 0) :-
+index_range_unpack(IndexRange, Index, Index, 0) :-
     single_index{'step': IndexStep, 'offset': IndexOffset, 'var': IndexVar} :< IndexRange,
-    linear_expression(Lower, IndexVar, IndexStep, IndexOffset),
-    Upper = Lower.
+    linear_expression(Index, IndexVar, IndexStep, IndexOffset).
+
+index_range_unpack(IndexRange, Index, Index, 0) :-
+    index_range{'step': Step, 'offset': Offset, 'loop': Loop} :< IndexRange,
+    _{'first': First, 'last': Last} :< Loop,
+    ref:expressions_equivalent(First, Last),
+    linear_expression(Index, First, Step, Offset).
 
 index_range_unpack(IndexRange, Lower, Upper, Step) :-
     index_range_union{
@@ -418,7 +423,8 @@ index_range_overlaps_with(Range1, Range2) :-
 
     index_range_unpack(Range1, LowerBound1, UpperBound1, Step1),
     index_range_unpack(Range2, LowerBound2, UpperBound2, Step2),
-    check_overlap(LowerBound1, UpperBound1, Step1, LowerBound2, UpperBound2, Step2).
+    check_overlap(LowerBound1, UpperBound1, Step1, LowerBound2, UpperBound2, Step2),
+    !.
 
 index_range_where_cs(Range, LoopCs) :-
     get_dict('df', Range, Df),
