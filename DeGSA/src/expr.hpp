@@ -13,7 +13,8 @@ class Expression {
 
     private:
 
-        ExpressionType _type; // type of a node [operation] (i.e. add, subtract, assign, identifier, ... )
+        ExpressionType _expressionType; // type of a node [operation] (i.e. add, subtract, assign, identifier, ... )
+        ValueType _valueType; // type of a value, if this type can be calculated
         Expression* _leftExpr; // left operand
         Expression* _rightExpr; // right operand
         Identifier* _identifier; // nullptr if not an identifier (type will also be not "identifierNode")
@@ -21,15 +22,23 @@ class Expression {
         expr* _ASTexpr;
         Vertex* _vertex;
 
+        void calculateValueType();
+
     public:
 
-        ExpressionType getType() { return _type; };
+        ExpressionType getExpressionType() { return _expressionType; };
+
+        ValueType getValueType() {
+          if (_valueType == notCalculated)
+            calculateValueType();
+          return _valueType; 
+        };
 
         expr* getASTExpr() { return _ASTexpr; };
 
         std::string getConstant() { return _constant; };
 
-        Expression binOp(); //todo rename
+        Expression calculateValue();
 
         Identifier* getAsIdentifier();
 
@@ -43,9 +52,11 @@ class Expression {
 
         bool isIndexable();
 
-        Expression(std::string constant, ExpressionType type, Vertex* currentVertex) :
-          _ASTexpr(nullptr), _constant(constant), _identifier(nullptr), _leftExpr(nullptr), _rightExpr(nullptr), _type(type), _vertex(currentVertex) {};
+        // used for creating constants as Expressions
+        Expression(std::string constant, ExpressionType expressionType, Vertex* currentVertex) :
+          _ASTexpr(nullptr), _constant(constant), _identifier(nullptr), _leftExpr(nullptr), _rightExpr(nullptr), _expressionType(expressionType), _vertex(currentVertex) {};
 
-        Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTable, Vertex* currentVertex);//todo
+        // used for anything more complex than a constant
+        Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTable, Vertex* currentVertex);
 
 };

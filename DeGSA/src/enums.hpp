@@ -13,18 +13,6 @@ enum IdentifierClass {
 
 };
 
-// used for Identifiers and DeclaredArgs structs (as LuNA types)
-enum LunaType {
-
-    intType = 1,
-    realType = 2,
-    stringType = 3,
-    valueType = 4,
-    nameType = 5,
-    noneType = 6 // used for BaseDFName for example
-
-};
-
 enum VertexType {//todo rename this stupid ass shit
 
     forVF = 1,
@@ -68,6 +56,21 @@ enum ExpressionType {
 
     noneNode = 22 // means error happened somewhere, or expression can not exist
 
+};
+
+// used for Identifiers and DeclaredArgs structs (as LuNA types)
+enum ValueType {
+
+    // LuNA types
+    intType = 1,
+    realType = 2,
+    stringType = 3,
+    valueType = 4,
+    nameType = 5,
+
+    noneType = 6, // used for BaseDFName for example
+    nonCalculatable = 7, // it's not possible to determine the type
+    notCalculated = 8 // used for lazy initialization
 };
 
 enum UseDef {

@@ -10,6 +10,10 @@ int Identifier::getLine(){
     }
 }
 
+void Identifier::calculateValueType(){
+    m_valueType = m_reference->getValueType();
+}
+
 void BaseDFName::markAsUse(Vertex* vertex, int size){
     m_useSet.insert(vertex);
 
@@ -92,7 +96,7 @@ bool IndexedDFName::isIndexable() {
 }
 
 IndexedDFName::IndexedDFName(std::string name, Vertex* currentVertex, Identifier* base, std::vector<Expression*> expressionsVector) : 
-    Identifier(name, nullptr, currentVertex, indexedDFNameClass, noneType /*todo when to init it accurately?*/) {
+    Identifier(name, nullptr, currentVertex, indexedDFNameClass, notCalculated /*todo when to init it accurately?*/) {
 
     if (
         (base->getClass() == baseDFNameClass) ||

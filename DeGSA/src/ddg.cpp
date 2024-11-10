@@ -39,7 +39,7 @@ class DDG {
                     std::vector<DeclaredArg> declaredArgs = {};
                     if (subDecl->params_->param_seq_ != nullptr){
                         for (auto arg : *(subDecl->params_->param_seq_->params_)) {
-                            LunaType type;
+                            ValueType type;
                             std::string lunaType = *(arg->type_->value_);
                             if (lunaType == "int") { //todo check all this
                                 type = intType;
@@ -73,7 +73,7 @@ class DDG {
                     std::vector<DeclaredArg> declaredArgs = {};
                     if (importDecl->params_->seq_ != nullptr){
                         for (auto arg : *(importDecl->params_->seq_->params_)) {
-                            LunaType type;
+                            ValueType type;
                             std::string lunaType = *(arg->type_->value_);
                             if (lunaType == "int") { //todo check all this
                                 type = intType;
@@ -216,8 +216,8 @@ class DDG {
                 if (vertex->getVertexType() == ifVF){
                     IfVertex* ifVertex = dynamic_cast<IfVertex*>(vertex);
                     Expression conditionConstant = ifVertex->getConditionExpr()->getAsConstant();
-                    if (conditionConstant.getType() != noneNode){
-                        switch(conditionConstant.getType()){
+                    if (conditionConstant.getExpressionType() != noneNode){
+                        switch(conditionConstant.getExpressionType()){
                             case realNode: {
                                 if (std::stod(conditionConstant.getConstant()) == 0){
                                     REPORTS.push_back(JsonReporter::createSEM5(
@@ -268,8 +268,8 @@ class DDG {
                 if (vertex->getVertexType() == whileVF){
                     WhileVertex* whileVertex = dynamic_cast<WhileVertex*>(vertex);
                     Expression conditionConstant = whileVertex->getConditionExpr()->getAsConstant();
-                    if (conditionConstant.getType() != noneNode){
-                        switch(conditionConstant.getType()){
+                    if (conditionConstant.getExpressionType() != noneNode){
+                        switch(conditionConstant.getExpressionType()){
                             case realNode:
                                 if (std::stod(conditionConstant.getConstant()) == 0) {
                                     REPORTS.push_back(JsonReporter::createSEM5(

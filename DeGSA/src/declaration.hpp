@@ -11,9 +11,9 @@
 // every argument has a name and a type in LuNA
 struct DeclaredArg {
     std::string name;
-    LunaType type;
+    ValueType type;
 
-    DeclaredArg(std::string iName, LunaType iType) : name(iName), type(iType) {};
+    DeclaredArg(std::string iName, ValueType iType) : name(iName), type(iType) {};
 };
 
 struct CFDeclaration {
@@ -22,7 +22,8 @@ struct CFDeclaration {
     std::vector<DeclaredArg> declaredArgs;
     block* cfBlock;
     int line;
+    bool isUsed;
 
     CFDeclaration(std::string name, CFType type, std::vector<DeclaredArg> declaredArgs, block* cfBlock, int line) :
-          name(name), type(type), declaredArgs(declaredArgs), cfBlock(cfBlock), line(line) {};
+          name(name), type(type), declaredArgs(declaredArgs), cfBlock(cfBlock), line(line), isUsed(false) {};
 };

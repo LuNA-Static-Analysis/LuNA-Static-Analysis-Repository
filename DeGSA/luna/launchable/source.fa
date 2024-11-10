@@ -1,11 +1,10 @@
-import printint(int) as print;
+import printint(int) as printint;
+import printstr(string) as printstr;
 sub main(){
-        let a = ((1 + 2 / (1 + 1) * 3) * 3) {
-                foo(a);
+        let a = 1 + 2 {
+                printstr(a);
+                printint(a);
         }
-}
-sub foo(int f){
-        if (f > 10){
-                print(f);
-        }
+        printint("text");
+        printstr("text");
 }

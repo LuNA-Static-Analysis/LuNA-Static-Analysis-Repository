@@ -17,9 +17,11 @@ protected:
     Expression* m_reference; // expression that is assigned to this variable (if possible)
     Vertex* m_vertex; // vertex where name was declared
     IdentifierClass m_identifierClass;
-    LunaType m_identifierType;//todo wip rename?
+    ValueType m_valueType;
     std::set<Vertex*> m_useSet = {};
     std::set<Vertex*> m_defSet = {};
+
+    void calculateValueType();
 
 public:
 
@@ -29,7 +31,11 @@ public:
 
     std::string getName() { return m_name; };
 
-    LunaType getType() { return m_identifierType; };
+    ValueType getValueType() {
+        if (m_valueType == notCalculated)
+        calculateValueType();
+        return m_valueType; 
+    };
 
     IdentifierClass getClass() { return m_identifierClass; };
 
@@ -57,8 +63,8 @@ public:
 
     virtual bool isIndexable() = 0;
 
-    Identifier(std::string name, Expression* reference, Vertex* vertex, IdentifierClass identifierClass, LunaType identifierType)
-      : m_name(name), m_reference(reference), m_vertex(vertex), m_identifierClass(identifierClass), m_identifierType(identifierType) {};
+    Identifier(std::string name, Expression* reference, Vertex* vertex, IdentifierClass identifierClass, ValueType valueType)
+      : m_name(name), m_reference(reference), m_vertex(vertex), m_identifierClass(identifierClass), m_valueType(valueType) {};
 
     virtual ~Identifier() {};
 };
@@ -187,7 +193,7 @@ public:
 
     bool isIndexable() { return m_reference->isIndexable(); };
 
-    LetName(std::string name, Expression* reference, Vertex* currentVertex) : Identifier(name, reference, currentVertex, letNameClass, noneType /* todo calculate the type using reference*/) {};
+    LetName(std::string name, Expression* reference, Vertex* currentVertex) : Identifier(name, reference, currentVertex, letNameClass, notCalculated) {};
 
     ~LetName() {};
 };
@@ -214,7 +220,7 @@ public:
 
     bool isIndexable() { return true; }
 
-    MutableArgName(std::string name, Expression* reference, Vertex* currentVertex, LunaType type) : Identifier(name, reference, currentVertex, mutableArgNameClass, type/*todo calculate later dynamically*/) {};
+    MutableArgName(std::string name, Expression* reference, Vertex* currentVertex, ValueType valueType) : Identifier(name, reference, currentVertex, mutableArgNameClass, valueType/*todo calculate later dynamically*/) {};
 
     ~MutableArgName() {};
 };
@@ -232,7 +238,7 @@ public:
     // in case of a "main()" function argument Expression reference must be nullptr
     // this will tell us that we can not predict its value
     // todo: use this philosophy everywhere else
-    ImmutableArgName(std::string name, Expression* reference, Vertex* currentVertex, LunaType type) : Identifier(name, reference, currentVertex, immutableArgNameClass, type) {}
+    ImmutableArgName(std::string name, Expression* reference, Vertex* currentVertex, ValueType valueType) : Identifier(name, reference, currentVertex, immutableArgNameClass, valueType) {}
 
     ~ImmutableArgName() {};
 };
