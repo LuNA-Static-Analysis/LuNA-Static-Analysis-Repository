@@ -275,12 +275,24 @@ def collect_tests(
     type=str,
     default=r'[^.(__)]\w+(_\w+)+'
 )
+@click.option(
+    '--first-fail',
+    required=False,
+    help='Exit on first failed test',
+    is_flag=True,
+    default=False
+)
 def main(
         tests_root: Path,
-        test_name_pattern: str
+        test_name_pattern: str,
+        first_fail: bool
 ) -> None:
     for test_name, test_path in collect_tests(tests_root, re.compile(test_name_pattern)):
-        run_test(test_name, test_path)
+        if run_test(test_name, test_path):
+            continue
+
+        if first_fail:
+            exit(1)
 
 
 if __name__ == '__main__':
