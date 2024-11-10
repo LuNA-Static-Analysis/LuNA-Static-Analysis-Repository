@@ -7,9 +7,10 @@
   "assert": {
     "stdout": {
       "match_lines": [
-        "wc:Found 2 error*",
+        "wc:Found 3 error*",
         "wc:warning[SEM2.2]*DF x",
-        "wc:warning[SEM2.2]*DF y"
+        "wc:warning[SEM2.2]*DF y",
+        "wc:warning[SEM2.2]*DF z"
       ]
     },
     "stderr": {

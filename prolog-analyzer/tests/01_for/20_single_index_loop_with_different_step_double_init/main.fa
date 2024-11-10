@@ -2,7 +2,7 @@ C++ sub int_set(name x, int val) ${{ x = val; $}}
 C++ sub consume(value v) ${{$}}
 
 sub main() {
-    df x, y, N;
+    df x, y, z, N;
 
     for i = 0..5 {
         int_set(x[2*i], i);
@@ -16,5 +16,12 @@ sub main() {
     }
     for k = 2*N+4..2*N+4 {
         int_set(y[k], k);
+    }
+
+    for j = 2*N..2*N+10 {
+        int_set(z[j], j);
+    }
+    for k = N+2..N+2 {
+        int_set(z[2*k], k);
     }
 }
