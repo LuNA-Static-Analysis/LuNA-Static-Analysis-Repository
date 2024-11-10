@@ -27,10 +27,7 @@ void BaseDFName::markAsUse(Vertex* vertex, int size){
         // then add this vertex as use
         maybeUseVector->push_back(vertex);
     } else { // create new pair and a new vector
-        _sizeToUseDefVectors.insert(std::make_pair(size, std::make_pair(
-            new std::vector<Vertex*>(),
-            new std::vector<Vertex*>()
-        )));
+        _sizeToUseDefVectors.insert( { size, { new std::vector<Vertex*>(), new std::vector<Vertex*>() } } );
         _sizeToUseDefVectors.find(size)->second.first->push_back(vertex);
     }
 }
@@ -48,10 +45,7 @@ void BaseDFName::markAsDef(Vertex* vertex, int size){
         // then add this vertex as def
         maybeDefVector->push_back(vertex);
     } else { // create new pair and a new vector
-        _sizeToUseDefVectors.insert(std::make_pair(size, std::make_pair(
-            new std::vector<Vertex*>(),
-            new std::vector<Vertex*>()
-        )));
+        _sizeToUseDefVectors.insert( { size, { new std::vector<Vertex*>(), new std::vector<Vertex*>() } } );
         _sizeToUseDefVectors.find(size)->second.second->push_back(vertex);
     }
 }

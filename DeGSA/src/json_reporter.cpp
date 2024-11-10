@@ -44,8 +44,8 @@ public:
 
     static std::string createReport(std::string lunaCode, std::string details){
         std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("error_code", lunaCode));
-        map.insert(std::make_pair("details", details));
+        map.insert( { "error_code", lunaCode } );
+        map.insert( { "details", details } );
         return createJson(map);
     }
 
@@ -56,9 +56,9 @@ public:
     )
     {
         std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("file", fileName));
-        map.insert(std::make_pair("line", line));
-        map.insert(std::make_pair("name", cfName));
+        map.insert( { "file", fileName } );
+        map.insert( { "line", line } );
+        map.insert( { "name", cfName } );
         return createJson(map);
     }
 
@@ -90,7 +90,7 @@ public:
             Identifier* identifier
     ){
         std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("name", identifier->getName()));
+        map.insert( { "name", identifier->getName() } );
         // decl
         std::vector<std::string> declCallstack = {};
         declCallstack.push_back(createCallstackFromVertex(identifier->getVertex()));
@@ -105,9 +105,9 @@ public:
             useCallstack.push_back(createCallstackFromVertex(use));
         }
 
-        map.insert(std::make_pair("declared", createArray(declCallstack)));
-        map.insert(std::make_pair("initialized", createArray(defCallstack)));
-        map.insert(std::make_pair("used", createArray(useCallstack)));
+        map.insert( { "declared", createArray(declCallstack) } );
+        map.insert( { "initialized", createArray(defCallstack) } );
+        map.insert( { "used", createArray(useCallstack) } );
         return createJson(map);
     }
 
@@ -118,10 +118,10 @@ public:
             std::string callStack // callstack as json
     ){
         std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("df", df));
-        map.insert(std::make_pair("local", localExpression));
-        map.insert(std::make_pair("true", trueExpression));
-        map.insert(std::make_pair("where", callStack));
+        map.insert( { "df", df } );
+        map.insert( { "local", localExpression } );
+        map.insert( { "true", trueExpression } );
+        map.insert( { "where", callStack } );
         return createJson(map);
     }
 
@@ -132,10 +132,10 @@ public:
             std::string offset // "for" offset; expression as json
     ){
         std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("df_ref", dfRef));
-        map.insert(std::make_pair("loop", forLoop));
-        map.insert(std::make_pair("step", step));
-        map.insert(std::make_pair("offset", offset));
+        map.insert( { "df_ref", dfRef } );
+        map.insert( { "loop", forLoop } );
+        map.insert( { "step", step } );
+        map.insert( { "offset", offset } );
         return createJson(map);
     }
 
@@ -146,10 +146,10 @@ public:
             int line
     ){
         std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("name", name));
-        map.insert(std::make_pair("type", type));
-        map.insert(std::make_pair("file", fileName));
-        map.insert(std::make_pair("line", std::to_string(line)));
+        map.insert( { "name", name } );
+        map.insert( { "type", type } );
+        map.insert( { "file", fileName } );
+        map.insert( { "line", std::to_string(line) } );
         return createJson(map);
     }
 
@@ -160,10 +160,10 @@ public:
             std::string callStack
     ){
         std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("var", iteratorName));
-        map.insert(std::make_pair("first", startExpression));
-        map.insert(std::make_pair("lase", endExpression));
-        map.insert(std::make_pair("where", callStack));
+        map.insert( { "var", iteratorName } );
+        map.insert( { "first", startExpression } );
+        map.insert( { "last", endExpression } );
+        map.insert( { "where", callStack } );
         return createJson(map);
     }
 
@@ -177,22 +177,15 @@ public:
         Vertex* vertex
     ){
         std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("expression", expression));
-        if(vertex->getVertexType() == importVF)
-            map.insert(std::make_pair("cf", createCF(
-                vertex->getName(),
-                "extern",
-                vertex->getFileName(),
-                vertex->getLine()
-            )));
-        else
-            map.insert(std::make_pair("cf", createCF(
-                vertex->getName(),
-                "struct",
-                vertex->getFileName(),
-                vertex->getLine()
-            )));
-        map.insert(std::make_pair("callstack", createCallstackFromVertex(vertex)));
+        map.insert( { "expression", expression } );
+        std::string cfType = vertex->getVertexType() == importVF ? "extern" : "struct";
+        map.insert({"cf", createCF(
+            vertex->getName(),
+            cfType,
+            vertex->getFileName(),
+            vertex->getLine()
+        )});
+        map.insert( { "callstack", createCallstackFromVertex(vertex) } );
         return createReport("SYN1", createJson(map));
     }
 
@@ -204,7 +197,7 @@ public:
     ){
         // details: df list
         std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("call_stack_entry", createCallStackEntry(fileName, std::to_string(line), cfName)));
+        map.insert( { "call_stack_entry", createCallStackEntry(fileName, std::to_string(line), cfName) } );
         return createReport("SYN2", createJson(map));
     }
 
@@ -213,13 +206,14 @@ public:
         Vertex* vertex
     ){
         std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("cf", createCF(
-                vertex->getName(),
-                "extern",
-                vertex->getFileName(),
-                vertex->getLine()
-            )));
-        map.insert(std::make_pair("call_stack_entry", createCallStackEntry(vertex->getFileName(), std::to_string(vertex->getLine()), vertex->getName())));
+        std::string cfType = vertex->getVertexType() == importVF ? "extern" : "struct";
+        map.insert({"cf", createCF(
+            vertex->getName(),
+            cfType,
+            vertex->getFileName(),
+            vertex->getLine()
+        )});
+        map.insert( { "call_stack_entry", createCallStackEntry(vertex->getFileName(), std::to_string(vertex->getLine()), vertex->getName()) } );
         return createReport("SYN3", createJson(map));
     }
 
@@ -229,7 +223,7 @@ public:
     ){
         // details: df list
         std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("dfs", createArray(dfs)));
+        map.insert( { "dfs", createArray(dfs) } );
         return createReport("SYN8", createJson(map));
     }
 
@@ -239,7 +233,7 @@ public:
     ){
         // details: df
         std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("df", createDF(identifier)));
+        map.insert( { "df", createDF(identifier) } );
         return createReport("SYN9", createJson(map));
     }
 
@@ -249,8 +243,8 @@ public:
         Vertex* vertex
     ){
         std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("expression", expression));
-        map.insert(std::make_pair("callstack", createCallstackFromVertex(vertex)));
+        map.insert( { "expression", expression } );
+        map.insert( { "callstack", createCallstackFromVertex(vertex) } );
         return createReport("SYN11", createJson(map));
     }
 
@@ -262,9 +256,7 @@ public:
     ){
         // details: df
         std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("df", createDF(
-            identifier
-        )));
+        map.insert( { "df", createDF(identifier) } );
         return createReport("SEM2", createJson(map));
     }
 
@@ -274,7 +266,7 @@ public:
     ){
         // details: df
         std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("df", createDF(identifier)));
+        map.insert( { "df", createDF(identifier) } );
         return createReport("SEM3_1", createJson(map));
     }
 
@@ -284,7 +276,7 @@ public:
     ){
         // details: df
         std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("df", createDF(identifier)));
+        map.insert( { "df", createDF(identifier) } );
         return createReport("SEM4", createJson(map));
     }
 
@@ -298,11 +290,11 @@ public:
     ){
         std::map<std::string, std::string> map = {};
         if (type)
-            map.insert(std::make_pair("type", "true"));
+            map.insert( { "type", "true" } );
         else
-            map.insert(std::make_pair("type", "false"));
-        map.insert(std::make_pair("condition", condition));
-        map.insert(std::make_pair("where", createCallStackEntry(fileName, std::to_string(line), cfName)));
+            map.insert( { "type", "false" } );
+        map.insert( { "condition", condition } );
+        map.insert( { "where", createCallStackEntry(fileName, std::to_string(line), cfName) } );
         return createReport("SEM5", createJson(map));
     }
 
