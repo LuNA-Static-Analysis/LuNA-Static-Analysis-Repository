@@ -1,0 +1,6 @@
+import c_init_int(int, name) as init;
+sub main(){
+        df a, b;
+        init(a, b);
+        init(b, a);
+}

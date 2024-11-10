@@ -159,7 +159,7 @@ class DDG {
                             // error code: 03
                             // details: df
                             //todo callstacks
-                            REPORTS.push_back(JsonReporter::create3(
+                            REPORTS.push_back(JsonReporter::createSEM2(
                                 bn
                             ));
                         }
@@ -175,7 +175,7 @@ class DDG {
                         // error code: 10
                         // details: df
                         //todo callstacks
-                        REPORTS.push_back(JsonReporter::create10(
+                        REPORTS.push_back(JsonReporter::createSEM4(
                             bn
                         ));
                     } else {
@@ -191,7 +191,7 @@ class DDG {
                             // error code: 05
                             // details: df
                             //todo callstacks
-                            REPORTS.push_back(JsonReporter::create5(
+                            REPORTS.push_back(JsonReporter::createSEM3_1(
                                 bn
                             ));
                         }
@@ -203,7 +203,7 @@ class DDG {
                     // error code: 10
                     // details: df
                     //todo callstacks
-                    REPORTS.push_back(JsonReporter::create10(
+                    REPORTS.push_back(JsonReporter::createSEM4(
                         bn
                     ));
                 }
@@ -220,7 +220,7 @@ class DDG {
                         switch(conditionConstant.getType()){
                             case realNode: {
                                 if (std::stod(conditionConstant.getConstant()) == 0){
-                                    REPORTS.push_back(JsonReporter::create23(
+                                    REPORTS.push_back(JsonReporter::createSEM5(
                                         false,
                                         ifVertex->getConditionExpr()->getASTExpr()->to_string(),
                                         fileName,
@@ -228,7 +228,7 @@ class DDG {
                                         "if"
                                     ));
                                 } else {
-                                    REPORTS.push_back(JsonReporter::create23(
+                                    REPORTS.push_back(JsonReporter::createSEM5(
                                         true,
                                         ifVertex->getConditionExpr()->getASTExpr()->to_string(),
                                         fileName,
@@ -241,7 +241,7 @@ class DDG {
                             case intNode: {
                                 std::string conditionConstantString = conditionConstant.getConstant();
                                 if (std::stoi(conditionConstantString) == 0) {
-                                    REPORTS.push_back(JsonReporter::create23(
+                                    REPORTS.push_back(JsonReporter::createSEM5(
                                         false,
                                         ifVertex->getConditionExpr()->getASTExpr()->to_string(),
                                         fileName,
@@ -249,7 +249,7 @@ class DDG {
                                         "if"
                                     ));
                                 } else {
-                                    REPORTS.push_back(JsonReporter::create23(
+                                    REPORTS.push_back(JsonReporter::createSEM5(
                                         true,
                                         ifVertex->getConditionExpr()->getASTExpr()->to_string(),
                                         fileName,
@@ -272,7 +272,7 @@ class DDG {
                         switch(conditionConstant.getType()){
                             case realNode:
                                 if (std::stod(conditionConstant.getConstant()) == 0) {
-                                    REPORTS.push_back(JsonReporter::create23(
+                                    REPORTS.push_back(JsonReporter::createSEM5(
                                         false,
                                         whileVertex->getConditionExpr()->getASTExpr()->to_string(),
                                         fileName,
@@ -280,7 +280,7 @@ class DDG {
                                         "while"
                                     ));
                                 } else {
-                                    REPORTS.push_back(JsonReporter::create23(
+                                    REPORTS.push_back(JsonReporter::createSEM5(
                                         true,
                                         whileVertex->getConditionExpr()->getASTExpr()->to_string(),
                                         fileName,
@@ -292,7 +292,7 @@ class DDG {
                             case intNode: {
                                 std::string conditionConstantString = conditionConstant.getConstant();
                                 if (std::stoi(conditionConstantString) == 0) {
-                                    REPORTS.push_back(JsonReporter::create23(
+                                    REPORTS.push_back(JsonReporter::createSEM5(
                                         false,
                                         whileVertex->getConditionExpr()->getASTExpr()->to_string(),
                                         fileName,
@@ -300,7 +300,7 @@ class DDG {
                                         "while"
                                     ));
                                 } else {
-                                    REPORTS.push_back(JsonReporter::create23(
+                                    REPORTS.push_back(JsonReporter::createSEM5(
                                         true,
                                         whileVertex->getConditionExpr()->getASTExpr()->to_string(),
                                         fileName,

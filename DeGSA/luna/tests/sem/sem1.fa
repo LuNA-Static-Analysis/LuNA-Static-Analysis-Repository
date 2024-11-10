@@ -1,0 +1,10 @@
+import c_init_int(int, name) as init;
+import printfl(real) as print;
+sub foo(real b) {
+    print(b);
+}
+sub main() {
+    df a;
+    init(1, a);
+    foo(a);
+}

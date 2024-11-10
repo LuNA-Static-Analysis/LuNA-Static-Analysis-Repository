@@ -1,0 +1,11 @@
+import printint(int) as print;
+sub main(){
+        for i = 2..3 {
+            foo(i);
+        }
+}
+sub foo(int f){
+        if (f > 1){
+                print(f);
+        }
+}

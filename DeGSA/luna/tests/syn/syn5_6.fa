@@ -1,0 +1,11 @@
+import printint(int) as print;
+sub foo(int a) {
+    print(1);
+}
+sub boo(int a) {
+    print(a);
+}
+sub main() {
+    foo(1);
+    boo(1);
+}

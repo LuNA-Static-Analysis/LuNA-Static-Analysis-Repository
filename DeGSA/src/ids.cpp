@@ -102,7 +102,7 @@ IndexedDFName::IndexedDFName(std::string name, Vertex* currentVertex, Identifier
         _base = base;
     } else {
         _base = nullptr;
-        REPORTS.push_back(JsonReporter::create36(name, currentVertex));
+        REPORTS.push_back(JsonReporter::createSYN11(name, currentVertex));
         std::cout << "INTERNAL ERROR: indexation of an unsuitable Identifier" << std::endl;
     }
 
@@ -139,7 +139,7 @@ void ForIteratorName::markAsDef(Vertex* currentVertex, int size){
     std::cout << "INTERNAL ERROR: for iterator " << m_name << " is being marked as defined" << std::endl;
     // error (iterator should be marked as defined by ForVertex automatically)
     
-    REPORTS.push_back(JsonReporter::create26(
+    REPORTS.push_back(JsonReporter::createSYN1(
         m_name,
         currentVertex
     ));
@@ -174,7 +174,7 @@ void WhileIteratorName::markAsDef(Vertex* currentVertex, int size){
     std::cout << "INTERNAL ERROR: while iterator " << m_name << " is being marked as defined" << std::endl;
     // error (iterator should be marked as defined by WhileVertex automatically)
     //todo
-    REPORTS.push_back(JsonReporter::create26(
+    REPORTS.push_back(JsonReporter::createSYN1(
         m_name,
         currentVertex
     ));
@@ -229,7 +229,7 @@ void ImmutableArgName::markAsDef(Vertex* currentVertex, int size){
 
     std::cout << "Immutable arg name " << m_name << " is being marked as defined" << std::endl;
     //todo
-    REPORTS.push_back(JsonReporter::create26(
+    REPORTS.push_back(JsonReporter::createSYN1(
         m_name,
         currentVertex
     ));
@@ -278,7 +278,7 @@ IndexedDFName* parseIndexedDFExpression(expr* expression, std::map<std::string, 
             std::cout << "INTERNAL ERROR: aborted creating new IndexedDFName object -- base is not indexable: " << baseName << std::endl;
             //std::string report = "ERROR: not indexable name \"" + baseName + "\" indexed at line " + std::to_string(line) + "\n";
             //todo
-            REPORTS.push_back(JsonReporter::create36(
+            REPORTS.push_back(JsonReporter::createSYN11(
                 baseName,
                 currentVertex
             ));
@@ -287,7 +287,7 @@ IndexedDFName* parseIndexedDFExpression(expr* expression, std::map<std::string, 
     } else {
         std::cout << "INTERNAL ERROR: aborted creating new IndexedDFName object -- no base name found visible: " << baseName << std::endl;
         //std::string report = "ERROR: no name \"" + baseName + "\" found at line " + std::to_string(line) + "\n";
-        REPORTS.push_back(JsonReporter::create14(//todo
+        REPORTS.push_back(JsonReporter::createSYN9(//todo
             base->second
         ));
         return nullptr;

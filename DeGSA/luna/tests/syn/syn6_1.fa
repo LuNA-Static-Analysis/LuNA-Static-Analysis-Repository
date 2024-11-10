@@ -1,0 +1,6 @@
+import printa(real) as print;
+import printb(real) as print;
+
+sub main(){
+	print(1.0);
+}

@@ -167,112 +167,12 @@ public:
         return createJson(map);
     }
 
-    // non-existing LuNA function
-    static std::string create2(
-        std::string fileName,
-        int line,
-        std::string cfName
-    ){
-        // details: df list
-        std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("call_stack_entry", createCallStackEntry(fileName, std::to_string(line), cfName)));
-        return createReport("LUNA02", createJson(map));
-    }
+    //================================= ERROR REPORTS =============================================
 
-    // multiple DF initialization
-    static std::string create3(
-        Identifier* identifier
-    ){
-        // details: df
-        std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("df", createDF(
-            identifier
-        )));
-        return createReport("LUNA03", createJson(map));
-    }
+    // ******************************** SYNTAX **************************************************
 
-    static std::string create4(
-        Vertex* vertex
-    ){
-        std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("cf", createCF(
-                vertex->getName(),
-                "extern",
-                vertex->getFileName(),
-                vertex->getLine()
-            )));
-        map.insert(std::make_pair("call_stack_entry", createCallStackEntry(vertex->getFileName(), std::to_string(vertex->getLine()), vertex->getName())));
-        return createReport("LUNA04", createJson(map));
-    }
-
-    static std::string create5(
-        Identifier* identifier
-    ){
-        // details: df
-        std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("df", createDF(identifier)));
-        return createReport("LUNA05", createJson(map));
-    }
-
-    static std::string create6(
-        Vertex* vertex
-    ){
-        std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("cf", createCF(
-                vertex->getName(),
-                "extern",
-                vertex->getFileName(),
-                vertex->getLine()
-            )));
-        map.insert(std::make_pair("call_stack_entry", createCallStackEntry(vertex->getFileName(), std::to_string(vertex->getLine()), vertex->getName())));
-        return createReport("LUNA06", createJson(map));
-    }
-
-    static std::string create10(
-        Identifier* identifier
-    ){
-        // details: df
-        std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("df", createDF(identifier)));
-        return createReport("LUNA10", createJson(map));
-    }
-
-    static std::string create13(
-        std::vector<std::string> dfs
-    ){
-        // details: df list
-        std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("dfs", createArray(dfs)));
-        return createReport("LUNA13", createJson(map));
-    }
-
-    static std::string create14(
-        Identifier* identifier
-    ){
-        // details: df
-        std::map<std::string, std::string> map = {};
-        map.insert(std::make_pair("df", createDF(identifier)));
-        return createReport("LUNA14", createJson(map));
-    }
-
-    static std::string create23(
-        bool type,
-        std::string condition,
-        std::string fileName,
-        int line,
-        std::string cfName
-    ){
-        std::map<std::string, std::string> map = {};
-        if (type)
-            map.insert(std::make_pair("type", "true"));
-        else
-            map.insert(std::make_pair("type", "false"));
-        map.insert(std::make_pair("condition", condition));
-        map.insert(std::make_pair("where", createCallStackEntry(fileName, std::to_string(line), cfName)));
-        return createReport("LUNA23", createJson(map));
-    }
-
-    static std::string create26(
+    // compile-time wrong types on CF call
+    static std::string createSYN1(
         std::string expression,
         Vertex* vertex
     ){
@@ -293,17 +193,117 @@ public:
                 vertex->getLine()
             )));
         map.insert(std::make_pair("callstack", createCallstackFromVertex(vertex)));
-        return createReport("LUNA26", createJson(map));
+        return createReport("SYN1", createJson(map));
     }
 
-    static std::string create36(
+    // non-existing CF called
+    static std::string createSYN2(
+        std::string fileName,
+        int line,
+        std::string cfName
+    ){
+        // details: df list
+        std::map<std::string, std::string> map = {};
+        map.insert(std::make_pair("call_stack_entry", createCallStackEntry(fileName, std::to_string(line), cfName)));
+        return createReport("SYN2", createJson(map));
+    }
+
+    // wrong amount of args on CF call
+    static std::string createSYN3(
+        Vertex* vertex
+    ){
+        std::map<std::string, std::string> map = {};
+        map.insert(std::make_pair("cf", createCF(
+                vertex->getName(),
+                "extern",
+                vertex->getFileName(),
+                vertex->getLine()
+            )));
+        map.insert(std::make_pair("call_stack_entry", createCallStackEntry(vertex->getFileName(), std::to_string(vertex->getLine()), vertex->getName())));
+        return createReport("SYN3", createJson(map));
+    }
+
+    // duplicate base names declared TODO what about other names? counters while, counters if, vars let
+    static std::string createSYN8(
+        std::vector<std::string> dfs
+    ){
+        // details: df list
+        std::map<std::string, std::string> map = {};
+        map.insert(std::make_pair("dfs", createArray(dfs)));
+        return createReport("SYN8", createJson(map));
+    }
+
+    // attempt to use undeclared identifier
+    static std::string createSYN9(
+        Identifier* identifier
+    ){
+        // details: df
+        std::map<std::string, std::string> map = {};
+        map.insert(std::make_pair("df", createDF(identifier)));
+        return createReport("SYN9", createJson(map));
+    }
+
+    // attempt to index non-Name
+    static std::string createSYN11(
         std::string expression,
         Vertex* vertex
     ){
         std::map<std::string, std::string> map = {};
         map.insert(std::make_pair("expression", expression));
         map.insert(std::make_pair("callstack", createCallstackFromVertex(vertex)));
-        return createReport("LUNA36", createJson(map));
+        return createReport("SYN11", createJson(map));
+    }
+
+    // ***************************************** SEMANTIC **************************************************
+
+    // multiple DF initialization
+    static std::string createSEM2(
+        Identifier* identifier
+    ){
+        // details: df
+        std::map<std::string, std::string> map = {};
+        map.insert(std::make_pair("df", createDF(
+            identifier
+        )));
+        return createReport("SEM2", createJson(map));
+    }
+
+    // attempt to use uninitialized DF (outside of a loop TODO this is weird, but we'll see)
+    static std::string createSEM3_1(
+        Identifier* identifier
+    ){
+        // details: df
+        std::map<std::string, std::string> map = {};
+        map.insert(std::make_pair("df", createDF(identifier)));
+        return createReport("SEM3_1", createJson(map));
+    }
+
+    // DF is initialized, but not used
+    static std::string createSEM4(
+        Identifier* identifier
+    ){
+        // details: df
+        std::map<std::string, std::string> map = {};
+        map.insert(std::make_pair("df", createDF(identifier)));
+        return createReport("SEM4", createJson(map));
+    }
+
+    // "if" condition is constant
+    static std::string createSEM5(
+        bool type,
+        std::string condition,
+        std::string fileName,
+        int line,
+        std::string cfName
+    ){
+        std::map<std::string, std::string> map = {};
+        if (type)
+            map.insert(std::make_pair("type", "true"));
+        else
+            map.insert(std::make_pair("type", "false"));
+        map.insert(std::make_pair("condition", condition));
+        map.insert(std::make_pair("where", createCallStackEntry(fileName, std::to_string(line), cfName)));
+        return createReport("SEM5", createJson(map));
     }
 
 private:

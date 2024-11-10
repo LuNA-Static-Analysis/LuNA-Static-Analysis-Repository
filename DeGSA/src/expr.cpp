@@ -143,7 +143,7 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
                 Identifier* nonExistingIdentifier = new ForIteratorName(simpleDFName, _vertex);
                 //nonExistingIdentifier->markAsUse(currentVertex, 0);
                 //todo
-                REPORTS.push_back(JsonReporter::create14(
+                REPORTS.push_back(JsonReporter::createSYN9(
                     nonExistingIdentifier
                 ));
             }
@@ -388,7 +388,7 @@ void Expression::markAsDef(Vertex* currentVertex, int size){
         case nonEqualNode:
         case andNode:
         case orNode:{
-            REPORTS.push_back(JsonReporter::create26(
+            REPORTS.push_back(JsonReporter::createSYN1(
                 this->getASTExpr()->to_string(),
                 currentVertex
             ));
@@ -416,7 +416,7 @@ void Expression::markAsDef(Vertex* currentVertex, int size){
                     return;
                 }
                 case forIteratorNameClass: {//error
-                    REPORTS.push_back(JsonReporter::create26(
+                    REPORTS.push_back(JsonReporter::createSYN1(
                         this->getASTExpr()->to_string(),
                         currentVertex
                     ));
@@ -424,7 +424,7 @@ void Expression::markAsDef(Vertex* currentVertex, int size){
                 }
                 
                 case whileIteratorNameClass:{ //error
-                    REPORTS.push_back(JsonReporter::create26(
+                    REPORTS.push_back(JsonReporter::createSYN1(
                         this->getASTExpr()->to_string(),
                         currentVertex
                     ));
@@ -440,7 +440,7 @@ void Expression::markAsDef(Vertex* currentVertex, int size){
                     return;
                 }
                 case immutableArgNameClass: {
-                    REPORTS.push_back(JsonReporter::create26(
+                    REPORTS.push_back(JsonReporter::createSYN1(
                         this->getASTExpr()->to_string(),
                         currentVertex
                     ));
@@ -459,7 +459,7 @@ void Expression::markAsDef(Vertex* currentVertex, int size){
         case intCastNode:
         case realCastNode:
         case stringCastNode:
-            REPORTS.push_back(JsonReporter::create26(
+            REPORTS.push_back(JsonReporter::createSYN1(
                 _ASTexpr->to_string(),
                 currentVertex
             ));

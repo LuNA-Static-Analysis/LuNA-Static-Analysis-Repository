@@ -87,7 +87,7 @@ void SubVertex::initializeVertex() {
 
     if (_callArgs.size() != _declaredArgs.size() && m_name != "main") {
         //todo wip report error (old code luna06)
-        //REPORTS.push_back(JsonReporter::create06());
+        //REPORTS.push_back(JsonReporter::createSYN3());
         std::cout << "INTERNAL ERROR: call args size and declared args size are not equal in call " << m_name << " at line " << m_line << std::endl;
         return;
     }
@@ -131,7 +131,7 @@ void SubVertex::initializeVertex() {
             std::vector<std::string> dfList = {};//todo
             //dfList.push_back(JsonReporter::createDF(identifierDeclaredName, "[]", "[]", "[]"));//todo callstacks
             //dfList.push_back(JsonReporter::createDF(identifierDeclaredName, "[]", "[]", "[]"));//todo callstacks
-            REPORTS.push_back(JsonReporter::create13(
+            REPORTS.push_back(JsonReporter::createSYN8(
                 dfList
             ));
         }
@@ -178,7 +178,7 @@ void ForVertex::initializeVertex() {
         dfList.push_back(JsonReporter::createDF(identifier));//todo callstacks
         //dfList.push_back(JsonReporter::createDF(forIteratorString, "[]", "[]", "[]"));//todo callstacks
         //todo find all duplicate dfs
-        REPORTS.push_back(JsonReporter::create13(
+        REPORTS.push_back(JsonReporter::createSYN8(
             dfList
         ));
 
@@ -216,7 +216,7 @@ void WhileVertex::initializeVertex() {
         dfList.push_back(JsonReporter::createDF(identifier));//todo callstacks
         //dfList.push_back(JsonReporter::createDF(whileIteratorString, "[]", "[]", "[]"));//todo callstacks
         //todo find all duplicate dfs
-        REPORTS.push_back(JsonReporter::create13(
+        REPORTS.push_back(JsonReporter::createSYN8(
             dfList
         ));
 
@@ -252,7 +252,7 @@ void WhileVertex::initializeVertex() {
     }
 
     if (_outName == nullptr)
-        REPORTS.push_back(JsonReporter::create26(
+        REPORTS.push_back(JsonReporter::createSYN1(
             whileOutNameExpr->getASTExpr()->to_string(),
             this
         ));
@@ -289,7 +289,7 @@ void LetVertex::initializeVertex() {
             dfList.push_back(JsonReporter::createDF(identifier));//todo callstacks
             //dfList.push_back(JsonReporter::createDF(letString, "[]", "[]", "[]"));//todo callstacks
             //todo find all duplicate dfs
-            REPORTS.push_back(JsonReporter::create13(dfList));
+            REPORTS.push_back(JsonReporter::createSYN8(dfList));
 
             std::cout << "INTERNAL ERROR: aborted initializing \"let\" vertex" << std::endl;
             return;
@@ -341,7 +341,7 @@ void Vertex::scanForDFDecls() {
                 dfList.push_back(JsonReporter::createDF(previousDF));//todo callstacks
                 //dfList.push_back(JsonReporter::createDF(dfName, "[]", "[]", "[]"));//todo callstacks
                 //todo find all duplicate dfs (just create new and then immediately delete)
-                REPORTS.push_back(JsonReporter::create13(
+                REPORTS.push_back(JsonReporter::createSYN8(
                     dfList
                 ));
             }
@@ -381,7 +381,7 @@ void Vertex::iterateThroughBlockStatements() {
                 std::cout << "INTERNAL ERROR: no sub with name " << cfName << " found" << std::endl;
                 // error code: 02
                 // callstack entry
-                REPORTS.push_back(JsonReporter::create2(
+                REPORTS.push_back(JsonReporter::createSYN2(
                     m_fileName,
                     cfStatement->line_,
                     cfName
@@ -444,7 +444,7 @@ void Vertex::handleSub(cf_statement* cfStatement) {
     SubVertex* nextVertex = new SubVertex(calledSubName, this, subVF, m_depth + 1, cfStatement->line_, m_fileName, cfDeclaration.cfBlock, cfStatement, m_declaredBothIdsMap, callArgs, cfDeclaration.declaredArgs);
     //todo wip check for LUNA04 and LUNA06
     if (cfDeclaration.declaredArgs.size() != callArgs.size()) {
-        REPORTS.push_back(JsonReporter::create6(nextVertex));
+        REPORTS.push_back(JsonReporter::createSYN3(nextVertex));
         std::cout << "INTERNAL ERROR: call of CF " << calledSubName << " has wrong amount of args" << std::endl;
         return;
     } else {
@@ -452,7 +452,7 @@ void Vertex::handleSub(cf_statement* cfStatement) {
             if (callArgs[i]->getType() != cfDeclaration.declaredArgs[i].type) {
                 //todo wip this is different enums somehow
                 //get expression VALUE type: create method getValueType, and recursively evaluate through every reference, what type do we have here, if possible
-                //then create4()
+                //then createSYN1() CHECK
                 //then return???
             }
         }
@@ -483,7 +483,7 @@ void Vertex::handleImport(cf_statement* cfStatement) {
     ImportVertex* nextVertex = new ImportVertex(calledImportName, this, importVF, m_depth + 1, cfStatement->line_, m_fileName, cfStatement->block_, cfStatement, m_declaredBothIdsMap, callArgs, cfDeclaration.declaredArgs);
     //todo wip check for LUNA04 and LUNA06
     if (cfDeclaration.declaredArgs.size() != callArgs.size()) {
-        REPORTS.push_back(JsonReporter::create6(nextVertex));
+        REPORTS.push_back(JsonReporter::createSYN3(nextVertex));
         std::cout << "INTERNAL ERROR: call of CF " << calledImportName << " has wrong amount of args" << std::endl;
         return;
     } else {
@@ -491,7 +491,7 @@ void Vertex::handleImport(cf_statement* cfStatement) {
             if (callArgs[i]->getType() != cfDeclaration.declaredArgs[i].type) {
                 //todo wip this is different enums somehow
                 //get expression VALUE type: create method getValueType, and recursively evaluate through every reference, what type do we have here, if possible
-                //then create4()
+                //then createSYN1() CHECK
                 //then return???
             }
         }

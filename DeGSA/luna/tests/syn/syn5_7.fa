@@ -1,0 +1,9 @@
+import printint(int) as print;
+sub main() {
+    for i = 0..1 {
+        print(1);
+    }
+    for i = 2..3 {
+        print(i);
+    }
+}

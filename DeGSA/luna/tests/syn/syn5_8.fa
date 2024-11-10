@@ -1,0 +1,10 @@
+import printint(int) as print;
+sub main() {
+    df a;
+    while 1 == 0, i = 1..out a {
+        print(1);
+    }
+    while 1 == 0, i = 1..out a {
+        print(1);
+    }
+}
