@@ -1,10 +1,10 @@
-import printint(int) as printint;
-import printstr(string) as printstr;
+import c_init_int(int, name) as init;
+import printint(int) as print;
 sub main(){
-        let a = 1 + 2 {
-                printstr(a);
-                printint(a);
-        }
-        printint("text");
-        printstr("text");
+    df a;
+    df b;
+    init(1, a);
+    init(1, b);
+    print(a);
+    print(b);
 }

@@ -224,7 +224,11 @@ void Expression::calculateValueType(){
 
         // identifier
         case identifierNode: {
-            _valueType = getAsIdentifier()->getValueType();
+            Identifier* identifier = getAsIdentifier();
+            if (identifier != nullptr)
+                _valueType = identifier->getValueType();
+            else
+                _valueType = nonCalculatable;
             return;
         }
 

@@ -11,7 +11,10 @@ int Identifier::getLine(){
 }
 
 void Identifier::calculateValueType(){
-    m_valueType = m_reference->getValueType();
+    if (m_reference != nullptr)
+        m_valueType = m_reference->getValueType();
+    else
+        m_valueType = nonCalculatable;
 }
 
 void BaseDFName::markAsUse(Vertex* vertex, int size){
