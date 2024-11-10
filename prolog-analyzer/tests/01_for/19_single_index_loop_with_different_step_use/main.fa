@@ -1,0 +1,20 @@
+C++ sub int_set(name x, int val) ${{ x = val; $}}
+C++ sub consume(value v) ${{$}}
+
+sub main() {
+    df x, y, N;
+
+    for i = 0..5 {
+        int_set(x[2*i], i);
+    }
+    for i = 6..6 {
+        consume(x[i]);
+    }
+
+    for j = N..N+5 {
+        int_set(y[2*j], j);
+    }
+    for k = 2*N+4..2*N+4 {
+        consume(y[k]);
+    }
+}
