@@ -27,7 +27,7 @@
   "LUNA32": "error[LUNA32]: Attempt to request DF from node where it is not present.",
   "LUNA33": "error[LUNA33]: Unfitting parameter for \"nfparam\".",
   "LUNA34": "error[LUNA34]: Unconditional recursion.\n- Callstack:\n$callstack",
-  "SEM2.2": "warning[SEM2.2]: Possible overlap of initialization loops for DF $df_name.\nInitialized:\n$initialization_loop1Also here:\n$initialization_loop2",
+  "SEM2.2": "warning[SEM2.2]: Possible overlap of initialization loops for DF $df_name.\nInitialized:\n$initialization_loop1\nAlso here:\n$initialization_loop2",
   "LUNA36": "error[LUNA36]: Attempt to index an identifier $expr that is not a DF.\n- Callstack:\n$callstack",
   "SEM3.3": "warning[SEM3.3]: Consumed index range might not have been initialized for DF $df_name.\nUsed$use_conditions:\n$consumption_loop",
   "LUNA38": "warning[LUNA38]: Invalid loop boundaries. \n -For: It: \"$var\". First: \"$first\". Last: \"$last\". \n- Callstack:\n$callstack",
