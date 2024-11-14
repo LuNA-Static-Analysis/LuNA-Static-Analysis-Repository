@@ -105,10 +105,7 @@ def get_for(for_: dict[str, Any], text_info: TextInfo) -> str:
 def get_df_ref(df_ref: dict[str, Any], text_info: TextInfo) -> str:
     name_str = f'{df_ref["true"]} as {df_ref["local"]}' if df_ref['true'] != df_ref['local'] else df_ref['local']
 
-    return (
-            f'DF {name_str}\n'
-            + f'in:\n{get_callstack(df_ref["where"], text_info)}'
-    )
+    return f'DF {name_str} in:\n{get_callstack(df_ref["where"], text_info)}'
 
 
 def get_index_range(index_range: dict[str, Any], text_info: TextInfo) -> str:
@@ -156,6 +153,15 @@ def report_error(
                 .replace("$cf_name", error["details"]["call_stack_entry"]["name"])
                 .replace("$callstack_entry",
                          get_callstack_entry(error["details"]["call_stack_entry"], text_info))
+            )
+        case 'SEM2.1':
+            output_file.write(
+                (templates_map[error_code] + "\n")
+                .replace("$df_true", error["details"]["true"])
+                .replace(
+                    "$initializations",
+                    "\nAlso here:\n".join(get_df_ref(it, text_info) for it in error["details"]["initializations"])
+                )
             )
         case 'LUNA3' | 'LUNA03':
             output_file.write(
