@@ -282,12 +282,20 @@ def collect_tests(
     is_flag=True,
     default=False
 )
+@click.option(
+    '--skip',
+    required=False,
+    help='Skip a number of tests assuming alphabetical sorting',
+    type=int,
+    default=0
+)
 def main(
         tests_root: Path,
         test_name_pattern: str,
-        first_fail: bool
+        first_fail: bool,
+        skip: int
 ) -> None:
-    for test_name, test_path in collect_tests(tests_root, re.compile(test_name_pattern)):
+    for test_name, test_path in collect_tests(tests_root, re.compile(test_name_pattern))[skip:]:
         if run_test(test_name, test_path):
             continue
 
