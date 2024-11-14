@@ -1,6 +1,7 @@
 :- module(ranges, [
     index_range_not_initialized_error_json/1,
     index_range_overlap_error_json/1,
+    index_overlap_error_json/1,
 
     index_range_not_initialized/2,
     index_range_overlap/2,
@@ -26,6 +27,7 @@
     input_parameter/2,
     output_parameter/3,
     position/3,
+    ancestor/2,
     statement/2,
     subroutine/3
 ]).
@@ -63,7 +65,9 @@ format_range_and_conditions(Range, RangeAndConditioins) :-
 format_range_and_conditions(Range, RangeAndConditioins) :-
     single_index{'df': Df} :< Range,
     reporting:format_df(Df, DfDict),
-    execution_sequence:conditions(Df.'where', Conditions),
+        get_dict('where', Df, Where),
+    execution_sequence:conditions(Where, Conditions),
+%    execution_sequence:conditions(Df.'where', Conditions),
     maplist(reporting:format_expression_decode, Conditions, ConditionsDicts),
     RangeAndConditioins = [DfDict, ConditionsDicts],
     !.
@@ -108,6 +112,27 @@ index_range_overlap_error_json(ErrorJson) :-
     }.
 
 
+index_overlap_error_json(ErrorJson) :-
+    execution_sequence:main_root_ctx(RootCtx),
+    single_index_overlap(RootCtx, error{
+        'error_code': "SEM2.1",
+        'details': details{
+            'ranges': InitRanges
+        }
+    }),
+    maplist(get_dict('df'), InitRanges, [InitRef1|InitRefs]),
+    get_dict('true', InitRef1, TrueName),
+    reporting:format_expression_decode(TrueName, FormattedTrueName),
+    maplist(reporting:format_df, [InitRef1|InitRefs], InitRefDicts),
+    ErrorJson = error{
+        'error_code': "SEM2.1",
+        'details': details{
+            'true': FormattedTrueName,
+            'initializations': InitRefDicts
+        }
+    }.
+
+
 %! input_df(+Es:list, -LocalExpression, -TrueExpression, -ConsumerEs:list) is nondet
 input_df(Es, LocalExpression, TrueExpression, ConsumerEs) :-
     append(_, ConsumerEs, Es), ConsumerEs = [ExecItem|_],
@@ -148,6 +173,16 @@ for_loop(Es, Loop) :-
     aliases:resolve(Aliases, LocalFirst, First),
     aliases:resolve(Aliases, LocalLast, Last).
 
+df_declared_in(Df, Es) :-
+    get_dict('true', Df, luna_ref([BaseName|_])),
+    encode:decode_name(BaseName, [DfDeclaredId|_], _),
+    Es = [EsEntry|_],
+    execution_sequence:item(EsEntry, Id, _, _, _),
+    once(
+        DfDeclaredId = Id
+    ;   ja:ancestor(DfDeclaredId, Id)
+    ).
+
 df_loop(RootCtx, GetDf, IndexRange) :-
     IndexRange = index_range{
         'df': Df,
@@ -156,11 +191,20 @@ df_loop(RootCtx, GetDf, IndexRange) :-
         'offset': Offset
     },
     execution_sequence:walk(RootCtx, Es),
+
     call(GetDf, Es, Df),
-        get_dict('true', Df, TrueName),
-        get_dict('where', Df, InitEs),
+    get_dict('true', Df, TrueName),
+    get_dict('where', Df, InitEs),
+
     arithmetic:indexed_name(TrueName, _, Var, Step, Offset),
-    for_loop(InitEs, Loop), get_dict('var', Loop, Var).
+
+    for_loop(InitEs, Loop),
+
+    % Ensure that DF was not declared inside this loop
+    get_dict('where', Loop, LoopEs),
+    \+ df_declared_in(Df, LoopEs),
+
+    get_dict('var', Loop, Var).
 
 df_init_loop(RootCtx, IndexRange) :- df_loop(RootCtx, output_df, IndexRange).
 df_use_loop(RootCtx, IndexRange) :- df_loop(RootCtx, input_df, IndexRange).
@@ -179,6 +223,8 @@ df_single(RootCtx, GetDf, SingleInit) :-
     arithmetic:indexed_name(TrueName, _, Var, Step, Offset),
     \+ (
         for_loop(InitEs, Loop),
+        get_dict('where', Loop, LoopEs),
+        \+ df_declared_in(Df, LoopEs),
         get_dict('var', Loop, Var)
     ).
 
@@ -241,7 +287,7 @@ index_range_concat_ordered(Range1, Range2, Step, Result) :-
     % never(Upper1, "#>", Upper2),
 
     Upper1AsLinear = ["+", ["*", "N2", Step], Lower2],
-    ref:rewrite_without_refs(Upper1AsLinear, _{}, U1LinearRefs, Upper1AsLinearWithoutRefs),
+    ref:rewrite_without_refs(Upper1AsLinear, _{0:0}, U1LinearRefs, Upper1AsLinearWithoutRefs),
     expressions:expression_string(Upper1AsLinearWithoutRefs, Upper1AsLinearStr),
     ref:rewrite_without_refs(Upper1, U1LinearRefs, U1Refs, Upper1WithoutRefs),
     expressions:expression_string(Upper1WithoutRefs, Upper1Str),
@@ -362,7 +408,9 @@ df_use_loop_of(RootCtx, BaseName, UseRange) :-
 
 df_single_init_of(RootCtx, BaseName, SingleInit) :-
     df_init_single(RootCtx, SingleInit),
-    SingleInit.df.true = luna_ref([BaseName|_]).
+        get_dict('df', SingleInit, Df),
+        get_dict('true', Df, luna_ref([BaseName|_])).
+%    SingleInit.df.true = luna_ref([BaseName|_]).
 
 df_init_of(RootCtx, BaseName, InitRange) :- 
     df_init_loop_of(RootCtx, BaseName, InitRange).
@@ -371,7 +419,6 @@ df_init_of(RootCtx, BaseName, InitRange) :-
 
 index_range_not_initialized(RootCtx, Error) :-
     df_use_loop_of(RootCtx, BaseName, UseRange),
-    index_range_unpack(UseRange, _, _, UseStep),
     findall(
         InitRange,
         df_init_of(RootCtx, BaseName, InitRange),
@@ -391,25 +438,40 @@ index_range_not_initialized(RootCtx, Error) :-
 
 check_overlap(L1, U1, S1, L2, U2, S2) :-
     ref:rewrite_without_refs(L1, _{0:0}, L1Refs, L1WithoutRefs),
-    expressions:expression_string(["+", L1WithoutRefs, ["*", "N1", S1]], X1Str),
-
     ref:rewrite_without_refs(U1, L1Refs, U1Refs, U1WithoutRefs),
-    expressions:expression_string(U1WithoutRefs, U1Str),
-
     ref:rewrite_without_refs(L2, U1Refs, L2Refs, L2WithoutRefs),
-    expressions:expression_string(["+", L2WithoutRefs, ["*", "N2", S2]], X2Str),
-
     ref:rewrite_without_refs(U2, L2Refs, _, U2WithoutRefs),
+
+    expressions:expression_string(U1WithoutRefs, U1Str),
     expressions:expression_string(U2WithoutRefs, U2Str),
 
-    atomics_to_string([
-        "(#>=(N1, 0), #>=(N2, 0), ",
-        "#=(", X1Str, ", ", X2Str, "), ",
-        "#=<(", X1Str, ", ", U1Str, "), ",
-        "#=<(", X2Str, ", ", U2Str, "))"
-    ], "", ClpfdTermStr),
-    term_string(ClpfdTerm, ClpfdTermStr),
-    ClpfdTerm.
+    X1 = ["+", L1WithoutRefs, ["*", "N1", S1]],
+    expressions:expression_string(X1, X1Str),
+
+    X2 = ["+", L2WithoutRefs, ["*", "N2", S2]],
+    expressions:expression_string(X2, X2Str),
+
+    setof(Var, expressions:expression_identifier(["+", X1, X2], Var), Vars),
+    length(Vars, VarsCount),
+
+    (   VarsCount < 2
+    ->  atomics_to_string([
+            "(#>=(N1, 0), #>=(N2, 0), ",
+            "#=(", X1Str, ", ", X2Str, "), ",
+            "#=<(", X1Str, ", ", U1Str, "), ",
+            "#=<(", X2Str, ", ", U2Str, "))"
+        ], "", ClpfdTermStr),
+        term_string(ClpfdTerm, ClpfdTermStr),
+        ClpfdTerm
+    ;   atomics_to_string([
+            "(#>=(N1, 0), #=<(N1, 1000), #>=(N2, 0), #=<(N2, 1000), ",
+            "#=(", X1Str, ", ", X2Str, "), ",
+            "#=<(", X1Str, ", ", U1Str, "), ",
+            "#=<(", X2Str, ", ", U2Str, "))"
+        ], "", ClpfdTermStr),
+        term_string(ClpfdTerm, ClpfdTermStr),
+        ClpfdTerm
+    ).
 
 index_range_overlaps_with(Range1, Range2) :-
     index_range_conditions(Range1, Conds1),
@@ -441,5 +503,25 @@ index_range_overlap(RootCtx, Error) :-
         'error_code': "SEM2.2",
         'details': details{
             'ranges': [InitRange1, InitRange2]
+        }
+    }.
+
+single_index_overlap(RootCtx, Error) :-
+    df_single_init_of(RootCtx, BaseName, SingleInit),
+    findall(
+        Init,
+        df_init_of(RootCtx, BaseName, Init),
+        Inits
+    ),
+    append([InitsBefore, [SingleInit], InitsAfter], Inits),
+    append([InitsBefore, InitsAfter], OtherInits),
+
+    include(ranges:index_range_overlaps_with(SingleInit), OtherInits, OverlappingInits),
+    OverlappingInits \= [],
+
+    Error = error{
+        'error_code': "SEM2.1",
+        'details': details{
+            'ranges': [SingleInit|OverlappingInits]
         }
     }.
