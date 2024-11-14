@@ -64,6 +64,12 @@ import click
     default=False,
     help='Do not delete generated files.'
 )
+@click.option(
+    '--ignore',
+    type=str,
+    required=False,
+    multiple=True
+)
 @click.argument(
     'luna-src',
     nargs=-1,
@@ -79,6 +85,7 @@ def main(
         output_dir: Path,
         errors_file: Path | None,
         no_cleanup: bool,
+        ignore: list[str],
         luna_src: tuple[Path, ...]
 ) -> None:
     prolog_analyzer_home = Path(os.environ.get('PROLOG_ANALYZER_HOME', str(Path.cwd())))
@@ -161,6 +168,8 @@ def main(
 
         with new_errors_file.open('rt') as new_errors_file_:
             new_errors = json.load(new_errors_file_)
+            # FIXME filtered errors must not be detected in the first place
+            new_errors = [it for it in new_errors if it['error_code'] not in ignore]
         with errors_file.open('wt') as dst_errors_file_:
             json.dump(base_errors + new_errors, dst_errors_file_)
 
