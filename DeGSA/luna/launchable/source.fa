@@ -1,10 +1,7 @@
 import c_init_int(int, name) as init;
 import printint(int) as print;
-sub main(){
-    df a;
-    df b;
-    init(1, a);
+sub main() {
+    df a, b;
     init(1, b);
-    print(a);
     print(b);
 }

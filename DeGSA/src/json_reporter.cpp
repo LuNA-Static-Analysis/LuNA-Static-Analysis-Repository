@@ -14,6 +14,8 @@ public:
     static std::string createJson(
         std::map<std::string, std::string> jsonObjects
     ){
+        if (jsonObjects.size() == 0)
+            return "{}";
         std::string result = "{";
         for (auto l: jsonObjects){
             if (l.second[0] == '{' || l.second[0] == '['){ // complex object
@@ -215,6 +217,121 @@ public:
         )});
         map.insert( { "call_stack_entry", createCallStackEntry(vertex->getFileName(), std::to_string(vertex->getLine()), vertex->getName()) } );
         return createReport("SYN3", createJson(map));
+    }
+
+    // unused and undefined name TODO CHECK DETAILS
+    static std::string createSYN5_2(
+        Identifier* identifier
+    ){
+        // details: df
+        if (identifier->getClass() != letNameClass)
+            std::cout << "INTERNAL ERROR: SYN5.2 got wrong type" << std::endl;
+        std::map<std::string, std::string> map = {};
+        map.insert( { "df", createDF(identifier) } );
+        return createReport("SYN5.2", createJson(map));
+    }
+
+    // unused and undefined name TODO CHECK DETAILS
+    static std::string createSYN5_3(
+        Identifier* identifier
+    ){
+        // details: df
+        if (identifier->getClass() != baseDFNameClass)
+            std::cout << "INTERNAL ERROR: SYN5.3 got wrong type" << std::endl;
+        std::map<std::string, std::string> map = {};
+        map.insert( { "df", createDF(identifier) } );
+        return createReport("SYN5.3", createJson(map));
+    }
+
+    // unused and undefined import TODO CHECK DETAILS
+    static std::string createSYN5_4(
+        CFDeclaration* cfDeclaration
+    ){
+        // details: df
+        if (cfDeclaration->type != importCF)
+            std::cout << "INTERNAL ERROR: SYN5.4 got wrong type" << std::endl;
+        std::map<std::string, std::string> map = {};
+        map.insert( { "cf", cfDeclaration->name } );
+        return createReport("SYN5.4", createJson(map));
+    }
+
+    // unused and undefined sub TODO CHECK DETAILS
+    static std::string createSYN5_5(
+        CFDeclaration* cfDeclaration
+    ){
+        // details: df
+        if (cfDeclaration->type != subCF)
+            std::cout << "INTERNAL ERROR: SYN5.5 got wrong type" << std::endl;
+        std::map<std::string, std::string> map = {};
+        map.insert( { "cf", cfDeclaration->name } );
+        return createReport("SYN5.5", createJson(map));
+    }
+
+    // unused and undefined name TODO CHECK DETAILS
+    static std::string createSYN5_6(
+        Identifier* identifier
+    ){
+        // details: df
+        if (identifier->getClass() != mutableArgNameClass && identifier->getClass() != immutableArgNameClass)
+            std::cout << "INTERNAL ERROR: SYN5.6 got wrong type" << std::endl;
+        std::map<std::string, std::string> map = {};
+        map.insert( { "df", createDF(identifier) } );
+        return createReport("SYN5.6", createJson(map));
+    }
+
+    // unused and undefined name TODO CHECK DETAILS
+    static std::string createSYN5_7(
+        Identifier* identifier
+    ){
+        // details: df
+        if (identifier->getClass() != forIteratorNameClass)
+            std::cout << "INTERNAL ERROR: SYN5.7 got wrong type" << std::endl;
+        std::map<std::string, std::string> map = {};
+        map.insert( { "df", createDF(identifier) } );
+        return createReport("SYN5.7", createJson(map));
+    }
+
+    // unused and undefined name TODO CHECK DETAILS
+    static std::string createSYN5_8(
+        Identifier* identifier
+    ){
+        // details: df
+        if (identifier->getClass() != whileIteratorNameClass)
+            std::cout << "INTERNAL ERROR: SYN5.8 got wrong type" << std::endl;
+        std::map<std::string, std::string> map = {};
+        map.insert( { "df", createDF(identifier) } );
+        return createReport("SYN5.8", createJson(map));
+    }
+
+    // duplicate import declaration
+    static std::string createSYN6_1(
+        CFDeclaration* cfDeclaration
+    ){
+        // details: cf
+        if (cfDeclaration->type != importCF)
+            std::cout << "INTERNAL ERROR: SYN6.1 got wrong type" << std::endl;
+        std::map<std::string, std::string> map = {};
+        map.insert( { "cf", cfDeclaration->name } );
+        return createReport("SYN6.1", createJson(map));
+    }
+
+    // duplicate sub declaration
+    static std::string createSYN6_2(
+        CFDeclaration* cfDeclaration
+    ){
+        // details: cf
+        if (cfDeclaration->type != subCF)
+            std::cout << "INTERNAL ERROR: SYN6.2 got wrong type" << std::endl;
+        std::map<std::string, std::string> map = {};
+        map.insert( { "cf", cfDeclaration->name } );
+        return createReport("SYN6.2", createJson(map));
+    }
+
+    // no main()
+    static std::string createSYN7(){
+        // details: none
+        std::map<std::string, std::string> map = {};
+        return createReport("SYN7", createJson(map));
     }
 
     // duplicate base names declared TODO what about other names? counters while, counters if, vars let

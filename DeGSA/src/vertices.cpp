@@ -188,7 +188,7 @@ void ForVertex::initializeVertex() {
 
     _iterator = new ForIteratorName(forIteratorString, this);
 
-    m_declaredOutsideIdsMap.insert( { forIteratorString, _iterator } );
+    m_declaredInsideIdsMap.insert( { forIteratorString, _iterator } );
     m_declaredBothIdsMap.insert( { forIteratorString, _iterator } );
 
     // all names inside "for" expressions must be marked as used
@@ -225,7 +225,7 @@ void WhileVertex::initializeVertex() {
     }
 
     _iterator = new WhileIteratorName(whileIteratorString, this);
-    m_declaredOutsideIdsMap.insert( { whileIteratorString, _iterator } );
+    m_declaredInsideIdsMap.insert( { whileIteratorString, _iterator } );
     m_declaredBothIdsMap.insert( { whileIteratorString, _iterator } );
 
     Expression* whileOutNameExpr = new Expression(innerStatementWhileVF->id_, m_declaredOutsideIdsMap, this);
@@ -297,7 +297,7 @@ void LetVertex::initializeVertex() {
 
         Expression* letExpr = new Expression(assignment->expr_, m_declaredOutsideIdsMap, this);
         LetName* letName = new LetName(*(assignment->name_->get_value()), letExpr, this);
-        m_declaredOutsideIdsMap.insert( { letString, letName } );
+        m_declaredInsideIdsMap.insert( { letString, letName } );
         m_declaredBothIdsMap.insert( { letString, letName } );
         letNamesVector->push_back(letName);
     }
@@ -313,6 +313,10 @@ void Vertex::enterBlock() {
     /* iterate through statements, collect vertices and their use-defs by calling initializeVertex on each,
     initialize currentVertex' use-defs and return it */
     iterateThroughBlockStatements();
+    
+    // SYN5.6
+    if (m_vertexType == VertexType::subVF)
+        dynamic_cast<SubVertex*>(this)->checkUnusedArgs();
 }
 
 // scanForDFDecls is a function that scans block for DF declarations
@@ -439,8 +443,15 @@ void Vertex::handleSub(cf_statement* cfStatement) {
     for (auto rawArgument : *rawArguments)
         callArgs.push_back(new Expression(rawArgument, m_declaredBothIdsMap, this));
 
-    CFDeclaration cfDeclaration = CFDECLARATIONS.find(calledSubName)->second;//todo this object will be deleted, do pointers
-    
+    auto cfDeclarationPair = CFDECLARATIONS.find(calledSubName);
+    if (cfDeclarationPair == CFDECLARATIONS.end()) {
+        //todo report non-existing CF?
+        std::cout << "INTERNAL ERROR" << std::endl;
+        return;
+    }
+    CFDeclaration cfDeclaration = cfDeclarationPair->second; // todo this will be deleted? do pointers?
+    CFDECLARATIONS.find(calledSubName)->second.isUsed = true;
+
     SubVertex* nextVertex = new SubVertex(calledSubName, this, subVF, m_depth + 1, cfStatement->line_, m_fileName, cfDeclaration.cfBlock, cfStatement, m_declaredBothIdsMap, callArgs, cfDeclaration.declaredArgs);
     if (cfDeclaration.declaredArgs.size() != callArgs.size()) {
         REPORTS.push_back(JsonReporter::createSYN3(nextVertex));
@@ -477,7 +488,14 @@ void Vertex::handleImport(cf_statement* cfStatement) {
     for (auto rawArgument : *rawArguments)
         callArgs.push_back(new Expression(rawArgument, m_declaredBothIdsMap, this));//TODO WIP this is wrong, create Identifier and send it (update 23.10.2024 what the fuck does that mean)
 
-    CFDeclaration cfDeclaration = CFDECLARATIONS.find(calledImportName)->second;//todo this object will be deleted, do pointers
+    auto cfDeclarationPair = CFDECLARATIONS.find(calledImportName);
+    if (cfDeclarationPair == CFDECLARATIONS.end()) {
+        //todo report non-existing CF?
+        std::cout << "INTERNAL ERROR" << std::endl;
+        return;
+    }
+    CFDeclaration cfDeclaration = cfDeclarationPair->second; // todo this will be deleted? do pointers?
+    CFDECLARATIONS.find(calledImportName)->second.isUsed = true;
 
     ImportVertex* nextVertex = new ImportVertex(calledImportName, this, importVF, m_depth + 1, cfStatement->line_, m_fileName, cfStatement->block_, cfStatement, m_declaredBothIdsMap, callArgs, cfDeclaration.declaredArgs);
     //todo wip check for LUNA04 and LUNA06
@@ -533,6 +551,13 @@ void SubVertex::printInfo(std::ostream* outputTarget) {
     printGenericInfo(outputTarget);
 
     *outputTarget << "Exact type: structured CF, name: " << this->getName() << std::endl;
+}
+
+void SubVertex::checkUnusedArgs() {
+    for (auto arg : _arguments) {
+        if (arg->getUseSet().empty())
+            REPORTS.push_back(JsonReporter::createSYN5_6(arg));
+    }
 }
 
 void ImportVertex::printInfo(std::ostream* outputTarget) {

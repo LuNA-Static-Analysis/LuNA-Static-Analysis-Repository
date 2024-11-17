@@ -58,11 +58,12 @@ class DDG {
                         }
                     }
 
-                    if (CFDECLARATIONS.find(subName) == CFDECLARATIONS.end()) {
-                        CFDECLARATIONS.insert( { subName, CFDeclaration(subName, subCF, declaredArgs, subDecl->block_, subDecl->line_) } );
-                    } else {
-                        //todo duplicate sub decl report
+                    auto subCFDecl = CFDECLARATIONS.find(subName);
+                    if (subCFDecl != CFDECLARATIONS.end()) {
+                        REPORTS.push_back(JsonReporter::createSYN6_2(&(subCFDecl->second)));
+                        CFDECLARATIONS.erase(subName); // LuNA overwrites declarations with same names and uses the last one
                     }
+                    CFDECLARATIONS.insert( { subName, CFDeclaration(subName, subCF, declaredArgs, subDecl->block_, subDecl->line_) } );
 
                 } else if (importDecl != NULL) { // found an import
 
@@ -92,11 +93,12 @@ class DDG {
                         }
                     }
 
-                    if (CFDECLARATIONS.find(importName) == CFDECLARATIONS.end()) {
-                        CFDECLARATIONS.insert( { importName, CFDeclaration(importName, importCF, declaredArgs, nullptr, importDecl->line_) } );
-                    } else {
-                        //todo duplicate import decl report
+                    auto importCFDecl = CFDECLARATIONS.find(importName);
+                    if (importCFDecl != CFDECLARATIONS.end()) {
+                        REPORTS.push_back(JsonReporter::createSYN6_1(&(importCFDecl->second)));
+                        CFDECLARATIONS.erase(importName); // LuNA overwrites declarations with same names and uses the last one
                     }
+                    CFDECLARATIONS.insert( { importName, CFDeclaration(importName, importCF, declaredArgs, nullptr, importDecl->line_) } );
 
                 } else {
                     std::cout << "INTERNAL ERROR: unknown CF of name " + subDef->to_string() 
@@ -127,12 +129,81 @@ class DDG {
 
     public:
 
+        // SYN5.2, 3, 6, 7, 8 if both use and def sets are empty
+        // SEM4 is def set is not empty, but use is empty
+        void checkUnusedIdentifiers(){
+            for (auto vertex: VERTICES){
+                for (auto nameIdPair: vertex->getDeclaredInsideIdsMap()){
+                    Identifier* identifier = nameIdPair.second;
+                    if (identifier->getUseSet().size() == 0) {
+                        if (identifier->getDefSet().size() == 0) { // SYN5
+                            switch (identifier->getClass()) {
+                                case letNameClass: {
+                                    REPORTS.push_back(JsonReporter::createSYN5_2(
+                                        identifier
+                                    ));
+                                    break;
+                                }
+                                case baseDFNameClass: {
+                                    REPORTS.push_back(JsonReporter::createSYN5_3(
+                                        identifier
+                                    ));
+                                    break;
+                                }
+                                case mutableArgNameClass:
+                                case immutableArgNameClass:
+                                {
+                                    REPORTS.push_back(JsonReporter::createSYN5_6(
+                                        identifier
+                                    ));
+                                    break;
+                                }
+                                case forIteratorNameClass: {
+                                    REPORTS.push_back(JsonReporter::createSYN5_7(
+                                        identifier
+                                    ));
+                                    break;
+                                }
+                                case whileIteratorNameClass: {
+                                    REPORTS.push_back(JsonReporter::createSYN5_8(
+                                        identifier
+                                    ));
+                                    break;
+                                }
+                            }
+                        } else { // SEM4
+                            REPORTS.push_back(JsonReporter::createSEM4(
+                                identifier
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+
+        // SYN5.4, SYN5.5
+        void checkUnusedCFs(){
+            for (auto cfDeclaration : CFDECLARATIONS){
+                if (!cfDeclaration.second.isUsed) {
+                    if (cfDeclaration.second.type == importCF)
+                        REPORTS.push_back(JsonReporter::createSYN5_4(
+                            &(cfDeclaration.second)
+                        ));
+                    else
+                        REPORTS.push_back(JsonReporter::createSYN5_5(
+                            &(cfDeclaration.second)
+                        ));
+                }
+            }
+        }
+
         // TODO
         // this function uses breadth search to find cycles in DDG, as this indicates cyclic dependencies
         void checkCyclicDependence(){
 
         }
 
+        //todo rename codes
         // this function goes through BASENAMES and finds few types of errors:
         // 1. multiple DF initialization (03)
         // 2. using uninitialized DFs (05)
@@ -330,7 +401,13 @@ class DDG {
             checkConstantConditions();
             std::cout << "\ncheckConstantConditions finished\n" << std::endl;
 
-            //TODO cyclic dependence
+            std::cout << "\ncheckUnusedIdentifiers started\n" << std::endl;
+            checkUnusedIdentifiers();
+            std::cout << "\ncheckUnusedIdentifiers finished\n" << std::endl;
+
+            std::cout << "\ncheckUnusedCFs started\n" << std::endl;
+            checkUnusedCFs();
+            std::cout << "\ncheckUnusedCFs finished\n" << std::endl;
 
         }
 
@@ -352,12 +429,22 @@ class DDG {
             // 2. create all the vertices
             auto mainDeclaration = CFDECLARATIONS.find("main");
             if (mainDeclaration != CFDECLARATIONS.end()) {
+                CFDECLARATIONS.find("main")->second.isUsed = true;
                 SubVertex* mainVertex = new SubVertex("main", nullptr, subVF, 1, mainDeclaration->second.line, fileName, mainDeclaration->second.cfBlock, nullptr, {}, {}, mainDeclaration->second.declaredArgs);
                 VERTICES.push_back(mainVertex);
                 mainVertex->initializeVertex();
                 std::cout << "Created a [MAIN] vertex: " << mainVertex << std::endl;
             } else {
+                REPORTS.push_back(JsonReporter::createSYN7());
                 std::cout << "INTERNAL ERROR: No main found" << std::endl;
+                // printing out information does not count towards time to find errors
+                if (REPORTS.size() == 0){
+                    *outputTarget << "\nNo errors found\n" << std::endl;
+                } else {
+                    for (auto r: REPORTS){
+                        *outputTarget << r << std::endl;
+                    }
+                }
                 return;
             }
 
