@@ -159,7 +159,8 @@ def main(
                 '-t', 'main',
                 'src/pro/run.pro',
                 '--',
-                facts_file, new_errors_file
+                facts_file, new_errors_file,
+                *ignoreFilte
             ],
             cwd=str(prolog_analyzer_home),
             capture_output=True,
@@ -168,8 +169,6 @@ def main(
 
         with new_errors_file.open('rt') as new_errors_file_:
             new_errors = json.load(new_errors_file_)
-            # FIXME filtered errors must not be detected in the first place
-            new_errors = [it for it in new_errors if it['error_code'] not in ignore]
         with errors_file.open('wt') as dst_errors_file_:
             json.dump(base_errors + new_errors, dst_errors_file_)
 

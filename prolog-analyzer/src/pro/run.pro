@@ -11,13 +11,13 @@
 ]).
 
 print_usage :-
-    writef("Usage: swipl -t main src/pro/run.pro -- <FACTS_FILE_NAME> <OUTPUT_FILE_NAME>"),
+    writef("Usage: swipl -t main src/pro/run.pro -- FACTS_FILE_NAME OUTPUT_FILE_NAME IGNORED_ERROR_CODES..."),
     nl.
 
-parse_args(FactsFileName, OutputFileName) :-
+parse_args(FactsFileName, OutputFileName, IngnoredErrorCodes) :-
     current_prolog_flag(argv, Argv),
 %    writef("Argv=%t\n", [Argv]),
-    (   [--, FactsFileName, OutputFileName] = Argv
+    (   [--, FactsFileName, OutputFileName | IngnoredErrorCodes] = Argv
     *-> true
     ;   print_usage,
         halt(1)
@@ -32,22 +32,37 @@ load_program_facts(FactsFileName) :-
         halt(1)
     ).
 
-write_errors_json(OutputFileName) :-
-    findall(Error, tautology_error_json(Error), Errors1),
-    findall(Error, bool_used_as_number_error_json(Error), Errors2),
-    findall(Error, index_range_overlap_error_json(Error), Errors3),
-    findall(Error, index_overlap_error_json(Error), Errors4),
-    findall(Error, index_range_not_initialized_error_json(Error), Errors5),
+write_errors_json(OutputFileName, IngnoredErrorCodes) :-
+    (   member('SEM5', IngnoredErrorCodes)
+    ->  Errors1 = []
+    ;   findall(Error, tautology_error_json(Error), Errors1)
+    ),
+    (   member('SEM7', IngnoredErrorCodes)
+    ->  Errors2 = []
+    ;   findall(Error, bool_used_as_number_error_json(Error), Errors2)
+    ),
+    (   member('SEM2.2', IngnoredErrorCodes)
+    ->  Errors3 = []
+    ;   findall(Error, index_range_overlap_error_json(Error), Errors3)
+    ),
+    (   member('SEM2.1', IngnoredErrorCodes)
+    ->  Errors4 = []
+    ;   findall(Error, index_overlap_error_json(Error), Errors4)
+    ),
+    (   member('SEM3.3', IngnoredErrorCodes)
+    ->  Errors5 = []
+    ;   findall(Error, index_range_not_initialized_error_json(Error), Errors5)
+    ),
     append([Errors1, Errors2, Errors3, Errors4, Errors5], Errors),
     open(OutputFileName, write, Out, [create([default])]),
     json_write_dict(Out, Errors),
     close(Out).
 
 main :-
-    parse_args(FactsFileName, OutputFileName),
+    parse_args(FactsFileName, OutputFileName, IngnoredErrorCodes),
     load_program_facts(FactsFileName),
     catch(
-        write_errors_json(OutputFileName),
+        write_errors_json(OutputFileName, IngnoredErrorCodes),
         E,
         (   print_message(error, E),
             halt(1)
