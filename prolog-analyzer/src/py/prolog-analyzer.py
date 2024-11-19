@@ -160,7 +160,7 @@ def main(
                 'src/pro/run.pro',
                 '--',
                 facts_file, new_errors_file,
-                *ignoreFilte
+                *ignore
             ],
             cwd=str(prolog_analyzer_home),
             capture_output=True,
