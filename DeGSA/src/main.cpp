@@ -3,7 +3,7 @@
 #include <fstream>
 #include "ddg.cpp"
 
-#include "../Exprtk/exprtk.hpp"
+#include "../Exprtk/exprtk.cpp"
 
 const int EXIT_ERROR = 1;
 const int NANOSECONDS_IN_SECOND = 1000000000;
