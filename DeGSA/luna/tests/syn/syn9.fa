@@ -2,9 +2,11 @@ import c_init_int(int, name) as init;
 import printfl(real) as print;
 sub main(){
         df a;
+        init(1, a);
+        print(a);
         foo(a);
 }
-sub foo(name f){
+sub foo(int f){
         print(d);
 }
 

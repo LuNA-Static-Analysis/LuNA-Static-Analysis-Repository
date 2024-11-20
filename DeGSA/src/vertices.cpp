@@ -76,7 +76,37 @@ void Vertex::printGenericInfo(std::ostream* outputTarget) {
     *outputTarget << std::endl;
 
     *outputTarget << "Vertex type: ";
-    *outputTarget << m_vertexType << std::endl;
+    std::string type;
+    switch (m_vertexType) {
+        case forVF: {
+            type = "for";
+            break;
+        }
+        case ifVF: {
+            type = "if";
+            break;
+        }
+        case whileVF: {
+            type = "while";
+            break;
+        }
+        case letVF: {
+            type = "let";
+            break;
+        }
+        case importVF: {
+            type = "import";
+            break;
+        }
+        case subVF: {
+            type = "sub";
+            break;
+        }
+    }
+    *outputTarget << type << std::endl;
+
+    *outputTarget << "Facts amount: ";
+    *outputTarget << m_facts.size() << std::endl;
 }
 
 void SubVertex::initializeVertex() {
@@ -201,6 +231,10 @@ void ForVertex::initializeVertex() {
     if (_rightBorder != nullptr)
         _rightBorder->markAsUse(this, 0);//todo why 0
 
+    Expression* iteratorExpression = new Expression(_iterator, intNode, this);
+    m_facts.insert(new GLeNFact(greaterOrEqualNode, iteratorExpression, _leftBorder));
+    m_facts.insert(new GLeNFact(lesserOrEqualNode, iteratorExpression, _rightBorder));
+
     enterBlock();
 }
 
@@ -257,6 +291,10 @@ void WhileVertex::initializeVertex() {
             this
         ));
 
+    Expression* iteratorExpression = new Expression(_iterator, intNode, this);
+    m_facts.insert(new GLeNFact(greaterOrEqualNode, iteratorExpression, _startExpr));
+    m_facts.insert(new GLeNFact(nonEqualNode, _conditionExpr, new Expression("0", intNode, this)));
+
     enterBlock();
 }
 
@@ -268,6 +306,8 @@ void IfVertex::initializeVertex() {
     // all identifiers inside "if" expression must be marked as "used"
     if (_conditionExpr != nullptr)
         _conditionExpr->markAsUse(this, 0);
+
+    m_facts.insert(new GLeNFact(nonEqualNode, _conditionExpr, new Expression("0", intNode, this)));
 
     enterBlock();
 }
@@ -452,7 +492,7 @@ void Vertex::handleSub(cf_statement* cfStatement) {
     CFDeclaration cfDeclaration = cfDeclarationPair->second; // todo this will be deleted? do pointers?
     CFDECLARATIONS.find(calledSubName)->second.isUsed = true;
 
-    SubVertex* nextVertex = new SubVertex(calledSubName, this, subVF, m_depth + 1, cfStatement->line_, m_fileName, cfDeclaration.cfBlock, cfStatement, m_declaredBothIdsMap, callArgs, cfDeclaration.declaredArgs);
+    SubVertex* nextVertex = new SubVertex(calledSubName, this, subVF, m_depth + 1, cfStatement->line_, m_fileName, cfDeclaration.cfBlock, cfStatement, m_declaredBothIdsMap, m_facts, callArgs, cfDeclaration.declaredArgs);
     if (cfDeclaration.declaredArgs.size() != callArgs.size()) {
         REPORTS.push_back(JsonReporter::createSYN3(nextVertex));
         std::cout << "INTERNAL ERROR: call of CF " << calledSubName << " has wrong amount of args" << std::endl;
@@ -497,7 +537,7 @@ void Vertex::handleImport(cf_statement* cfStatement) {
     CFDeclaration cfDeclaration = cfDeclarationPair->second; // todo this will be deleted? do pointers?
     CFDECLARATIONS.find(calledImportName)->second.isUsed = true;
 
-    ImportVertex* nextVertex = new ImportVertex(calledImportName, this, importVF, m_depth + 1, cfStatement->line_, m_fileName, cfStatement->block_, cfStatement, m_declaredBothIdsMap, callArgs, cfDeclaration.declaredArgs);
+    ImportVertex* nextVertex = new ImportVertex(calledImportName, this, importVF, m_depth + 1, cfStatement->line_, m_fileName, cfStatement->block_, cfStatement, m_declaredBothIdsMap, m_facts, callArgs, cfDeclaration.declaredArgs);
     //todo wip check for LUNA04 and LUNA06
     if (cfDeclaration.declaredArgs.size() != callArgs.size()) {
         REPORTS.push_back(JsonReporter::createSYN3(nextVertex));
@@ -520,28 +560,28 @@ void Vertex::handleImport(cf_statement* cfStatement) {
 }
 
 void Vertex::handleFor(for_statement* forStatement) {
-    ForVertex* nextVertex = new ForVertex(this, m_depth + 1, forStatement->line_, m_fileName, forStatement->block_, forStatement, m_declaredBothIdsMap);
+    ForVertex* nextVertex = new ForVertex(this, m_depth + 1, forStatement->line_, m_fileName, forStatement->block_, forStatement, m_declaredBothIdsMap, m_facts);
     VERTICES.push_back(nextVertex);
     addInside(nextVertex);
     nextVertex->initializeVertex();
 }
 
 void Vertex::handleWhile(while_statement* whileStatement) {
-    WhileVertex* nextVertex = new WhileVertex(this, m_depth + 1, whileStatement->line_, m_fileName, whileStatement->block_, whileStatement, m_declaredBothIdsMap);
+    WhileVertex* nextVertex = new WhileVertex(this, m_depth + 1, whileStatement->line_, m_fileName, whileStatement->block_, whileStatement, m_declaredBothIdsMap, m_facts);
     VERTICES.push_back(nextVertex);
     addInside(nextVertex);
     nextVertex->initializeVertex();
 }
 
 void Vertex::handleIf(if_statement* ifStatement) {
-    IfVertex* nextVertex = new IfVertex(this, m_depth + 1, ifStatement->line_, m_fileName, ifStatement->block_, ifStatement, m_declaredBothIdsMap);
+    IfVertex* nextVertex = new IfVertex(this, m_depth + 1, ifStatement->line_, m_fileName, ifStatement->block_, ifStatement, m_declaredBothIdsMap, m_facts);
     VERTICES.push_back(nextVertex);
     addInside(nextVertex);
     nextVertex->initializeVertex();
 }
 
 void Vertex::handleLet(let_statement* letStatement) {
-    LetVertex* nextVertex = new LetVertex(this, m_depth + 1, letStatement->line_, m_fileName, letStatement->block_, letStatement, m_declaredBothIdsMap);
+    LetVertex* nextVertex = new LetVertex(this, m_depth + 1, letStatement->line_, m_fileName, letStatement->block_, letStatement, m_declaredBothIdsMap, m_facts);
     VERTICES.push_back(nextVertex);
     addInside(nextVertex);
     nextVertex->initializeVertex();

@@ -56,7 +56,11 @@ class Expression {
         Expression(std::string constant, ExpressionType expressionType, Vertex* currentVertex) :
           _ASTexpr(nullptr), _constant(constant), _identifier(nullptr), _leftExpr(nullptr), _rightExpr(nullptr), _expressionType(expressionType), _vertex(currentVertex) {};
 
-        // used for anything more complex than a constant
+        // used for creating names (i.e. iterators) as Expressions
+        Expression(Identifier* identifier, ExpressionType expressionType, Vertex* currentVertex) :
+          _ASTexpr(nullptr), _constant(""), _identifier(identifier), _leftExpr(nullptr), _rightExpr(nullptr), _expressionType(expressionType), _vertex(currentVertex) {};
+
+        // used for anything more complex than a constant and a name
         Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTable, Vertex* currentVertex);
 
 };

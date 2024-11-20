@@ -430,7 +430,7 @@ class DDG {
             auto mainDeclaration = CFDECLARATIONS.find("main");
             if (mainDeclaration != CFDECLARATIONS.end()) {
                 CFDECLARATIONS.find("main")->second.isUsed = true;
-                SubVertex* mainVertex = new SubVertex("main", nullptr, subVF, 1, mainDeclaration->second.line, fileName, mainDeclaration->second.cfBlock, nullptr, {}, {}, mainDeclaration->second.declaredArgs);
+                SubVertex* mainVertex = new SubVertex("main", nullptr, subVF, 1, mainDeclaration->second.line, fileName, mainDeclaration->second.cfBlock, nullptr, {}, {}, {}, mainDeclaration->second.declaredArgs);
                 VERTICES.push_back(mainVertex);
                 mainVertex->initializeVertex();
                 std::cout << "Created a [MAIN] vertex: " << mainVertex << std::endl;
