@@ -34,7 +34,7 @@
 
 %:- use_module('src/pro/reporting.pro').
 
-:- consult("tests/01_for/14_luna37_no_loop/.prolog-analyzer/program_facts.pro").
+:- consult("tests/01_for/22_single_index_use/.prolog-analyzer/program_facts.pro").
 
 % consult("src/pro/demo.pro").
 

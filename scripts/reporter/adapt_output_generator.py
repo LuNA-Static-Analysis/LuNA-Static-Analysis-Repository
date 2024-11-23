@@ -316,6 +316,35 @@ def report_error(
                 .replace('$first', error['details']['for']['first'])
                 .replace('$last', error['details']['for']['last'])
             )
+        case 'SEM3.1':
+            use_conditions = get_conditions(error['details'].get('use_conditions', []))
+            output_file.write(
+                templates_map[error_code]
+                .replace('$df_name', error['details']['used']['local'])
+                .replace('$use_conditions', f' {use_conditions}' if use_conditions else '')
+                .replace('$used', get_df_ref(error['details']['used'], text_info))
+            )
+            output_file.write('\n')
+
+            for init, conditions in error['details']['initialized']:
+                conditions_str = get_conditions(conditions)
+                match init:
+                    case {'loop': _, **unused}:
+                        init_str = get_index_range(init, text_info)
+                    case {'df': _, 'true': _, 'local': _, 'where': _, **unused}:
+                        init_str = get_df_ref(init, text_info)
+                        # init_str = str(init)
+                    case _:
+                        raise NotImplementedError()
+
+                output_file.write(
+                    f'Initialized$init_conditions:\n$init'
+                    .replace('$init_conditions', f' {conditions_str}' if conditions_str else '')
+                    .replace('$init', init_str)
+                )
+                output_file.write('\n')
+
+            output_file.write('\n')
         case 'SEM3.3':
             use_conditions = get_conditions(error['details'].get('use_conditions', []))
             output_file.write(

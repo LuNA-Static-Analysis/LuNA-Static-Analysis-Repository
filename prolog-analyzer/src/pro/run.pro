@@ -2,6 +2,7 @@
 
 :- use_module('src/pro/checks/ranges.pro', [
     index_range_not_initialized_error_json/1,
+    index_not_initialized_error_json/1,
     index_range_overlap_error_json/1,
     index_overlap_error_json/1
 ]).
@@ -53,7 +54,11 @@ write_errors_json(OutputFileName, IngnoredErrorCodes) :-
     ->  Errors5 = []
     ;   findall(Error, index_range_not_initialized_error_json(Error), Errors5)
     ),
-    append([Errors1, Errors2, Errors3, Errors4, Errors5], Errors),
+    (   member('SEM3.1', IngnoredErrorCodes)
+    ->  Errors6 = []
+    ;   findall(Error, index_not_initialized_error_json(Error), Errors6)
+    ),
+    append([Errors1, Errors2, Errors3, Errors4, Errors5, Errors6], Errors),
     open(OutputFileName, write, Out, [create([default])]),
     json_write_dict(Out, Errors),
     close(Out).

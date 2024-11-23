@@ -1,13 +1,8 @@
 :- module(ranges, [
     index_range_not_initialized_error_json/1,
+    index_not_initialized_error_json/1,
     index_range_overlap_error_json/1,
-    index_overlap_error_json/1,
-
-    index_range_not_initialized/2,
-    index_range_overlap/2,
-    index_range_unpack/4,
-    input_df/2,
-    output_df/2
+    index_overlap_error_json/1
 ]).
 
 :- use_module('src/pro/terms/expressions.pro', [
@@ -90,6 +85,30 @@ index_range_not_initialized_error_json(ErrorJson) :-
         'details': details{
             'used': UseRangeDict,
             'use_conditions': UseConditionsDicts,
+            'initialized': InitRangesFormatted
+        }
+    }.
+
+index_not_initialized_error_json(ErrorJson) :-
+    execution_sequence:main_root_ctx(RootCtx),
+    index_not_initialized(RootCtx, error{
+        'error_code': "SEM3.1",
+        'details': details{
+            'used': UseRange,
+            'initialized': InitRanges
+        }
+    }),
+    get_dict('df', UseRange, Use),
+    index_range_conditions(UseRange, UseConditions),
+    reporting:format_df(Use, UseFormatted),
+    maplist(reporting:format_expression_decode, UseConditions, UseConditionsFormatted),
+    maplist(format_range_and_conditions, InitRanges, InitRangesFormatted),
+
+    ErrorJson = error{
+        'error_code': "SEM3.1",
+        'details': details{
+            'used': UseFormatted,
+            'use_conditions': UseConditionsFormatted,
             'initialized': InitRangesFormatted
         }
     }.
@@ -229,6 +248,8 @@ df_single(RootCtx, GetDf, SingleInit) :-
     ).
 
 df_init_single(RootCtx, SingleInit) :- df_single(RootCtx, output_df, SingleInit).
+
+df_use_single(RootCtx, SingleUse) :- df_single(RootCtx, input_df, SingleUse).
 
 maybe(Lhs, Sign, Rhs) :-
     ref:rewrite_without_refs(Lhs, _{0:0}, LhsRefs, LhsWithoutRefs),
@@ -412,6 +433,11 @@ df_single_init_of(RootCtx, BaseName, SingleInit) :-
         get_dict('true', Df, luna_ref([BaseName|_])).
 %    SingleInit.df.true = luna_ref([BaseName|_]).
 
+df_single_use_of(RootCtx, BaseName, SingleUse) :-
+    df_use_single(RootCtx, SingleUse),
+        get_dict('df', SingleUse, Df),
+        get_dict('true', Df, luna_ref([BaseName|_])).
+
 df_init_of(RootCtx, BaseName, InitRange) :- 
     df_init_loop_of(RootCtx, BaseName, InitRange).
 df_init_of(RootCtx, BaseName, InitRange) :- 
@@ -428,6 +454,23 @@ index_range_not_initialized(RootCtx, Error) :-
     \+ index_range_is_covered(UseRange, ImpliedInits),
     Error = error{
         'error_code': "SEM3.3",
+        'details': details{
+            'used': UseRange,
+            'initialized': InitRanges
+        }
+    }.
+
+index_not_initialized(RootCtx, Error) :-
+    df_single_use_of(RootCtx, BaseName, UseRange),
+    findall(
+        InitRange,
+        df_init_of(RootCtx, BaseName, InitRange),
+        InitRanges
+    ),
+    include(index_range_implies(UseRange), InitRanges, ImpliedInits),
+    \+ index_range_is_covered(UseRange, ImpliedInits),
+    Error = error{
+        'error_code': "SEM3.1",
         'details': details{
             'used': UseRange,
             'initialized': InitRanges
