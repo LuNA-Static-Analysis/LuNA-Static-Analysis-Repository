@@ -8,7 +8,8 @@
     negation/2,
     equvalent/2,
     simultaneous/2,
-    implies/2
+    implies/2,
+    flatten/3
 ]).
 
 % swipl -g run_tests -t halt .\src\pro\terms\logic_test.pro
@@ -187,5 +188,20 @@ test(implies) :-
     implies(["&&", [">", "N", 0], ["<=", "K", "Y"]], ["<=", "K", "Y"]).
 test(implies) :-
     implies(["&&", [">", "N", 0], ["<=", "K", "Y"]], ["||", "ExtraCondtition", ["&&", [">", "N", 0], ["<=", "K", "Y"]]]).
+
+test(flatten) :-
+    flatten(1, "&&", [1]).
+test(flatten) :-
+    flatten("X", "&&", ["X"]).
+test(flatten) :-
+    flatten(["||", 1, 2], "&&", [["||", 1, 2]]).
+test(flatten) :-
+    flatten(["||", 1, 2], "||", [1, 2]).
+test(flatten) :-
+    flatten(["||", 1, ["||", "X", "Y"]], "||", [1, "X", "Y"]).
+test(flatten) :-
+    flatten(["||", ["||", "X", "Y"], 1], "||", ["X", "Y", 1]).
+test(flatten) :-
+    flatten(["||", ["&&", "X", "Y"], 1], "||", [["&&", "X", "Y"], 1]).
 
 :- end_tests(logic).

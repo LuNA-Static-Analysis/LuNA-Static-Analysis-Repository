@@ -15,7 +15,9 @@
 ]).
 :- use_module('src/pro/terms/logic.pro', [
     and/2,
-    simultaneous/2
+    flatten/3,
+    simultaneous/2,
+    condition_normalize/2
 ]).
 :- use_module('src/pro/terms/ref.pro', [rewrite_without_refs/4]).
 :- use_module('src/pro/ja.pro', [
@@ -376,6 +378,49 @@ index_range_conditions(Range, Conditions) :-
     get_dict('where', Df, Where),
     execution_sequence:conditions(Where, Conditions).
 
+conditions_constrain_range_normalized(C1, C2, Var, Lower, Upper) :-
+    C1 = ["!", ["<", Var1, Lower]],
+    C2 = ["!", ["<", Upper, Var2]],
+    ref:expressions_equivalent(Var, Var1),
+    ref:expressions_equivalent(Var, Var2),
+    !.
+
+conditions_constrain_range_normalized(C1, C2, Var, Lower, Upper) :-
+    C2 = ["!", ["<", Var1, Lower]],
+    C1 = ["!", ["<", Upper, Var2]],
+    ref:expressions_equivalent(Var, Var1),
+    ref:expressions_equivalent(Var, Var2),
+    !.
+
+conditions_constrain_half_range_normalized(C, Var, Lower, Var) :-
+    C = ["!", ["<", Var1, Lower]],
+    ref:expressions_equivalent(Var, Var1),
+    !.
+
+conditions_constrain_half_range_normalized(C, Var, Var, Upper) :-
+    C = ["!", ["<", Upper, Var1]],
+    ref:expressions_equivalent(Var, Var1),
+    !.
+
+conditions_constrain_range(Conditions, Var, Lower, Upper) :-
+    logic:and(Conditions, Conjunction),
+    logic:flatten(Conjunction, "&&", Constraints),
+    append([_, [C1], _, [C2], _], Constraints),
+%    throw([C1, C2]),
+    logic:condition_normalize(C1, NormC1),
+    logic:condition_normalize(C2, NormC2),
+%    throw([NormC2, NormC1]),
+    conditions_constrain_range_normalized(NormC1, NormC2, Var, Lower, Upper).
+
+conditions_constrain_range(Conditions, Var, Lower, Upper) :-
+    logic:and(Conditions, Conjunction),
+    logic:flatten(Conjunction, "&&", Constraints),
+    member(C, Constraints),
+%    throw([C1, C2]),
+    logic:condition_normalize(C, NormC),
+%    throw([NormC2, NormC1]),
+    conditions_constrain_half_range_normalized(NormC, Var, Lower, Upper).
+
 index_range_implies(Range1, Range2) :-
     index_range_conditions(Range1, Conds1),
     index_range_conditions(Range2, Conds2),
@@ -405,7 +450,25 @@ index_range_covers(InitRange, UseRange) :-
     index_range_unpack(UseRange, _, _, UseStep),
     expression_compare("#=", UseStep, ["*", "N", InitStep]),
     index_range_covers_lower(InitRange, UseRange),
-    index_range_covers_upper(InitRange, UseRange).
+    index_range_covers_upper(InitRange, UseRange),
+    !.
+
+index_range_covers(InitRange, UseRange) :-
+    single_index{'df': _} :< UseRange,
+    index_range_unpack(UseRange, Var, Var, 0),
+    index_range_conditions(UseRange, UseConditions),
+%    Var = ["+","Var8__LUNA_N",-1],
+%    throw(UseConditions),
+    conditions_constrain_range(UseConditions, Var, Lower, Upper),
+    index_range_covers(
+        InitRange,
+        index_range_union{
+            'lower': Lower,
+            'upper': Upper,
+            'step': 1,
+            'ranges': []
+        }
+    ).
 
 index_range_is_covered(UseRange, InitRanges) :-
     member(InitRange, InitRanges),
