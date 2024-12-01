@@ -51,22 +51,14 @@
 :- use_module('src/pro/reporting.pro', [format_index_range/2, format_expression_decode/2]).
 
 
-format_range_and_conditions(Range, RangeAndConditioins) :-
-    reporting:format_index_range(Range, RangeDict),
-    index_range_conditions(Range, Conditions),
-    maplist(reporting:format_expression_decode, Conditions, ConditionsDicts),
-    RangeAndConditioins = [RangeDict, ConditionsDicts],
+format_range_or_single(Range, FormattedRange) :-
+    reporting:format_index_range(Range, FormattedRange),
     !.
 
 
-format_range_and_conditions(Range, RangeAndConditioins) :-
+format_range_or_single(Range, FormattedRange) :-
     single_index{'df': Df} :< Range,
-    reporting:format_df(Df, DfDict),
-        get_dict('where', Df, Where),
-    execution_sequence:conditions(Where, Conditions),
-%    execution_sequence:conditions(Df.'where', Conditions),
-    maplist(reporting:format_expression_decode, Conditions, ConditionsDicts),
-    RangeAndConditioins = [DfDict, ConditionsDicts],
+    reporting:format_df(Df, FormattedRange),
     !.
 
 index_range_not_initialized_error_json(ErrorJson) :-
@@ -79,14 +71,11 @@ index_range_not_initialized_error_json(ErrorJson) :-
         }
     }),
     reporting:format_index_range(UseRange, UseRangeDict),
-    index_range_conditions(UseRange, UseConditions),
-    maplist(reporting:format_expression_decode, UseConditions, UseConditionsDicts),
-    maplist(format_range_and_conditions, InitRanges, InitRangesFormatted),
+    maplist(format_range_or_single, InitRanges, InitRangesFormatted),
     ErrorJson = error{
         'error_code': "SEM3.3",
         'details': details{
             'used': UseRangeDict,
-            'use_conditions': UseConditionsDicts,
             'initialized': InitRangesFormatted
         }
     }.
@@ -101,16 +90,13 @@ index_not_initialized_error_json(ErrorJson) :-
         }
     }),
     get_dict('df', UseRange, Use),
-    index_range_conditions(UseRange, UseConditions),
     reporting:format_df(Use, UseFormatted),
-    maplist(reporting:format_expression_decode, UseConditions, UseConditionsFormatted),
-    maplist(format_range_and_conditions, InitRanges, InitRangesFormatted),
+    maplist(format_range_or_single, InitRanges, InitRangesFormatted),
 
     ErrorJson = error{
         'error_code': "SEM3.1",
         'details': details{
             'used': UseFormatted,
-            'use_conditions': UseConditionsFormatted,
             'initialized': InitRangesFormatted
         }
     }.
@@ -141,15 +127,12 @@ index_overlap_error_json(ErrorJson) :-
             'ranges': InitRanges
         }
     }),
-    maplist(get_dict('df'), InitRanges, [InitRef1|InitRefs]),
-    get_dict('true', InitRef1, TrueName),
-    reporting:format_expression_decode(TrueName, FormattedTrueName),
-    maplist(reporting:format_df, [InitRef1|InitRefs], InitRefDicts),
+    maplist(format_range_or_single, InitRanges, [FormattedInit|FormattedOtherInits]),
     ErrorJson = error{
         'error_code': "SEM2.1",
         'details': details{
-            'true': FormattedTrueName,
-            'initializations': InitRefDicts
+            'initialized': FormattedInit,
+            'other_initializations': FormattedOtherInits
         }
     }.
 
