@@ -415,6 +415,19 @@ public:
         return createReport("SEM5", createJson(map));
     }
 
+    // unconditional recursion
+    static std::string createSEM8(
+        Vertex* firstCaller,
+        Vertex* secondCaller
+    ){
+        //NOT SYNCHRONIZED TODO
+        // details: call stack entry of first caller, call stack entry of second caller
+        std::map<std::string, std::string> map = {};
+        map.insert( { "first", createCallStackEntry(firstCaller->getFileName(), std::to_string(firstCaller->getLine()), firstCaller->getName()) } );
+        map.insert( { "second", createCallStackEntry(secondCaller->getFileName(), std::to_string(secondCaller->getLine()), secondCaller->getName()) } );
+        return createReport("SEM8", createJson(map));
+    }
+
 private:
 
     JsonReporter(){}

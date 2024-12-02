@@ -122,11 +122,27 @@ void SubVertex::initializeVertex() {
         return;
     }
 
+    // SEM8: check for unconditional recursion
+    Vertex* callerVertex = m_parent;
+    VertexType callerType;
+    bool conditional = false;
+    while (callerVertex != nullptr) {
+        callerType = callerVertex->getVertexType();
+        if (callerType == subVF && callerVertex->getName() == m_name) {
+            if (!conditional)
+                REPORTS.push_back(JsonReporter::createSEM8(callerVertex, this));
+            return; // to avoid infinite recursion in DeGSA itself
+        }
+        if (callerType == ifVF || callerType == forVF || callerType == whileVF) {
+            conditional = true; // condition found, error is not present
+        }
+        callerVertex = callerVertex->getParent();
+    }
+
     std::vector<Identifier*> declaredNamesVector = {};
 
     // in case of a "sub": add args as an inside Ids and map them to call args
-    // IMPORTANT EXCEPTION: no mapping done to args of main(); also these names cannot be initialized and
-    // indexed, so they are pretty special and have a class of their own: MainArgName
+    // IMPORTANT EXCEPTION: no mapping done to args of main()
 
     // iterate through this vector and for every arg create a MutableArgName or an ImmutableArgName object
     for (int i = 0; i < _declaredArgs.size(); i++){
