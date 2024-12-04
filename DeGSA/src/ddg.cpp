@@ -6,6 +6,7 @@
 
 #include <chrono>
 #include <fstream>
+#include <queue>
 
 using ns = std::chrono::nanoseconds;
 
@@ -197,10 +198,93 @@ class DDG {
             }
         }
 
-        // TODO
         // this function uses breadth search to find cycles in DDG, as this indicates cyclic dependencies
+        // SEM3.2
         void checkCyclicDependence(){
 
+            class VertexCycleDependence {
+            
+            public:
+
+                std::vector<Vertex*> callstack;
+
+                VertexCycleDependence(std::vector<Vertex*> iCallstack) : callstack(iCallstack) {};
+
+                VertexCycleDependence(const VertexCycleDependence& iVCD) : callstack(iVCD.callstack) {};
+
+                bool operator<(const VertexCycleDependence& other) const { // todo check
+
+                    if (this->callstack.size() < other.callstack.size()) {
+                        return true;
+                    } else if (this->callstack.size() > other.callstack.size()) {
+                        return false;
+                    } else { // check this stuff
+                        int biggerTimes = 0;
+                        for (auto thisElement : this->callstack) {
+                            bool found = false;
+                            for (auto otherElement : other.callstack) {
+                                if (thisElement == otherElement) {
+                                    break;
+                                }
+                            }
+                            if (!found) {
+                                return false;
+                            }
+                        }
+                        return false; //todo why
+                    }
+                }
+
+                static std::set<VertexCycleDependence> DFS(Vertex* vertex, std::set<Vertex*> marked, std::vector<Vertex*> callstack) {
+                    std::set<VertexCycleDependence> foundCycles = {};
+                    if (marked.find(vertex) != marked.end()) {
+                        // already marked -> cycle found, i.e. find this vertex in a callstack and create a cycle
+                        VertexCycleDependence newFoundCycle({});
+                        // find last same vertex, i.e. beginning of the cycle
+                        int lastSameVertex = -1;
+                        for (int i = 0; i < callstack.size(); i++) {
+                            if (vertex == callstack[i])
+                                lastSameVertex = i;
+                        }
+                        // now create a cycle beginning from lastSameVertex up until the callstack end
+                        for (int i = lastSameVertex; i < callstack.size(); i++) {
+                            newFoundCycle.callstack.push_back(callstack[i]);
+                        }
+                        foundCycles.insert(newFoundCycle);
+                        return foundCycles;
+                    }
+                    callstack.push_back(vertex);
+                    marked.insert(vertex);
+                    for (auto nextBinding : vertex->getOutSet()) {
+                        if (nextBinding->getId()->getClass() == indexedDFNameClass && dynamic_cast<IndexedDFName*>(nextBinding->getId())->getExpressionsVector().size() > 0) {
+                            continue; // indexed DF, ingore it for now TODO do cool things after DFTS
+                        } else {
+                            // found simple DF or iterator
+                            for (auto newFoundCycle : DFS(nextBinding->getPointerTo(), marked, callstack)) {
+                                if (foundCycles.find(newFoundCycle) == foundCycles.end())
+                                    foundCycles.insert(newFoundCycle);
+                            }
+                        }
+                    }
+                    return foundCycles;
+                }
+
+            };
+
+            std::set<VertexCycleDependence> foundCycles = {};
+
+            // now use DFS for every Vertex
+            for (auto vertex : VERTICES) {
+                for (auto additionalFoundCycle : VertexCycleDependence::DFS(vertex, {}, {})) {
+                    if (foundCycles.find(additionalFoundCycle) == foundCycles.end()) {
+                        foundCycles.insert(additionalFoundCycle);
+                    }
+                }
+            }
+
+            for (auto cycle : foundCycles) {
+                REPORTS.push_back(JsonReporter::createSEM3_2(cycle.callstack));
+            }
         }
 
         //todo rename codes
@@ -408,6 +492,10 @@ class DDG {
             std::cout << "\ncheckUnusedCFs started\n" << std::endl;
             checkUnusedCFs();
             std::cout << "\ncheckUnusedCFs finished\n" << std::endl;
+
+            std::cout << "\ncheckCyclicDependence started\n" << std::endl;
+            checkCyclicDependence();
+            std::cout << "\ncheckCyclicDependence finished\n" << std::endl;
 
         }
 

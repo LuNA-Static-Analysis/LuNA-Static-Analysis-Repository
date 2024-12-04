@@ -4,12 +4,12 @@ rm debug_launch_degsa_output.txt
 bison -d ../parser/grammar.ypp
 flex ../parser/lexics.l
 
-python3 ../parser/pp.py luna/tests/sem/sem8.fa -o prepr.fa
+python3 ../parser/pp.py luna/tests/sem/sem3_2.fa -o prepr.fa
 g++ lex.yy.c -c -o lex.yy.o
 g++ grammar.tab.cpp -c -o grammar.tab.o
 g++ -std=gnu++0x src/main.cpp -O2 -c -o degsa.o
 g++ Exprtk/exprtk.o lex.yy.o grammar.tab.o degsa.o -o degsa.out
-./degsa.out prepr.fa luna/tests/sem/sem8.fa
+./degsa.out prepr.fa luna/tests/sem/sem3_2.fa
 
 rm grammar.tab.cpp
 rm grammar.tab.hpp

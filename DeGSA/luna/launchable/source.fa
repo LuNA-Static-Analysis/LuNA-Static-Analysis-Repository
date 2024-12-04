@@ -1,7 +1,11 @@
 import c_init_int(int, name) as init;
-import printint(int) as print;
-sub main() {
-    df a, b;
-    init(1, b);
-    print(b);
+sub main(){
+        df a, b, c, d, e;
+
+        init(a, b);
+        init(b, a);
+
+        init(c, d);
+        init(d, e);
+        init(e, c);
 }

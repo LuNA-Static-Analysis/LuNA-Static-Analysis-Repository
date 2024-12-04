@@ -387,6 +387,18 @@ public:
         return createReport("SEM3_1", createJson(map));
     }
 
+    // cyclic dependence
+    static std::string createSEM3_2(
+        std::vector<Vertex*> loop
+    ){
+        // details: df
+        std::map<std::string, std::string> map = {};
+        for (int i = 0; i < loop.size(); i++) {
+            map.insert( { "vertex" + std::to_string(i + 1), createCallStackEntry(loop[i]->getFileName(), std::to_string(loop[i]->getLine()), loop[i]->getName()) } );
+        }
+        return createReport("SEM3_2", createJson(map));
+    }
+
     // DF is initialized, but not used
     static std::string createSEM4(
         Identifier* identifier
