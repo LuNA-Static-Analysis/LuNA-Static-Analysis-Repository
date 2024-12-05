@@ -152,8 +152,6 @@ class SubVertex: public Vertex {
 
         void printInfo(std::ostream* outputTarget);
         virtual void initializeVertex();
-
-        void checkUnusedArgs();
 };
 
 class ImportVertex: public Vertex {

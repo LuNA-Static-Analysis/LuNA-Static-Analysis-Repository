@@ -2,7 +2,7 @@ import printint(int) as print;
 sub main() {
     df a, b;
     while 1 == 0, i = 1..out a {
-        print(1);
+        print(i);
     }
     while 1 == 0, i = 1..out b {
         print(1);

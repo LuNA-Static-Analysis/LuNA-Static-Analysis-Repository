@@ -369,10 +369,6 @@ void Vertex::enterBlock() {
     /* iterate through statements, collect vertices and their use-defs by calling initializeVertex on each,
     initialize currentVertex' use-defs and return it */
     iterateThroughBlockStatements();
-    
-    // SYN5.6
-    if (m_vertexType == VertexType::subVF)
-        dynamic_cast<SubVertex*>(this)->checkUnusedArgs();
 }
 
 // scanForDFDecls is a function that scans block for DF declarations
@@ -607,13 +603,6 @@ void SubVertex::printInfo(std::ostream* outputTarget) {
     printGenericInfo(outputTarget);
 
     *outputTarget << "Exact type: structured CF, name: " << this->getName() << std::endl;
-}
-
-void SubVertex::checkUnusedArgs() {
-    for (auto arg : _arguments) {
-        if (arg->getUseSet().empty())
-            REPORTS.push_back(JsonReporter::createSYN5_6(arg));
-    }
 }
 
 void ImportVertex::printInfo(std::ostream* outputTarget) {

@@ -134,12 +134,8 @@ void ForIteratorName::markAsUse(Vertex* currentVertex, int size){
 }
 
 void ForIteratorName::markAsDef(Vertex* currentVertex, int size){
-    m_defSet.insert(currentVertex);//todo is it ok?
-    //todo: if marking as def, then there is only error 26 left; if not, then there will be more errors like using of nondefined shit
-    // decide what philosophy we are pursuing here
     std::cout << "INTERNAL ERROR: for iterator " << m_name << " is being marked as defined" << std::endl;
-    // error (iterator should be marked as defined by ForVertex automatically)
-    
+    // error (iterator should be marked as defined at the time of a ForVertex creation)
     REPORTS.push_back(JsonReporter::createSYN1(
         m_name,
         currentVertex
@@ -164,17 +160,12 @@ Expression* WhileIteratorName::getStartExpr(){
 
 void WhileIteratorName::markAsUse(Vertex* currentVertex, int size){
     m_useSet.insert(currentVertex);
-
     std::cout << "While iterator " << m_name << " is being marked as used" << std::endl;
-    m_useSet.insert(currentVertex);
 }
 
 void WhileIteratorName::markAsDef(Vertex* currentVertex, int size){
-    m_defSet.insert(currentVertex);//todo is it ok?
-
     std::cout << "INTERNAL ERROR: while iterator " << m_name << " is being marked as defined" << std::endl;
-    // error (iterator should be marked as defined by WhileVertex automatically)
-    //todo
+    // error (iterator should be marked as defined at the time of a WhileVertex creation)
     REPORTS.push_back(JsonReporter::createSYN1(
         m_name,
         currentVertex

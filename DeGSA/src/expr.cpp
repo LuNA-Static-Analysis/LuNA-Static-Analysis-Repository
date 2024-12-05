@@ -472,16 +472,19 @@ void Expression::markAsDef(Vertex* currentVertex, int size){
                     mutableArgName->getReference()->markAsDef(currentVertex, size);
                     return;
                 }
+                
                 case baseDFNameClass: {//ok
                     BaseDFName* baseDFName = dynamic_cast<BaseDFName*>(_identifier);
                     baseDFName->markAsDef(currentVertex, size);
                     return;
                 }
+
                 case indexedDFNameClass: {//ok
                     IndexedDFName* indexedDFName = dynamic_cast<IndexedDFName*>(_identifier);
                     indexedDFName->markAsDef(currentVertex, size);
                     return;
                 }
+
                 case forIteratorNameClass: {//error
                     REPORTS.push_back(JsonReporter::createSYN1(
                         this->getASTExpr()->to_string(),
@@ -489,7 +492,7 @@ void Expression::markAsDef(Vertex* currentVertex, int size){
                     ));
                     return;
                 }
-                
+
                 case whileIteratorNameClass:{ //error
                     REPORTS.push_back(JsonReporter::createSYN1(
                         this->getASTExpr()->to_string(),
@@ -506,6 +509,7 @@ void Expression::markAsDef(Vertex* currentVertex, int size){
                     letName->getReference()->markAsDef(currentVertex, size);
                     return;
                 }
+
                 case immutableArgNameClass: {//error
                     REPORTS.push_back(JsonReporter::createSYN1(
                         this->getASTExpr()->to_string(),
