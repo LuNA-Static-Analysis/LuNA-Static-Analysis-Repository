@@ -201,12 +201,14 @@ def run_test(test_name: str, test_dir: Path) -> bool:
         if not command.available:
             continue
 
-        printer.print(f'{prefix}Running "{command.command}"')
+        command_str = command.command.replace('"', '\\"')
+        printer.print(f'{prefix}Running "{command_str}"')
         _, error = command.execute(test_dir)
         if error:
             return fail(error)
 
-    printer.print(f'{prefix}Running "{act_command.command}"')
+    command_str = act_command.command.replace('"', '\\"')
+    printer.print(f'{prefix}Running "{command_str}"')
     process, error = act_command.execute(test_dir)
     if error:
         return fail(error)
@@ -275,12 +277,32 @@ def collect_tests(
     type=str,
     default=r'[^.(__)]\w+(_\w+)+'
 )
+@click.option(
+    '--first-fail',
+    required=False,
+    help='Exit on first failed test',
+    is_flag=True,
+    default=False
+)
+@click.option(
+    '--skip',
+    required=False,
+    help='Skip a number of tests assuming alphabetical sorting',
+    type=int,
+    default=0
+)
 def main(
         tests_root: Path,
-        test_name_pattern: str
+        test_name_pattern: str,
+        first_fail: bool,
+        skip: int
 ) -> None:
-    for test_name, test_path in collect_tests(tests_root, re.compile(test_name_pattern)):
-        run_test(test_name, test_path)
+    for test_name, test_path in collect_tests(tests_root, re.compile(test_name_pattern))[skip:]:
+        if run_test(test_name, test_path):
+            continue
+
+        if first_fail:
+            exit(1)
 
 
 if __name__ == '__main__':

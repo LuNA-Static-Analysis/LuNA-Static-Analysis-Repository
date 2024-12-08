@@ -102,27 +102,59 @@ def get_for(for_: dict[str, Any], text_info: TextInfo) -> str:
     )
 
 
-def get_df_ref(df_ref: dict[str, Any], text_info: TextInfo) -> str:
+def get_df_ref(
+        df_ref: dict[str, Any],
+        text_info: TextInfo,
+        include_declared: bool = False
+) -> str:
+    df = df_ref['df']
     name_str = f'{df_ref["true"]} as {df_ref["local"]}' if df_ref['true'] != df_ref['local'] else df_ref['local']
 
-    return (
-            f'DF {name_str}\n'
-            + f'in:\n{get_callstack(df_ref["where"], text_info)}'
-    )
+    conditions = get_conditions(df_ref["conditions"])
+    conditions_str = f' {conditions}' if conditions else ''
+
+    result = f'DF {name_str}{conditions_str} in:\n{get_callstack(df_ref["where"], text_info)}'
+
+    if include_declared:
+        result += f'\nNote: {df["name"]} declared in:\n{get_callstack(df["declared"][0], text_info)}'
+
+    return result
 
 
-def get_index_range(index_range: dict[str, Any], text_info: TextInfo) -> str:
+def get_index_range(
+        index_range: dict[str, Any],
+        text_info: TextInfo,
+        include_declared: bool = False
+) -> str:
     df_ref: dict[str, Any] = index_range['df']
     df: dict[str, Any] = df_ref['df']
     loop: dict[str, Any] = index_range['loop']
 
-    return (
+    result = (
             f'{get_df_ref(df_ref, text_info)}\n'
-            + f'from {index_range["true_lower"]} to {index_range["true_upper"]} with step {index_range["step"]}'
+            + f'  from {index_range["true_lower"]} to {index_range["true_upper"]} with step {index_range["step"]}'
             + f' (with {loop["var"]} from {loop["first"]} to {loop["last"]},'
             + f' step {index_range["step"]} and offset {index_range["offset"]})\n'
-            + f'Note: {df["name"]} declared in:\n{get_callstack(df["declared"][0], text_info)}'
     )
+
+    if include_declared:
+        result += f'\nNote: {df["name"]} declared in:\n{get_callstack(df["declared"][0], text_info)}'
+
+    return result
+
+
+def get_df_ref_or_index_range(
+        ref_or_index_range: dict[str, Any],
+        text_info: TextInfo,
+        include_declared: bool = False
+) -> str:
+    if 'loop' in ref_or_index_range:
+        return get_index_range(ref_or_index_range, text_info, include_declared)
+
+    if {'df', 'true', 'local', 'where'} <= ref_or_index_range.keys():
+        return get_df_ref(ref_or_index_range, text_info, include_declared)
+
+    raise NotImplementedError(f'Not a \'df_ref\' or \'index_range\': {ref_or_index_range}')
 
 
 def get_conditions(conditions: list[str]) -> str:
@@ -133,6 +165,9 @@ def get_conditions(conditions: list[str]) -> str:
         return f'when {conditions[0]} is true'
 
     return 'when ' + ', '.join(conditions[:-1]) + f' and {conditions[-1]} are true'
+
+
+REF_SEPARATOR: Final[str] = '\nAlso here:\n'
 
 
 def report_error(
@@ -156,6 +191,17 @@ def report_error(
                 .replace("$cf_name", error["details"]["call_stack_entry"]["name"])
                 .replace("$callstack_entry",
                          get_callstack_entry(error["details"]["call_stack_entry"], text_info))
+            )
+        case 'SEM2.1':
+            output_file.write(
+                (templates_map[error_code] + "\n")
+                .replace("$df_true", error["details"]["initialized"]["true"])
+                .replace("$initialized", get_df_ref(error["details"]["initialized"], text_info, include_declared=True))
+                .replace(
+                    "$other_initializations",
+                    REF_SEPARATOR.join(
+                        get_df_ref_or_index_range(it, text_info) for it in error["details"]["other_initializations"])
+                )
             )
         case 'LUNA3' | 'LUNA03':
             output_file.write(
@@ -285,7 +331,10 @@ def report_error(
             output_file.write(
                 (templates_map[error_code] + '\n')
                 .replace('$df_name', error['details']['ranges'][0]['df']['df']['name'])
-                .replace('$initialization_loop1', get_index_range(error['details']['ranges'][0], text_info))
+                .replace(
+                    '$initialization_loop1',
+                    get_index_range(error['details']['ranges'][0], text_info, include_declared=True)
+                )
                 .replace('$initialization_loop2', get_index_range(error['details']['ranges'][1], text_info))
             )
         case 'LUNA36':
@@ -294,7 +343,7 @@ def report_error(
                 .replace("$expr", str(error["details"]["expression"]))
                 .replace("$callstack", get_callstack(error["details"]["callstack"], text_info))
             )
-        case 'LUNA38':
+        case 'LUNA38' | 'LUNA39':
             output_file.write(
                 (templates_map[error_code] + '\n')
                 .replace('$callstack', get_callstack(error['details']['for']['where'], text_info))
@@ -302,42 +351,31 @@ def report_error(
                 .replace('$first', error['details']['for']['first'])
                 .replace('$last', error['details']['for']['last'])
             )
-        case 'LUNA39':
+        case 'SEM3.1':
             output_file.write(
-                (templates_map[error_code] + '\n')
-                .replace('$callstack', get_callstack(error['details']['for']['where'], text_info))
-                .replace('$var', error['details']['for']['var'])
-                .replace('$first', error['details']['for']['first'])
-                .replace('$last', error['details']['for']['last'])
+                templates_map[error_code]
+                .replace('$df_true', error['details']['used']['true'])
+                .replace('$used', get_df_ref(error['details']['used'], text_info, include_declared=True))
+                .replace(
+                    '$initialized',
+                    REF_SEPARATOR.join(
+                        get_df_ref_or_index_range(it, text_info) for it in error['details']['initialized']
+                    )
+                )
             )
+            output_file.write('\n')
         case 'SEM3.3':
-            use_conditions = get_conditions(error['details'].get('use_conditions', []))
             output_file.write(
                 templates_map[error_code]
                 .replace('$df_name', error['details']['used']['df']['df']['name'])
-                .replace('$use_conditions', f' {use_conditions}' if use_conditions else '')
-                .replace('$consumption_loop', get_index_range(error['details']['used'], text_info))
-            )
-            output_file.write('\n')
-
-            for init, conditions in error['details']['initialized']:
-                conditions_str = get_conditions(conditions)
-                match init:
-                    case {'loop': _, **unused}:
-                        init_str = get_index_range(init, text_info)
-                    case {'df': _, 'true': _, 'local': _, 'where': _, **unused}:
-                        init_str = get_df_ref(init, text_info)
-                        # init_str = str(init)
-                    case _:
-                        raise NotImplementedError()
-
-                output_file.write(
-                    f'Initialized$init_conditions:\n$init'
-                    .replace('$init_conditions', f' {conditions_str}' if conditions_str else '')
-                    .replace('$init', init_str)
+                .replace('$used', get_index_range(error['details']['used'], text_info, include_declared=True))
+                .replace(
+                    '$initialized',
+                    REF_SEPARATOR.join(
+                        get_df_ref_or_index_range(it, text_info) for it in error['details']['initialized']
+                    )
                 )
-                output_file.write('\n')
-
+            )
             output_file.write('\n')
         case _:
             print(f'INTERNAL ERROR: error code "{error_code}" is not supported')

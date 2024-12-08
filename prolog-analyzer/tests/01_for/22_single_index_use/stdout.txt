@@ -1,0 +1,119 @@
+
+Running preprocessor
+
+Running prolog-analyzer         
+
+Generating output
+
+                                
+Found 5 errors:
+(1) warning[SEM3.1]: Consumed DF x[-1] might not have been initialized.
+Used:
+DF x[-1] in:
+  File "./main.fa", line 12, in main
+    sub main()
+  File "./main.fa", line 18, in consume
+    consume(x[-1])
+
+Initialized:
+DF x[(2 * i)] in:
+  File "./main.fa", line 12, in main
+    sub main()
+  File "./main.fa", line 15, in for
+    for i = 0..5
+  File "./main.fa", line 16, in int_set
+    int_set(x[2*i], i)
+
+from 0 to 10 with step 2 (with i from 0 to 5, step 2 and offset 0)
+Note: x declared in:
+  File "./main.fa", line 12, in main
+    sub main()
+
+
+(2) warning[SEM3.1]: Consumed DF x[11] might not have been initialized.
+Used:
+DF x[11] in:
+  File "./main.fa", line 12, in main
+    sub main()
+  File "./main.fa", line 19, in consume
+    consume(x[11])
+
+Initialized:
+DF x[(2 * i)] in:
+  File "./main.fa", line 12, in main
+    sub main()
+  File "./main.fa", line 15, in for
+    for i = 0..5
+  File "./main.fa", line 16, in int_set
+    int_set(x[2*i], i)
+
+from 0 to 10 with step 2 (with i from 0 to 5, step 2 and offset 0)
+Note: x declared in:
+  File "./main.fa", line 12, in main
+    sub main()
+
+
+(3) warning[SEM3.1]: Consumed DF x[N] might not have been initialized.
+Used:
+DF x[N] in:
+  File "./main.fa", line 12, in main
+    sub main()
+  File "./main.fa", line 20, in consume
+    consume(x[N])
+
+Initialized:
+DF x[(2 * i)] in:
+  File "./main.fa", line 12, in main
+    sub main()
+  File "./main.fa", line 15, in for
+    for i = 0..5
+  File "./main.fa", line 16, in int_set
+    int_set(x[2*i], i)
+
+from 0 to 10 with step 2 (with i from 0 to 5, step 2 and offset 0)
+Note: x declared in:
+  File "./main.fa", line 12, in main
+    sub main()
+
+
+(4) warning[SEM3.1]: Consumed DF y[1] might not have been initialized.
+Used:
+DF y[1] in:
+  File "./main.fa", line 12, in main
+    sub main()
+  File "./main.fa", line 25, in consume
+    consume(y[1])
+
+Initialized when (x > 0) is true:
+DF y[1] as x[index] in:
+  File "./main.fa", line 12, in main
+    sub main()
+  File "./main.fa", line 22, in if
+    if x > 0
+  File "./main.fa", line 23, in int_set_at
+    int_set_at(y, 1, 1)
+  File "./main.fa", line 5, in int_set
+    int_set(x[index], val)
+
+
+(5) warning[SEM3.1]: Consumed DF y[N] might not have been initialized.
+Used when (y[N] == 0) is true:
+DF y[N] in:
+  File "./main.fa", line 12, in main
+    sub main()
+  File "./main.fa", line 28, in if
+    if y[N] == 0
+
+Initialized when (x > 0) is true:
+DF y[1] as x[index] in:
+  File "./main.fa", line 12, in main
+    sub main()
+  File "./main.fa", line 22, in if
+    if x > 0
+  File "./main.fa", line 23, in int_set_at
+    int_set_at(y, 1, 1)
+  File "./main.fa", line 5, in int_set
+    int_set(x[index], val)
+
+
+

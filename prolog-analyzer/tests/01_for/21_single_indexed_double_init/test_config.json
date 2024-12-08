@@ -1,0 +1,33 @@
+{
+  "arrange": [],
+  "act": {
+    "command": "adapt --run prolog main.fa",
+    "can_fail": false
+  },
+  "assert": {
+    "stdout": {
+      "match_lines": [
+        "wc:Found 7 error*",
+        "wc:warning[SEM2.1]*DF x",
+        "wc:int_set(x[i], 1)",
+        "wc:int_set(x[i], 2)",
+        "wc:warning[SEM2.1]*DF y",
+        "wc:int_set(y[j], 1)",
+        "wc:int_set_at(y, j + 1 - 1, 2)",
+        "wc:warning[SEM2.1]*DF z",
+        "wc:int_set_at(z, i, 1)",
+        "wc:for k = 0..N",
+        "wc:int_set_at(z, k, k)",
+        "wc:warning[SEM2.1]*DF t",
+        "wc:int_set(t[k], 1)",
+        "wc:int_set_at(t, k - 7 + (2 * 3) + 1 - y * 0, 2)",
+        "wc:for m = 1..10",
+        "wc:int_set(t[m], m)"
+      ]
+    },
+    "stderr": {
+      "empty": true
+    },
+    "save": ["stderr", "stdout"]
+  }
+}

@@ -1,7 +1,7 @@
 {
   "arrange": [],
   "act": {
-    "command": "adapt --run prolog main.fa",
+    "command": "PROLOG_ANALYZER_OPTIONS=\"--ignore SEM3.1\" adapt --run prolog main.fa",
     "can_fail": false
   },
   "assert": {
@@ -10,25 +10,25 @@
         "wc:Found 6 error*",
         "wc:warning[SEM3.3]*DF x",
         "wc: x ",
-        "wc:Initialized *N*>*7",
-        "wc:Used *N*>*0",
+        "wc:x*when*N*>*7",
+        "wc:x*when*N*>*0",
         "wc:warning[SEM3.3]*DF z",
         "wc: z ",
-        "wc:Initialized *x*&&*y",
-        "wc:Used *y*&&*x*||*N*>*0",
+        "wc:z*when*x*&&*y",
+        "wc:z*when*y*&&*x*||*N*>*0",
         "wc:warning[SEM3.3]*DF t",
         "wc: t ",
-        "Initialized (?=.*\\(N \\> 0\\))(?=.*\\(\\(x\\[0\\] \\+ y\\[0\\]\\) \\> z\\[0\\]\\))",
-        "wc:Used *z[0]*<*x[*7*-*7*]*+*y[*N*0*]",
+        "t.* when .*(?=.*\\(N \\> 0\\))(?=.*\\(\\(x\\[0\\] \\+ y\\[0\\]\\) \\> z\\[0\\]\\))",
+        "wc:t*when*z[0]*<*x[*7*-*7*]*+*y[*N*0*]",
         "wc:warning[SEM3.3]*DF k",
         "wc: k ",
-        "Initialized (?=.*\\(x && y\\))(?=.*\\(z\\[0\\] < 10\\))",
-        "wc:Used *x*&&*10*>*z",
-        "wc:Used *z[0]*<*10*&&*t[42]*&&*x",
+        "k.* when .*(?=.*\\(x && y\\))(?=.*\\(z\\[0\\] < 10\\))",
+        "wc:k*when*x*&&*10*>*z",
+        "wc:k*when*z[0]*<*10*&&*t[42]*&&*x",
         "wc:warning[SEM3.3]*DF a",
         "wc: a ",
-        "wc:Initialized *N*>*0",
-        "wc:Used *N*<=*0"
+        "wc:a*when*N*>*0",
+        "wc:a*when*N*<=*0"
       ]
     },
     "stderr": {
