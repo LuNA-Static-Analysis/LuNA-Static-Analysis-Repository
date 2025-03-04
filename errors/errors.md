@@ -324,9 +324,9 @@ err>
 
 ## SYN8 - Повторное объявление имени
 
-В старой классификации: [LUNA13](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#13-df-%D1%81-%D0%BE%D0%B4%D0%B8%D0%BD%D0%B0%D0%BA%D0%BE%D0%B2%D1%8B%D0%BC%D0%B8-%D0%BD%D0%B0%D0%B7%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F%D0%BC%D0%B8-%D0%B2-%D0%BE%D0%B4%D0%BD%D0%BE%D0%B9-%D0%BE%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D0%B8-%D0%B2%D0%B8%D0%B4%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D0%B8)
+В старой классификации: [LUNA13](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#13-df-%D1%81-%D0%BE%D0%B4%D0%B8%D0%BD%D0%B0%D0%BA%D0%BE%D0%B2%D1%8B%D0%BC%D0%B8-%D0%BD%D0%B0%D0%B7%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F%D0%BC%D0%B8-%D0%B2-%D0%BE%D0%B4%D0%BD%D0%BE%D0%B9-%D0%BE%D0%B1%D0%BB%D0%B0%D1%81%D1%82%D0%B8-%D0%B2%D0%B8%D0%B4%D0%B8%D0%BC%D0%BE%D1%81%D1%82%D0%B8) 
 
-**Обнаруживает компилятор.**  
+### SYN8.1 - Повторное объявление базового имени
 
 Пример:
 ```
@@ -344,7 +344,95 @@ luna: compile error: redeclaration of x at ./luna8.fa:4
     ^--here
 ```
 
-Такая ошибка может быть порождена как оператором df, так и при порождении переменных let и итераторов for и while.
+### SYN8.2 - Повторное объявление имени в операторе for
+
+Пример:
+```
+import printint(int) as print;
+sub main() {
+    df i;
+    for i=1..2 {
+        print(i);
+    }
+}
+```
+
+Вывод luna:
+```
+luna: fatal error: run-time error: errcode=-6
+err> 0 ERROR:  get_int failed for type (unset) ./src/rts/df.cpp:165
+err> 0 ABORT 
+err> 0 ERROR:  get_int failed for type (unset) ./src/rts/df.cpp:165
+err> 0 ABORT 
+err> terminate called after throwing an instance of 'RuntimeError'
+err> terminate called after throwing an instance of 'RuntimeError'
+err>   what():  std::exception
+err>   what():  std::exception
+err> [Conngent:07362] *** Process received signal ***
+err> [Conngent:07362] Signal: Aborted (6)
+err> [Conngent:07362] Signal code:  (-6)
+err> 
+```
+
+Происходит падение, так как объявленный итератор i не перекрывает базовое имя, и используется неинициализированный ФД i.
+
+### SYN8.3 - Повторное объявление имени в операторе while
+
+Пример:
+```
+import printint(int) as print;
+sub main() {
+    df i, o;
+    while (1), i=1..out o {
+        print(i);
+    }
+}
+```
+Вывод luna:
+```
+luna: fatal error: run-time error: errcode=-6
+err> 0 ERROR:  get_int failed for type (unset) ./src/rts/df.cpp:165
+err> 0 ABORT 
+err> 0 ERROR:  get_int failed for type (unset) ./src/rts/df.cpp:165
+err> 0 ABORT 
+err> 0 ERROR:  get_int failed for type (unset) ./src/rts/df.cpp:165
+err> 0 ABORT 
+err> terminate called after throwing an instance of 'terminate called after throwing an instance of 'RuntimeErrorRuntimeError'
+err> '
+err> terminate called after throwing an instance of 'RuntimeError'
+err>   what():    what():  std::exception
+err>   what():  std::exception
+err> std::exception
+err> [Conngent:10360] *** Process received signal ***
+err> [Conngent:10360] Signal: Aborted (6)
+err> [Conngent:10360] Signal code:  (-6)
+err> [Conngent:10360] [ 0] /lib/x86_64-linux-gnu/libc.so.6(+0x42520)[0x7f768c536520]
+err> [Conngent:10360] [ 1] 
+```
+Аналогично SYN8.3, не происходит перекрытия имени внутри блока while.
+
+### SYN8.4 - Повторное объявление переменной let
+
+Пример:
+```
+import c_init_int(int, name) as init;
+import printfl(real) as printfl;
+sub main() {
+    df a, b;
+    init(1, a);
+    init(2, b);
+    let a = b {
+        printfl(a);
+        printfl(b);
+    }
+}
+```
+Вывод luna:
+```
+2.00000000000000
+2.00000000000000
+```
+Внутри блока let происходит перекрытие имён, а базовое имя a остаётся неиспользованным.
 
 ## SYN9 - Попытка использования необъявленного идентификатора
 
