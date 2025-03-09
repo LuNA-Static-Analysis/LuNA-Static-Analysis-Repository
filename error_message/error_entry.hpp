@@ -292,7 +292,7 @@ public:
   std::string dfs_to_json() const {
     if (dfs.size() == 0) return "";
 
-    if (error_code == "03" || error_code == "05" || error_code == "07" || error_code == "10" || error_code == "14") {
+    if (error_code == "SEM2" || error_code == "SEM3.1" || error_code == "SYN4" || error_code == "SEM4" || error_code == "SYN9") {
       return "\"df\" :" + dfs.at(0).to_json();
     }
     else {
@@ -311,7 +311,7 @@ public:
   std::string cfs_to_json() const {
     if (cfs.size() == 0) return "";
 
-    if (error_code == "02" || error_code == "04" || error_code == "06" || error_code == "17") {
+    if (error_code == "SYN2" || error_code == "SYN1" || error_code == "SYN3" || error_code == "SYN10") {
       return "\"cf\" :" + cfs.at(0).to_json();
     }
     else {
