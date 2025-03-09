@@ -31,7 +31,7 @@ public:
         std::vector<luna_sub_def *> duplicated = find_pairs<luna_sub_def *>(&luna_funcs);
 
         for (auto i : duplicated) {
-            details detail = details("16");
+            details detail = details("SYN6.2");
             detail.add_cf(cf(i->code_id_->to_string(), "struct", get_file(), i->line_));
             reporter_->report_json(detail);
         }

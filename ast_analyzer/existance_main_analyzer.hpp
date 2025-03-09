@@ -40,7 +40,7 @@ public:
 
         if (has_main) return false;
 
-        reporter_->report_json(details("12"));
+        reporter_->report_json(details("SYN7"));
 
         return true;
     }
