@@ -1,0 +1,9 @@
+C++ sub f(int x) ${{ printf("%d\n", x); $}}
+
+C++ sub set_real(name x, real v) ${{ x = v; $}}
+
+sub main() {
+    df x;
+    set_real(x, 42.73);
+    f(x);
+}
