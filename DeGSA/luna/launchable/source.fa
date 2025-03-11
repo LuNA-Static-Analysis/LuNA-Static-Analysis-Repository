@@ -1,12 +1,12 @@
 import c_init_int(int, name) as init;
-import printint(int) as print;
-sub foo(int f){
-        print(f);
+import printfl(real) as printfl;
+sub main() {
+    df a, b;
+    init(1, a);
+    init(2, b);
+    let a = b {
+        printfl(a);
+        printfl(b);
+    }
 }
-sub main(int m){
-        df a;
-        init(1, a);
-        for i = 0..a {
-                foo(i);
-        }
-}
+
