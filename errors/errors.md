@@ -434,6 +434,37 @@ sub main() {
 ```
 Внутри блока let происходит перекрытие имён, а базовое имя a остаётся неиспользованным.
 
+### SYN8.5 - Повторное объявление аргумента структурированного ФК
+
+Пример:
+```
+import printint(int) as print;
+sub foo(int a, int a){
+    print(a);
+}
+sub main() {
+    foo(1, 2);
+}
+```
+Вывод luna:
+```
+luna: fatal error: recom-generation failed (see below):
+Traceback (most recent call last):
+  File "/home/conngent/luna/scripts/../scripts/fcmp", line 1713, in <module>
+    content=Fa(ja).gen()
+  File "/home/conngent/luna/scripts/../scripts/fcmp", line 1679, in __init__
+    self.Subs[sub_name]=create_sub(self, sub_name)
+  File "/home/conngent/luna/scripts/../scripts/fcmp", line 1668, in create_sub
+    return SubStruct(fa, sub_name, None)
+  File "/home/conngent/luna/scripts/../scripts/fcmp", line 1608, in __init__
+    self.Regs.add_sub_param(i, arg['type'], arg['id'])
+  File "/home/conngent/luna/scripts/../scripts/fcmp", line 407, in add_sub_param
+    self._set_name_info(name, 'sub_param', {
+  File "/home/conngent/luna/scripts/../scripts/fcmp", line 395, in _set_name_info
+    assert type_ not in self._names[name]
+AssertionError
+```
+
 ## SYN9 - Попытка использования необъявленного идентификатора
 
 В старой классификации: [LUNA14](https://github.com/LuNA-Static-Analysis/LuNA-Static-Analysis-Repository/wiki/%D0%91%D0%B0%D0%B7%D0%B0-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA#14-%D0%BF%D0%BE%D0%BF%D1%8B%D1%82%D0%BA%D0%B0-%D0%B8%D1%81%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F-%D0%BD%D0%B5%D0%BE%D0%B1%D1%8A%D1%8F%D0%B2%D0%BB%D0%B5%D0%BD%D0%BD%D0%BE%D0%B3%D0%BE-%D1%84%D0%B4)
