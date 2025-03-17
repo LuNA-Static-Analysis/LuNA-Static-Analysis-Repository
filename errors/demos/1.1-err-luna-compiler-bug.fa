@@ -1,0 +1,5 @@
+C++ sub f(int x) ${{ printf("%d\n", x); $}}
+
+sub main() {
+    f("2.0");
+}

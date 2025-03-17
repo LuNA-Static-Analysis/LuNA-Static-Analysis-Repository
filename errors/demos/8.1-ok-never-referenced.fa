@@ -1,0 +1,7 @@
+C++ sub f(int x) ${{ printf("%d\n", x); $}}
+
+sub main() {
+    df x;
+
+    f(1);
+}

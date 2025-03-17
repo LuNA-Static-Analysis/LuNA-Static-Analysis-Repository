@@ -62,7 +62,7 @@ public:
         for (auto i : map) {
             if (i.second.size() <= 1) continue;
 
-            details detail = details("13");
+            details detail = details("SYN8");
             declared declared_ = declared();
 
             for (auto line : i.second) {

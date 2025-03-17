@@ -44,7 +44,7 @@ public:
 
             for (auto s : *scope) {
                 for (auto var : *s) {
-                    details d = details("10");
+                    details d = details("SEM4");
                     d.add_df(
                         df(
                             var->to_string(),
@@ -141,7 +141,7 @@ public:
                 check_(scope, cur_if->block_);
                 
                 for (auto var : *(scope->back())) {
-                    details d = details("10");
+                    details d = details("SEM4");
                     d.add_df(
                         df(
                             var->to_string(),
@@ -173,7 +173,7 @@ public:
                 check_(scope, cur_while->block_);
 
                 for (auto var : *(scope->back())) {
-                    details d = details("10");
+                    details d = details("SEM4");
                     d.add_df(
                         df(
                             var->to_string(),
@@ -203,7 +203,7 @@ public:
                 check_(scope, cur_for->block_);
 
                 for (auto var : *(scope->back())) {
-                    details d = details("10");
+                    details d = details("SEM4");
                     d.add_df(
                         df(
                             var->to_string(),
