@@ -23,7 +23,6 @@ std::string line, prev_line;
 uint tokens = 0;
 ast *ast_ = new ast();
 
-//todo wip: check and redo all of this, perhaps merge with master and overwrite
 int main(int argc, char **argv){
 
     auto realStart = std::chrono::steady_clock::now();
@@ -43,7 +42,7 @@ int main(int argc, char **argv){
             launchASTAnalyzer = true;
         } else if (arg == "-degsa"){
             launchDeGSA = true;
-        } else if (arg == "-o"){//todo unused
+        } else if (arg == "-o"){
             std::cout << arg << std::endl;
             if (i < argc - 1){
                 i++;
@@ -65,7 +64,7 @@ int main(int argc, char **argv){
         launchDeGSA = true;
     }
 
-    std::ofstream outputFile(outputFileName);//todo perhaps need to add name check
+    std::ofstream outputFile(outputFileName);
 
     auto astBuildStart = std::chrono::steady_clock::now();
     auto astBuildStartSystem = std::chrono::system_clock::now();
@@ -97,7 +96,7 @@ int main(int argc, char **argv){
     }
 
     out.close();
-//wip
+
     std::ofstream o;
         o.open("./reporter/found_errors.json");
 o << "[]";

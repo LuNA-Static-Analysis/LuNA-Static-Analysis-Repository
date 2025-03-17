@@ -166,6 +166,11 @@ def get_conditions(conditions: list[str]) -> str:
 
     return 'when ' + ', '.join(conditions[:-1]) + f' and {conditions[-1]} are true'
 
+def get_typed_id(
+        typed_id: dict[str, Any],
+        text_info: TextInfo
+) -> str:
+    return f'Name: {typed_id["name"]}\nType: {typed_id["type"]}\nAt: {get_callstack_entry(typed_id["call_stack_entry"], text_info)}'
 
 REF_SEPARATOR: Final[str] = '\nAlso here:\n'
 
@@ -178,21 +183,126 @@ def report_error(
 ) -> None:
     error_code: str = error['error_code']
     match error_code.upper():
-        case 'SYN1':
+        case 'SYN1':#done
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$callstack_entry",
                          get_callstack_entry(error["details"]["call_stack_entry"], text_info))
                 .replace("$cf", get_cf(error["details"]["cf"]))
             )
-        case 'SYN2':
+        case 'SYN2':#done
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$cf_name", error["details"]["call_stack_entry"]["name"])
                 .replace("$callstack_entry",
                          get_callstack_entry(error["details"]["call_stack_entry"], text_info))
             )
-        case 'SEM2.1':
+        case 'SYN3':#done
+            output_file.write(
+                (templates_map[error_code] + "\n")
+                .replace("$cf_name", error["details"]["cf"]["name"])
+                .replace("$callstack_entry",
+                         get_callstack_entry(error["details"]["call_stack_entry"], text_info))
+                .replace("$cf", get_cf(error["details"]["cf"]))
+            )
+        case 'SYN4':#done
+            output_file.write(
+                (templates_map[error_code] + "\n")
+                .replace("$callstack_entry",
+                         get_callstack_entry(error["details"]["call_stack_entry"], text_info))
+            )
+        #case 'SYN5.1': #todo
+        case 'SYN5.2':#done
+            output_file.write(
+                (templates_map[error_code] + "\n")
+                .replace("$typed_id",
+                         get_typed_id(error["details"]["typed_id"], text_info))
+            )
+
+        case 'SYN5.3':#done
+            output_file.write(
+                (templates_map[error_code] + "\n")
+                .replace('$df', get_df(error['details']['df'], text_info, include_name=False))
+            )
+
+        case 'SYN5.4' | 'SYN5.5':#done
+            output_file.write(
+                (templates_map[error_code] + "\n")
+                .replace("$cf", get_cf(error["details"]["cf"]))
+            )
+
+        case 'SYN5.6':#done
+            output_file.write(
+                (templates_map[error_code] + "\n")
+                .replace("$cf", get_cf(error["details"]["cf"]))
+                .replace("$typed_id",
+                         get_typed_id(error["details"]["typed_id"], text_info))
+            )
+
+        case 'SYN5.7' | 'SYN5.8':#done
+            output_file.write(
+                (templates_map[error_code] + "\n")
+                .replace("$callstack_entry",
+                         get_callstack_entry(error["details"]["call_stack_entry"], text_info))
+                .replace("$typed_id",
+                         get_typed_id(error["details"]["typed_id"], text_info))
+            )
+
+        case 'SYN6.1' | 'SYN6.2':#done
+            output_file.write(
+                (templates_map[error_code] + "\n")
+                .replace("$cfs", get_all_cfs(error["details"]["cfs"]))
+            )
+
+            
+        case 'SYN7':#done
+            output_file.write(
+                (templates_map[error_code] + "\n\n"))
+            
+        case 'SYN8.1' | 'SYN8.2' | 'SYN8.3' | 'SYN8.4':#done
+            output_file.write(
+                (templates_map[error_code] + "\n")
+                .replace("$id_name", error["details"]["id_name"])
+                .replace("$callstack_entry",
+                         get_callstack_entry(error["details"]["call_stack_entry"], text_info))
+            )
+
+        case 'SYN9':#done
+            output_file.write(
+                (templates_map[error_code] + '\n')
+                .replace('$df_name', error['details']['df']['name'])
+                .replace('$df', get_df(error['details']['df'], text_info, include_name=False))
+            )
+
+        case 'SYN10':#done
+            output_file.write(
+                (templates_map[error_code] + "\n")
+                .replace("$cf", get_cf(error["details"]["cf"]))
+            )
+
+        case 'SYN11':#done
+            output_file.write(
+                (templates_map[error_code] + "\n")
+                .replace("$expr", str(error["details"]["expression"]))
+                .replace("$callstack", get_callstack(error["details"]["callstack"], text_info))
+            )
+
+        case 'SYN12':#done
+            output_file.write(
+                (templates_map[error_code] + "\n")
+                .replace("$cf", get_cf(error["details"]["cf"]))
+            )
+
+
+
+        case 'SEM1':#done
+            output_file.write(
+                (templates_map[error_code] + '\n')
+                .replace("$cf", get_cf(error["details"]["cf"]))
+                .replace('$df', get_df(error['details']['df'], text_info, include_name=False))
+            )
+
+        case 'SEM2.1':#done
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$df_true", error["details"]["initialized"]["true"])
@@ -203,130 +313,8 @@ def report_error(
                         get_df_ref_or_index_range(it, text_info) for it in error["details"]["other_initializations"])
                 )
             )
-        case 'SYN3':#todo check!
-            output_file.write(
-                (templates_map[error_code] + "\n")
-                .replace("$cf_name", error["details"]["cf"]["name"])
-                .replace("$callstack_entry", get_cf(error["details"]["cf"]))
-                .replace("$cf", get_cf(error["details"]["cf"]))
-            )
-        case 'SYN4':
-            output_file.write(
-                (templates_map[error_code] + "\n")
-                .replace("$callstack_entry",
-                         get_callstack_entry(error["details"]["call_stack_entry"], text_info))
-            )
-        case 'LUNA3' | 'LUNA03':
-            output_file.write(
-                (templates_map[error_code] + "\n")
-                .replace("$df_name", error["details"]["df"]["name"])
-                .replace("$decl_callstacks",
-                         get_all_callstacks(error["details"]["df"]["declared"], text_info))
-                .replace("$uses_callstacks",
-                         get_all_callstacks(error["details"]["df"]["used"], text_info))
-                .replace("$defs_callstacks",
-                         get_all_callstacks(error["details"]["df"]["initialized"], text_info))
-            )
-        case 'LUNA5' | 'LUNA05':
-            output_file.write(
-                (templates_map[error_code] + '\n')
-                .replace('$df_name', error['details']['df']['name'])
-                .replace('$df', get_df(error['details']['df'], text_info, include_name=False))
-            )
-        case 'LUNA7' | 'LUNA07':
-            output_file.write(
-                (templates_map[error_code] + "\n")
-                .replace("$decl_callstacks",
-                         get_all_callstacks(error["details"]["df"]["declared"], text_info))
-            )
-        case 'LUNA9' | 'LUNA09':
-            output_file.write((templates_map[error_code] + "\n\n"))
-        case 'SEM4':
-            output_file.write(
-                (templates_map[error_code] + '\n')
-                .replace('$df_name', error['details']['df']['name'])
-                .replace('$df', get_df(error['details']['df'], text_info, include_name=False))
-            )
-        case 'SYN6.1' | 'SYN6.2':
-            output_file.write(
-                (templates_map[error_code] + "\n")
-                .replace("$cfs", get_all_cfs(error["details"]["cfs"]))
-            )
-        case 'SYN7':
-            output_file.write(
-                (templates_map[error_code] + "\n\n"))
-        case 'SYN8':
-            output_file.write(
-                (templates_map[error_code] + "\n")
-                .replace("$dfs", get_all_dfs(error["details"]["dfs"], text_info))
-            )
-        case 'SYN9':
-            output_file.write(
-                (templates_map[error_code] + '\n')
-                .replace('$df_name', error['details']['df']['name'])
-                .replace('$df', get_df(error['details']['df'], text_info, include_name=False))
-            )
-        case 'LUNA15':  # TODO
-            output_file.write((templates_map[error_code] + "\n\n"))
-        case 'LUNA16':
-            output_file.write(
-                (templates_map[error_code] + "\n")
-                .replace("$cf_name", error["details"]["cfs"][0]["name"])
-                .replace("$cfs", get_all_cfs(error["details"]["cfs"]))
-            )
-        case 'LUNA17':
-            output_file.write(
-                (templates_map[error_code] + "\n")
-                .replace("$cf", get_cf(error["details"]["cf"]))
-            )
-        case 'SEM5':
-            output_file.write(
-                (templates_map[error_code] + "\n")
-                .replace("$bool", str(error["details"]["type"]))
-                .replace("$expr", str(error["details"]["condition"]))
-                .replace("$callstack_entry", get_callstack_entry(error["details"]["where"], text_info))
-            )
-        case 'LUNA24':
-            output_file.write(
-                (templates_map[error_code] + "\n")
-                .replace("$bool", str(error["details"]["type"]))
-                .replace("$expr", str(error["details"]["condition"]))
-                .replace("$callstack_entry", get_callstack_entry(error["details"]["where"], text_info))
-            )
-        case 'SEM7':
-            output_file.write(
-                (templates_map[error_code] + "\n")
-                .replace("$index", str(error["details"]["arg_index"]))
-                .replace("$expr", str(error["details"]["bad_expr"]))
-                .replace("$callstack_entry", get_callstack_entry(error["details"]["where"], text_info))
-            )
-        case 'LUNA26':
-            output_file.write(
-                (templates_map[error_code] + "\n")
-                .replace("$expr", str(error["details"]["expression"]))
-                .replace("$cf", get_cf(error["details"]["cf"]))
-                .replace("$callstack", get_callstack(error["details"]["callstack"], text_info))
-            )
-        case 'LUNA27':  # TODO
-            output_file.write((templates_map[error_code] + "\n\n"))
-        case 'LUNA28':  # TODO
-            output_file.write((templates_map[error_code] + "\n\n"))
-        case 'LUNA29':  # TODO
-            output_file.write((templates_map[error_code] + "\n\n"))
-        case 'LUNA30':  # TODO
-            output_file.write((templates_map[error_code] + "\n\n"))
-        case 'LUNA31':  # TODO
-            output_file.write((templates_map[error_code] + "\n\n"))
-        case 'LUNA32':  # TODO
-            output_file.write((templates_map[error_code] + "\n\n"))
-        case 'LUNA33':  # TODO
-            output_file.write((templates_map[error_code] + "\n\n"))
-        case 'SEM8':
-            output_file.write(
-                (templates_map[error_code] + '\n')
-                .replace('$callstack', get_callstack_entry(error['details']['call_stack_entry'], text_info))
-            )
-        case 'SEM2.2':
+
+        case 'SEM2.2':#done
             output_file.write(
                 (templates_map[error_code] + '\n')
                 .replace('$df_name', error['details']['ranges'][0]['df']['df']['name'])
@@ -336,23 +324,10 @@ def report_error(
                 )
                 .replace('$initialization_loop2', get_index_range(error['details']['ranges'][1], text_info))
             )
-        case 'LUNA36':
-            output_file.write(
-                (templates_map[error_code] + "\n")
-                .replace("$expr", str(error["details"]["expression"]))
-                .replace("$callstack", get_callstack(error["details"]["callstack"], text_info))
-            )
-        case 'LUNA38' | 'LUNA39':
+
+        case 'SEM3.1':#done
             output_file.write(
                 (templates_map[error_code] + '\n')
-                .replace('$callstack', get_callstack(error['details']['for']['where'], text_info))
-                .replace('$var', error['details']['for']['var'])
-                .replace('$first', error['details']['for']['first'])
-                .replace('$last', error['details']['for']['last'])
-            )
-        case 'SEM3.1':
-            output_file.write(
-                templates_map[error_code]
                 .replace('$df_true', error['details']['used']['true'])
                 .replace('$used', get_df_ref(error['details']['used'], text_info, include_declared=True))
                 .replace(
@@ -362,10 +337,15 @@ def report_error(
                     )
                 )
             )
-            output_file.write('\n')
-        case 'SEM3.3':
+        
+        case 'SEM3.2':#todo
             output_file.write(
-                templates_map[error_code]
+                (templates_map[error_code] + '\n')
+            )
+
+        case 'SEM3.3':#done
+            output_file.write(
+                (templates_map[error_code] + '\n')
                 .replace('$df_name', error['details']['used']['df']['df']['name'])
                 .replace('$used', get_index_range(error['details']['used'], text_info, include_declared=True))
                 .replace(
@@ -375,7 +355,66 @@ def report_error(
                     )
                 )
             )
-            output_file.write('\n')
+        
+        case 'SEM3.4':#todo
+            output_file.write(
+                (templates_map[error_code] + '\n')
+            )
+
+        case 'SEM3.5':#todo
+            output_file.write(
+                (templates_map[error_code] + '\n')
+            )
+
+        case 'SEM3.6':#todo
+            output_file.write(
+                (templates_map[error_code] + '\n')
+            )
+
+        case 'SEM4':#done
+            output_file.write(
+                (templates_map[error_code] + '\n')
+                .replace('$df_name', error['details']['df']['name'])
+                .replace('$df', get_df(error['details']['df'], text_info, include_name=False))
+            )
+
+        case 'SEM5' | 'SEM6':#done
+            output_file.write(
+                (templates_map[error_code] + "\n")
+                .replace("$bool", str(error["details"]["type"]))
+                .replace("$expr", str(error["details"]["condition"]))
+                .replace("$callstack_entry", get_callstack_entry(error["details"]["where"], text_info))
+            )
+
+        case 'SEM7':#done
+            output_file.write(
+                (templates_map[error_code] + "\n")
+                .replace("$index", str(error["details"]["arg_index"]))
+                .replace("$expr", str(error["details"]["bad_expr"]))
+                .replace("$callstack_entry", get_callstack_entry(error["details"]["where"], text_info))
+            )
+
+        case 'SEM8':#done
+            output_file.write(
+                (templates_map[error_code] + '\n')
+                .replace('$callstack', get_callstack(error['details']['call_stack'], text_info))
+            )
+
+        case 'SEM9':#todo
+            output_file.write(
+                (templates_map[error_code] + '\n')
+            )
+        
+        case 'SEM10':#todo
+            output_file.write(
+                (templates_map[error_code] + '\n')
+            )
+
+        case 'SEM11':#todo
+            output_file.write(
+                (templates_map[error_code] + '\n')
+            )
+        
         case _:
             print(f'INTERNAL ERROR: error code "{error_code}" is not supported')
 
