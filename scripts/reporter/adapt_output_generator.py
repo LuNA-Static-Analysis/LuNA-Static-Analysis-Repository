@@ -178,11 +178,11 @@ def report_error(
 ) -> None:
     error_code: str = error['error_code']
     match error_code.upper():
-        case 'LUNA1' | 'LUNA01':
+        case 'SYN1':
             output_file.write(
                 (templates_map[error_code] + "\n")
-                .replace("$cf_name", error["details"]["cf"]["name"])
-                .replace("$callstack_entry", get_cf(error["details"]["cf"]))
+                .replace("$callstack_entry",
+                         get_callstack_entry(error["details"]["call_stack_entry"], text_info))
                 .replace("$cf", get_cf(error["details"]["cf"]))
             )
         case 'SYN2':
@@ -203,6 +203,19 @@ def report_error(
                         get_df_ref_or_index_range(it, text_info) for it in error["details"]["other_initializations"])
                 )
             )
+        case 'SYN3':#todo check!
+            output_file.write(
+                (templates_map[error_code] + "\n")
+                .replace("$cf_name", error["details"]["cf"]["name"])
+                .replace("$callstack_entry", get_cf(error["details"]["cf"]))
+                .replace("$cf", get_cf(error["details"]["cf"]))
+            )
+        case 'SYN4':
+            output_file.write(
+                (templates_map[error_code] + "\n")
+                .replace("$callstack_entry",
+                         get_callstack_entry(error["details"]["call_stack_entry"], text_info))
+            )
         case 'LUNA3' | 'LUNA03':
             output_file.write(
                 (templates_map[error_code] + "\n")
@@ -214,25 +227,11 @@ def report_error(
                 .replace("$defs_callstacks",
                          get_all_callstacks(error["details"]["df"]["initialized"], text_info))
             )
-        case 'SYN1':
-            output_file.write(
-                (templates_map[error_code] + "\n")
-                .replace("$callstack_entry",
-                         get_callstack_entry(error["details"]["call_stack_entry"], text_info))
-                .replace("$cf", get_cf(error["details"]["cf"]))
-            )
         case 'LUNA5' | 'LUNA05':
             output_file.write(
                 (templates_map[error_code] + '\n')
                 .replace('$df_name', error['details']['df']['name'])
                 .replace('$df', get_df(error['details']['df'], text_info, include_name=False))
-            )
-        case 'SYN3':
-            output_file.write(
-                (templates_map[error_code] + "\n")
-                .replace("$cf_name", error["details"]["cf"]["name"])
-                .replace("$callstack_entry", get_cf(error["details"]["cf"]))
-                .replace("$cf", get_cf(error["details"]["cf"]))
             )
         case 'LUNA7' | 'LUNA07':
             output_file.write(
