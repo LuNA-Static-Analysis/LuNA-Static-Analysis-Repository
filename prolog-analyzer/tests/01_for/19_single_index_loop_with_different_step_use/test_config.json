@@ -1,7 +1,7 @@
 {
   "arrange": [],
   "act": {
-    "command": "PROLOG_ANALYZER_OPTIONS=\"--ignore SEM3.1\" adapt --run prolog main.fa",
+    "command": "adapt --run prolog main.fa",
     "can_fail": false
   },
   "assert": {

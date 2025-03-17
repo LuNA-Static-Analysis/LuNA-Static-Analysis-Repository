@@ -74,9 +74,11 @@ format_index_range(Range, FormattedRange) :-
     format_for(Loop, FormattedFor),
     format_expression_decode(Step, StepDict),
     format_expression_decode(Offset, OffsetDict),
-    arithmetic:linear_expression(TrueLower, Loop.'first', Step, Offset),
+    get_dict('first', Loop, LoopFirst),
+    arithmetic:linear_expression(TrueLower, LoopFirst, Step, Offset),
     format_expression_decode(TrueLower, TrueLowerRepr),
-    arithmetic:linear_expression(TrueUpper, Loop.'last', Step, Offset),
+    get_dict('last', Loop, LoopLast),
+    arithmetic:linear_expression(TrueUpper, LoopLast, Step, Offset),
     format_expression_decode(TrueUpper, TrueUpperRepr),
     FormattedRange = index_range{
         'df': FormattedDf,
@@ -97,6 +99,8 @@ format_df(Df, FormattedDf) :-
         'where': WhereEs
     },
     execution_sequence:to_call_stack(WhereEs, WhereCs),
+    execution_sequence:conditions(WhereEs, Conditions),
+    maplist(format_expression_decode, Conditions, FormattedConditions),
 
     base_name(True, BaseName),
     encode:decode_name(BaseName, DeclaredCsIds, DecodedBaseName),
@@ -113,5 +117,6 @@ format_df(Df, FormattedDf) :-
         },
         'local': LocalDict,
         'true': TrueDict,
-        'where': WhereCs
+        'where': WhereCs,
+        'conditions': FormattedConditions
     }.

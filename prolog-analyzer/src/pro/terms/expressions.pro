@@ -34,7 +34,7 @@ repr(Expression, Repr) :-
     !.
 repr([Op, Arg], Repr) :-
     repr(Arg, ArgRepr),
-    atomics_to_string(["(", Op, " ", ArgRepr, ")"], "", Repr),
+    atomics_to_string([Op, ArgRepr], "", Repr),
     !.
 repr([Op, Lhs, Rhs], Repr) :-
     repr(Lhs, LshRepr),

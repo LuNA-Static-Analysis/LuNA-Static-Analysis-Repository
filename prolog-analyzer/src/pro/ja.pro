@@ -8,6 +8,7 @@
     dfs/2,
     body/2,
     parent/2,
+    ancestor/2,
     parent_body/2,
     arity/2,
     input_parameter/2,
@@ -45,6 +46,12 @@ body(SubroutineId, Body) :-
 parent(StatementId, ParentId) :-
     body(ParentId, ParentBody),
     member(StatementId, ParentBody).
+
+ancestor(StatementId, AncestorId) :-
+    parent(StatementId, AncestorId), !.
+ancestor(StatementId, AncestorId) :-
+    parent(StatementId, ParentId),
+    ancestor(ParentId, AncestorId), !.
 
 parent_body(StatementId, Body) :-
     body(_, Body),
