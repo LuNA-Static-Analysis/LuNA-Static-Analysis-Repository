@@ -28,9 +28,11 @@
   "LUNA31": "error[LUNA31]: No \"nfparam\" value given.",
   "LUNA32": "error[LUNA32]: Attempt to request DF from node where it is not present.",
   "LUNA33": "error[LUNA33]: Unfitting parameter for \"nfparam\".",
-  "SEM2.2": "warning[SEM2.2]: Possible overlap of initialization loops for DF $df_name.\nInitialized:\n$initialization_loop1Also here:\n$initialization_loop2",
+  "SEM2.1": "warning[SEM2.1]: Possible repeated initialization of single DF $df_true.\nInitialized:\n$initialized\nAlso here:\n$other_initializations",
+  "SEM2.2": "warning[SEM2.2]: Possible overlap of initialization loops for DF $df_name.\nInitialized:\n$initialization_loop1\nAlso here:\n$initialization_loop2",
   "LUNA36": "error[LUNA36]: Attempt to index an identifier $expr that is not a DF.\n- Callstack:\n$callstack",
-  "SEM3.3": "warning[SEM3.3]: Consumed index range might not have been initialized for DF $df_name.\nUsed$use_conditions:\n$consumption_loop",
+  "SEM3.1": "warning[SEM3.1]: Consumed DF $df_true might not have been initialized.\nUsed:\n$used\nInitialized:\n$initialized",
+  "SEM3.3": "warning[SEM3.3]: Consumed index range might not have been initialized for DF $df_name.\nUsed:\n$used\nInitialized:\n$initialized",
   "LUNA38": "warning[LUNA38]: Invalid loop boundaries. \n -For: It: \"$var\". First: \"$first\". Last: \"$last\". \n- Callstack:\n$callstack",
   "LUNA39": "warning[LUNA39]: Using non-integer variables within loop boundaries. \n- For: It: \"$var\". First: \"$first\". Last: \"$last\". \n- Callstack:\n$callstack"
    

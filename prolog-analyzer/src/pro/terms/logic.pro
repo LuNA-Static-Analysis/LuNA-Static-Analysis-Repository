@@ -8,6 +8,7 @@
     bool_used_as_number/3,
     condition_normalize/2,
     condition_formula/4,
+    flatten/3,
     and/2
 ]).
 
@@ -253,6 +254,15 @@ satisfiable(Cond) :-
 %    writef("%t\n", [ClpbTerm]),
     clpb:sat(ClpbTerm),
     !.
+
+flatten([Op|Args], Op, Result) :-
+    length(Args, ArgsCount),
+    length(Ops, ArgsCount),
+    maplist(=(Op), Ops),
+    maplist(flatten, Args, Ops, FlatArgs),
+    append(FlatArgs, Result),
+    !.
+flatten(Cond, _, [Cond]) :- true, !.
 
 and([], 1) :- true, !.
 and([Cond], Cond) :- true, !.

@@ -1,0 +1,32 @@
+C++ sub int_set(name x, int val) ${{ x = val; $}}
+C++ sub consume(value v) ${{$}}
+
+sub int_set_at(name x, int index, int val) {
+    int_set(x[index], val);
+}
+
+// TODO infer index ranges for single inits from conditions
+sub main() {
+    df x, y, z, i, j, N;
+
+    int_set(x[i], 1);
+    int_set(x[i], 2);
+
+    int_set(y[j], 1);
+    int_set_at(y, j + 1 - 1, 2);
+
+    int_set_at(z, i, 1);
+    for k = 0..N {
+        int_set_at(z, k, k);
+    }
+
+    for k = 0..N {
+        df t;
+        int_set(t[k], 1);
+        int_set_at(t, k - 7 + (2 * 3) + 1 - y * 0, 2);
+
+        for m = 1..10 {
+            int_set(t[m], m);
+        }
+    }
+}

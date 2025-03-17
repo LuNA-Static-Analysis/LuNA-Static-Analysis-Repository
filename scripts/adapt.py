@@ -110,6 +110,7 @@ def main(
                     '--errors-file', errors_file,
                     '--output-dir', prolog_analyzer_output_dir,
                     '--no-cleanup',
+                    *os.environ.get('PROLOG_ANALYZER_OPTIONS', '').split(),
                     luna_src
                 ],
                 env=os.environ | {'PROLOG_ANALYZER_HOME': ADAPT_HOME / 'prolog-analyzer'},

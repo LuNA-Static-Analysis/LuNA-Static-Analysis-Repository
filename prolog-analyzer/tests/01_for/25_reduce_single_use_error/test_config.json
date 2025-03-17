@@ -1,13 +1,15 @@
 {
   "arrange": [],
   "act": {
-    "command": "PROLOG_ANALYZER_OPTIONS=\"--ignore SEM3.1\" adapt --run prolog main.fa",
+    "command": "adapt --run prolog main.fa",
     "can_fail": false
   },
   "assert": {
     "stdout": {
       "match_lines": [
-        "wc:No errors found"
+        "wc:Found 2 error*",
+        "wc:warning[SEM3.1]*DF x[1]",
+        "wc:warning[SEM3.1]*DF acc[N]"
       ]
     },
     "stderr": {

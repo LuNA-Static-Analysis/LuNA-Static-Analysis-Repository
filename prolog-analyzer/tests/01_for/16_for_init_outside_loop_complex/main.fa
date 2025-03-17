@@ -30,7 +30,7 @@ sub main() {
         init(y[3], 2);
     }
     init(y[5], 1);
-    if x[1] {
+    if z[$Z_STEP * N - $Z_STEP * 1] {
         init(y[7], 1);
     }
     init(y[9], 3);

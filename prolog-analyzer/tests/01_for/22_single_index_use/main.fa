@@ -1,0 +1,46 @@
+C++ sub int_set(name x, int val) ${{ x = val; $}}
+C++ sub consume(value v) ${{$}}
+
+sub int_set_at(name x, int index, int val) {
+    int_set(x[index], val);
+}
+
+sub consume_at(name x, int index) {
+    consume(x[index]);
+}
+
+sub main() {
+    df x, y, z, t, N;
+
+    for i = 0..5 {
+        int_set(x[2*i], i);
+    }
+    consume(x[-1]);
+    consume(x[11]);
+    consume(x[N]);
+
+    if x > 0 {
+        int_set_at(y, 1, 1);
+    }
+    consume(y[1]);
+
+    int_set(z[N], N);
+    if y[N] == 0 {
+        consume_at(z, N + 1 * 0);
+    }
+
+    for j = 1..10 {
+        int_set_at(t, j, j);
+    }
+
+    consume_at(t, 1);
+    consume_at(t, 2);
+    consume_at(t, 3);
+    consume_at(t, 4);
+    consume_at(t, 5);
+    consume_at(t, 6);
+    consume_at(t, 7);
+    consume_at(t, 8);
+    consume_at(t, 9);
+    consume_at(t, 10);
+}

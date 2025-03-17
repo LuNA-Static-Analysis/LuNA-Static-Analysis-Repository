@@ -64,6 +64,12 @@ import click
     default=False,
     help='Do not delete generated files.'
 )
+@click.option(
+    '--ignore',
+    type=str,
+    required=False,
+    multiple=True
+)
 @click.argument(
     'luna-src',
     nargs=-1,
@@ -79,6 +85,7 @@ def main(
         output_dir: Path,
         errors_file: Path | None,
         no_cleanup: bool,
+        ignore: list[str],
         luna_src: tuple[Path, ...]
 ) -> None:
     prolog_analyzer_home = Path(os.environ.get('PROLOG_ANALYZER_HOME', str(Path.cwd())))
@@ -152,7 +159,8 @@ def main(
                 '-t', 'main',
                 'src/pro/run.pro',
                 '--',
-                facts_file, new_errors_file
+                facts_file, new_errors_file,
+                *ignore
             ],
             cwd=str(prolog_analyzer_home),
             capture_output=True,
