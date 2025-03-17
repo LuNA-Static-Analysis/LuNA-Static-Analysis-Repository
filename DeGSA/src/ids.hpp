@@ -25,27 +25,44 @@ protected:
 
 public:
 
-    Vertex* getVertex() { return m_vertex; };
+    Vertex* getVertex() const { return m_vertex; };
 
-    Expression* getReference() { return m_reference; };
+    Expression* getReference() const { return m_reference; };
 
-    std::string getName() { return m_name; };
+    std::string getName() const { return m_name; };
 
-    ValueType getValueType() {
+    ValueType getValueType() {//todo perhaps should be const?
         if (m_valueType == notCalculated)
         calculateValueType();
         return m_valueType; 
     };
 
-    IdentifierClass getClass() { return m_identifierClass; };
+    std::string getValueTypeAsString() const {
+        switch(m_valueType){
+            case intType:
+                return "int";
+            case realType:
+                return "real";
+            case stringType:
+                return "string";
+            case valueType:
+                return "value";
+            case nameType:
+                return "name";
+            default:
+                return "unknown";
+        }
+    }
+
+    IdentifierClass getClass() const { return m_identifierClass; };
 
     //todo check how this works actuaaly; perhaps use const &; also returning and creating a lot if string reports is retarded
-    std::set<Vertex*> getUseSet() { return m_useSet; };
+    std::set<Vertex*> getUseSet() const { return m_useSet; };
 
-    std::set<Vertex*> getDefSet() { return m_defSet; };
+    std::set<Vertex*> getDefSet() const { return m_defSet; };
 
     //todo wth is this
-    virtual int getLine();
+    virtual int getLine() const;
 
     //void setVertex(Vertex* currentVertex) { m_vertex = currentVertex; };
 

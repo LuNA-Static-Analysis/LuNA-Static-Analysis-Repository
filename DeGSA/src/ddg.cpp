@@ -60,11 +60,13 @@ class DDG {
                     }
 
                     auto subCFDecl = CFDECLARATIONS.find(subName);
+                    CFDeclaration* newDeclaration = new CFDeclaration(subName, subCF, declaredArgs, subDecl->block_, subDecl->line_, fileName);
                     if (subCFDecl != CFDECLARATIONS.end()) {
-                        REPORTS.push_back(JsonReporter::createSYN6_2(&(subCFDecl->second)));
+
+                        REPORTS.push_back(JsonReporter::createSYN6_2(subCFDecl->second, newDeclaration));
                         CFDECLARATIONS.erase(subName); // LuNA overwrites declarations with same names and uses the last one
                     }
-                    CFDECLARATIONS.insert( { subName, CFDeclaration(subName, subCF, declaredArgs, subDecl->block_, subDecl->line_) } );
+                    CFDECLARATIONS.insert( { subName, newDeclaration } );
 
                 } else if (importDecl != NULL) { // found an import
 
@@ -95,11 +97,12 @@ class DDG {
                     }
 
                     auto importCFDecl = CFDECLARATIONS.find(importName);
+                    CFDeclaration* newDeclaration = new CFDeclaration(importName, importCF, declaredArgs, nullptr, importDecl->line_, fileName);
                     if (importCFDecl != CFDECLARATIONS.end()) {
-                        REPORTS.push_back(JsonReporter::createSYN6_1(&(importCFDecl->second)));
+                        REPORTS.push_back(JsonReporter::createSYN6_1(importCFDecl->second, newDeclaration));
                         CFDECLARATIONS.erase(importName); // LuNA overwrites declarations with same names and uses the last one
                     }
-                    CFDECLARATIONS.insert( { importName, CFDeclaration(importName, importCF, declaredArgs, nullptr, importDecl->line_) } );
+                    CFDECLARATIONS.insert( { importName, newDeclaration } );
 
                 } else {
                     std::cout << "INTERNAL ERROR: unknown CF of name " + subDef->to_string() 
@@ -185,14 +188,14 @@ class DDG {
         // SYN5.4, SYN5.5
         void checkUnusedCFs(){
             for (auto cfDeclaration : CFDECLARATIONS){
-                if (!cfDeclaration.second.isUsed) {
-                    if (cfDeclaration.second.type == importCF)
+                if (!cfDeclaration.second->isUsed) {
+                    if (cfDeclaration.second->type == importCF)
                         REPORTS.push_back(JsonReporter::createSYN5_4(
-                            &(cfDeclaration.second)
+                            cfDeclaration.second
                         ));
                     else
                         REPORTS.push_back(JsonReporter::createSYN5_5(
-                            &(cfDeclaration.second)
+                            cfDeclaration.second
                         ));
                 }
             }
@@ -517,21 +520,16 @@ class DDG {
             // 2. create all the vertices
             auto mainDeclaration = CFDECLARATIONS.find("main");
             if (mainDeclaration != CFDECLARATIONS.end()) {
-                CFDECLARATIONS.find("main")->second.isUsed = true;
-                SubVertex* mainVertex = new SubVertex("main", nullptr, subVF, 1, mainDeclaration->second.line, fileName, mainDeclaration->second.cfBlock, nullptr, {}, {}, {}, mainDeclaration->second.declaredArgs);
+                CFDECLARATIONS.find("main")->second->isUsed = true;
+                SubVertex* mainVertex = new SubVertex("main", nullptr, subVF, 1, mainDeclaration->second->line, fileName, mainDeclaration->second->cfBlock, nullptr, mainDeclaration->second, {}, {}, {}, mainDeclaration->second->declaredArgs);
                 VERTICES.push_back(mainVertex);
                 mainVertex->initializeVertex();
                 std::cout << "Created a [MAIN] vertex: " << mainVertex << std::endl;
             } else {
                 REPORTS.push_back(JsonReporter::createSYN7());
                 std::cout << "INTERNAL ERROR: No main found" << std::endl;
-                // printing out information does not count towards time to find errors
-                if (REPORTS.size() == 0){
-                    *outputTarget << "\nNo errors found\n" << std::endl;
-                } else {
-                    for (auto r: REPORTS){
-                        *outputTarget << r << std::endl;
-                    }
+                for (auto r: REPORTS){
+                    *outputTarget << r << std::endl;//todo does not work as a part of the ADAPT
                 }
                 return;
             }
@@ -545,7 +543,6 @@ class DDG {
             auto graphBuildTotal = std::chrono::duration_cast<ns>(graphBuildEnd - graphBuildStart).count();
             auto graphBuildTotalSystem = std::chrono::duration_cast<ns>(graphBuildEndSystem - graphBuildStartSystem).count();
 
-            // printing out information does not count towards time to use and build graph
             *outputTarget << "Total vertices: " << VERTICES.size() << std::endl << std::endl; 
             for (Vertex* vertex : VERTICES){
                 vertex->printInfo(outputTarget);
@@ -590,7 +587,6 @@ class DDG {
             auto errorsFindTotal = std::chrono::duration_cast<ns>(errorsFindEnd - errorsFindStart).count();
             auto errorsFindTotalSystem = std::chrono::duration_cast<ns>(errorsFindEndSystem - errorsFindStartSystem).count();
 
-            // printing out information does not count towards time to find errors
             if (REPORTS.size() == 0){
                 *outputTarget << "\nNo errors found\n" << std::endl;
             } else {

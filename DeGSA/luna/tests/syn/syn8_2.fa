@@ -1,0 +1,7 @@
+import printint(int) as print;
+sub main() {
+    df i;
+    for i=1..2 {
+        print(i);
+    }
+}

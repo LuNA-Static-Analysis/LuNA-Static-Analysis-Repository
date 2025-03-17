@@ -457,7 +457,8 @@ void Expression::markAsDef(Vertex* currentVertex, int size){
         case orNode:{
             REPORTS.push_back(JsonReporter::createSYN1(
                 this->getASTExpr()->to_string(),
-                currentVertex
+                currentVertex,
+                nullptr
             ));
             return;
         }
@@ -488,7 +489,8 @@ void Expression::markAsDef(Vertex* currentVertex, int size){
                 case forIteratorNameClass: {//error
                     REPORTS.push_back(JsonReporter::createSYN1(
                         this->getASTExpr()->to_string(),
-                        currentVertex
+                        currentVertex,
+                        nullptr
                     ));
                     return;
                 }
@@ -496,7 +498,8 @@ void Expression::markAsDef(Vertex* currentVertex, int size){
                 case whileIteratorNameClass:{ //error
                     REPORTS.push_back(JsonReporter::createSYN1(
                         this->getASTExpr()->to_string(),
-                        currentVertex
+                        currentVertex,
+                        nullptr
                     ));
                     return;
                 }
@@ -513,7 +516,8 @@ void Expression::markAsDef(Vertex* currentVertex, int size){
                 case immutableArgNameClass: {//error
                     REPORTS.push_back(JsonReporter::createSYN1(
                         this->getASTExpr()->to_string(),
-                        currentVertex
+                        currentVertex,
+                        nullptr
                     ));
                     return;
                 }
@@ -532,7 +536,8 @@ void Expression::markAsDef(Vertex* currentVertex, int size){
         case stringCastNode:
             REPORTS.push_back(JsonReporter::createSYN1(
                 _ASTexpr->to_string(),
-                currentVertex
+                currentVertex,
+                nullptr
             ));
             return;
 

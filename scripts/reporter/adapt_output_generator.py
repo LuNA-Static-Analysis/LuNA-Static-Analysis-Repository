@@ -42,16 +42,16 @@ class TextInfo:
         return line
 
 
-def get_callstack_entry(call: dict[str, Any], text_info: TextInfo) -> str:
+def get_call_stack_entry(call: dict[str, Any], text_info: TextInfo) -> str:
     assert isinstance(call, dict), str(type(call))
     return f'  File "{call["file"]}", line {call["line"]}, in {call["name"]}\n' \
            f'    {text_info.code_line(int(call["line"]))}\n'
 
 
-def get_callstack(callstack: list[dict[str, Any]], text_info: TextInfo) -> str:
+def get_call_stack(callstack: list[dict[str, Any]], text_info: TextInfo) -> str:
     result = ''
     for call in callstack:
-        result += get_callstack_entry(call, text_info)
+        result += get_call_stack_entry(call, text_info)
     return result
 
 
@@ -60,11 +60,11 @@ def get_all_callstacks(
         text_info: TextInfo,
         separator: str = '\n'
 ) -> str:
-    return separator.join(map(lambda it: get_callstack(it, text_info), callstacks))
+    return separator.join(map(lambda it: get_call_stack(it, text_info), callstacks))
 
 
-def get_cf(cf: dict[str, Any]) -> str:
-    return f'Name: {cf["name"]}, type: {cf["type"]}, file "{cf["file"]}", line {cf["line"]}\n'
+def get_cf(cf: dict[str, Any]) -> str:#todo crashes
+    return f'Name: {cf["name"]}, type: {cf["type"]}, file: {cf["file"]}, line: {cf["line"]}\n'
 
 
 def get_all_cfs(cfs: list[dict[str, Any]]) -> str:
@@ -98,7 +98,7 @@ def get_all_dfs(dfs: list[dict[str, Any]], text_info: TextInfo) -> str:
 def get_for(for_: dict[str, Any], text_info: TextInfo) -> str:
     return (
             f'Loop for {for_["var"]} from {for_["first"]} to {for_["last"]}\n'
-            + f'in:\n{get_callstack(for_["where"], text_info)}'
+            + f'in:\n{get_call_stack(for_["where"], text_info)}'
     )
 
 
@@ -113,10 +113,10 @@ def get_df_ref(
     conditions = get_conditions(df_ref["conditions"])
     conditions_str = f' {conditions}' if conditions else ''
 
-    result = f'DF {name_str}{conditions_str} in:\n{get_callstack(df_ref["where"], text_info)}'
+    result = f'DF {name_str}{conditions_str} in:\n{get_call_stack(df_ref["where"], text_info)}'
 
     if include_declared:
-        result += f'\nNote: {df["name"]} declared in:\n{get_callstack(df["declared"][0], text_info)}'
+        result += f'\nNote: {df["name"]} declared in:\n{get_call_stack(df["declared"][0], text_info)}'
 
     return result
 
@@ -138,7 +138,7 @@ def get_index_range(
     )
 
     if include_declared:
-        result += f'\nNote: {df["name"]} declared in:\n{get_callstack(df["declared"][0], text_info)}'
+        result += f'\nNote: {df["name"]} declared in:\n{get_call_stack(df["declared"][0], text_info)}'
 
     return result
 
@@ -170,7 +170,7 @@ def get_typed_id(
         typed_id: dict[str, Any],
         text_info: TextInfo
 ) -> str:
-    return f'Name: {typed_id["name"]}\nType: {typed_id["type"]}\nAt: {get_callstack_entry(typed_id["call_stack_entry"], text_info)}'
+    return f'Name: {typed_id["name"]}\nType: {typed_id["type"]}\nAt: {get_call_stack_entry(typed_id["call_stack_entry"], text_info)}'
 
 REF_SEPARATOR: Final[str] = '\nAlso here:\n'
 
@@ -183,72 +183,72 @@ def report_error(
 ) -> None:
     error_code: str = error['error_code']
     match error_code.upper():
-        case 'SYN1':#done
+        case 'SYN1':#done, tested
             output_file.write(
                 (templates_map[error_code] + "\n")
-                .replace("$callstack_entry",
-                         get_callstack_entry(error["details"]["call_stack_entry"], text_info))
+                .replace("$call_stack",
+                         get_call_stack(error["details"]["call_stack"], text_info))
                 .replace("$cf", get_cf(error["details"]["cf"]))
             )
-        case 'SYN2':#done
+        case 'SYN2':#done, tested
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$cf_name", error["details"]["call_stack_entry"]["name"])
-                .replace("$callstack_entry",
-                         get_callstack_entry(error["details"]["call_stack_entry"], text_info))
+                .replace("$call_stack_entry",
+                         get_call_stack_entry(error["details"]["call_stack_entry"], text_info))
             )
-        case 'SYN3':#done
+        case 'SYN3':#done, tested
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$cf_name", error["details"]["cf"]["name"])
-                .replace("$callstack_entry",
-                         get_callstack_entry(error["details"]["call_stack_entry"], text_info))
+                .replace("$call_stack_entry",
+                         get_call_stack_entry(error["details"]["call_stack_entry"], text_info))
                 .replace("$cf", get_cf(error["details"]["cf"]))
             )
-        case 'SYN4':#done
+        case 'SYN4':#done, not workable
             output_file.write(
                 (templates_map[error_code] + "\n")
-                .replace("$callstack_entry",
-                         get_callstack_entry(error["details"]["call_stack_entry"], text_info))
+                .replace("$call_stack_entry",
+                         get_call_stack_entry(error["details"]["call_stack_entry"], text_info))
             )
-        #case 'SYN5.1': #todo
-        case 'SYN5.2':#done
+        case 'SYN5.1':#todo
+            output_file.write(
+                (templates_map[error_code] + "\n")
+            )
+        case 'SYN5.2':#done, tested
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$typed_id",
                          get_typed_id(error["details"]["typed_id"], text_info))
             )
 
-        case 'SYN5.3':#done
+        case 'SYN5.3':#done, tested
             output_file.write(
                 (templates_map[error_code] + "\n")
-                .replace('$df', get_df(error['details']['df'], text_info, include_name=False))
+                .replace('$df', get_df(error['details']['df'], text_info, include_name=True))
             )
 
-        case 'SYN5.4' | 'SYN5.5':#done
+        case 'SYN5.4' | 'SYN5.5':#done, tested
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$cf", get_cf(error["details"]["cf"]))
             )
 
-        case 'SYN5.6':#done
+        case 'SYN5.6':#done, tested
             output_file.write(
                 (templates_map[error_code] + "\n")
-                .replace("$cf", get_cf(error["details"]["cf"]))
                 .replace("$typed_id",
                          get_typed_id(error["details"]["typed_id"], text_info))
             )
 
-        case 'SYN5.7' | 'SYN5.8':#done
+        case 'SYN5.7' | 'SYN5.8':#done, tested
             output_file.write(
                 (templates_map[error_code] + "\n")
-                .replace("$callstack_entry",
-                         get_callstack_entry(error["details"]["call_stack_entry"], text_info))
                 .replace("$typed_id",
                          get_typed_id(error["details"]["typed_id"], text_info))
             )
 
-        case 'SYN6.1' | 'SYN6.2':#done
+        case 'SYN6.1' | 'SYN6.2':#done, tested
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$cfs", get_all_cfs(error["details"]["cfs"]))
@@ -259,35 +259,35 @@ def report_error(
             output_file.write(
                 (templates_map[error_code] + "\n\n"))
             
-        case 'SYN8.1' | 'SYN8.2' | 'SYN8.3' | 'SYN8.4':#done
+        case 'SYN8.1' | 'SYN8.2' | 'SYN8.3' | 'SYN8.4':#done, TODO: CRASHES ON SYN8.2 AND SYN8.3
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$id_name", error["details"]["id_name"])
-                .replace("$callstack_entry",
-                         get_callstack_entry(error["details"]["call_stack_entry"], text_info))
+                .replace("$call_stack_entry",
+                         get_call_stack_entry(error["details"]["call_stack_entry"], text_info))
             )
 
-        case 'SYN9':#done
+        case 'SYN9':#done, tested
             output_file.write(
                 (templates_map[error_code] + '\n')
                 .replace('$df_name', error['details']['df']['name'])
                 .replace('$df', get_df(error['details']['df'], text_info, include_name=False))
             )
 
-        case 'SYN10':#done
+        case 'SYN10':#done, not workable
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$cf", get_cf(error["details"]["cf"]))
             )
 
-        case 'SYN11':#done
+        case 'SYN11':#done, tested
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$expr", str(error["details"]["expression"]))
-                .replace("$callstack", get_callstack(error["details"]["callstack"], text_info))
+                .replace("$callstack", get_call_stack(error["details"]["call_stack"], text_info))
             )
 
-        case 'SYN12':#done
+        case 'SYN12':#done, not workable
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$cf", get_cf(error["details"]["cf"]))
@@ -383,7 +383,7 @@ def report_error(
                 (templates_map[error_code] + "\n")
                 .replace("$bool", str(error["details"]["type"]))
                 .replace("$expr", str(error["details"]["condition"]))
-                .replace("$callstack_entry", get_callstack_entry(error["details"]["where"], text_info))
+                .replace("$call_stack_entry", get_call_stack_entry(error["details"]["where"], text_info))
             )
 
         case 'SEM7':#done
@@ -391,13 +391,13 @@ def report_error(
                 (templates_map[error_code] + "\n")
                 .replace("$index", str(error["details"]["arg_index"]))
                 .replace("$expr", str(error["details"]["bad_expr"]))
-                .replace("$callstack_entry", get_callstack_entry(error["details"]["where"], text_info))
+                .replace("$call_stack_entry", get_call_stack_entry(error["details"]["where"], text_info))
             )
 
         case 'SEM8':#done
             output_file.write(
                 (templates_map[error_code] + '\n')
-                .replace('$callstack', get_callstack(error['details']['call_stack'], text_info))
+                .replace('$callstack', get_call_stack(error['details']['call_stack'], text_info))
             )
 
         case 'SEM9':#todo

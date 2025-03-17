@@ -174,11 +174,9 @@ void SubVertex::initializeVertex() {
         } else {
             std::cout << "INTERNAL ERROR: created nullptr sub/main arg name because of name duplication" << std::endl;
 
-            std::vector<std::string> dfList = {};//todo
-            //dfList.push_back(JsonReporter::createDF(identifierDeclaredName, "[]", "[]", "[]"));//todo callstacks
-            //dfList.push_back(JsonReporter::createDF(identifierDeclaredName, "[]", "[]", "[]"));//todo callstacks
-            REPORTS.push_back(JsonReporter::createSYN8(
-                dfList
+            REPORTS.push_back(JsonReporter::createSYN8_5(
+                identifierDeclaredName,
+                this
             ));
         }
     }
@@ -219,13 +217,10 @@ void ForVertex::initializeVertex() {
     // check for duplicate name
     std::string forIteratorString = innerStatementForVF->name_->to_string();
     if (m_declaredOutsideIdsMap.find(forIteratorString) != m_declaredOutsideIdsMap.end()){
-        std::vector<std::string> dfList = {};
-        Identifier* identifier = m_declaredOutsideIdsMap.find(forIteratorString)->second;
-        dfList.push_back(JsonReporter::createDF(identifier));//todo callstacks
-        //dfList.push_back(JsonReporter::createDF(forIteratorString, "[]", "[]", "[]"));//todo callstacks
-        //todo find all duplicate dfs
-        REPORTS.push_back(JsonReporter::createSYN8(
-            dfList
+        
+        REPORTS.push_back(JsonReporter::createSYN8_2(
+            forIteratorString,
+            this
         ));
 
         std::cout << "INTERNAL ERROR: aborted initializing \"for\" vertex" << std::endl;
@@ -261,13 +256,9 @@ void WhileVertex::initializeVertex() {
     std::string whileIteratorString = innerStatementWhileVF->left_->to_string();
     if (m_declaredOutsideIdsMap.find(whileIteratorString) != m_declaredOutsideIdsMap.end()){
 
-        std::vector<std::string> dfList = {};
-        Identifier* identifier = m_declaredOutsideIdsMap.find(whileIteratorString)->second;
-        dfList.push_back(JsonReporter::createDF(identifier));//todo callstacks
-        //dfList.push_back(JsonReporter::createDF(whileIteratorString, "[]", "[]", "[]"));//todo callstacks
-        //todo find all duplicate dfs
-        REPORTS.push_back(JsonReporter::createSYN8(
-            dfList
+        REPORTS.push_back(JsonReporter::createSYN8_3(
+            whileIteratorString,
+            this
         ));
 
         std::cout << "INTERNAL ERROR: aborted initializing \"while\" vertex" << std::endl;
@@ -297,14 +288,13 @@ void WhileVertex::initializeVertex() {
     if (_startExpr != nullptr)
         _startExpr->markAsUse(this, 0);//todo why 0
 
-    if (_outName != nullptr){
+    if (_outName != nullptr)
         _outName->markAsDef(this, 0); //todo why 0
-    }
-
-    if (_outName == nullptr)
+    else 
         REPORTS.push_back(JsonReporter::createSYN1(
             whileOutNameExpr->getASTExpr()->to_string(),
-            this
+            this,
+            nullptr//todo
         ));
 
     Expression* iteratorExpression = new Expression(_iterator, intNode, this);
@@ -340,12 +330,10 @@ void LetVertex::initializeVertex() {
         std::string letString = *(assignment->name_->get_value());
         if (m_declaredOutsideIdsMap.find(letString) != m_declaredOutsideIdsMap.end()){
 
-            std::vector<std::string> dfList = {};
-            Identifier* identifier = m_declaredOutsideIdsMap.find(letString)->second;
-            dfList.push_back(JsonReporter::createDF(identifier));//todo callstacks
-            //dfList.push_back(JsonReporter::createDF(letString, "[]", "[]", "[]"));//todo callstacks
-            //todo find all duplicate dfs
-            REPORTS.push_back(JsonReporter::createSYN8(dfList));
+            REPORTS.push_back(JsonReporter::createSYN8_4(
+                letString,
+                this
+            ));
 
             std::cout << "INTERNAL ERROR: aborted initializing \"let\" vertex" << std::endl;
             return;
@@ -390,16 +378,13 @@ void Vertex::scanForDFDecls() {
                 m_declaredBothIdsMap.insert( { nextDFName, newBaseDFName } );
                 BASENAMES.insert(newBaseDFName);
             } else {
-                Identifier* previousDF = previousDFIterator->second;
-                // error code: 13
-                // df list
-                std::vector<std::string> dfList = {};
-                dfList.push_back(JsonReporter::createDF(previousDF));//todo callstacks
-                //dfList.push_back(JsonReporter::createDF(dfName, "[]", "[]", "[]"));//todo callstacks
-                //todo find all duplicate dfs (just create new and then immediately delete)
-                REPORTS.push_back(JsonReporter::createSYN8(
-                    dfList
+
+                REPORTS.push_back(JsonReporter::createSYN8_1(
+                    nextDFName,
+                    this
                 ));
+
+                //this error is actually tolerable
             }
         }
 
@@ -428,7 +413,7 @@ void Vertex::iterateThroughBlockStatements() {
             std::string cfName = *(cfStatement->code_id_->value_);
             auto cfDeclaration = CFDECLARATIONS.find(*(cfStatement->code_id_->value_));
             if (cfDeclaration != CFDECLARATIONS.end()) {
-                if (cfDeclaration->second.type == importCF) {
+                if (cfDeclaration->second->type == importCF) {
                     handleImport(cfStatement);
                 } else {
                     handleSub(cfStatement);
@@ -501,20 +486,21 @@ void Vertex::handleSub(cf_statement* cfStatement) {
         std::cout << "INTERNAL ERROR" << std::endl;
         return;
     }
-    CFDeclaration cfDeclaration = cfDeclarationPair->second; // todo this will be deleted? do pointers?
-    CFDECLARATIONS.find(calledSubName)->second.isUsed = true;
+    CFDeclaration* cfDeclaration = cfDeclarationPair->second; // todo this will be deleted? do pointers?
+    CFDECLARATIONS.find(calledSubName)->second->isUsed = true;
 
-    SubVertex* nextVertex = new SubVertex(calledSubName, this, subVF, m_depth + 1, cfStatement->line_, m_fileName, cfDeclaration.cfBlock, cfStatement, m_declaredBothIdsMap, m_facts, callArgs, cfDeclaration.declaredArgs);
-    if (cfDeclaration.declaredArgs.size() != callArgs.size()) {
-        REPORTS.push_back(JsonReporter::createSYN3(nextVertex));
+    SubVertex* nextVertex = new SubVertex(calledSubName, this, subVF, m_depth + 1, cfStatement->line_, m_fileName, cfDeclaration->cfBlock, cfStatement, cfDeclaration, m_declaredBothIdsMap, m_facts, callArgs, cfDeclaration->declaredArgs);
+    if (cfDeclaration->declaredArgs.size() != callArgs.size()) {
+        REPORTS.push_back(JsonReporter::createSYN3(nextVertex, cfDeclaration));
         std::cout << "INTERNAL ERROR: call of CF " << calledSubName << " has wrong amount of args" << std::endl;
         return;
     } else {
-        for (int i = 0; i < cfDeclaration.declaredArgs.size(); i++) {
-            if (callArgs[i]->getValueType() != cfDeclaration.declaredArgs[i].type) {
+        for (int i = 0; i < cfDeclaration->declaredArgs.size(); i++) {
+            if (callArgs[i]->getValueType() != cfDeclaration->declaredArgs[i].type) {
                 REPORTS.push_back(JsonReporter::createSYN1(
                     callArgs[i]->getASTExpr()->to_string(),
-                    nextVertex
+                    nextVertex,
+                    cfDeclaration
                 ));
             }
         }
@@ -546,21 +532,22 @@ void Vertex::handleImport(cf_statement* cfStatement) {
         std::cout << "INTERNAL ERROR" << std::endl;
         return;
     }
-    CFDeclaration cfDeclaration = cfDeclarationPair->second; // todo this will be deleted? do pointers?
-    CFDECLARATIONS.find(calledImportName)->second.isUsed = true;
+    CFDeclaration* cfDeclaration = cfDeclarationPair->second;
+    CFDECLARATIONS.find(calledImportName)->second->isUsed = true;
 
-    ImportVertex* nextVertex = new ImportVertex(calledImportName, this, importVF, m_depth + 1, cfStatement->line_, m_fileName, cfStatement->block_, cfStatement, m_declaredBothIdsMap, m_facts, callArgs, cfDeclaration.declaredArgs);
+    ImportVertex* nextVertex = new ImportVertex(calledImportName, this, importVF, m_depth + 1, cfStatement->line_, m_fileName, cfStatement->block_, cfStatement, cfDeclaration, m_declaredBothIdsMap, m_facts, callArgs, cfDeclaration->declaredArgs);
     //todo wip check for LUNA04 and LUNA06
-    if (cfDeclaration.declaredArgs.size() != callArgs.size()) {
-        REPORTS.push_back(JsonReporter::createSYN3(nextVertex));
+    if (cfDeclaration->declaredArgs.size() != callArgs.size()) {
+        REPORTS.push_back(JsonReporter::createSYN3(nextVertex, cfDeclaration));
         std::cout << "INTERNAL ERROR: call of CF " << calledImportName << " has wrong amount of args" << std::endl;
         return;
     } else {
-        for (int i = 0; i < cfDeclaration.declaredArgs.size(); i++) {
-            if (callArgs[i]->getValueType() != cfDeclaration.declaredArgs[i].type) {
+        for (int i = 0; i < cfDeclaration->declaredArgs.size(); i++) {
+            if (callArgs[i]->getValueType() != cfDeclaration->declaredArgs[i].type) {
                 REPORTS.push_back(JsonReporter::createSYN1(
                     callArgs[i]->getASTExpr()->to_string(),
-                    nextVertex
+                    nextVertex,
+                    cfDeclaration
                 ));
             }
         }

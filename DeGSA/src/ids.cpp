@@ -2,7 +2,7 @@
 #include "json_reporter.cpp"
 
 //todo check if this is true
-int Identifier::getLine(){
+int Identifier::getLine() const{
     if (m_vertex != nullptr){
         return m_vertex->getLine();
     } else {
@@ -138,7 +138,8 @@ void ForIteratorName::markAsDef(Vertex* currentVertex, int size){
     // error (iterator should be marked as defined at the time of a ForVertex creation)
     REPORTS.push_back(JsonReporter::createSYN1(
         m_name,
-        currentVertex
+        currentVertex,
+        nullptr
     ));
 }
 
@@ -168,7 +169,8 @@ void WhileIteratorName::markAsDef(Vertex* currentVertex, int size){
     // error (iterator should be marked as defined at the time of a WhileVertex creation)
     REPORTS.push_back(JsonReporter::createSYN1(
         m_name,
-        currentVertex
+        currentVertex,
+        nullptr
     ));
 }
 
@@ -223,7 +225,8 @@ void ImmutableArgName::markAsDef(Vertex* currentVertex, int size){
     //todo
     REPORTS.push_back(JsonReporter::createSYN1(
         m_name,
-        currentVertex
+        currentVertex,
+        nullptr
     ));
 }
 

@@ -14,4 +14,4 @@ class BaseDFName;
 std::vector<std::string> REPORTS = {};
 std::set<BaseDFName*> BASENAMES = {}; // all names declared after the keyword "df"
 std::vector<Vertex*> VERTICES = {};
-std::map<std::string, CFDeclaration> CFDECLARATIONS = {};
+std::map<std::string, CFDeclaration*> CFDECLARATIONS = {};

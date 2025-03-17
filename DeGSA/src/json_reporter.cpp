@@ -71,12 +71,13 @@ public:
     }
 
     static std::string createCallstackFromVertex(
-        Vertex* vertex
+        Vertex* const ipVertex
     ){
-        if (vertex == nullptr)
+        if (ipVertex == nullptr)
             return "[]";
         
         std::vector<std::string> callstackEntries = {};
+        Vertex* vertex = ipVertex;
         while(vertex != nullptr){
             callstackEntries.push_back(JsonReporter::createCallStackEntry(
                 vertex->getFileName(),
@@ -89,7 +90,7 @@ public:
     }
 
     static std::string createDF(
-            Identifier* identifier
+        Identifier* const identifier
     ){
         std::map<std::string, std::string> map = {};
         map.insert( { "name", identifier->getName() } );
@@ -142,16 +143,20 @@ public:
     }
 
     static std::string createCF(
-            std::string name, // cf name
-            std::string type, // "struct" (sub) or "extern" // import
-            std::string fileName,
-            int line
+        CFDeclaration* const cfDeclaration
     ){
         std::map<std::string, std::string> map = {};
-        map.insert( { "name", name } );
-        map.insert( { "type", type } );
-        map.insert( { "file", fileName } );
-        map.insert( { "line", std::to_string(line) } );
+        if (cfDeclaration == nullptr) {
+            map.insert( { "name", "INTERNAL_ERROR" } );
+            map.insert( { "type", "INTERNAL_ERROR" } );
+            map.insert( { "file", "INTERNAL_ERROR" } );
+            map.insert( { "line", "INTERNAL_ERROR" } );
+        } else {
+            map.insert( { "name", cfDeclaration->name } );
+            map.insert( { "type", cfDeclaration->type == subCF ? "struct" : "extern" } );
+            map.insert( { "file", cfDeclaration->fileName } );
+            map.insert( { "line", std::to_string(cfDeclaration->line) } );
+        }
         return createJson(map);
     }
 
@@ -169,73 +174,69 @@ public:
         return createJson(map);
     }
 
+    static std::string createTypedId(
+        Identifier* identifier
+    ){
+        std::map<std::string, std::string> map = {};
+        map.insert( { "name", identifier->getName() } );
+        map.insert( { "type", identifier->getValueTypeAsString() } );
+        auto vertex = identifier->getVertex();
+        map.insert( { "call_stack_entry", createCallStackEntry(vertex->getFileName(), std::to_string(vertex->getLine()), vertex->getName()) } );
+        return createJson(map);
+    }
+
     //================================= ERROR REPORTS =============================================
 
     // ******************************** SYNTAX **************************************************
 
-    // compile-time wrong types on CF call
     static std::string createSYN1(
         std::string expression,
-        Vertex* vertex
+        Vertex* const vertex,
+        CFDeclaration* const cfDeclaration
     ){
         std::map<std::string, std::string> map = {};
+        std::replace( expression.begin(), expression.end(), '\"', '\'');
         map.insert( { "expression", expression } );
         std::string cfType = vertex->getVertexType() == importVF ? "extern" : "struct";
-        map.insert({"cf", createCF(
-            vertex->getName(),
-            cfType,
-            vertex->getFileName(),
-            vertex->getLine()
-        )});
-        map.insert( { "callstack", createCallstackFromVertex(vertex) } );
+        map.insert( { "cf", createCF(cfDeclaration) } );
+        map.insert( { "call_stack", createCallstackFromVertex(vertex) } );
         return createReport("SYN1", createJson(map));
     }
 
-    // non-existing CF called
     static std::string createSYN2(
         std::string fileName,
         int line,
         std::string cfName
     ){
-        // details: df list
         std::map<std::string, std::string> map = {};
         map.insert( { "call_stack_entry", createCallStackEntry(fileName, std::to_string(line), cfName) } );
         return createReport("SYN2", createJson(map));
     }
 
-    // wrong amount of args on CF call
     static std::string createSYN3(
-        Vertex* vertex
+        Vertex* const vertex,
+        CFDeclaration* const cfDeclaration
     ){
         std::map<std::string, std::string> map = {};
         std::string cfType = vertex->getVertexType() == importVF ? "extern" : "struct";
-        map.insert({"cf", createCF(
-            vertex->getName(),
-            cfType,
-            vertex->getFileName(),
-            vertex->getLine()
-        )});
+        map.insert( { "cf", createCF(cfDeclaration) } );
         map.insert( { "call_stack_entry", createCallStackEntry(vertex->getFileName(), std::to_string(vertex->getLine()), vertex->getName()) } );
         return createReport("SYN3", createJson(map));
     }
 
-    // unused and undefined name TODO CHECK DETAILS
     static std::string createSYN5_2(
-        Identifier* identifier
+        Identifier* const identifier
     ){
-        // details: df
         if (identifier->getClass() != letNameClass)
             std::cout << "INTERNAL ERROR: SYN5.2 got wrong type" << std::endl;
         std::map<std::string, std::string> map = {};
-        map.insert( { "df", createDF(identifier) } );
+        map.insert( { "typed_id", createTypedId(identifier) } );
         return createReport("SYN5.2", createJson(map));
     }
 
-    // unused and undefined name TODO CHECK DETAILS
     static std::string createSYN5_3(
-        Identifier* identifier
+        Identifier* const identifier
     ){
-        // details: df
         if (identifier->getClass() != baseDFNameClass)
             std::cout << "INTERNAL ERROR: SYN5.3 got wrong type" << std::endl;
         std::map<std::string, std::string> map = {};
@@ -243,143 +244,165 @@ public:
         return createReport("SYN5.3", createJson(map));
     }
 
-    // unused and undefined import TODO CHECK DETAILS
     static std::string createSYN5_4(
-        CFDeclaration* cfDeclaration
+        CFDeclaration* const cfDeclaration
     ){
-        // details: df
         if (cfDeclaration->type != importCF)
             std::cout << "INTERNAL ERROR: SYN5.4 got wrong type" << std::endl;
         std::map<std::string, std::string> map = {};
-        map.insert( { "cf", cfDeclaration->name } );
+        map.insert( { "cf", createCF(cfDeclaration) } );
         return createReport("SYN5.4", createJson(map));
     }
 
-    // unused and undefined sub TODO CHECK DETAILS
     static std::string createSYN5_5(
-        CFDeclaration* cfDeclaration
+        CFDeclaration* const cfDeclaration
     ){
-        // details: df
         if (cfDeclaration->type != subCF)
             std::cout << "INTERNAL ERROR: SYN5.5 got wrong type" << std::endl;
         std::map<std::string, std::string> map = {};
-        map.insert( { "cf", cfDeclaration->name } );
+        map.insert( { "cf", createCF(cfDeclaration) } );
         return createReport("SYN5.5", createJson(map));
     }
 
-    // unused and undefined name TODO CHECK DETAILS
     static std::string createSYN5_6(
-        Identifier* identifier
+        Identifier* const identifier
     ){
-        // details: df
         if (identifier->getClass() != mutableArgNameClass && identifier->getClass() != immutableArgNameClass)
             std::cout << "INTERNAL ERROR: SYN5.6 got wrong type" << std::endl;
         std::map<std::string, std::string> map = {};
-        map.insert( { "df", createDF(identifier) } );
+        map.insert( { "typed_id", createTypedId(identifier) } );
         return createReport("SYN5.6", createJson(map));
     }
 
-    // unused and undefined name TODO CHECK DETAILS
     static std::string createSYN5_7(
-        Identifier* identifier
+        Identifier* const identifier
     ){
-        // details: df
         if (identifier->getClass() != forIteratorNameClass)
             std::cout << "INTERNAL ERROR: SYN5.7 got wrong type" << std::endl;
         std::map<std::string, std::string> map = {};
-        map.insert( { "df", createDF(identifier) } );
+        map.insert( { "typed_id", createTypedId(identifier) } );
         return createReport("SYN5.7", createJson(map));
     }
 
-    // unused and undefined name TODO CHECK DETAILS
     static std::string createSYN5_8(
-        Identifier* identifier
+        Identifier* const identifier
     ){
-        // details: df
         if (identifier->getClass() != whileIteratorNameClass)
             std::cout << "INTERNAL ERROR: SYN5.8 got wrong type" << std::endl;
         std::map<std::string, std::string> map = {};
-        map.insert( { "df", createDF(identifier) } );
+        map.insert( { "typed_id", createTypedId(identifier) } );
         return createReport("SYN5.8", createJson(map));
     }
 
-    // duplicate import declaration
     static std::string createSYN6_1(
-        CFDeclaration* cfDeclaration
+        CFDeclaration* const cfDeclarationOrigin,
+        CFDeclaration* const cfDeclarationDuplicate
     ){
-        // details: cf
-        if (cfDeclaration->type != importCF)
+        if (cfDeclarationOrigin->type != importCF)
             std::cout << "INTERNAL ERROR: SYN6.1 got wrong type" << std::endl;
         std::map<std::string, std::string> map = {};
-        map.insert( { "cf", cfDeclaration->name } );
+        map.insert( { "cfs", createArray({ createCF(cfDeclarationOrigin), createCF(cfDeclarationDuplicate) }) } );
         return createReport("SYN6.1", createJson(map));
     }
 
-    // duplicate sub declaration
     static std::string createSYN6_2(
-        CFDeclaration* cfDeclaration
+        CFDeclaration* const cfDeclarationOrigin,
+        CFDeclaration* const cfDeclarationDuplicate
     ){
-        // details: cf
-        if (cfDeclaration->type != subCF)
+        if (cfDeclarationOrigin->type != subCF)
             std::cout << "INTERNAL ERROR: SYN6.2 got wrong type" << std::endl;
         std::map<std::string, std::string> map = {};
-        map.insert( { "cf", cfDeclaration->name } );
+        map.insert( { "cfs", createArray({ createCF(cfDeclarationOrigin), createCF(cfDeclarationDuplicate) }) } );
         return createReport("SYN6.2", createJson(map));
     }
 
-    // no main()
     static std::string createSYN7(){
-        // details: none
         std::map<std::string, std::string> map = {};
         return createReport("SYN7", createJson(map));
     }
 
-    // duplicate base names declared TODO what about other names? counters while, counters if, vars let
-    static std::string createSYN8(
-        std::vector<std::string> dfs
+    static std::string createSYN8_1(
+        std::string identifierName,
+        Vertex* vertex
     ){
-        // details: df list
         std::map<std::string, std::string> map = {};
-        map.insert( { "dfs", createArray(dfs) } );
-        return createReport("SYN8", createJson(map));
+        map.insert( { "id_name", identifierName } );
+        map.insert( { "call_stack_entry", createCallStackEntry(vertex->getFileName(), std::to_string(vertex->getLine()), vertex->getName()) } );
+        return createReport("SYN8.1", createJson(map));
     }
 
-    // attempt to use undeclared identifier
-    static std::string createSYN9(
-        Identifier* identifier
+    static std::string createSYN8_2(
+        std::string identifierName,
+        Vertex* vertex
     ){
-        // details: df
+        std::map<std::string, std::string> map = {};
+        map.insert( { "id_name", identifierName } );
+        map.insert( { "call_stack_entry", createCallStackEntry(vertex->getFileName(), std::to_string(vertex->getLine()), vertex->getName()) } );
+        return createReport("SYN8.2", createJson(map));
+    }
+
+    static std::string createSYN8_3(
+        std::string identifierName,
+        Vertex* vertex
+    ){
+        std::map<std::string, std::string> map = {};
+        map.insert( { "id_name", identifierName } );
+        map.insert( { "call_stack_entry", createCallStackEntry(vertex->getFileName(), std::to_string(vertex->getLine()), vertex->getName()) } );
+        return createReport("SYN8.3", createJson(map));
+    }
+
+    static std::string createSYN8_4(
+        std::string identifierName,
+        Vertex* vertex
+    ){
+        std::map<std::string, std::string> map = {};
+        map.insert( { "id_name", identifierName } );
+        map.insert( { "call_stack_entry", createCallStackEntry(vertex->getFileName(), std::to_string(vertex->getLine()), vertex->getName()) } );
+        return createReport("SYN8.4", createJson(map));
+    }
+
+    static std::string createSYN8_5(
+        std::string identifierName,
+        Vertex* vertex
+    ){
+        std::map<std::string, std::string> map = {};
+        map.insert( { "id_name", identifierName } );
+        map.insert( { "call_stack_entry", createCallStackEntry(vertex->getFileName(), std::to_string(vertex->getLine()), vertex->getName()) } );
+        return createReport("SYN8.5", createJson(map));
+    }
+
+    static std::string createSYN9(
+        Identifier* const identifier
+    ){
         std::map<std::string, std::string> map = {};
         map.insert( { "df", createDF(identifier) } );
         return createReport("SYN9", createJson(map));
     }
 
-    // attempt to index non-Name
     static std::string createSYN11(
         std::string expression,
-        Vertex* vertex
+        Vertex* const vertex
     ){
         std::map<std::string, std::string> map = {};
         map.insert( { "expression", expression } );
-        map.insert( { "callstack", createCallstackFromVertex(vertex) } );
+        std::replace( expression.begin(), expression.end(), '\"', '\'');
+        map.insert( { "call_stack", createCallstackFromVertex(vertex) } );
         return createReport("SYN11", createJson(map));
     }
 
     // ***************************************** SEMANTIC **************************************************
 
-    // multiple DF initialization
     static std::string createSEM2(
-        Identifier* identifier
+        Identifier* const identifier
     ){
-        // details: df
         std::map<std::string, std::string> map = {};
         map.insert( { "df", createDF(identifier) } );
-        return createReport("SEM2", createJson(map));
+        return createReport("SEM2.1", createJson(map));
     }
 
     // attempt to use uninitialized DF (outside of a loop TODO this is weird, but we'll see)
     static std::string createSEM3_1(
-        Identifier* identifier
+        Identifier* const identifier
     ){
         // details: df
         std::map<std::string, std::string> map = {};
@@ -387,11 +410,9 @@ public:
         return createReport("SEM3_1", createJson(map));
     }
 
-    // cyclic dependence
     static std::string createSEM3_2(
         std::vector<Vertex*> loop
     ){
-        // details: df
         std::map<std::string, std::string> map = {};
         for (int i = 0; i < loop.size(); i++) {
             map.insert( { "vertex" + std::to_string(i + 1), createCallStackEntry(loop[i]->getFileName(), std::to_string(loop[i]->getLine()), loop[i]->getName()) } );
@@ -399,17 +420,14 @@ public:
         return createReport("SEM3_2", createJson(map));
     }
 
-    // DF is initialized, but not used
     static std::string createSEM4(
-        Identifier* identifier
+        Identifier* const identifier
     ){
-        // details: df
         std::map<std::string, std::string> map = {};
         map.insert( { "df", createDF(identifier) } );
         return createReport("SEM4", createJson(map));
     }
 
-    // "if" condition is constant
     static std::string createSEM5(
         bool type,
         std::string condition,
@@ -427,13 +445,11 @@ public:
         return createReport("SEM5", createJson(map));
     }
 
-    // unconditional recursion
     static std::string createSEM8(
-        Vertex* firstCaller,
-        Vertex* secondCaller
+        Vertex* const firstCaller,
+        Vertex* const secondCaller
     ){
         //NOT SYNCHRONIZED TODO
-        // details: call stack entry of first caller, call stack entry of second caller
         std::map<std::string, std::string> map = {};
         map.insert( { "first", createCallStackEntry(firstCaller->getFileName(), std::to_string(firstCaller->getLine()), firstCaller->getName()) } );
         map.insert( { "second", createCallStackEntry(secondCaller->getFileName(), std::to_string(secondCaller->getLine()), secondCaller->getName()) } );

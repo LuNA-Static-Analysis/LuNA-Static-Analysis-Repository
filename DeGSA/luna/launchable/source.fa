@@ -1,12 +1,5 @@
-import c_init_int(int, name) as init;
-import printfl(real) as printfl;
-sub main() {
-    df a, b;
-    init(1, a);
-    init(2, b);
-    let a = b {
-        printfl(a);
-        printfl(b);
-    }
+import printint(int) as print;
+sub foo() {
+    print(1);
 }
 

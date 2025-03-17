@@ -18,12 +18,13 @@ struct DeclaredArg {
 
 struct CFDeclaration {
     std::string name;
+    std::string fileName;
     CFType type;
     std::vector<DeclaredArg> declaredArgs;
     block* cfBlock;
     int line;
     bool isUsed;
 
-    CFDeclaration(std::string name, CFType type, std::vector<DeclaredArg> declaredArgs, block* cfBlock, int line) :
-          name(name), type(type), declaredArgs(declaredArgs), cfBlock(cfBlock), line(line), isUsed(false) {};
+    CFDeclaration(std::string name, CFType type, std::vector<DeclaredArg> declaredArgs, block* cfBlock, int line, std::string fileName) :
+          name(name), type(type), declaredArgs(declaredArgs), cfBlock(cfBlock), line(line), fileName(fileName), isUsed(false) {};
 };

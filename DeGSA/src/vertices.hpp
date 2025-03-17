@@ -97,7 +97,7 @@ class Vertex {
 
         int getLine() { return m_line; };
 
-        Vertex* getParent() { return m_parent; };
+        Vertex* getParent() const { return m_parent; };
 
         const std::map<std::string, Identifier*>& getDeclaredInsideIdsMap() { return m_declaredInsideIdsMap; };
 
@@ -144,14 +144,17 @@ class SubVertex: public Vertex {
         std::vector<Identifier*> _arguments; // vector of MutableArgNames and ImmutableArgNames
         std::vector<Expression*> _callArgs;
         std::vector<DeclaredArg> _declaredArgs;
+        CFDeclaration* _cfDeclaration;
 
     public:
 
-        SubVertex(std::string name, Vertex* parent, VertexType vertexType, int depth, int line, std::string fileName, block* block, statement* statement, std::map<std::string, Identifier*> declaredOutsideIdsMap, std::set<GLeNFact*> facts, std::vector<Expression*> callArgs, std::vector<DeclaredArg> declaredArgs) :
-            Vertex(name, parent, vertexType, depth, line, fileName, block, statement, declaredOutsideIdsMap, facts), _callArgs(callArgs), _declaredArgs(declaredArgs) {};
+        SubVertex(std::string name, Vertex* parent, VertexType vertexType, int depth, int line, std::string fileName, block* block, statement* statement, CFDeclaration* cfDeclaration, std::map<std::string, Identifier*> declaredOutsideIdsMap, std::set<GLeNFact*> facts, std::vector<Expression*> callArgs, std::vector<DeclaredArg> declaredArgs) :
+            Vertex(name, parent, vertexType, depth, line, fileName, block, statement, declaredOutsideIdsMap, facts), _callArgs(callArgs), _declaredArgs(declaredArgs), _cfDeclaration(cfDeclaration) {};
 
         void printInfo(std::ostream* outputTarget);
         virtual void initializeVertex();
+
+        CFDeclaration* getDeclaration() const { return _cfDeclaration; };
 };
 
 class ImportVertex: public Vertex {
@@ -161,14 +164,17 @@ class ImportVertex: public Vertex {
         std::vector<Identifier*> _arguments; // vector of MutableArgNames and ImmutableArgNames
         std::vector<Expression*> _callArgs;
         std::vector<DeclaredArg> _declaredArgs;
+        CFDeclaration* _cfDeclaration;
 
     public:
 
-        ImportVertex(std::string name, Vertex* parent, VertexType vertexType, int depth, int line, std::string fileName, block* block, statement* statement, std::map<std::string, Identifier*> declaredOutsideIdsMap, std::set<GLeNFact*> facts, std::vector<Expression*> callArgs, std::vector<DeclaredArg> declaredArgs) :
-            Vertex(name, parent, vertexType, depth, line, fileName, block, statement, declaredOutsideIdsMap, facts), _callArgs(callArgs), _declaredArgs(declaredArgs) {};
+        ImportVertex(std::string name, Vertex* parent, VertexType vertexType, int depth, int line, std::string fileName, block* block, statement* statement, CFDeclaration* cfDeclaration, std::map<std::string, Identifier*> declaredOutsideIdsMap, std::set<GLeNFact*> facts, std::vector<Expression*> callArgs, std::vector<DeclaredArg> declaredArgs) :
+            Vertex(name, parent, vertexType, depth, line, fileName, block, statement, declaredOutsideIdsMap, facts), _callArgs(callArgs), _declaredArgs(declaredArgs), _cfDeclaration(cfDeclaration) {};
 
         void printInfo(std::ostream* outputTarget);
         virtual void initializeVertex();
+
+        CFDeclaration* getDeclaration() const { return _cfDeclaration; };
 };
 
 class ForVertex: public Vertex {
