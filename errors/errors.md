@@ -11,6 +11,8 @@
  - содержит фрагменты, смысл которых может не соответствовать ожиданиям программиста (например, ошибки SYN5, SYN6);
  - содержит фрагменты, препятствующие компиляции или компоновке программы по иным причинам (например, SYN10).
 
+Различные подходы имеют те или иные преимущества при поиске тех или иных видов ошибок. Информация о том, какой модуль способен обнаруживать ошибки какого вида, указана в [таблице](https://docs.google.com/spreadsheets/d/1mnSqv9LdMiBuyW8POlpacnpZjZK6bBFxYZsSjeBj_wM/edit).
+
 # Синтаксические ошибки 
 
 ## SYN1 - Несоответствие типов аргументов LuNA типам формальных параметров при вызове ФК (типы аргументов известны на этапе компиляции)
@@ -433,6 +435,37 @@ sub main() {
 2.00000000000000
 ```
 Внутри блока let происходит перекрытие имён, а базовое имя a остаётся неиспользованным.
+
+### SYN8.5 - Повторное объявление аргумента структурированного ФК
+
+Пример:
+```
+import printint(int) as print;
+sub foo(int a, int a){
+    print(a);
+}
+sub main() {
+    foo(1, 2);
+}
+```
+Вывод luna:
+```
+luna: fatal error: recom-generation failed (see below):
+Traceback (most recent call last):
+  File "/home/conngent/luna/scripts/../scripts/fcmp", line 1713, in <module>
+    content=Fa(ja).gen()
+  File "/home/conngent/luna/scripts/../scripts/fcmp", line 1679, in __init__
+    self.Subs[sub_name]=create_sub(self, sub_name)
+  File "/home/conngent/luna/scripts/../scripts/fcmp", line 1668, in create_sub
+    return SubStruct(fa, sub_name, None)
+  File "/home/conngent/luna/scripts/../scripts/fcmp", line 1608, in __init__
+    self.Regs.add_sub_param(i, arg['type'], arg['id'])
+  File "/home/conngent/luna/scripts/../scripts/fcmp", line 407, in add_sub_param
+    self._set_name_info(name, 'sub_param', {
+  File "/home/conngent/luna/scripts/../scripts/fcmp", line 395, in _set_name_info
+    assert type_ not in self._names[name]
+AssertionError
+```
 
 ## SYN9 - Попытка использования необъявленного идентификатора
 
