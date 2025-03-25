@@ -7,6 +7,7 @@ from typing import Any, TextIO, Final
 import click
 
 TEXT_INFO_FILE_NAME: Final[str] = 'preprocessed.fa.ti'
+REF_SEPARATOR: Final[str] = '\nAlso here:\n'
 
 
 class TextInfo:
@@ -95,13 +96,6 @@ def get_all_dfs(dfs: list[dict[str, Any]], text_info: TextInfo) -> str:
     return result
 
 
-def get_for(for_: dict[str, Any], text_info: TextInfo) -> str:
-    return (
-            f'Loop for {for_["var"]} from {for_["first"]} to {for_["last"]}\n'
-            + f'in:\n{get_call_stack(for_["where"], text_info)}'
-    )
-
-
 def get_df_ref(
         df_ref: dict[str, Any],
         text_info: TextInfo,
@@ -157,6 +151,13 @@ def get_df_ref_or_index_range(
     raise NotImplementedError(f'Not a \'df_ref\' or \'index_range\': {ref_or_index_range}')
 
 
+def get_for(for_: dict[str, Any], text_info: TextInfo) -> str:
+    return (
+            f'Loop for {for_["var"]} from {for_["first"]} to {for_["last"]}\n'
+            + f'in:\n{get_call_stack(for_["where"], text_info)}'
+    )
+
+
 def get_conditions(conditions: list[str]) -> str:
     if not conditions:
         return ''
@@ -166,13 +167,12 @@ def get_conditions(conditions: list[str]) -> str:
 
     return 'when ' + ', '.join(conditions[:-1]) + f' and {conditions[-1]} are true'
 
-def get_typed_id(
+
+def get_identifier(
         typed_id: dict[str, Any],
         text_info: TextInfo
 ) -> str:
-    return f'Name: {typed_id["name"]}\nType: {typed_id["type"]}\nAt: {get_call_stack_entry(typed_id["call_stack_entry"], text_info)}'
-
-REF_SEPARATOR: Final[str] = '\nAlso here:\n'
+    return f'Name: {typed_id["name"]}\nAt: {get_call_stack(typed_id["call_stack"], text_info)}'
 
 
 def report_error(
@@ -181,236 +181,256 @@ def report_error(
         text_info: TextInfo,
         error: dict[str, Any]
 ) -> None:
-    error_code: str = error['error_code']
+    error_code: str = error["error_code"]
     match error_code.upper():
-        case 'SYN1':#done, tested
+        case 'SYN1':
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$call_stack",
                          get_call_stack(error["details"]["call_stack"], text_info))
-                .replace("$cf", get_cf(error["details"]["cf"]))
+                .replace("$cf",
+                         get_cf(error["details"]["cf"]))
             )
-        case 'SYN2':#done, tested
+        case 'SYN2':
             output_file.write(
                 (templates_map[error_code] + "\n")
-                .replace("$cf_name", error["details"]["call_stack_entry"]["name"])
+                .replace("$cf_name",
+                         error["details"]["call_stack_entry"]["name"])
                 .replace("$call_stack_entry",
                          get_call_stack_entry(error["details"]["call_stack_entry"], text_info))
             )
-        case 'SYN3':#done, tested
+        case 'SYN3':
             output_file.write(
                 (templates_map[error_code] + "\n")
-                .replace("$cf_name", error["details"]["cf"]["name"])
+                .replace("$cf_name",
+                         error["details"]["cf"]["name"])
                 .replace("$call_stack_entry",
                          get_call_stack_entry(error["details"]["call_stack_entry"], text_info))
-                .replace("$cf", get_cf(error["details"]["cf"]))
+                .replace("$cf",
+                         get_cf(error["details"]["cf"]))
             )
-        case 'SYN4':#done, not workable
+        case 'SYN4':#not workable
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$call_stack_entry",
                          get_call_stack_entry(error["details"]["call_stack_entry"], text_info))
             )
-        case 'SYN5.1':#todo
+        case 'SYN5.1':
             output_file.write(
                 (templates_map[error_code] + "\n")
             )
-        case 'SYN5.2':#done, tested
+        case 'SYN5.2':
             output_file.write(
                 (templates_map[error_code] + "\n")
-                .replace("$typed_id",
-                         get_typed_id(error["details"]["typed_id"], text_info))
-            )
-
-        case 'SYN5.3':#done, tested
-            output_file.write(
-                (templates_map[error_code] + "\n")
-                .replace('$df', get_df(error['details']['df'], text_info, include_name=True))
+                .replace("$identifier",
+                         get_identifier(error["details"]["identifier"], text_info))
             )
 
-        case 'SYN5.4' | 'SYN5.5':#done, tested
+        case 'SYN5.3':
             output_file.write(
                 (templates_map[error_code] + "\n")
-                .replace("$cf", get_cf(error["details"]["cf"]))
+                .replace("$identifier",
+                         get_identifier(error["details"]["identifier"], text_info, include_name=True))
             )
 
-        case 'SYN5.6':#done, tested
+        case 'SYN5.4' | 'SYN5.5':
             output_file.write(
                 (templates_map[error_code] + "\n")
-                .replace("$typed_id",
-                         get_typed_id(error["details"]["typed_id"], text_info))
+                .replace("$cf",
+                         get_cf(error["details"]["cf"]))
             )
 
-        case 'SYN5.7' | 'SYN5.8':#done, tested
+        case 'SYN5.6':
             output_file.write(
                 (templates_map[error_code] + "\n")
-                .replace("$typed_id",
-                         get_typed_id(error["details"]["typed_id"], text_info))
+                .replace("$identifier",
+                         get_identifier(error["details"]["identifier"], text_info))
             )
 
-        case 'SYN6.1' | 'SYN6.2':#done, tested
+        case 'SYN5.7' | 'SYN5.8':
             output_file.write(
                 (templates_map[error_code] + "\n")
-                .replace("$cfs", get_all_cfs(error["details"]["cfs"]))
+                .replace("$identifier",
+                         get_identifier(error["details"]["identifier"], text_info))
             )
 
+        case 'SYN6.1' | 'SYN6.2':
+            output_file.write(
+                (templates_map[error_code] + "\n")
+                .replace("$cfs",
+                         get_all_cfs(error["details"]["cfs"]))
+            )
             
-        case 'SYN7':#done
+        case 'SYN7':
             output_file.write(
-                (templates_map[error_code] + "\n\n"))
+                (templates_map[error_code] + "\n\n")
+            )
             
-        case 'SYN8.1' | 'SYN8.2' | 'SYN8.3' | 'SYN8.4':#done, tested
+        case 'SYN8.1' | 'SYN8.2' | 'SYN8.3' | 'SYN8.4' | "SYN8.5":
             output_file.write(
                 (templates_map[error_code] + "\n")
-                .replace("$id_name", error["details"]["id_name"])
+                .replace("$id_name",
+                         error["details"]["id_name"])
                 .replace("$call_stack_entry",
                          get_call_stack_entry(error["details"]["call_stack_entry"], text_info))
             )
 
-        case 'SYN9':#done, tested
+        case 'SYN9':
+            output_file.write(
+                (templates_map[error_code] + "\n")
+                .replace("$identifier",
+                         get_identifier(error["details"]["identifier"], text_info, include_name=False))
+            )
+
+        case 'SYN10':
+            output_file.write(
+                (templates_map[error_code] + "\n")
+                .replace("$cf",
+                         get_cf(error["details"]["cf"]))
+            )
+
+        case 'SYN11':
+            output_file.write(
+                (templates_map[error_code] + "\n")
+                .replace("$expr",
+                         str(error["details"]["expression"]))
+                .replace("$callstack",
+                         get_call_stack(error["details"]["call_stack"], text_info))
+            )
+
+        case 'SYN12':#not workable
+            output_file.write(
+                (templates_map[error_code] + "\n")
+                .replace("$cf",
+                         get_cf(error["details"]["cf"]))
+            )
+
+
+
+        case 'SEM1':#not ready
             output_file.write(
                 (templates_map[error_code] + '\n')
-                .replace('$df_name', error['details']['df']['name'])
-                .replace('$df', get_df(error['details']['df'], text_info, include_name=False))
+                .replace("$cf",
+                         get_cf(error["details"]["cf"]))
+                .replace('$identifier',
+                         get_df(error["details"]["identifier"], text_info, include_name=False))
             )
 
-        case 'SYN10':#done, not workable
+        case 'SEM2.1':#TODO wtf
             output_file.write(
                 (templates_map[error_code] + "\n")
-                .replace("$cf", get_cf(error["details"]["cf"]))
-            )
-
-        case 'SYN11':#done, tested
-            output_file.write(
-                (templates_map[error_code] + "\n")
-                .replace("$expr", str(error["details"]["expression"]))
-                .replace("$callstack", get_call_stack(error["details"]["call_stack"], text_info))
-            )
-
-        case 'SYN12':#done, not workable
-            output_file.write(
-                (templates_map[error_code] + "\n")
-                .replace("$cf", get_cf(error["details"]["cf"]))
-            )
-
-
-
-        case 'SEM1':#done
-            output_file.write(
-                (templates_map[error_code] + '\n')
-                .replace("$cf", get_cf(error["details"]["cf"]))
-                .replace('$df', get_df(error['details']['df'], text_info, include_name=False))
-            )
-
-        case 'SEM2.1':#done
-            output_file.write(
-                (templates_map[error_code] + "\n")
-                .replace("$df_true", error["details"]["initialized"]["true"])
-                .replace("$initialized", get_df_ref(error["details"]["initialized"], text_info, include_declared=True))
-                .replace(
-                    "$other_initializations",
+                .replace("$df_true",
+                         error["details"]["initialized"]["true"])
+                .replace("$initialized",
+                         get_df_ref(error["details"]["initialized"], text_info, include_declared=True))
+                .replace("$other_initializations",
                     REF_SEPARATOR.join(
                         get_df_ref_or_index_range(it, text_info) for it in error["details"]["other_initializations"])
                 )
             )
 
-        case 'SEM2.2':#done
+        case 'SEM2.2':
             output_file.write(
                 (templates_map[error_code] + '\n')
-                .replace('$df_name', error['details']['ranges'][0]['df']['df']['name'])
-                .replace(
-                    '$initialization_loop1',
-                    get_index_range(error['details']['ranges'][0], text_info, include_declared=True)
-                )
-                .replace('$initialization_loop2', get_index_range(error['details']['ranges'][1], text_info))
+                .replace('$df_name',
+                         error['details']['ranges'][0]['df']['df']['name'])
+                .replace('$initialization_loop1',
+                         get_index_range(error['details']['ranges'][0], text_info, include_declared=True))
+                .replace('$initialization_loop2',
+                         get_index_range(error['details']['ranges'][1], text_info))
             )
 
-        case 'SEM3.1':#done
+        case 'SEM3.1':
             output_file.write(
                 (templates_map[error_code] + '\n')
-                .replace('$df_true', error['details']['used']['true'])
-                .replace('$used', get_df_ref(error['details']['used'], text_info, include_declared=True))
-                .replace(
-                    '$initialized',
-                    REF_SEPARATOR.join(
-                        get_df_ref_or_index_range(it, text_info) for it in error['details']['initialized']
-                    )
-                )
+                .replace('$df_true',
+                         error['details']['used']['true'])
+                .replace('$used',
+                         get_df_ref(error['details']['used'], text_info, include_declared=True))
+                .replace('$initialized',
+                         REF_SEPARATOR.join(get_df_ref_or_index_range(it, text_info) for it in error['details']['initialized']))
             )
         
-        case 'SEM3.2':#todo
+        case 'SEM3.2':
             output_file.write(
                 (templates_map[error_code] + '\n')
             )
 
-        case 'SEM3.3':#done
+        case 'SEM3.3':
             output_file.write(
                 (templates_map[error_code] + '\n')
-                .replace('$df_name', error['details']['used']['df']['df']['name'])
-                .replace('$used', get_index_range(error['details']['used'], text_info, include_declared=True))
-                .replace(
-                    '$initialized',
-                    REF_SEPARATOR.join(
-                        get_df_ref_or_index_range(it, text_info) for it in error['details']['initialized']
-                    )
-                )
+                .replace('$df_name',
+                         error['details']['used']['df']['df']['name'])
+                .replace('$used',
+                         get_index_range(error['details']['used'], text_info, include_declared=True))
+                .replace('$initialized',
+                         REF_SEPARATOR.join(get_df_ref_or_index_range(it, text_info) for it in error['details']['initialized']))
             )
         
-        case 'SEM3.4':#todo
+        case 'SEM3.4':
             output_file.write(
                 (templates_map[error_code] + '\n')
             )
 
-        case 'SEM3.5':#todo
+        case 'SEM3.5':
             output_file.write(
                 (templates_map[error_code] + '\n')
             )
 
-        case 'SEM3.6':#todo
+        case 'SEM3.6':
             output_file.write(
                 (templates_map[error_code] + '\n')
             )
 
-        case 'SEM4':#done
+        case 'SEM4':
             output_file.write(
                 (templates_map[error_code] + '\n')
-                .replace('$df_name', error['details']['df']['name'])
-                .replace('$df', get_df(error['details']['df'], text_info, include_name=False))
+                .replace('$df_name',
+                         error['details']['df']['name'])
+                .replace('$df',
+                         get_df(error['details']['df'], text_info, include_name=False))
             )
 
-        case 'SEM5' | 'SEM6':#done
+        case 'SEM5' | 'SEM6':
             output_file.write(
                 (templates_map[error_code] + "\n")
-                .replace("$bool", str(error["details"]["type"]))
-                .replace("$expr", str(error["details"]["condition"]))
-                .replace("$call_stack_entry", get_call_stack_entry(error["details"]["where"], text_info))
+                .replace("$bool",
+                         str(error["details"]["type"]))
+                .replace("$expr",
+                         str(error["details"]["condition"]))
+                .replace("$call_stack_entry",
+                         get_call_stack_entry(error["details"]["where"], text_info))
             )
 
-        case 'SEM7':#done
+        case 'SEM7':
             output_file.write(
                 (templates_map[error_code] + "\n")
-                .replace("$index", str(error["details"]["arg_index"]))
-                .replace("$expr", str(error["details"]["bad_expr"]))
-                .replace("$call_stack_entry", get_call_stack_entry(error["details"]["where"], text_info))
+                .replace("$index",
+                         str(error["details"]["arg_index"]))
+                .replace("$expr",
+                         str(error["details"]["bad_expr"]))
+                .replace("$call_stack_entry",
+                         get_call_stack_entry(error["details"]["where"], text_info))
             )
 
-        case 'SEM8':#done
+        case 'SEM8':
             output_file.write(
                 (templates_map[error_code] + '\n')
-                .replace('$callstack', get_call_stack(error['details']['call_stack'], text_info))
+                .replace('$callstack',
+                         get_call_stack(error['details']['call_stack'], text_info))
             )
 
-        case 'SEM9':#todo
+        case 'SEM9':
             output_file.write(
                 (templates_map[error_code] + '\n')
             )
         
-        case 'SEM10':#todo
+        case 'SEM10':
             output_file.write(
                 (templates_map[error_code] + '\n')
             )
 
-        case 'SEM11':#todo
+        case 'SEM11':
             output_file.write(
                 (templates_map[error_code] + '\n')
             )
