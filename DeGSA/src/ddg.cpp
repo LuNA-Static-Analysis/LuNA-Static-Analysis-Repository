@@ -317,7 +317,7 @@ class DDG {
                             // error code: 03
                             // details: df
                             //todo callstacks
-                            REPORTS.push_back(JsonReporter::createSEM2(
+                            REPORTS.push_back(JsonReporter::createSEM2_1(
                                 bn
                             ));
                         }
@@ -522,9 +522,15 @@ class DDG {
             if (mainDeclaration != CFDECLARATIONS.end()) {
                 CFDECLARATIONS.find("main")->second->isUsed = true;
                 SubVertex* mainVertex = new SubVertex("main", nullptr, subVF, 1, mainDeclaration->second->line, fileName, mainDeclaration->second->cfBlock, nullptr, mainDeclaration->second, {}, {}, {}, mainDeclaration->second->declaredArgs);
-                VERTICES.push_back(mainVertex);
-                mainVertex->initializeVertex();
+                //VERTICES.push_back(mainVertex);
                 std::cout << "Created a [MAIN] vertex: " << mainVertex << std::endl;
+                std::cout << "Initializing [MAIN] vertex" << std::endl;
+                if (mainVertex->initializeVertex()) {
+                    VERTICES.push_back(mainVertex);
+                } else {
+                    std::cout << "INTERNAL ERROR: not able to initialize [MAIN] vertex" << std::endl;
+                }
+                
             } else {
                 REPORTS.push_back(JsonReporter::createSYN7());
                 std::cout << "INTERNAL ERROR: No main found" << std::endl;

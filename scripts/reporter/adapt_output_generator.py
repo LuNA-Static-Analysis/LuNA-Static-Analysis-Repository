@@ -63,7 +63,7 @@ def get_all_callstacks(
     return separator.join(map(lambda it: get_call_stack(it, text_info), callstacks))
 
 
-def get_cf(cf: dict[str, Any]) -> str:#todo crashes
+def get_cf(cf: dict[str, Any]) -> str:
     return f'Name: {cf["name"]}, type: {cf["type"]}, file: {cf["file"]}, line: {cf["line"]}\n'
 
 
@@ -259,7 +259,7 @@ def report_error(
             output_file.write(
                 (templates_map[error_code] + "\n\n"))
             
-        case 'SYN8.1' | 'SYN8.2' | 'SYN8.3' | 'SYN8.4':#done, TODO: CRASHES ON SYN8.2 AND SYN8.3
+        case 'SYN8.1' | 'SYN8.2' | 'SYN8.3' | 'SYN8.4':#done, tested
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$id_name", error["details"]["id_name"])

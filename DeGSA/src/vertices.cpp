@@ -109,7 +109,12 @@ void Vertex::printGenericInfo(std::ostream* outputTarget) {
     *outputTarget << m_facts.size() << std::endl;
 }
 
-void SubVertex::initializeVertex() {
+bool SubVertex::initializeVertex() {
+    if (m_parent == nullptr && m_name != "main") {
+        std::cout << "INTERNAL ERROR: initializing SubVertex before setting its parent" << std::endl;
+        return false;
+    }
+
     _arguments = {};
     m_declaredBothIdsMap = {};
     m_declaredInsideIdsMap = {};
@@ -119,7 +124,7 @@ void SubVertex::initializeVertex() {
         //todo wip report error (old code luna06)
         //REPORTS.push_back(JsonReporter::createSYN3());
         std::cout << "INTERNAL ERROR: call args size and declared args size are not equal in call " << m_name << " at line " << m_line << std::endl;
-        return;
+        return false;
     }
 
     // SEM8: check for unconditional recursion
@@ -131,7 +136,7 @@ void SubVertex::initializeVertex() {
         if (callerType == subVF && callerVertex->getName() == m_name) {
             if (!conditional)
                 REPORTS.push_back(JsonReporter::createSEM8(callerVertex, this));
-            return; // to avoid infinite recursion in DeGSA itself
+            return false; // to avoid infinite recursion in DeGSA itself
         }
         if (callerType == ifVF || callerType == forVF || callerType == whileVF) {
             conditional = true; // condition found, error is not present
@@ -182,9 +187,15 @@ void SubVertex::initializeVertex() {
     }
 
     enterBlock();
+    return true;
 }
 
-void ImportVertex::initializeVertex() {
+bool ImportVertex::initializeVertex() {
+    if (m_parent == nullptr) {
+        std::cout << "INTERNAL ERROR: initializing ImportVertex before setting its parent" << std::endl;
+        return false;
+    }
+
     _arguments = {};
 
     std::cout << "Import entered" << std::endl;
@@ -208,10 +219,15 @@ void ImportVertex::initializeVertex() {
                 std::cout << "INTERNAL ERROR: initializeVertex -- import: found DF with unexpected UseDef!" << std::endl;
         }
     }
-    return;
+    return true;
 }
 
-void ForVertex::initializeVertex() {
+bool ForVertex::initializeVertex() {
+    if (m_parent == nullptr) {
+        std::cout << "INTERNAL ERROR: initializing ForVertex before setting its parent" << std::endl;
+        return false;
+    }
+
     const for_statement* innerStatementForVF = dynamic_cast<const for_statement*>(m_statement);
 
     // check for duplicate name
@@ -224,8 +240,10 @@ void ForVertex::initializeVertex() {
         ));
 
         std::cout << "INTERNAL ERROR: aborted initializing \"for\" vertex" << std::endl;
-        return;
+        return false;
     }
+
+    //todo check conditions here perhaps
 
     _iterator = new ForIteratorName(forIteratorString, this);
 
@@ -247,9 +265,15 @@ void ForVertex::initializeVertex() {
     m_facts.insert(new GLeNFact(lesserOrEqualNode, iteratorExpression, _rightBorder));
 
     enterBlock();
+    return true;
 }
 
-void WhileVertex::initializeVertex() {
+bool WhileVertex::initializeVertex() {
+    if (m_parent == nullptr) {
+        std::cout << "INTERNAL ERROR: initializing WhileVertex before setting its parent" << std::endl;
+        return false;
+    }
+
     const while_statement* innerStatementWhileVF = dynamic_cast<const while_statement*>(m_statement);
 
     // check for duplicate name
@@ -262,7 +286,7 @@ void WhileVertex::initializeVertex() {
         ));
 
         std::cout << "INTERNAL ERROR: aborted initializing \"while\" vertex" << std::endl;
-        return;
+        return false;
     }
 
     _iterator = new WhileIteratorName(whileIteratorString, this);
@@ -302,9 +326,15 @@ void WhileVertex::initializeVertex() {
     m_facts.insert(new GLeNFact(nonEqualNode, _conditionExpr, new Expression("0", intNode, this)));
 
     enterBlock();
+    return true;
 }
 
-void IfVertex::initializeVertex() {
+bool IfVertex::initializeVertex() {
+    if (m_parent == nullptr) {
+        std::cout << "INTERNAL ERROR: initializing IfVertex before setting its parent" << std::endl;
+        return false;
+    }
+
     const if_statement* innerStatementIfVF = dynamic_cast<const if_statement*>(m_statement);
 
     _conditionExpr = new Expression(innerStatementIfVF->expr_, m_declaredOutsideIdsMap, this);
@@ -316,9 +346,15 @@ void IfVertex::initializeVertex() {
     m_facts.insert(new GLeNFact(nonEqualNode, _conditionExpr, new Expression("0", intNode, this)));
 
     enterBlock();
+    return true;
 }
 
-void LetVertex::initializeVertex() {
+bool LetVertex::initializeVertex() {
+    if (m_parent == nullptr) {
+        std::cout << "INTERNAL ERROR: initializing LetVertex before setting its parent" << std::endl;
+        return false;
+    }
+
     const let_statement* innerStatementLetVF = dynamic_cast<const let_statement*>(m_statement);
 
     // map expressions to new letNames
@@ -336,7 +372,7 @@ void LetVertex::initializeVertex() {
             ));
 
             std::cout << "INTERNAL ERROR: aborted initializing \"let\" vertex" << std::endl;
-            return;
+            return false;
         }
 
         Expression* letExpr = new Expression(assignment->expr_, m_declaredOutsideIdsMap, this);
@@ -347,6 +383,7 @@ void LetVertex::initializeVertex() {
     }
 
     enterBlock();
+    return true;
 }
 
 void Vertex::enterBlock() {
@@ -506,9 +543,11 @@ void Vertex::handleSub(cf_statement* cfStatement) {
         }
     }
     
-    VERTICES.push_back(nextVertex);
-    addInside(nextVertex);
-    nextVertex->initializeVertex();
+    if (nextVertex->initializeVertex()) {
+        VERTICES.push_back(nextVertex);
+        addInside(nextVertex);
+    } else
+        std::cout << "INTERNAL ERROR: unable to initialize SubVertex" << std::endl;
 }
 
 void Vertex::handleImport(cf_statement* cfStatement) {
@@ -552,38 +591,52 @@ void Vertex::handleImport(cf_statement* cfStatement) {
             }
         }
     }
-
-    VERTICES.push_back(nextVertex);
-    addInside(nextVertex);
-    nextVertex->initializeVertex();
+    
+    if (nextVertex->initializeVertex()) {
+        VERTICES.push_back(nextVertex);
+        addInside(nextVertex);
+    } else
+        std::cout << "INTERNAL ERROR: unable to initialize ImportVertex" << std::endl;
 }
 
 void Vertex::handleFor(for_statement* forStatement) {
     ForVertex* nextVertex = new ForVertex(this, m_depth + 1, forStatement->line_, m_fileName, forStatement->block_, forStatement, m_declaredBothIdsMap, m_facts);
-    VERTICES.push_back(nextVertex);
-    addInside(nextVertex);
-    nextVertex->initializeVertex();
+    
+    if (nextVertex->initializeVertex()) {
+        VERTICES.push_back(nextVertex);
+        addInside(nextVertex);
+    } else
+        std::cout << "INTERNAL ERROR: unable to initialize ForVertex" << std::endl;
 }
 
 void Vertex::handleWhile(while_statement* whileStatement) {
     WhileVertex* nextVertex = new WhileVertex(this, m_depth + 1, whileStatement->line_, m_fileName, whileStatement->block_, whileStatement, m_declaredBothIdsMap, m_facts);
-    VERTICES.push_back(nextVertex);
-    addInside(nextVertex);
-    nextVertex->initializeVertex();
+    
+    if (nextVertex->initializeVertex()) {
+        VERTICES.push_back(nextVertex);
+        addInside(nextVertex);
+    } else
+        std::cout << "INTERNAL ERROR: unable to initialize WhileVertex" << std::endl;
 }
 
 void Vertex::handleIf(if_statement* ifStatement) {
     IfVertex* nextVertex = new IfVertex(this, m_depth + 1, ifStatement->line_, m_fileName, ifStatement->block_, ifStatement, m_declaredBothIdsMap, m_facts);
-    VERTICES.push_back(nextVertex);
-    addInside(nextVertex);
-    nextVertex->initializeVertex();
+    
+    if (nextVertex->initializeVertex()) {
+        VERTICES.push_back(nextVertex);
+        addInside(nextVertex);
+    } else
+        std::cout << "INTERNAL ERROR: unable to initialize IfVertex" << std::endl;
 }
 
 void Vertex::handleLet(let_statement* letStatement) {
     LetVertex* nextVertex = new LetVertex(this, m_depth + 1, letStatement->line_, m_fileName, letStatement->block_, letStatement, m_declaredBothIdsMap, m_facts);
-    VERTICES.push_back(nextVertex);
-    addInside(nextVertex);
-    nextVertex->initializeVertex();
+    
+    if (nextVertex->initializeVertex()) {
+        VERTICES.push_back(nextVertex);
+        addInside(nextVertex);
+    } else
+        std::cout << "INTERNAL ERROR: unable to initialize LetVertex" << std::endl;
 }
 
 void SubVertex::printInfo(std::ostream* outputTarget) {
@@ -601,18 +654,18 @@ void ImportVertex::printInfo(std::ostream* outputTarget) {
 void ForVertex::printInfo(std::ostream* outputTarget){
     printGenericInfo(outputTarget);
 
-    *outputTarget << "Iterator: " + this->getIterator()->getName() << std::endl;
-    *outputTarget << "Left border: " + this->getLeftBorder()->getASTExpr()->to_string() << std::endl;
-    *outputTarget << "Right border: " + this->getRightBorder()->getASTExpr()->to_string() << std::endl;
+    *outputTarget << "Iterator: " + (this->getIterator() != nullptr ? this->getIterator()->getName() : "NULL") << std::endl;
+    *outputTarget << "Left border: " + (this->getLeftBorder() != nullptr ? this->getLeftBorder()->getASTExpr()->to_string() : "NULL") << std::endl;
+    *outputTarget << "Right border: " + (this->getRightBorder() != nullptr ? this->getRightBorder()->getASTExpr()->to_string() : "NULL") << std::endl;
 }
 
 void WhileVertex::printInfo(std::ostream* outputTarget){
     printGenericInfo(outputTarget);
 
-    *outputTarget << "Iterator: " + _iterator->getName() << std::endl;
-    *outputTarget << "Out name: " + _outName->getName() << std::endl;
-    *outputTarget << "Condition expression: " + _conditionExpr->getASTExpr()->to_string() << std::endl;
-    *outputTarget << "Start expression: " + _startExpr->getASTExpr()->to_string() << std::endl;
+    *outputTarget << "Iterator: " + (this->_iterator != nullptr ? _iterator->getName() : "NULL") << std::endl;
+    *outputTarget << "Out name: " + (this->_outName != nullptr ? _outName->getName() : "NULL") << std::endl;
+    *outputTarget << "Condition expression: " + (this->_conditionExpr != nullptr ? _conditionExpr->getASTExpr()->to_string() : "NULL") << std::endl;
+    *outputTarget << "Start expression: " + (this->_startExpr != nullptr ? _startExpr->getASTExpr()->to_string() : "NULL") << std::endl;
 }
 
 void IfVertex::printInfo(std::ostream* outputTarget){

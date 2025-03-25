@@ -121,7 +121,7 @@ class Vertex {
         // this information in Use and Def sets of a vertice (this is later used in bindVertices() to fully create a graph)
         // Identifier objects (except for SubArgNames) and Expressions are being created in enterBlock(), Vertex objects are being created in initializeVertex()
         //todo redo these docs
-        virtual void initializeVertex() = 0;
+        virtual bool initializeVertex() = 0;
         void enterBlock();
 
         void scanForDFDecls();
@@ -152,7 +152,7 @@ class SubVertex: public Vertex {
             Vertex(name, parent, vertexType, depth, line, fileName, block, statement, declaredOutsideIdsMap, facts), _callArgs(callArgs), _declaredArgs(declaredArgs), _cfDeclaration(cfDeclaration) {};
 
         void printInfo(std::ostream* outputTarget);
-        virtual void initializeVertex();
+        virtual bool initializeVertex();
 
         CFDeclaration* getDeclaration() const { return _cfDeclaration; };
 };
@@ -172,7 +172,7 @@ class ImportVertex: public Vertex {
             Vertex(name, parent, vertexType, depth, line, fileName, block, statement, declaredOutsideIdsMap, facts), _callArgs(callArgs), _declaredArgs(declaredArgs), _cfDeclaration(cfDeclaration) {};
 
         void printInfo(std::ostream* outputTarget);
-        virtual void initializeVertex();
+        virtual bool initializeVertex();
 
         CFDeclaration* getDeclaration() const { return _cfDeclaration; };
 };
@@ -197,7 +197,7 @@ class ForVertex: public Vertex {
         Expression* getRightBorder() { return _rightBorder; };
 
         void printInfo(std::ostream* outputTarget);
-        virtual void initializeVertex();
+        virtual bool initializeVertex();
 };
 
 class WhileVertex: public Vertex {
@@ -223,7 +223,7 @@ class WhileVertex: public Vertex {
         Expression* getStartExpr() { return _startExpr; };
 
         void printInfo(std::ostream* outputTarget);
-        virtual void initializeVertex();
+        virtual bool initializeVertex();
 };
 
 class IfVertex: public Vertex {
@@ -240,7 +240,7 @@ class IfVertex: public Vertex {
         Expression* getConditionExpr() { return _conditionExpr; };
 
         void printInfo(std::ostream* outputTarget);
-        virtual void initializeVertex();
+        virtual bool initializeVertex();
 };
 
 class LetVertex: public Vertex {
@@ -259,5 +259,5 @@ class LetVertex: public Vertex {
         //todo add method to add names
 
         void printInfo(std::ostream* outputTarget);
-        virtual void initializeVertex();
+        virtual bool initializeVertex();
 };

@@ -392,11 +392,12 @@ public:
 
     // ***************************************** SEMANTIC **************************************************
 
-    static std::string createSEM2(
+    static std::string createSEM2_1(
         Identifier* const identifier
     ){
         std::map<std::string, std::string> map = {};
-        map.insert( { "df", createDF(identifier) } );
+        map.insert( { "initialized", createDFRef("todo", "todo", "todo", "todo") } );//todo
+        map.insert( { "other_initializations", createArray( { } )});//todo
         return createReport("SEM2.1", createJson(map));
     }
 
@@ -404,10 +405,9 @@ public:
     static std::string createSEM3_1(
         Identifier* const identifier
     ){
-        // details: df
         std::map<std::string, std::string> map = {};
         map.insert( { "df", createDF(identifier) } );
-        return createReport("SEM3_1", createJson(map));
+        return createReport("SEM3.1", createJson(map));
     }
 
     static std::string createSEM3_2(
@@ -417,7 +417,7 @@ public:
         for (int i = 0; i < loop.size(); i++) {
             map.insert( { "vertex" + std::to_string(i + 1), createCallStackEntry(loop[i]->getFileName(), std::to_string(loop[i]->getLine()), loop[i]->getName()) } );
         }
-        return createReport("SEM3_2", createJson(map));
+        return createReport("SEM3.2", createJson(map));
     }
 
     static std::string createSEM4(
