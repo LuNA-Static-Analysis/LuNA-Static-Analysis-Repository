@@ -169,10 +169,10 @@ def get_conditions(conditions: list[str]) -> str:
 
 
 def get_identifier(
-        typed_id: dict[str, Any],
+        identifier: dict[str, Any],
         text_info: TextInfo
 ) -> str:
-    return f'Name: {typed_id["name"]}\nAt: {get_call_stack(typed_id["call_stack"], text_info)}'
+    return f'Name: {identifier["name"]}\nAt: {get_call_stack_entry(identifier["call_stack_entry"], text_info)}'
 
 
 def report_error(
@@ -183,15 +183,17 @@ def report_error(
 ) -> None:
     error_code: str = error["error_code"]
     match error_code.upper():
-        case 'SYN1':
+
+        case 'SYN1':#dap
             output_file.write(
                 (templates_map[error_code] + "\n")
-                .replace("$call_stack",
-                         get_call_stack(error["details"]["call_stack"], text_info))
+                .replace("$call_stack_entry",
+                         get_call_stack_entry(error["details"]["call_stack_entry"], text_info))
                 .replace("$cf",
                          get_cf(error["details"]["cf"]))
             )
-        case 'SYN2':
+        
+        case 'SYN2':#dap
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$cf_name",
@@ -199,7 +201,8 @@ def report_error(
                 .replace("$call_stack_entry",
                          get_call_stack_entry(error["details"]["call_stack_entry"], text_info))
             )
-        case 'SYN3':
+        
+        case 'SYN3':#dap
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$cf_name",
@@ -209,87 +212,92 @@ def report_error(
                 .replace("$cf",
                          get_cf(error["details"]["cf"]))
             )
-        case 'SYN4':#not workable
+        
+        case 'SYN4':#dXp
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$call_stack_entry",
                          get_call_stack_entry(error["details"]["call_stack_entry"], text_info))
             )
-        case 'SYN5.1':
+        
+        case 'SYN5.1':#dap
             output_file.write(
                 (templates_map[error_code] + "\n")
             )
-        case 'SYN5.2':
+        
+        case 'SYN5.2':#dap
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$identifier",
                          get_identifier(error["details"]["identifier"], text_info))
             )
 
-        case 'SYN5.3':
+        case 'SYN5.3':#dap
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$identifier",
-                         get_identifier(error["details"]["identifier"], text_info, include_name=True))
+                         get_identifier(error["details"]["identifier"], text_info))
             )
 
-        case 'SYN5.4' | 'SYN5.5':
+        case 'SYN5.4' | 'SYN5.5':#dap dap
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$cf",
                          get_cf(error["details"]["cf"]))
             )
 
-        case 'SYN5.6':
+        case 'SYN5.6':#dap
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$identifier",
                          get_identifier(error["details"]["identifier"], text_info))
             )
 
-        case 'SYN5.7' | 'SYN5.8':
+        case 'SYN5.7' | 'SYN5.8':#dXp dap
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$identifier",
                          get_identifier(error["details"]["identifier"], text_info))
             )
 
-        case 'SYN6.1' | 'SYN6.2':
+        case 'SYN6.1' | 'SYN6.2':#dap dap
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$cfs",
                          get_all_cfs(error["details"]["cfs"]))
             )
             
-        case 'SYN7':
+        case 'SYN7':#dap TODO DeGSA did not find it (only if using in adapt)
             output_file.write(
                 (templates_map[error_code] + "\n\n")
             )
             
-        case 'SYN8.1' | 'SYN8.2' | 'SYN8.3' | 'SYN8.4' | "SYN8.5":
+        case 'SYN8.1' | 'SYN8.2' | 'SYN8.3' | 'SYN8.4' | 'SYN8.5':# dap dap dap dap dap
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$id_name",
-                         error["details"]["id_name"])
+                         error["details"]["identifier"]["name"])
                 .replace("$call_stack_entry",
-                         get_call_stack_entry(error["details"]["call_stack_entry"], text_info))
+                         get_call_stack_entry(error["details"]["identifier"]["call_stack_entry"], text_info))
             )
 
-        case 'SYN9':
+        case 'SYN9':#dXp
             output_file.write(
                 (templates_map[error_code] + "\n")
-                .replace("$identifier",
-                         get_identifier(error["details"]["identifier"], text_info, include_name=False))
+                .replace("$id_name",
+                         error["details"]["identifier"]["name"])
+                .replace("$call_stack_entry",
+                         get_call_stack_entry(error["details"]["identifier"]["call_stack_entry"], text_info))
             )
 
-        case 'SYN10':
+        case 'SYN10':#todo
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$cf",
                          get_cf(error["details"]["cf"]))
             )
 
-        case 'SYN11':
+        case 'SYN11':#dap
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$expr",
@@ -298,7 +306,7 @@ def report_error(
                          get_call_stack(error["details"]["call_stack"], text_info))
             )
 
-        case 'SYN12':#not workable
+        case 'SYN12':#todo
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$cf",
@@ -307,7 +315,7 @@ def report_error(
 
 
 
-        case 'SEM1':#not ready
+        case 'SEM1':#dap
             output_file.write(
                 (templates_map[error_code] + '\n')
                 .replace("$cf",
@@ -316,7 +324,7 @@ def report_error(
                          get_df(error["details"]["identifier"], text_info, include_name=False))
             )
 
-        case 'SEM2.1':#TODO wtf
+        case 'SEM2.1':#Xap  TODO wtf
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$df_true",
@@ -329,7 +337,7 @@ def report_error(
                 )
             )
 
-        case 'SEM2.2':
+        case 'SEM2.2':#todo
             output_file.write(
                 (templates_map[error_code] + '\n')
                 .replace('$df_name',
@@ -340,7 +348,7 @@ def report_error(
                          get_index_range(error['details']['ranges'][1], text_info))
             )
 
-        case 'SEM3.1':
+        case 'SEM3.1':#Xap
             output_file.write(
                 (templates_map[error_code] + '\n')
                 .replace('$df_true',
@@ -351,12 +359,12 @@ def report_error(
                          REF_SEPARATOR.join(get_df_ref_or_index_range(it, text_info) for it in error['details']['initialized']))
             )
         
-        case 'SEM3.2':
+        case 'SEM3.2':#dap TODO new format
             output_file.write(
                 (templates_map[error_code] + '\n')
             )
 
-        case 'SEM3.3':
+        case 'SEM3.3':#todo
             output_file.write(
                 (templates_map[error_code] + '\n')
                 .replace('$df_name',
@@ -367,22 +375,22 @@ def report_error(
                          REF_SEPARATOR.join(get_df_ref_or_index_range(it, text_info) for it in error['details']['initialized']))
             )
         
-        case 'SEM3.4':
+        case 'SEM3.4':#todo
             output_file.write(
                 (templates_map[error_code] + '\n')
             )
 
-        case 'SEM3.5':
+        case 'SEM3.5':#todo
             output_file.write(
                 (templates_map[error_code] + '\n')
             )
 
-        case 'SEM3.6':
+        case 'SEM3.6':#todo
             output_file.write(
                 (templates_map[error_code] + '\n')
             )
 
-        case 'SEM4':
+        case 'SEM4':#Xap
             output_file.write(
                 (templates_map[error_code] + '\n')
                 .replace('$df_name',
@@ -391,7 +399,7 @@ def report_error(
                          get_df(error['details']['df'], text_info, include_name=False))
             )
 
-        case 'SEM5' | 'SEM6':
+        case 'SEM5' | 'SEM6':#dap dXp
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$bool",
@@ -402,7 +410,7 @@ def report_error(
                          get_call_stack_entry(error["details"]["where"], text_info))
             )
 
-        case 'SEM7':
+        case 'SEM7':#dap
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$index",
@@ -413,24 +421,24 @@ def report_error(
                          get_call_stack_entry(error["details"]["where"], text_info))
             )
 
-        case 'SEM8':
+        case 'SEM8':#XaX
             output_file.write(
                 (templates_map[error_code] + '\n')
                 .replace('$callstack',
                          get_call_stack(error['details']['call_stack'], text_info))
             )
 
-        case 'SEM9':
+        case 'SEM9':#todo
             output_file.write(
                 (templates_map[error_code] + '\n')
             )
         
-        case 'SEM10':
+        case 'SEM10':#todo
             output_file.write(
                 (templates_map[error_code] + '\n')
             )
 
-        case 'SEM11':
+        case 'SEM11':#todo
             output_file.write(
                 (templates_map[error_code] + '\n')
             )

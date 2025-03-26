@@ -174,13 +174,22 @@ public:
         return createJson(map);
     }
 
-    static std::string createTypedId(
+    static std::string createIdentifier(
         Identifier* identifier
     ){
         std::map<std::string, std::string> map = {};
         map.insert( { "name", identifier->getName() } );
-        map.insert( { "type", identifier->getValueTypeAsString() } );
         auto vertex = identifier->getVertex();
+        map.insert( { "call_stack_entry", createCallStackEntry(vertex->getFileName(), std::to_string(vertex->getLine()), vertex->getName()) } );
+        return createJson(map);
+    }
+
+    static std::string createIdentifierLazy(
+        std::string identifierName,
+        Vertex* vertex
+    ){
+        std::map<std::string, std::string> map = {};
+        map.insert( { "name", identifierName } );
         map.insert( { "call_stack_entry", createCallStackEntry(vertex->getFileName(), std::to_string(vertex->getLine()), vertex->getName()) } );
         return createJson(map);
     }
@@ -199,7 +208,7 @@ public:
         map.insert( { "expression", expression } );
         std::string cfType = vertex->getVertexType() == importVF ? "extern" : "struct";
         map.insert( { "cf", createCF(cfDeclaration) } );
-        map.insert( { "call_stack", createCallstackFromVertex(vertex) } );
+        map.insert( { "call_stack_entry", createCallStackEntry(vertex->getFileName(), std::to_string(vertex->getLine()), vertex->getName()) } );
         return createReport("SYN1", createJson(map));
     }
 
@@ -230,7 +239,7 @@ public:
         if (identifier->getClass() != letNameClass)
             std::cout << "INTERNAL ERROR: SYN5.2 got wrong type" << std::endl;
         std::map<std::string, std::string> map = {};
-        map.insert( { "typed_id", createTypedId(identifier) } );
+        map.insert( { "identifier", createIdentifier(identifier) } );
         return createReport("SYN5.2", createJson(map));
     }
 
@@ -240,7 +249,7 @@ public:
         if (identifier->getClass() != baseDFNameClass)
             std::cout << "INTERNAL ERROR: SYN5.3 got wrong type" << std::endl;
         std::map<std::string, std::string> map = {};
-        map.insert( { "df", createDF(identifier) } );
+        map.insert( { "identifier", createIdentifier(identifier) } );
         return createReport("SYN5.3", createJson(map));
     }
 
@@ -270,7 +279,7 @@ public:
         if (identifier->getClass() != mutableArgNameClass && identifier->getClass() != immutableArgNameClass)
             std::cout << "INTERNAL ERROR: SYN5.6 got wrong type" << std::endl;
         std::map<std::string, std::string> map = {};
-        map.insert( { "typed_id", createTypedId(identifier) } );
+        map.insert( { "identifier", createIdentifier(identifier) } );
         return createReport("SYN5.6", createJson(map));
     }
 
@@ -280,7 +289,7 @@ public:
         if (identifier->getClass() != forIteratorNameClass)
             std::cout << "INTERNAL ERROR: SYN5.7 got wrong type" << std::endl;
         std::map<std::string, std::string> map = {};
-        map.insert( { "typed_id", createTypedId(identifier) } );
+        map.insert( { "identifier", createIdentifier(identifier) } );
         return createReport("SYN5.7", createJson(map));
     }
 
@@ -290,7 +299,7 @@ public:
         if (identifier->getClass() != whileIteratorNameClass)
             std::cout << "INTERNAL ERROR: SYN5.8 got wrong type" << std::endl;
         std::map<std::string, std::string> map = {};
-        map.insert( { "typed_id", createTypedId(identifier) } );
+        map.insert( { "identifier", createIdentifier(identifier) } );
         return createReport("SYN5.8", createJson(map));
     }
 
@@ -326,8 +335,7 @@ public:
         Vertex* vertex
     ){
         std::map<std::string, std::string> map = {};
-        map.insert( { "id_name", identifierName } );
-        map.insert( { "call_stack_entry", createCallStackEntry(vertex->getFileName(), std::to_string(vertex->getLine()), vertex->getName()) } );
+        map.insert( { "identifier", createIdentifierLazy(identifierName, vertex) } );
         return createReport("SYN8.1", createJson(map));
     }
 
@@ -336,8 +344,7 @@ public:
         Vertex* vertex
     ){
         std::map<std::string, std::string> map = {};
-        map.insert( { "id_name", identifierName } );
-        map.insert( { "call_stack_entry", createCallStackEntry(vertex->getFileName(), std::to_string(vertex->getLine()), vertex->getName()) } );
+        map.insert( { "identifier", createIdentifierLazy(identifierName, vertex) } );
         return createReport("SYN8.2", createJson(map));
     }
 
@@ -346,8 +353,7 @@ public:
         Vertex* vertex
     ){
         std::map<std::string, std::string> map = {};
-        map.insert( { "id_name", identifierName } );
-        map.insert( { "call_stack_entry", createCallStackEntry(vertex->getFileName(), std::to_string(vertex->getLine()), vertex->getName()) } );
+        map.insert( { "identifier", createIdentifierLazy(identifierName, vertex) } );
         return createReport("SYN8.3", createJson(map));
     }
 
@@ -356,8 +362,7 @@ public:
         Vertex* vertex
     ){
         std::map<std::string, std::string> map = {};
-        map.insert( { "id_name", identifierName } );
-        map.insert( { "call_stack_entry", createCallStackEntry(vertex->getFileName(), std::to_string(vertex->getLine()), vertex->getName()) } );
+        map.insert( { "identifier", createIdentifierLazy(identifierName, vertex) } );
         return createReport("SYN8.4", createJson(map));
     }
 
@@ -366,8 +371,7 @@ public:
         Vertex* vertex
     ){
         std::map<std::string, std::string> map = {};
-        map.insert( { "id_name", identifierName } );
-        map.insert( { "call_stack_entry", createCallStackEntry(vertex->getFileName(), std::to_string(vertex->getLine()), vertex->getName()) } );
+        map.insert( { "identifier", createIdentifierLazy(identifierName, vertex) } );
         return createReport("SYN8.5", createJson(map));
     }
 
@@ -375,7 +379,7 @@ public:
         Identifier* const identifier
     ){
         std::map<std::string, std::string> map = {};
-        map.insert( { "df", createDF(identifier) } );
+        map.insert( { "identifier", createIdentifier(identifier) } );
         return createReport("SYN9", createJson(map));
     }
 
