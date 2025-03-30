@@ -340,7 +340,7 @@ def report_error(
         case 'SEM2.2':#todo
             output_file.write(
                 (templates_map[error_code] + '\n')
-                .replace('$df_name',
+                .replace('$id_name',
                          error['details']['ranges'][0]['df']['df']['name'])
                 .replace('$initialization_loop1',
                          get_index_range(error['details']['ranges'][0], text_info, include_declared=True))
@@ -367,7 +367,7 @@ def report_error(
         case 'SEM3.3':#todo
             output_file.write(
                 (templates_map[error_code] + '\n')
-                .replace('$df_name',
+                .replace('$id_name',
                          error['details']['used']['df']['df']['name'])
                 .replace('$used',
                          get_index_range(error['details']['used'], text_info, include_declared=True))
@@ -393,7 +393,7 @@ def report_error(
         case 'SEM4':#Xap
             output_file.write(
                 (templates_map[error_code] + '\n')
-                .replace('$df_name',
+                .replace('$id_name',
                          error['details']['df']['name'])
                 .replace('$df',
                          get_df(error['details']['df'], text_info, include_name=False))
