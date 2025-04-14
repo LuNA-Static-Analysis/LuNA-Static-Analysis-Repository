@@ -1,10 +1,9 @@
 #include <iostream>
 
-#include "../Exprtk/exprtk.cpp"
+#include "../symengine-0.14.0/symengine/expression.h"
 
-typedef exprtk::symbol_table<double> symbol_table_t;
-typedef exprtk::expression<double>   expression_t;
-typedef exprtk::parser<double>       parser_t;
+//using SymEngine::Expression;
+using SymEngine::RCP;
 
 void logs(std::string message)
 {
@@ -20,38 +19,14 @@ int main(){
 
     logs("started");
 
-    double x = 0;
-    double y = 0;
+    RCP<const SymEngine::Basic> r, r1, r2;
+    RCP<const SymEngine::Integer> i = SymEngine::integer(-1);
+    RCP<const SymEngine::Symbol> x = SymEngine::symbol("x");
+    RCP<const SymEngine::Symbol> y = SymEngine::symbol("y");
+    RCP<const SymEngine::Symbol> z = SymEngine::symbol("z");
 
-    symbol_table_t symbol_table;
-    expression_t   expression;
-    parser_t       parser;
+    r = SymEngine::div(SymEngine::integer(12), pow(SymEngine::integer(195), SymEngine::div(SymEngine::integer(1), SymEngine::integer(2))));
+    logs(r->__str__());
 
-    std::string expression_string = "x * y == x * y";
-
-    symbol_table.add_variable("x",x);
-    symbol_table.add_variable("y",y);
-
-    expression.register_symbol_table(symbol_table);
-
-    parser.compile(expression_string,expression);
-
-    std::cout << expression.results
-
-    x = 1.0;
-    y = 2.0;
-    logd(expression.value()); // 1 * 2 + 3
-
-    x = 3.7;
-    logd(expression.value()); // 3.7 * 2 + 3
-
-    y = -9.0;
-    logd(expression.value()); // 3.7 * -9 + 3
-
-    // 'x * -9 + 3' for x in range of [0,100) in steps of 0.0001
-    /*for (x = 0.0; x < 100.0; x += 0.0001)
-    {
-        expression.value(); // x * -9 + 3
-    }*/
     logs("ended");
 }

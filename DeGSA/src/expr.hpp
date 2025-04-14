@@ -4,11 +4,6 @@
 #include "ids.hpp"
 #include "../../parser/ast.hpp"
 
-#include "../Exprtk/exprtk.cpp"
-typedef exprtk::expression<double> ExprtkExpressionDouble;
-typedef exprtk::expression<int> ExprtkExpressionInt;
-typedef exprtk::expression<std::string> ExprtkExpressionString;
-
 #include <regex>
 
 // abstract class that represents nodes in an AST
