@@ -58,6 +58,12 @@ enum ExpressionType {
 
 };
 
+enum ExpressionEquality {
+    definitelyEqual = 1,
+    maybeEqual = 2,
+    notEqual = 3
+};
+
 // used for Identifiers and DeclaredArgs structs (as LuNA types)
 enum ValueType {
 

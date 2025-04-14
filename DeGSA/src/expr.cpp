@@ -239,6 +239,132 @@ void Expression::calculateValueType(){
     }
 }
 
+std::string Expression::getAsTrueString(){
+    //todo how to avoid duplication of names?
+    //answer: names must be coded in such a way that different are different and same are the same
+    switch(_expressionType) {
+        case addNode: {
+            return "(" + _leftExpr->getAsTrueString() + "+" + _rightExpr->getAsTrueString() + ")";
+        }
+        case subtractNode: {
+            return "(" + _leftExpr->getAsTrueString() + "-" + _rightExpr->getAsTrueString() + ")";
+        }
+        case multiplyNode: {
+            return "(" + _leftExpr->getAsTrueString() + "*" + _rightExpr->getAsTrueString() + ")";
+        }
+        case divideNode: {
+            return "(" + _leftExpr->getAsTrueString() + "/" + _rightExpr->getAsTrueString() + ")";
+        }
+        case modulusNode: {
+            return "(" + _leftExpr->getAsTrueString() + "%" + _rightExpr->getAsTrueString() + ")";
+        }
+        case greaterNode: {
+            return "(" + _leftExpr->getAsTrueString() + ">" + _rightExpr->getAsTrueString() + ")";
+        }
+        case greaterOrEqualNode: {
+            return "(" + _leftExpr->getAsTrueString() + ">=" + _rightExpr->getAsTrueString() + ")";
+        }
+        case lesserNode: {
+            return "(" + _leftExpr->getAsTrueString() + "<" + _rightExpr->getAsTrueString() + ")";
+        }
+        case lesserOrEqualNode: {
+            return "(" + _leftExpr->getAsTrueString() + "<=" + _rightExpr->getAsTrueString() + ")";
+        }
+        case equalNode: {
+            return "(" + _leftExpr->getAsTrueString() + "==" + _rightExpr->getAsTrueString() + ")";
+        }
+        case nonEqualNode: {
+            return "(" + _leftExpr->getAsTrueString() + "!=" + _rightExpr->getAsTrueString() + ")";
+        }
+        case andNode: {
+            return "(" + _leftExpr->getAsTrueString() + "&&" + _rightExpr->getAsTrueString() + ")";
+        }
+        case orNode: {
+            return "(" + _leftExpr->getAsTrueString() + "||" + _rightExpr->getAsTrueString() + ")";
+        }
+        case intNode: {
+            //todo
+        }
+        case intCastNode: {
+            //todo
+        }
+        case stringNode: {
+            //todo
+        }
+        case stringCastNode: {
+            //todo
+        }
+        case realNode: {
+            //todo
+        }
+        case realCastNode: {
+            //todo
+        }
+        // identifier
+        case identifierNode: {
+            return getAsIdentifier()->getName();
+            //todo this is not strictly true, for IDFs for example
+        }
+        case noneNode: {
+            logInternalError("noneNode when trying to convert to Exprtk");
+            return "";
+        }
+    }
+}
+
+ExprtkExpressionDouble* Expression::toExprkDouble(){
+    // check for types
+}
+
+//todo templates?
+ExprtkExpressionInt* Expression::toExprkInt(){
+    if (_valueType == nonCalculatable){
+        logInternalError("trying to convert non-calculatable type expression to Exprtk");
+        return nullptr;
+    } else if (_valueType == notCalculated){
+        calculateValueType();
+    }
+
+    //todo how to easily convert my ast to his?
+
+    std::string result = getAsTrueString();
+    //basically recursively build overly curly expression string
+    
+}
+
+ExprtkExpressionString* Expression::toExprkString(){
+
+}
+
+Expression* Expression::simplify(
+    const Expression* currentExpression, const Vertex* currentVertex
+){
+    //todo
+    //convert to Exprtk
+    //simplify
+    //convert back
+    //return
+}
+
+std::pair<Expression*, Expression> Expression::mimplify(
+    const Expression* leftExpression, const Vertex* leftVertex, const Expression* rightExpression, const Vertex* rightVertex
+){
+    //todo
+    //convert both to Exprtk
+    //simplify mutually
+    //convert both back
+    //return
+}
+
+ExpressionEquality Expression::equals(
+    const Expression* leftExpression, const Vertex* leftVertex, const Expression* rightExpression, const Vertex* rightVertex
+){
+    //todo
+    //convert both to exprtk
+    //"equals"?
+    //return
+}
+
 Expression Expression::calculateValue(){
     Expression left = _leftExpr->getAsConstant();
     Expression right = _rightExpr->getAsConstant();

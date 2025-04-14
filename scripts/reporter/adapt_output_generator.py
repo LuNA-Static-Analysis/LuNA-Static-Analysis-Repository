@@ -184,7 +184,7 @@ def report_error(
     error_code: str = error["error_code"]
     match error_code.upper():
 
-        case 'SYN1':#dap
+        case 'SYN1':
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$call_stack_entry",
@@ -193,7 +193,7 @@ def report_error(
                          get_cf(error["details"]["cf"]))
             )
         
-        case 'SYN2':#dap
+        case 'SYN2':
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$cf_name",
@@ -202,7 +202,7 @@ def report_error(
                          get_call_stack_entry(error["details"]["call_stack_entry"], text_info))
             )
         
-        case 'SYN3':#dap
+        case 'SYN3':
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$cf_name",
@@ -213,66 +213,66 @@ def report_error(
                          get_cf(error["details"]["cf"]))
             )
         
-        case 'SYN4':#dXp
+        case 'SYN4':
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$call_stack_entry",
                          get_call_stack_entry(error["details"]["call_stack_entry"], text_info))
             )
         
-        case 'SYN5.1':#dap
+        case 'SYN5.1':
             output_file.write(
                 (templates_map[error_code] + "\n")
             )
         
-        case 'SYN5.2':#dap
+        case 'SYN5.2':
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$identifier",
                          get_identifier(error["details"]["identifier"], text_info))
             )
 
-        case 'SYN5.3':#dap
+        case 'SYN5.3':
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$identifier",
                          get_identifier(error["details"]["identifier"], text_info))
             )
 
-        case 'SYN5.4' | 'SYN5.5':#dap dap
+        case 'SYN5.4' | 'SYN5.5':
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$cf",
                          get_cf(error["details"]["cf"]))
             )
 
-        case 'SYN5.6':#dap
+        case 'SYN5.6':
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$identifier",
                          get_identifier(error["details"]["identifier"], text_info))
             )
 
-        case 'SYN5.7' | 'SYN5.8':#dXp dap
+        case 'SYN5.7' | 'SYN5.8':
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$identifier",
                          get_identifier(error["details"]["identifier"], text_info))
             )
 
-        case 'SYN6.1' | 'SYN6.2':#dap dap
+        case 'SYN6.1' | 'SYN6.2':
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$cfs",
                          get_all_cfs(error["details"]["cfs"]))
             )
             
-        case 'SYN7':#dap TODO DeGSA did not find it (only if using in adapt)
+        case 'SYN7':
             output_file.write(
                 (templates_map[error_code] + "\n\n")
             )
             
-        case 'SYN8.1' | 'SYN8.2' | 'SYN8.3' | 'SYN8.4' | 'SYN8.5':# dap dap dap dap dap
+        case 'SYN8.1' | 'SYN8.2' | 'SYN8.3' | 'SYN8.4' | 'SYN8.5':
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$id_name",
@@ -281,7 +281,7 @@ def report_error(
                          get_call_stack_entry(error["details"]["identifier"]["call_stack_entry"], text_info))
             )
 
-        case 'SYN9':#dXp
+        case 'SYN9':
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$id_name",
@@ -290,14 +290,14 @@ def report_error(
                          get_call_stack_entry(error["details"]["identifier"]["call_stack_entry"], text_info))
             )
 
-        case 'SYN10':#todo
+        case 'SYN10':
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$cf",
                          get_cf(error["details"]["cf"]))
             )
 
-        case 'SYN11':#dap
+        case 'SYN11':
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$expr",
@@ -306,7 +306,7 @@ def report_error(
                          get_call_stack(error["details"]["call_stack"], text_info))
             )
 
-        case 'SYN12':#todo
+        case 'SYN12':
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$cf",
@@ -315,7 +315,7 @@ def report_error(
 
 
 
-        case 'SEM1':#dap
+        case 'SEM1':
             output_file.write(
                 (templates_map[error_code] + '\n')
                 .replace("$cf",
@@ -324,7 +324,7 @@ def report_error(
                          get_df(error["details"]["identifier"], text_info, include_name=False))
             )
 
-        case 'SEM2.1':#Xap  TODO wtf
+        case 'SEM2.1':
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$df_true",
@@ -337,7 +337,7 @@ def report_error(
                 )
             )
 
-        case 'SEM2.2':#todo
+        case 'SEM2.2':
             output_file.write(
                 (templates_map[error_code] + '\n')
                 .replace('$id_name',
@@ -348,7 +348,7 @@ def report_error(
                          get_index_range(error['details']['ranges'][1], text_info))
             )
 
-        case 'SEM3.1':#Xap
+        case 'SEM3.1':
             output_file.write(
                 (templates_map[error_code] + '\n')
                 .replace('$df_true',
@@ -359,12 +359,12 @@ def report_error(
                          REF_SEPARATOR.join(get_df_ref_or_index_range(it, text_info) for it in error['details']['initialized']))
             )
         
-        case 'SEM3.2':#dap TODO new format
+        case 'SEM3.2':
             output_file.write(
                 (templates_map[error_code] + '\n')
             )
 
-        case 'SEM3.3':#todo
+        case 'SEM3.3':
             output_file.write(
                 (templates_map[error_code] + '\n')
                 .replace('$id_name',
@@ -375,22 +375,22 @@ def report_error(
                          REF_SEPARATOR.join(get_df_ref_or_index_range(it, text_info) for it in error['details']['initialized']))
             )
         
-        case 'SEM3.4':#todo
+        case 'SEM3.4':
             output_file.write(
                 (templates_map[error_code] + '\n')
             )
 
-        case 'SEM3.5':#todo
+        case 'SEM3.5':
             output_file.write(
                 (templates_map[error_code] + '\n')
             )
 
-        case 'SEM3.6':#todo
+        case 'SEM3.6':
             output_file.write(
                 (templates_map[error_code] + '\n')
             )
 
-        case 'SEM4':#Xap
+        case 'SEM4':
             output_file.write(
                 (templates_map[error_code] + '\n')
                 .replace('$id_name',
@@ -399,7 +399,7 @@ def report_error(
                          get_df(error['details']['df'], text_info, include_name=False))
             )
 
-        case 'SEM5' | 'SEM6':#dap dXp
+        case 'SEM5' | 'SEM6':
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$bool",
@@ -410,7 +410,7 @@ def report_error(
                          get_call_stack_entry(error["details"]["where"], text_info))
             )
 
-        case 'SEM7':#dap
+        case 'SEM7':
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$index",
@@ -421,24 +421,24 @@ def report_error(
                          get_call_stack_entry(error["details"]["where"], text_info))
             )
 
-        case 'SEM8':#XaX
+        case 'SEM8':
             output_file.write(
                 (templates_map[error_code] + '\n')
                 .replace('$callstack',
                          get_call_stack(error['details']['call_stack'], text_info))
             )
 
-        case 'SEM9':#todo
+        case 'SEM9':
             output_file.write(
                 (templates_map[error_code] + '\n')
             )
         
-        case 'SEM10':#todo
+        case 'SEM10':
             output_file.write(
                 (templates_map[error_code] + '\n')
             )
 
-        case 'SEM11':#todo
+        case 'SEM11':
             output_file.write(
                 (templates_map[error_code] + '\n')
             )

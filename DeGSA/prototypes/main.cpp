@@ -27,7 +27,7 @@ int main(){
     expression_t   expression;
     parser_t       parser;
 
-    std::string expression_string = "x * y + 3";
+    std::string expression_string = "x * y == x * y";
 
     symbol_table.add_variable("x",x);
     symbol_table.add_variable("y",y);
@@ -35,6 +35,8 @@ int main(){
     expression.register_symbol_table(symbol_table);
 
     parser.compile(expression_string,expression);
+
+    std::cout << expression.results
 
     x = 1.0;
     y = 2.0;
