@@ -1,0 +1,8 @@
+C++ sub assign_int(name x, int val) ${{ x = val; $}}
+C++ sub consume(value v) ${{$}}
+
+sub main() {
+    df x;
+    for i = 1..5 { assign_int(x[i], i * i); }
+    for i = 1..8 { consume(x[i]); }
+
