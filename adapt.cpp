@@ -12,6 +12,7 @@
 #include "./ast_analyzer/undecl_func_analyzer.hpp"
 #include "./ast_analyzer/df_redecl_analyzer.hpp"
 #include "./ast_analyzer/threadpool/threadpool.h"
+#include "./ast_analyzer/ast_json_reporter.cpp"
 #include "./DeGSA/src/ddg.cpp"
 
 const int EXIT_ERROR = 1;
@@ -97,14 +98,8 @@ int main(int argc, char **argv){
 
     out.close();
 
-    std::ofstream o;
-        o.open("./reporter/found_errors.json");
-o << "[]";
-
-        o.close();
-
     if (launchASTAnalyzer){
-        error_reporter reporter = error_reporter();
+        AstErrorReporter::ErrorReporter reporter;
 
         std::vector<base_analyzer *> analyzers = {
             new undeclarated_names_analyzer(ast_, yyin, &reporter, realLunaSource),
@@ -127,7 +122,7 @@ o << "[]";
 
         if (o.is_open())
         {
-            o << reporter.get_errors();
+            o << reporter.get_all_errors_json();
         }
 
         o.close();

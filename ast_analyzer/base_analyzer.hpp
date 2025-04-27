@@ -1,7 +1,6 @@
 #pragma once
 #include "../parser/ast.hpp"
-#include "error_reporter.hpp"
-#include "../error_message/error_entry.hpp"
+#include "ast_json_reporter.cpp"
 
 #include <vector>
 #include <map>
@@ -19,7 +18,7 @@ protected:
     static const int FSEEK_ERROR = -1;
     FILE* file_;
     ast* ast_;
-    error_reporter* reporter_;
+    AstErrorReporter::ErrorReporter* reporter_;
     std::string real_luna_source_;
 
     std::string current_cf;

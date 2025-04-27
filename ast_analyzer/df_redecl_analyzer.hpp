@@ -2,7 +2,7 @@
 
 class df_redecl_analyzer : public base_analyzer {
 public:
-    df_redecl_analyzer(ast* ast_, FILE* yyin, error_reporter* reporter, std::string luna_source)  {
+    df_redecl_analyzer(ast* ast_, FILE* yyin, AstErrorReporter::ErrorReporter* reporter, std::string luna_source)  {
         this->ast_ = ast_;
         this->file_ = yyin;
         this->reporter_ = reporter;
@@ -25,6 +25,7 @@ public:
             if (i == nullptr) continue;
             luna_sub_def* luna_func = dynamic_cast<luna_sub_def *> (i); 
             if (luna_func == nullptr) continue;
+            current_cf = luna_func->code_id_->to_string();
             luna_funcs.push_back(luna_func);
         }
 
@@ -57,21 +58,12 @@ public:
 
         all_values.insert(all_values.end(), block_values.begin(), block_values.end());
 
-        std::map<std::string, std::set<uint>> map = find_redecls(all_values);
+        std::map<std::string, std::vector<uint>> map = find_redecls(all_values);
 
         for (auto i : map) {
             if (i.second.size() <= 1) continue;
-
-            details detail = details("SYN8");
-            declared declared_ = declared();
-
-            for (auto line : i.second) {
-                declared_.add_decl(call_stack(call_stack_entry(get_file(), line, current_cf)));
-            }
-
-            detail.add_df(df(i.first, declared_, initialized(), used()));
-
-            reporter_->report_json(detail);
+            AstErrorReporter::Identifier id{i.first, {get_file(), i.second[0], current_cf}};
+            reporter_->addSYN8_1(id);
         }
 
         for (auto i : *(block_->statement_seq_->statements_)) {
@@ -121,17 +113,17 @@ public:
         return all_values;
     }
 
-    std::map<std::string, std::set<uint>> find_redecls(std::vector<luna_string* > values) {
-        auto map = std::map<std::string, std::set<uint>>();
+    std::map<std::string, std::vector<uint>> find_redecls(std::vector<luna_string* > values) {
+        auto map = std::map<std::string, std::vector<uint>>();
 
         for (auto i : values) {
             if (map.count(*(i->get_value())) == 0) {
-                std::set<uint> set = std::set<uint>();
-                set.insert(i->line_);
-                map.insert(std::pair<std::string, std::set<uint>>(*(i->get_value()), set));
+                std::vector<uint> set = std::vector<uint>();
+                set.push_back(i->line_);
+                map.insert(std::pair<std::string, std::vector<uint>>(*(i->get_value()), set));
             }
             else {
-                map.at(*(i->get_value())).insert(i->line_);
+                map.at(*(i->get_value())).push_back(i->line_);
             }
         }
         return map;

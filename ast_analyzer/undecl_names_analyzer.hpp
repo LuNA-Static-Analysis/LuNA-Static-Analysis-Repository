@@ -1,6 +1,6 @@
 #pragma once
 #include "../parser/ast.hpp"
-#include "error_reporter.hpp"
+#include "ast_json_reporter.cpp"
 #include "base_analyzer.hpp"
 #include "utils.cpp"
 
@@ -9,7 +9,7 @@
 
 class undeclarated_names_analyzer : public base_analyzer {
 public:
-    undeclarated_names_analyzer(ast* ast_, FILE* yyin, error_reporter* reporter, std::string luna_source) {
+    undeclarated_names_analyzer(ast* ast_, FILE* yyin, AstErrorReporter::ErrorReporter* reporter, std::string luna_source) {
         this->ast_ = ast_;
         this->file_ = yyin;
         this->reporter_ = reporter;
@@ -132,10 +132,8 @@ public:
 
                     for (auto var : *vars) {
                         if (!is_define_in_scope(var, scope)) {
-                            details detail = details("SYN9");
-                            declared declared_ = declared(call_stack_entry(get_file(), var->line_, current_cf));
-                            detail.add_df(df(var->to_string(), declared_, initialized(), used()));
-                            reporter_->report_json(detail);
+                            AstErrorReporter::Identifier id{var->to_string(), {get_file(), var->line_, current_cf}};
+                            reporter_->addSYN9(id);
                         }
                     }
                 }
@@ -157,10 +155,8 @@ public:
 
                 for (auto i : *inner_if_vars) {
                     if (!is_define_in_scope(i, scope)) {
-                        details detail = details("SYN9");
-                        declared declared_ = declared(call_stack_entry(get_file(), i->line_, current_cf));
-                        detail.add_df(df(i->to_string(), declared_, initialized(), used()));
-                        reporter_->report_json(detail);
+                        AstErrorReporter::Identifier id{i->to_string(), {get_file(), i->line_, current_cf}};
+                        reporter_->addSYN9(id);
                     }
                 }
 
@@ -185,10 +181,8 @@ public:
 
                 for (auto i : *while_vars) {
                     if (!is_define_in_scope(i, scope)) {
-                        details detail = details("SYN9");
-                        declared declared_ = declared(call_stack_entry(get_file(), i->line_, current_cf));
-                        detail.add_df(df(i->to_string(), declared_, initialized(), used()));
-                        reporter_->report_json(detail);
+                        AstErrorReporter::Identifier id{i->to_string(), {get_file(), i->line_, current_cf}};
+                        reporter_->addSYN9(id);
                     }
                 }
 
@@ -202,19 +196,16 @@ public:
             if (cur_for != nullptr) {
                 std::vector<expr *> v;
 
+                scope->back()->push_back(cur_for->name_);
                 v.push_back(cur_for->expr_1_);
                 v.push_back(cur_for->expr_2_);
-
-                check_for_statement_types(cur_for);
 
                 std::vector<luna_string*>* for_vars = get_vars(&v);
                 for (auto i : *for_vars) {
 
                     if (!is_define_in_scope(i, scope)) {
-                        details detail = details("SYN9");
-                        declared declared_ = declared(call_stack_entry(get_file(), i->line_, current_cf));
-                        detail.add_df(df(i->to_string(), declared_, initialized(), used()));
-                        reporter_->report_json(detail);
+                        AstErrorReporter::Identifier id{i->to_string(), {get_file(), i->line_, current_cf}};
+                        reporter_->addSYN9(id);
                     }
                 }
 
@@ -264,36 +255,4 @@ public:
         return has_errors;
     }
 
-    void check_for_statement_types(for_statement* for_stat) {
-        expr* e1 = for_stat->expr_1_;
-        expr* e2 = for_stat->expr_2_;
-
-        if (is_real(e2->to_string()) || is_string(e2->to_string()) || is_real(e1->to_string()) || is_string(e1->to_string())) {
-            details d = details("39");
-
-            d.set_for(for_entry(
-                for_stat->name_->to_string(), 
-                e1->to_string(), 
-                e2->to_string(),
-                call_stack(call_stack_entry(get_file(), for_stat->line_, ""))
-            ));
-            reporter_->report_json(d);
-        }
-
-        if (is_int(e1->to_string()) && is_int(e2->to_string())) {
-            int l = std::stoi(e1->to_string());
-            int r = std::stoi(e2->to_string());
-
-            if (r < l) {
-                details d = details("38");
-                d.set_for(for_entry(
-                    for_stat->name_->to_string(), 
-                    e1->to_string(), 
-                    e2->to_string(),
-                    call_stack(call_stack_entry(get_file(), for_stat->line_, ""))
-                ));
-                reporter_->report_json(d);
-            }
-        }
-    }
 };

@@ -2,7 +2,6 @@
 
 #include "../parser/ast.hpp"
 #include "grammar.tab.hpp"
-// #include "../parser/error_reporter.hpp"
 
 #include <string>
 #include <cstring>
@@ -15,7 +14,6 @@ std::string yystring();
 void next_token(const std::string&);
 extern bool has_errors;
 using namespace std;
-// extern error_reporter reporter;
 
 extern int cur_position_in_line;
 extern int line_num;
