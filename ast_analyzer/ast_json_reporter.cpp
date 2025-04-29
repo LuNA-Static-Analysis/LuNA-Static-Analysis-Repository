@@ -154,9 +154,13 @@ public:
         }));
     }
 
-    void addSEM8(const CallStackEntry& where) {
+    void addSEM8(CallStackEntry& where) {
+        std::string cfsJson = "[";
+        cfsJson += where.toJson();
+        cfsJson += "]";
+
         errors.push_back(createError("SEM8", {
-            {"where", where.toJson()}
+            {"where", cfsJson}
         }));
     }
 
