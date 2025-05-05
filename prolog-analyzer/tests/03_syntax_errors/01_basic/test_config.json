@@ -11,7 +11,9 @@
       ]
     },
     "stderr": {
-      "empty": true
+      "match_lines": [
+        "wc:WARNING*"
+      ]
     },
     "save": ["stderr", "stdout"]
   }

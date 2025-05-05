@@ -100,8 +100,13 @@ def main(
                     capture_output=True,
                     check=True,
                 )
-            except subprocess.CalledProcessError:
-                pass
+            except subprocess.CalledProcessError as e:
+                print(
+                    f'WARNING: {" ".join(map(str, e.cmd))} '
+                    f'failed with exit code {e.returncode}:\n'
+                    f'{e.stderr.decode("utf-8")}',
+                    file=sys.stderr
+                )
 
         if 'prolog' in run:
             try:
@@ -121,11 +126,18 @@ def main(
                     capture_output=True,
                     check=True
                 )
-            except subprocess.CalledProcessError:
-                pass
+            except subprocess.CalledProcessError as e:
+                print(
+                    f'WARNING: {" ".join(map(str, e.cmd))} '
+                    f'failed with exit code {e.returncode}:\n'
+                    f'{e.stderr.decode("utf-8")}',
+                    file=sys.stderr
+                )
+
+        # exit_code = 1
 
         if not errors_file.exists():
-            errors_file.write_text('{}\n')
+            errors_file.write_text('[]\n')
 
         print('\rGenerating output\r', end='')
         print('\r                                \r', end='')
