@@ -92,31 +92,52 @@ def main(
             if 'degsa' in run:
                 args += ['-degsa']
 
-            print(f'\rRunning {", ".join([it for it in run if it != "prolog"])}\r', end='')
-            subprocess.run(
-                args=args,
-                cwd=output_dir,
-                capture_output=True,
-                check=True,
-            )
+            try:
+                print(f'\rRunning {", ".join([it for it in run if it != "prolog"])}\r', end='')
+                subprocess.run(
+                    args=args,
+                    cwd=output_dir,
+                    capture_output=True,
+                    check=True,
+                )
+            except subprocess.CalledProcessError as e:
+                print(
+                    f'WARNING: {" ".join(map(str, e.cmd))} '
+                    f'failed with exit code {e.returncode}:\n'
+                    f'{e.stderr.decode("utf-8")}',
+                    file=sys.stderr
+                )
 
         if 'prolog' in run:
-            print(f'\rRunning prolog-analyzer         \r', end='')
-            subprocess.run(
-                args=[
-                    ADAPT_HOME / 'prolog-analyzer' / 'bin' / 'prolog-analyzer',
-                    '--project-dir', project_dir,
-                    '--build-dir', build_dir,
-                    '--errors-file', errors_file,
-                    '--output-dir', prolog_analyzer_output_dir,
-                    '--no-cleanup',
-                    *os.environ.get('PROLOG_ANALYZER_OPTIONS', '').split(),
-                    luna_src
-                ],
-                env=os.environ | {'PROLOG_ANALYZER_HOME': ADAPT_HOME / 'prolog-analyzer'},
-                capture_output=True,
-                check=True
-            )
+            try:
+                print(f'\rRunning prolog-analyzer         \r', end='')
+                subprocess.run(
+                    args=[
+                        ADAPT_HOME / 'prolog-analyzer' / 'bin' / 'prolog-analyzer',
+                        '--project-dir', project_dir,
+                        '--build-dir', build_dir,
+                        '--errors-file', errors_file,
+                        '--output-dir', prolog_analyzer_output_dir,
+                        '--no-cleanup',
+                        *os.environ.get('PROLOG_ANALYZER_OPTIONS', '').split(),
+                        luna_src
+                    ],
+                    env=os.environ | {'PROLOG_ANALYZER_HOME': ADAPT_HOME / 'prolog-analyzer'},
+                    capture_output=True,
+                    check=True
+                )
+            except subprocess.CalledProcessError as e:
+                print(
+                    f'WARNING: {" ".join(map(str, e.cmd))} '
+                    f'failed with exit code {e.returncode}:\n'
+                    f'{e.stderr.decode("utf-8")}',
+                    file=sys.stderr
+                )
+
+        # exit_code = 1
+
+        if not errors_file.exists():
+            errors_file.write_text('[]\n')
 
         print('\rGenerating output\r', end='')
         print('\r                                \r', end='')
