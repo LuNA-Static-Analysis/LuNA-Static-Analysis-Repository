@@ -67,7 +67,14 @@
     "stop_token": "cpp",
     "thread": "cpp",
     "valarray": "cpp",
-    "list": "cpp"
+    "list": "cpp",
+    "complex": "cpp",
+    "csignal": "cpp",
+    "unordered_set": "cpp",
+    "future": "cpp",
+    "typeindex": "cpp",
+    "variant": "cpp",
+    "*.inc": "cpp"
   },
   "C_Cpp.default.compilerPath": "c:\\msys64\\ucrt64\\bin\\g++.exe",
   "C_Cpp_Runner.msvcBatchPath": "",

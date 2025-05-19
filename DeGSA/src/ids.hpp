@@ -9,6 +9,10 @@
 
 class BaseDFName;
 
+class IndexedDFName;
+class IndexedDFValueName;
+class IndexedDFAliasName;
+
 class Identifier {
 
 protected:
@@ -70,15 +74,19 @@ public:
        recursively marks every referenced identifiers as used
        initializes global reports array
     */
-    virtual void markAsUse(Vertex* currentVertex, int size) = 0;
+    virtual void markAsUse(Vertex* currentVertex, const std::vector<Expression*>& indexesExpression) = 0;
 
     /* 
        recursively marks every referenced identifiers as defined, if it is allowed
        initializes global reports array
     */
-    virtual void markAsDef(Vertex* currentVertex, int size) = 0;
+    virtual void markAsDef(Vertex* currentVertex, const std::vector<Expression*>& indexesExpression) = 0;
 
-    virtual bool isIndexable() = 0;
+    virtual bool isIndexable() const = 0;
+
+    virtual TrueIndexedDFData getTrueBaseNameIndexedDF(TrueIndexedDFData currentIndexedDF) = 0;
+
+    virtual std::string getAsTrueString() const = 0;
 
     Identifier(std::string name, Expression* reference, Vertex* vertex, IdentifierClass identifierClass, ValueType valueType)
       : m_name(name), m_reference(reference), m_vertex(vertex), m_identifierClass(identifierClass), m_valueType(valueType) {};
@@ -86,71 +94,185 @@ public:
     virtual ~Identifier() {};
 };
 
+
+/* TODO MAJOR ISSUE 05.05.2025, or am I schizo, i dunno
+actually there should not be just everybody inheriting from Identifier
+as there are basically two types of names:
+- base names, i.e. BaseDFName or MutableArgs
+- value names, i.e. iterators
+also there is a let name which can be whatever, and IDFs as well are pluripotent
+currently there are unused code in every identifier because they simply inherit Identifier
+fix this later perhaps :)
+*/
+
 // this class' objects are created at DF declaration line (not as args of a sub!)
 // objects save information about every indexed and simple DF, i.e. their sizes and use/defs
-class BaseDFName: public Identifier {
+class BaseDFName final: public Identifier {
 
 private:
 
-    // this map has information about what indexed/simple DFs there is and with how many indices
-    // they are used and defined in what vertices
-    // basically: map(int size, pair<vector use, vector def>);
-    std::map<int, std::pair<std::vector<Vertex*>*, std::vector<Vertex*>*>> _sizeToUseDefVectors = {};
+    // list of indexed DFs with this base name
+    // it is possiblle to just get use/def info from them directly, and indices expressions as well
+    //TODO think about example of mutable arg, indexedf df and let
+    // basically only leafs IDFs must be created as value, and only them should be marked as use or def
+    
+    // creating IDF means creating it with true name already
+    // either this IDF will be used directly, or indirectly
+    // we can not tell for sure, as, for example, we can do:
+    /*
+    
+    sub main() {
+        df c;
+        foo(c[0]);
+    }
+    sub foo(name a) {
+        let b = a {
+            print(b);//c[0], no IDF will be created, only marked Alias as used
+            print(b[1]);//c[0][1], ValueIDF will be created
+        }
+    }
+    
+    */
+    std::vector<IndexedDFValueName*> _indexedDFValueNames = {};
+    std::vector<IndexedDFAliasName*> _indexedDFAliasNames = {};
+
     int _line;
 
 public:
 
-    std::map<int, std::pair<std::vector<Vertex*>*, std::vector<Vertex*>*>> getMap() { return _sizeToUseDefVectors; };
+    std::vector<IndexedDFValueName*> getAllIndexedDFValueNames() { return _indexedDFValueNames; };
+
+    std::vector<IndexedDFAliasName*> getAllIndexedDFAliasNames() { return _indexedDFAliasNames; };
 
     int getLine() { return _line; }
 
-    void markAsUse(Vertex* currentVertex, int size);
+    void markAsUse(Vertex* currentVertex, const std::vector<Expression*>& indexesExpression) override;
 
-    void markAsDef(Vertex* currentVertex, int size);
+    void markAsDef(Vertex* currentVertex, const std::vector<Expression*>& indexesExpression) override;
 
     // obviously BaseDFName is always indexable
-    bool isIndexable() { return true; };
+    bool isIndexable() const override { return true; };
+
+    virtual TrueIndexedDFData getTrueBaseNameIndexedDF(TrueIndexedDFData currentIndexedDF) override;
+
+    virtual std::string getAsTrueString() const override {
+        return m_name;
+    }
+    
+    void AddNewIndexedDFValueName(IndexedDFValueName* indexedDF) {
+        for (auto existingIDF : _indexedDFValueNames) {
+            if (indexedDF == existingIDF) {
+                logInternalError("tried adding duplicate IDF value name to the base name table");
+                return;
+            }
+        }
+        _indexedDFValueNames.push_back(indexedDF);
+    };
+
+    void AddNewIndexedDFAliasName(IndexedDFAliasName* indexedDF) {
+        for (auto existingIDF : _indexedDFAliasNames) {
+            if (indexedDF == existingIDF) {
+                logInternalError("tried adding duplicate IDF alias name to the base name table");
+                return;
+            }
+        }
+        _indexedDFAliasNames.push_back(indexedDF);
+    };
 
     BaseDFName(std::string name, Vertex* vertex, int line) : Identifier(name, nullptr, vertex, baseDFNameClass, noneType), _line(line) {};
 
     ~BaseDFName() {};
 };
 
+
 // this class' objects are created at finding any DF in an expression
-// it stores information about its base DF, but this DF could be either a BaseDFName or a LetName
+// abstract class!
 class IndexedDFName: public Identifier {
 
-private:
+protected:
 
     // pointer to the base name
-    Identifier* _base;
+    BaseDFName* _base;
 
-    // this array shows, at what positions (inside "[]") are what expressions (in "ast.hpp" terms)
+    // this array shows, at what positions (inside "[]") are what expressions
     // in this indexed DF (starting from 0)
     // if expressionsVector is empty, then it is a simple DF with no indices
     std::vector<Expression*> _expressionsVector;
 
+    // constructor is private, creation must happen using static method
+    IndexedDFName(Vertex* currentVertex, BaseDFName* trueBaseName, std::vector<Expression*> expressionsVector);
+
 public:
 
-    Identifier* getBase() { return _base; };
+    BaseDFName* getBase() { return _base; };
 
     std::vector<Expression*> getExpressionsVector() { return _expressionsVector; };
 
-    void markAsUse(Vertex* currentVertex, int size);
-
-    void markAsDef(Vertex* currentVertex, int size);
-
     /* all indexed DFs are checked at construction, so already constucted
     ones are definetely indexable*/
-    bool isIndexable();
+    bool isIndexable() const override { return true; };
 
-    //todo this is wrong, see .cpp
-    IndexedDFName(std::string name, Vertex* currentVertex, Identifier* base, std::vector<Expression*> expressionsVector);
+    virtual std::string getAsTrueString() const override {
+        std::string trueName = m_name;
+        for (auto exp : _expressionsVector)
+            trueName.append("[" + exp->getAsTrueString() + "]");
+        return trueName;
+    }
 
     ~IndexedDFName() {};
 };
 
-class ForIteratorName: public Identifier {
+
+//TODO currently both these classes are identical?
+// this class' objects are created at finding any DF in an expression that are used or defined, i.e. have a value
+class IndexedDFValueName final: public IndexedDFName {
+
+private:
+
+    // constructor is private, creation must happen using static method
+    IndexedDFValueName(Vertex* currentVertex, BaseDFName* trueBaseName, std::vector<Expression*> expressionsVector);
+
+public:
+
+    void markAsUse(Vertex* currentVertex, const std::vector<Expression*>& indexesExpression) override;
+
+    void markAsDef(Vertex* currentVertex, const std::vector<Expression*>& indexesExpression) override;
+
+    virtual TrueIndexedDFData getTrueBaseNameIndexedDF(TrueIndexedDFData currentIndexedDF) override;
+
+    // it is used inside Expression constructor when encountering indexed name
+    static IndexedDFValueName* TryCreateIndexedDFValueName(expr* expression, std::map<std::string, Identifier*> nameTable, int line, Vertex* currentVertex);
+
+    ~IndexedDFValueName() {};
+};
+
+
+
+// this class' objects are created at finding any DF in an expression that are used as a base for some other IDF
+class IndexedDFAliasName final: public IndexedDFName {
+
+private:
+
+    // constructor is private, creation must happen using static method
+    IndexedDFAliasName(Vertex* currentVertex, BaseDFName* trueBaseName, std::vector<Expression*> expressionsVector);
+
+public:
+
+    void markAsUse(Vertex* currentVertex, const std::vector<Expression*>& indexesExpression) override;
+
+    void markAsDef(Vertex* currentVertex, const std::vector<Expression*>& indexesExpression) override;
+
+    virtual TrueIndexedDFData getTrueBaseNameIndexedDF(TrueIndexedDFData currentIndexedDF) override;
+
+    static // it is used inside Expression constructor when encountering indexed name
+    IndexedDFAliasName* TryCreateIndexedDFAliasName(expr* expression, std::map<std::string, Identifier*> nameTable, int line, Vertex* currentVertex);
+
+    ~IndexedDFAliasName() {};
+};
+
+
+
+class ForIteratorName final: public Identifier {
 
 public:
 
@@ -158,18 +280,26 @@ public:
 
     Expression* getRightBorder();
 
-    void markAsUse(Vertex* currentVertex, int size);
+    void markAsUse(Vertex* currentVertex, const std::vector<Expression*>& indexesExpression) override;
 
-    void markAsDef(Vertex* currentVertex, int size);
+    void markAsDef(Vertex* currentVertex, const std::vector<Expression*>& indexesExpression) override;
 
-    bool isIndexable() { return false; };
+    bool isIndexable() const override { return false; };
+
+    virtual TrueIndexedDFData getTrueBaseNameIndexedDF(TrueIndexedDFData currentIndexedDF) override;
+
+    virtual std::string getAsTrueString() const override {
+        return m_name;
+    }
 
     ForIteratorName(std::string name, Vertex* currentVertex) : Identifier(name, nullptr /* todo what to do here?*/, currentVertex, forIteratorNameClass, intType) {};
 
     ~ForIteratorName() {};
 };
 
-class WhileIteratorName: public Identifier {
+
+
+class WhileIteratorName final: public Identifier {
 
 public:
 
@@ -177,19 +307,27 @@ public:
 
     Expression* getStartExpr();
 
-    void markAsUse(Vertex* currentVertex, int size);
+    void markAsUse(Vertex* currentVertex, const std::vector<Expression*>& indexesExpression) override;
 
-    void markAsDef(Vertex* currentVertex, int size);
+    void markAsDef(Vertex* currentVertex, const std::vector<Expression*>& indexesExpression) override;
 
-    bool isIndexable() { return false; };
+    bool isIndexable() const override { return false; };
+
+    virtual TrueIndexedDFData getTrueBaseNameIndexedDF(TrueIndexedDFData currentIndexedDF) override;
+
+    virtual std::string getAsTrueString() const override {
+        return m_name;
+    }
 
     WhileIteratorName(std::string name, Vertex* currentVertex) : Identifier(name, nullptr /* todo what to do here?*/, currentVertex, whileIteratorNameClass, intType) {};
 
     ~WhileIteratorName() {};
 };
 
+
+
 //TODO
-class ValueName: public Identifier {
+class ValueName final: public Identifier {
 
 private:
 
@@ -200,20 +338,28 @@ public:
 };
 
 
-class LetName: public Identifier {
+
+class LetName final: public Identifier {
 
 public:
 
-    void markAsUse(Vertex* currentVertex, int size);
+    void markAsUse(Vertex* currentVertex, const std::vector<Expression*>& indexesExpression) override;
 
-    void markAsDef(Vertex* currentVertex, int size);
+    void markAsDef(Vertex* currentVertex, const std::vector<Expression*>& indexesExpression) override;
 
-    bool isIndexable() { return m_reference->isIndexable(); };
+    bool isIndexable() const override { return m_reference->isIndexable(); };
+
+    virtual TrueIndexedDFData getTrueBaseNameIndexedDF(TrueIndexedDFData currentIndexedDF) override;
+
+    virtual std::string getAsTrueString() const override {
+        return m_name;
+    }
 
     LetName(std::string name, Expression* reference, Vertex* currentVertex) : Identifier(name, reference, currentVertex, letNameClass, notCalculated) {};
 
     ~LetName() {};
 };
+
 
 
 /*
@@ -227,30 +373,44 @@ public:
    it's never indexable!
 */
 
-class MutableArgName: public Identifier {
+class MutableArgName final: public Identifier {
 
 public:
 
-    void markAsUse(Vertex* currentVertex, int size);
+    void markAsUse(Vertex* currentVertex, const std::vector<Expression*>& indexesExpression) override;
 
-    void markAsDef(Vertex* currentVertex, int size);
+    void markAsDef(Vertex* currentVertex, const std::vector<Expression*>& indexesExpression) override;
 
-    bool isIndexable() { return true; }
+    bool isIndexable() const override { return true; }
+
+    virtual TrueIndexedDFData getTrueBaseNameIndexedDF(TrueIndexedDFData currentIndexedDF) override;
+
+    virtual std::string getAsTrueString() const override {
+        return m_name;
+    }
 
     MutableArgName(std::string name, Expression* reference, Vertex* currentVertex, ValueType valueType) : Identifier(name, reference, currentVertex, mutableArgNameClass, valueType/*todo calculate later dynamically*/) {};
 
     ~MutableArgName() {};
 };
 
-class ImmutableArgName: public Identifier {
+
+
+class ImmutableArgName final: public Identifier {
 
 public:
 
-    void markAsUse(Vertex* currentVertex, int size);
+    void markAsUse(Vertex* currentVertex, const std::vector<Expression*>& indexesExpression) override;
 
-    void markAsDef(Vertex* currentVertex, int size);
+    void markAsDef(Vertex* currentVertex, const std::vector<Expression*>& indexesExpression) override;
 
-    bool isIndexable() { return false; }
+    bool isIndexable() const override { return false; }
+
+    virtual TrueIndexedDFData getTrueBaseNameIndexedDF(TrueIndexedDFData currentIndexedDF) override;
+
+    virtual std::string getAsTrueString() const override {
+        return m_name;
+    }
 
     // in case of a "main()" function argument Expression reference must be nullptr
     // this will tell us that we can not predict its value
@@ -259,6 +419,3 @@ public:
 
     ~ImmutableArgName() {};
 };
-
-// it is used inside Expression constructor when encountering indexed name
-IndexedDFName* parseIndexedDFExpression(expr* expression, std::map<std::string, Identifier*> nameTable, int line, Vertex* currentVertex);

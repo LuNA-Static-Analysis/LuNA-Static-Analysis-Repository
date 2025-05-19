@@ -1,7 +1,22 @@
-import printint(int) as print;
-sub main() {
-    df i, o;
-    while (1), i=1..out o {
+import printfl(real) as print;
+import c_init_int(int, name) as init;
+sub main(){
+    df a;
+    init(2, a[0]);
+    init(3, a[1.0]);
+    init(3, a["lmao"]);
+    init(2, a[228][129]);
+    init(2, a[1 + 2]);
+    init(2, a[a[0]]);
+    print(a[0]);
+    foo(a[32280]);
+    let h = a[2] {
+        print(h[1][a[37]]);
+    }
+    for i=1..2 {
         print(i);
     }
+}
+sub foo(name aa){
+    init(2, aa[32281]);
 }

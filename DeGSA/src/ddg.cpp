@@ -116,18 +116,36 @@ class DDG {
         // this function binds vertices to each other
         // currently function initializes "in" and "out" of imports using BASENAMES
         void bindVertices(){
-            std::cout << "\nbindVertices started\n" << std::endl;
+
+            //TODO CAN NOT USE USE OR DEF SETS
+            //USE BASENAME VALUE IDFS!
+
+            std::cout << "\nbindVertices started TODO SKIPPING\n" << std::endl;
             // go through all basenames and bind imports depending on what info BASENAMES has
             for (BaseDFName* baseName: BASENAMES){
                 std::cout << "checking \"" + baseName->getName() << "\":" << std::endl;
-                std::map<int, std::pair<std::vector<Vertex*>*, std::vector<Vertex*>*>> map = baseName->getMap();
-                for (auto entry: map){
-                    for (auto useVertex: *(entry.second.first)){
-                        for (auto defVertex: *(entry.second.second))
-                            defVertex->bindTo(useVertex, baseName);
+
+                //todo
+                //bind depending on a global ruleset, i.e. IDF equalities
+                //initialize global ruleset here
+                //how to store rules?
+                //issue: one IDF could depend on iterator
+                //resolution: just don't create a rule then, some cases will work, some won't
+                //how to store rules? 
+
+                /*auto indexedDFs = baseName->getAllIndexedDFs();
+
+                for (auto indexedDF: indexedDFs){
+                    for (auto useVertex: indexedDF->getUseSet()){
+                        for (auto defVertex: indexedDF->getDefSet())
+                            defVertex->bindTo(useVertex, indexedDF);
                     }
-                }
+                }*/
+
             }
+
+            //todo bind depending on for and while iterators?
+
             std::cout << "\nbindVertices finished\n" << std::endl;
         }
 
@@ -290,83 +308,21 @@ class DDG {
             }
         }
 
-        //todo rename codes
-        // this function goes through BASENAMES and finds few types of errors:
-        // 1. multiple DF initialization (03)
-        // 2. using uninitialized DFs (05)
-        // 3. unused DF (10)
-        void checkBaseNameSet(){
+        void checkSEM2_1(){
+            //todo:
+            //iterate through all of the initialization points of IndexedDF
+            //compare each initialization to every other of the same base name and same size
+            //convert each index to Sympression
+            //simplify each
+            //compare each
+            //if all equal then error
+            //else todo
 
-            for (BaseDFName* bn: BASENAMES){
-                auto bnMap = bn->getMap();
-                for (auto sizeAndUseDefs: bnMap){
-
-                    int size = sizeAndUseDefs.first;
-                    std::vector<Vertex*> uses = *(sizeAndUseDefs.second.first);
-                    std::vector<Vertex*> defs = *(sizeAndUseDefs.second.second);
-
-                    // multiple initialization of a DF
-                    if (size == 0){ // simple DFs
-                        if (defs.size() > 1){
-                            /*std::string report = "ERROR: multiple initialization of a DF " + bn->getName() + " in lines:\n";
-                            for (auto def: defs){
-                                report += (std::to_string(def->getLine()) + " ");
-                            }
-                            report += "\n";
-                            errorReports.push_back(report);*/
-                            // error code: 03
-                            // details: df
-                            //todo callstacks
-                            REPORTS.push_back(JsonReporter::createSEM2_1(
-                                bn
-                            ));
-                        }
-                    } else { // indexed DFs
-                        //TODO add warnings?
-                        // proper implementation requires expressions parsing
-                    }
-
-                    // unused DF 1
-                    if (uses.size() == 0){
-                        /*std::string report = "ERROR: unused DF " + bn->getName() + " with " + std::to_string(size) + " indices\n";
-                        errorReports.push_back(report);*/
-                        // error code: 10
-                        // details: df
-                        //todo callstacks
-                        REPORTS.push_back(JsonReporter::createSEM4(
-                            bn
-                        ));
-                    } else {
-                        // using uninitialized DFs
-                        if (defs.size() == 0){
-                            /*std::string report = "ERROR: using uninitialized DF " + bn->getName() + " with " + std::to_string(size) +
-                            " indices at lines:\n";
-                            for (auto use: uses){
-                                report += (std::to_string(use->getLine()) + " ");
-                            }
-                            report += "\n";
-                            errorReports.push_back(report);*/
-                            // error code: 05
-                            // details: df
-                            //todo callstacks
-                            REPORTS.push_back(JsonReporter::createSEM3_1(
-                                bn
-                            ));
-                        }
-                    }
-
+            /*for (auto baseName : BASENAMES) {
+                for (auto indexedDF : baseName->getAllIndexedDFs()) {
+                    std::cout << indexedDF->getName();
                 }
-                // unused DF 2
-                if (bnMap.size() == 0){
-                    // error code: 10
-                    // details: df
-                    //todo callstacks
-                    REPORTS.push_back(JsonReporter::createSEM4(
-                        bn
-                    ));
-                }
-            }
-
+            }*/
         }
 
         void checkConstantConditions(){
@@ -480,10 +436,6 @@ class DDG {
         // this function accepts list of errors to find and tries to find them in the created graph and BASENAMES
         void findErrors(){
 
-            std::cout << "\ncheckBaseNameSet started\n" << std::endl;
-            checkBaseNameSet();
-            std::cout << "\ncheckBaseNameSet finished\n" << std::endl;
-
             std::cout << "\ncheckConstantConditions started\n" << std::endl;
             checkConstantConditions();
             std::cout << "\ncheckConstantConditions finished\n" << std::endl;
@@ -513,7 +465,7 @@ class DDG {
 
             // 1. find use- and def- atomic CFs
 
-            std::cout << "\n============ Creating DDG ============" << std::endl;
+            *outputTarget << "\n============ Creating DDG ============" << std::endl;
 
             this->findSubs(astobj);
 
@@ -558,22 +510,46 @@ class DDG {
             *outputTarget << "BaseDFNames:" << std::endl;
             for (BaseDFName* bn: BASENAMES){
                 *outputTarget << std::endl;
-                *outputTarget << "Name: " << bn->getName() << std::endl;
+                *outputTarget << "\n\nName: " << bn->getName() << std::endl;
                 *outputTarget << "Declared in function call at line: " << bn->getLine() << std::endl;
-                auto map = bn->getMap(); // 1 = use, 2 = def
-                for (auto m: map){
-                    *outputTarget << "Size: " << m.first << std::endl;
-                    std::pair<std::vector<Vertex*>*, std::vector<Vertex*>*> pair = m.second;
+                *outputTarget << "Value IDFs:" << std::endl;
+                auto indexedDFValueNames = bn->getAllIndexedDFValueNames();
+                for (auto indexedDF : indexedDFValueNames){
+                    *outputTarget << "Indices: ";
+                    for (auto exp : indexedDF->getExpressionsVector()) {
+                        *outputTarget << "[" << exp->getAsTrueString() << "]";
+                    }
+                    *outputTarget << std::endl;
                     *outputTarget << "Uses: ";
-                    for (auto u: *(pair.first)){
+                    for (auto u: indexedDF->getUseSet()){
                         *outputTarget << u << " ";
                     }
                     *outputTarget << std::endl;
                     *outputTarget << "Defs: ";
-                    for (auto d: *(pair.second)){
+                    for (auto d: indexedDF->getDefSet()){
                         *outputTarget << d << " ";
                     }
+                    *outputTarget << "\n" << std::endl;
+                }
+
+                *outputTarget << "Alias IDFs:" << std::endl;
+                auto indexedDFAliasNames = bn->getAllIndexedDFAliasNames();
+                for (auto indexedDF : indexedDFAliasNames){
+                    *outputTarget << "Indices: ";
+                    for (auto exp : indexedDF->getExpressionsVector()) {
+                        *outputTarget << "[" << exp->getAsTrueString() << "]";
+                    }
                     *outputTarget << std::endl;
+                    *outputTarget << "Uses: ";
+                    for (auto u: indexedDF->getUseSet()){
+                        *outputTarget << u << " ";
+                    }
+                    *outputTarget << std::endl;
+                    *outputTarget << "Defs: ";
+                    for (auto d: indexedDF->getDefSet()){
+                        *outputTarget << d << " ";
+                    }
+                    *outputTarget << "\n" << std::endl;
                 }
             }
 

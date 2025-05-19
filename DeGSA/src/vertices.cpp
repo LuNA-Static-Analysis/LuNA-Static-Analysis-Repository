@@ -204,7 +204,7 @@ bool ImportVertex::initializeVertex() {
         switch(_declaredArgs[i].type){
             case nameType:
                 if (expression != nullptr) {
-                    expression->markAsDef(this, 0);//todo why zero??
+                    expression->markAsDef(this, {});
                     break;
                 }
             case intType:
@@ -212,7 +212,7 @@ bool ImportVertex::initializeVertex() {
             case stringType:
             case valueType:
                 if (expression != nullptr) {
-                    expression->markAsUse(this, 0);
+                    expression->markAsUse(this, {});
                     break;
                 }
             default:
@@ -256,9 +256,9 @@ bool ForVertex::initializeVertex() {
     _rightBorder = new Expression(innerStatementForVF->expr_2_, m_declaredOutsideIdsMap, this);
 
     if (_leftBorder != nullptr)
-        _leftBorder->markAsUse(this, 0);//todo why 0
+        _leftBorder->markAsUse(this, {});//todo why 0
     if (_rightBorder != nullptr)
-        _rightBorder->markAsUse(this, 0);//todo why 0
+        _rightBorder->markAsUse(this, {});//todo why 0
 
     Expression* iteratorExpression = new Expression(_iterator, intNode, this);
     m_facts.insert(new GLeNFact(greaterOrEqualNode, iteratorExpression, _leftBorder));
@@ -307,13 +307,13 @@ bool WhileVertex::initializeVertex() {
     _startExpr = new Expression(innerStatementWhileVF->right_, m_declaredOutsideIdsMap, this);
 
     if (_conditionExpr != nullptr)
-        _conditionExpr->markAsUse(this, 0);//todo why 0
+        _conditionExpr->markAsUse(this, {});//todo why 0
 
     if (_startExpr != nullptr)
-        _startExpr->markAsUse(this, 0);//todo why 0
+        _startExpr->markAsUse(this, {});//todo why 0
 
     if (_outName != nullptr)
-        _outName->markAsDef(this, 0); //todo why 0
+        _outName->markAsDef(this, {}); //todo why 0
     else 
         REPORTS.push_back(JsonReporter::createSYN1(
             whileOutNameExpr->getASTExpr()->to_string(),
@@ -341,7 +341,7 @@ bool IfVertex::initializeVertex() {
 
     // all identifiers inside "if" expression must be marked as "used"
     if (_conditionExpr != nullptr)
-        _conditionExpr->markAsUse(this, 0);
+        _conditionExpr->markAsUse(this, {});
 
     m_facts.insert(new GLeNFact(nonEqualNode, _conditionExpr, new Expression("0", intNode, this)));
 

@@ -10,7 +10,7 @@
             "cppStandard": "${default}",
             "intelliSenseMode": "linux-gcc-x64",
             "compilerArgs": [
-                "-std=gnu++0x"
+                "-std=c++20"
             ]
         }
     ],

@@ -1,6 +1,52 @@
 #include "expr.hpp"
 #include "json_reporter.cpp"
 
+#include "../symengine-0.14.0/symengine/refine.h"
+
+using SymEngine::Assumptions;
+
+unsigned int AliasTable::nextNumber = 0;
+std::vector<std::pair<std::string, Identifier*>> AliasTable::table = {};
+std::vector<AliasTable::ExpressionAssumption> AliasTable::ruleSet = {};
+
+std::optional<std::pair<std::string, Identifier*>> AliasTable::GetIdentifierByAlias(const std::string& iAlias) {
+    for (int i = 0; i < AliasTable::table.size(); i++)
+        if (AliasTable::table[i].first == iAlias)
+            return table[i];
+
+    return std::nullopt;
+}
+
+std::optional<std::pair<std::string, Identifier*>> AliasTable::GetAliasByIdentifier(Identifier* iIdentifier) {
+    for (int i = 0; i < AliasTable::table.size(); i++)
+        if (AliasTable::table[i].second == iIdentifier)
+            return AliasTable::table[i];
+
+    return std::nullopt;
+}
+
+std::optional<std::string> AliasTable::CreateAlias(Identifier* iIdentifier) {
+    auto maybeMapping = AliasTable::GetAliasByIdentifier(iIdentifier);
+    if (!maybeMapping) {
+        std::string nextAlias = "t" + std::to_string(nextNumber);
+        nextNumber++;
+        AliasTable::table.push_back({ nextAlias, iIdentifier });
+        return nextAlias;
+    } else // Identifier already has a mapping
+        return std::nullopt;
+}
+
+bool AliasTable::AddRule(std::string iLeft, std::string iRight, AliasTable::OperationType iOperation) {//todo operation type
+    auto newRule = AliasTable::ExpressionAssumption(iLeft, iRight, iOperation);
+    for (int i = 0; i < AliasTable::ruleSet.size(); i++) {
+        if (AliasTable::ruleSet[i].Equals(newRule))
+            return false;
+    }
+    AliasTable::ruleSet.push_back(newRule);
+    return true;
+}
+
+
 /* 
     this function gets an expression, recursively goes through it and
     returns an obejct of type Expression, plus creates objects for IndexedDFs
@@ -123,20 +169,26 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
             if (identifierName != nameTable.end()){
 
                 switch(identifierName->second->getClass()){
-                    case baseDFNameClass: // simple DF (no indices)
-                        _identifier = new IndexedDFName(simpleDFName, currentVertex, identifierName->second, {});
+                    case baseDFNameClass: { // create simple DF (no indices)
+                        //todo how to understand if this is alias or not?
+                        //perhaps depending on the vertex type?
+                        //temporary solution: just use value everywhere, then revalidate architecture
+                        _identifier = IndexedDFValueName::TryCreateIndexedDFValueName(simpleDF, nameTable, ASTexpr->line_, currentVertex);
                         break;
+                    }
                     case forIteratorNameClass:
                     case whileIteratorNameClass:
                     case valueNameClass:
                     case letNameClass:
                     case mutableArgNameClass:
-                    case immutableArgNameClass:
+                    case immutableArgNameClass: {
                         _identifier = identifierName->second;
                         break;
-                    default:
+                    }
+                    default: {
                         std::cout << "INTERNAL ERROR: unknown identifier type" << std::endl;
                         break;
+                    }
                 }
             } else {
                 //todo fake Id to use it in report
@@ -155,7 +207,9 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
         complex_id* complexDF = dynamic_cast<complex_id*>(ASTexpr);
         if (complexDF != NULL){
 
-            IndexedDFName* temp = parseIndexedDFExpression(complexDF, nameTable, ASTexpr->line_, currentVertex);
+            // creating DF with more than zero indices
+            //todo same temporary solution here
+            IndexedDFValueName* temp = IndexedDFValueName::TryCreateIndexedDFValueName(complexDF, nameTable, ASTexpr->line_, currentVertex);
             if (temp != nullptr){
                 _identifier = temp;
             } else {
@@ -240,8 +294,6 @@ void Expression::calculateValueType(){
 }
 
 std::string Expression::getAsTrueString(){
-    //todo how to avoid duplication of names?
-    //answer: names must be coded in such a way that different are different and same are the same
     switch(_expressionType) {
         case addNode: {
             return "(" + _leftExpr->getAsTrueString() + "+" + _rightExpr->getAsTrueString() + ")";
@@ -283,57 +335,128 @@ std::string Expression::getAsTrueString(){
             return "(" + _leftExpr->getAsTrueString() + "||" + _rightExpr->getAsTrueString() + ")";
         }
         case intNode: {
-            //todo
+            return _constant;
         }
         case intCastNode: {
-            //todo
+            return "int(" + _leftExpr->getAsTrueString() + ")";
         }
         case stringNode: {
-            //todo
+            return _constant;
         }
         case stringCastNode: {
-            //todo
+            return "string(" + _leftExpr->getAsTrueString() + ")";
         }
         case realNode: {
-            //todo
+            return _constant;
         }
         case realCastNode: {
-            //todo
+            return "real(" + _leftExpr->getAsTrueString() + ")";
         }
         // identifier
         case identifierNode: {
-            return getAsIdentifier()->getName();
-            //todo this is not strictly true, for IDFs for example
+            if (getAsIdentifier() != nullptr)
+                return getAsIdentifier()->getAsTrueString();
+            else
+                logInternalError("Expression::getAsTrueString used on a nullptr identifier");
         }
         case noneNode: {
-            logInternalError("noneNode when trying to convert to Exprtk");
+            logInternalError("Expression::getAsTrueString used on noneNode");
+            return "";
+        }
+        default: {
+            logInternalError("Expression::getAsTrueString reached default");
             return "";
         }
     }
 }
 
-ExprtkExpressionDouble* Expression::toExprkDouble(){
-    // check for types
-}
+Sympression Expression::toSympression(){
+    //todo
+    //recursively create nodes of corresponding types
+    switch(_expressionType){
+        // operations
+        case addNode: return SymEngine::add(_leftExpr->toSympression(), _rightExpr->toSympression());
+        case subtractNode: return SymEngine::sub(_leftExpr->toSympression(), _rightExpr->toSympression());
+        case multiplyNode: return SymEngine::mul(_leftExpr->toSympression(), _rightExpr->toSympression());
+        case divideNode: return SymEngine::div(_leftExpr->toSympression(), _rightExpr->toSympression());
+        //TODO
+        //case modulusNode: return SymEngine::mod(_leftExpr->toSympression(), _rightExpr->toSympression());//todo
+        case greaterNode: return SymEngine::Lt(_rightExpr->toSympression(), _leftExpr->toSympression());
+        case greaterOrEqualNode: return SymEngine::Le(_rightExpr->toSympression(), _leftExpr->toSympression());
+        case lesserNode: return SymEngine::Lt(_leftExpr->toSympression(), _rightExpr->toSympression());
+        case lesserOrEqualNode: return SymEngine::Le(_leftExpr->toSympression(), _rightExpr->toSympression());
+        case equalNode: return SymEngine::Eq(_leftExpr->toSympression(), _rightExpr->toSympression());
+        case nonEqualNode: return SymEngine::Ne(_leftExpr->toSympression(), _rightExpr->toSympression());
+        //TODO
+        //case andNode: return SymEngine::logical_and(_leftExpr->toSympression(), _rightExpr->toSympression());//todo
+        //TODO
+        //case orNode: return SymEngine::logical_or(_leftExpr->toSympression(), _rightExpr->toSympression());//todo
 
-//todo templates?
-ExprtkExpressionInt* Expression::toExprkInt(){
-    if (_valueType == nonCalculatable){
-        logInternalError("trying to convert non-calculatable type expression to Exprtk");
-        return nullptr;
-    } else if (_valueType == notCalculated){
-        calculateValueType();
+        // constants
+        case intNode: return SymEngine::integer(std::stoi(_constant));
+        //case stringNode: return SymEngine::string(_constant, stringNode, nullptr);//todo strings are not supported?
+        case realNode: return SymEngine::real_double(std::stod(_constant));
+
+        // identifiers
+        case identifierNode: {
+            if (_identifier != nullptr) {
+                LetName* letName = dynamic_cast<LetName*>(_identifier);
+                if (letName != nullptr) {
+                    return letName->getReference()->toSympression();
+                }
+
+                ImmutableArgName* immutableArgName = dynamic_cast<ImmutableArgName*>(_identifier);
+                if (immutableArgName != nullptr) {
+                    auto reference = immutableArgName->getReference();
+                    if (reference != nullptr) {
+                        return reference->toSympression();
+                    } else {
+                        // main arg, has to be mapped
+                        //todo
+                    }
+                }
+
+                MutableArgName* mutableArgName = dynamic_cast<MutableArgName*>(_identifier);
+                if (mutableArgName != nullptr) {
+                    return mutableArgName->getReference()->toSympression();
+                }
+
+                //todo other identifiers
+            } else {
+                logInternalError("toSympression got nullptr identifier");
+            }
+        }
+
+        // casts
+        //TODO
+        /*case intCastNode: {
+            Expression insideExpression = _leftExpr->getAsConstant();
+            switch(insideExpression._expressionType){
+                case intNode: return insideExpression;
+                case realNode: return Expression(std::to_string((int)std::stod(insideExpression._constant)), intNode, nullptr);
+                default: return Expression("", noneNode, nullptr);
+            }
+        }*/
+
+        //TODO
+        /*case realCastNode: {
+            Expression insideExpression = _leftExpr->getAsConstant();
+            switch(insideExpression._expressionType){
+                case intNode: {
+                    return Expression(std::to_string((double)std::stoi(insideExpression._constant)), realNode, nullptr);
+                }
+                case realNode: return insideExpression;
+                default: return Expression("", noneNode, nullptr);
+            }
+        }*/
+
+        //todo string cast
+
+        default:
+            std::cout << "INTERNAL ERROR: toSympression reached default in switch" << std::endl;
+            //todo return something bad
+            return SymEngine::acos(_leftExpr->toSympression());//todo!
     }
-
-    //todo how to easily convert my ast to his?
-
-    std::string result = getAsTrueString();
-    //basically recursively build overly curly expression string
-    
-}
-
-ExprtkExpressionString* Expression::toExprkString(){
-
 }
 
 Expression* Expression::simplify(
@@ -344,6 +467,7 @@ Expression* Expression::simplify(
     //simplify
     //convert back
     //return
+    return nullptr;
 }
 
 std::pair<Expression*, Expression> Expression::mimplify(
@@ -354,6 +478,7 @@ std::pair<Expression*, Expression> Expression::mimplify(
     //simplify mutually
     //convert both back
     //return
+    return {nullptr, *leftExpression};
 }
 
 ExpressionEquality Expression::equals(
@@ -363,6 +488,7 @@ ExpressionEquality Expression::equals(
     //convert both to exprtk
     //"equals"?
     //return
+    return ExpressionEquality::notEqual;
 }
 
 Expression Expression::calculateValue(){
@@ -517,7 +643,7 @@ Expression Expression::getAsConstant(){
     }
 }
 
-void Expression::markAsUse(Vertex* currentVertex, int size){
+void Expression::markAsUse(Vertex* currentVertex, const std::vector<Expression*>& indexesExpression){
     std::cout << "Expression " << _ASTexpr->to_string() << " is being marked as used" << std::endl;
     switch(_expressionType){
 
@@ -535,14 +661,14 @@ void Expression::markAsUse(Vertex* currentVertex, int size){
         case andNode:
         case orNode:
             if (_leftExpr != nullptr)
-                _leftExpr->markAsUse(currentVertex, size);
+                _leftExpr->markAsUse(currentVertex, indexesExpression);
             if (_rightExpr != nullptr)
-                _rightExpr->markAsUse(currentVertex, size);
+                _rightExpr->markAsUse(currentVertex, indexesExpression);
             return;
         
         case identifierNode:
             if (_identifier != nullptr)
-                _identifier->markAsUse(currentVertex, size);
+                _identifier->markAsUse(currentVertex, indexesExpression);
             return;
         
         case stringNode:
@@ -554,7 +680,7 @@ void Expression::markAsUse(Vertex* currentVertex, int size){
         case intCastNode:
         case stringCastNode:
             if (_leftExpr != nullptr)
-                _leftExpr->markAsUse(currentVertex, size);
+                _leftExpr->markAsUse(currentVertex, indexesExpression);
             return;
         
         // only noneNode must be left
@@ -565,7 +691,7 @@ void Expression::markAsUse(Vertex* currentVertex, int size){
     return;
 }
 
-void Expression::markAsDef(Vertex* currentVertex, int size){
+void Expression::markAsDef(Vertex* currentVertex, const std::vector<Expression*>& indexesExpression){
     std::cout << "Expression " << _ASTexpr->to_string() << " is being marked as defined" << std::endl;
     switch(_expressionType){
         case addNode:
@@ -596,19 +722,19 @@ void Expression::markAsDef(Vertex* currentVertex, int size){
 
                 case mutableArgNameClass: { //ok
                     MutableArgName* mutableArgName = dynamic_cast<MutableArgName*>(_identifier);
-                    mutableArgName->getReference()->markAsDef(currentVertex, size);
+                    mutableArgName->getReference()->markAsDef(currentVertex, indexesExpression);
                     return;
                 }
                 
                 case baseDFNameClass: {//ok
                     BaseDFName* baseDFName = dynamic_cast<BaseDFName*>(_identifier);
-                    baseDFName->markAsDef(currentVertex, size);
+                    baseDFName->markAsDef(currentVertex, indexesExpression);
                     return;
                 }
 
                 case indexedDFNameClass: {//ok
                     IndexedDFName* indexedDFName = dynamic_cast<IndexedDFName*>(_identifier);
-                    indexedDFName->markAsDef(currentVertex, size);
+                    indexedDFName->markAsDef(currentVertex, indexesExpression);
                     return;
                 }
 
@@ -635,7 +761,7 @@ void Expression::markAsDef(Vertex* currentVertex, int size){
                 
                 case letNameClass: {//ok
                     LetName* letName = dynamic_cast<LetName*>(_identifier);
-                    letName->getReference()->markAsDef(currentVertex, size);
+                    letName->getReference()->markAsDef(currentVertex, indexesExpression);
                     return;
                 }
 
@@ -678,9 +804,15 @@ void Expression::markAsDef(Vertex* currentVertex, int size){
 
 bool Expression::isIndexable(){
     // only identifiers are indexable
-    if (_expressionType == identifierNode){
+    if (_expressionType == identifierNode)
         return _identifier->isIndexable();
-    } else {
+    else
         return false;
-    }
+}
+
+TrueIndexedDFData Expression::getTrueBaseNameIndexedDF(TrueIndexedDFData currentIndexedDF){
+    if (_expressionType == identifierNode)
+        return _identifier->getTrueBaseNameIndexedDF(currentIndexedDF);
+    else
+        return TrueIndexedDFData(nullptr, {});
 }

@@ -11,21 +11,56 @@
         },
         {
             "type": "shell",
-            "label": "DeGSA_flex",
+            "label": "DeGSA_bison_move1",
             "dependsOn": [
                 "DeGSA_bison"
             ],
-            "command": "flex",
+            "command": "mv",
             "args": [
-                "${workspaceFolder}/parser/lexics.l"
+                "${workspaceFolder}/grammar.tab.cpp",
+                "${workspaceFolder}/DeGSA"
             ]
         },
         {
             "type": "shell",
-            "label": "DeGSA_python",
+            "label": "DeGSA_bison_move2",
+            "dependsOn": [
+                "DeGSA_bison"
+            ],
+            "command": "mv",
+            "args": [
+                "${workspaceFolder}/grammar.tab.hpp",
+                "${workspaceFolder}/DeGSA"
+            ]
+        },
+
+        {
+            "type": "shell",
+            "label": "DeGSA_flex",
+            "command": "flex",
+            "args": [
+                "${workspaceFolder}/parser/lexics.l"
+                //"-o",
+                //"${workspaceFolder}/DeGSA"
+            ]
+        },
+        {
+            "type": "shell",
+            "label": "DeGSA_flex_move1",
             "dependsOn": [
                 "DeGSA_flex"
             ],
+            "command": "mv",
+            "args": [
+                "${workspaceFolder}/lex.yy.c",
+                "${workspaceFolder}/DeGSA"
+            ]
+        },
+
+
+        {
+            "type": "shell",
+            "label": "DeGSA_preprocess",
             "command": "python3",
             "args": [
                 "${workspaceFolder}/parser/pp.py",
@@ -36,21 +71,75 @@
         },
         {
             "type": "shell",
+            "label": "DeGSA_flex_compile",
+            "dependsOn": [
+                "DeGSA_flex_move1"
+            ],
+            "command": "g++",
+            "args": [
+                "-g",
+                "${workspaceFolder}/DeGSA/lex.yy.c",
+                "-c",
+                "-o",
+                "${workspaceFolder}/lex.yy.o"
+            ]
+        },
+        {
+            "type": "shell",
+            "label": "DeGSA_bison_compile",
+            "dependsOn": [
+                "DeGSA_bison_move1",
+                "DeGSA_bison_move2"
+            ],
+            "command": "g++",
+            "args": [
+                "-g",
+                "${workspaceFolder}/DeGSA/grammar.tab.cpp",
+                "-c",
+                "-o",
+                "${workspaceFolder}/grammar.tab.o"
+            ]
+        },
+        {
+            "type": "shell",
+            "label": "DeGSA_precompile",
+            "dependsOn": [
+                "DeGSA_bison_compile",
+                "DeGSA_flex_compile"
+            ],
+            "command": "g++",
+            "args": [
+                "-g",
+                "-std=c++20",
+                "${workspaceFolder}/DeGSA/src/main.cpp",
+                "-c",
+                "-o",
+                "${workspaceFolder}/degsa.o"
+            ]
+        },
+        {
+            "type": "shell",
             "label": "DeGSA_compile",
             "dependsOn": [
-                "DeGSA_python"
+                "DeGSA_precompile",
+                "DeGSA_preprocess",
+                "DeGSA_bison_compile",
+                "DeGSA_flex_compile"
             ],
             "command": "g++",
             "args": [
                 "-g", // add debug information
-                "-I${workspaceFolder}/parser", // includes fix
+                "-I${workspaceFolder}/parser", // includes fix //todo what
                 //"-Wall", // all warnings
-                "-std=gnu++0x", // todo change version?
-                "lex.yy.c",
-                "grammar.tab.cpp",
-                "${workspaceFolder}/DeGSA/src/main.cpp",
+                "-std=c++20",
+                "${workspaceFolder}/DeGSA/symengine-0.14.0/build/symengine/libsymengine.a",
+                "${workspaceFolder}/lex.yy.o",
+                "${workspaceFolder}/grammar.tab.o",
+                "${workspaceFolder}/degsa.o",
+                "-lsymengine",
+                "-lgmp",
                 "-o",
-                "a.out"
+                "${workspaceFolder}/a.out"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
@@ -63,6 +152,8 @@
                 "isDefault": true
             }
         },
+
+
 
         {
             "type": "shell",
