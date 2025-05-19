@@ -1,10 +1,11 @@
 #pragma once
 #include "undecl_names_analyzer.hpp"
+#include "ast_json_reporter.cpp"
 
 class unused_names_analyzer : public undeclarated_names_analyzer {
 
 public:
-    unused_names_analyzer(ast* ast_, FILE* yyin, error_reporter* reporter, std::string luna_source) 
+    unused_names_analyzer(ast* ast_, FILE* yyin, AstErrorReporter::ErrorReporter* reporter, std::string luna_source) 
                 : undeclarated_names_analyzer(ast_, yyin, reporter, luna_source) {}
 
     bool analyze() override {
@@ -26,6 +27,8 @@ public:
         // }
 
         for (auto i : luna_funcs) {
+            if (i == nullptr) continue;
+
             std::vector<luna_string*> luna_sub_def_params; 
 
             if (i->params_->param_seq_ != nullptr) {
@@ -36,6 +39,7 @@ public:
             }
             has_errors = check_(scope, i->block_);
 
+            current_cf = i->code_id_->to_string();
             // for (auto s : *scope) {
             //     for (auto j : *s) {
             //         std::cerr << j->to_string() << std::endl;
@@ -44,16 +48,8 @@ public:
 
             for (auto s : *scope) {
                 for (auto var : *s) {
-                    details d = details("SEM4");
-                    d.add_df(
-                        df(
-                            var->to_string(),
-                            declared(call_stack_entry(get_file(), var->line_, current_cf)),
-                            initialized(),
-                            used()
-                        )
-                    );
-                    reporter_->report_json(d);
+                    AstErrorReporter::Identifier id{var->to_string(), {get_file(), var->line_, current_cf}};
+                    reporter_->addSEM4(id);
                 }
             }
 
@@ -65,18 +61,17 @@ public:
     }
 
     void delete_var_from_scope(std::vector<std::vector<luna_string*>*>* scope, luna_string* var) {
-        for (auto i : *scope) {
-            auto it = i->begin();
-            auto end = i->end();
-
-            while (it != end) {
-                // std::cerr << (*it)->to_string() << std::endl;
-                // std::cerr << var->to_string() << std::endl;
-
-                if ((*it)->to_string() == var->to_string()) {
-                    i->erase(it);
+        if (!var) return; 
+        std::string var_str = var->to_string();
+    
+        for (auto& inner_vec : *scope) {
+            auto it = inner_vec->begin();
+            while (it != inner_vec->end()) {
+                if (*it && (*it)->to_string() == var_str) {
+                    it = inner_vec->erase(it);
+                } else {
+                    it++;
                 }
-                it++;
             }
         }
     }
@@ -141,16 +136,8 @@ public:
                 check_(scope, cur_if->block_);
                 
                 for (auto var : *(scope->back())) {
-                    details d = details("SEM4");
-                    d.add_df(
-                        df(
-                            var->to_string(),
-                            declared(call_stack_entry(get_file(), var->line_, current_cf)),
-                            initialized(),
-                            used()
-                        )
-                    );
-                    reporter_->report_json(d);
+                    AstErrorReporter::Identifier id{var->to_string(), {get_file(), var->line_, current_cf}};
+                    reporter_->addSEM4(id);
                 }
 
                 scope->pop_back();
@@ -173,16 +160,8 @@ public:
                 check_(scope, cur_while->block_);
 
                 for (auto var : *(scope->back())) {
-                    details d = details("SEM4");
-                    d.add_df(
-                        df(
-                            var->to_string(),
-                            declared(call_stack_entry(get_file(), var->line_, current_cf)),
-                            initialized(),
-                            used()
-                        )
-                    );
-                    reporter_->report_json(d);
+                    AstErrorReporter::Identifier id{var->to_string(), {get_file(), var->line_, current_cf}};
+                    reporter_->addSEM4(id);
                 }
 
                 scope->pop_back();
@@ -203,16 +182,8 @@ public:
                 check_(scope, cur_for->block_);
 
                 for (auto var : *(scope->back())) {
-                    details d = details("SEM4");
-                    d.add_df(
-                        df(
-                            var->to_string(),
-                            declared(call_stack_entry(get_file(), var->line_, current_cf)),
-                            initialized(),
-                            used()
-                        )
-                    );
-                    reporter_->report_json(d);
+                    AstErrorReporter::Identifier id{var->to_string(), {get_file(), var->line_, current_cf}};
+                    reporter_->addSEM4(id);
                 }
 
                 scope->pop_back();

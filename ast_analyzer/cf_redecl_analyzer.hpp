@@ -1,8 +1,9 @@
 #include "base_analyzer.hpp"
+#include "ast_json_reporter.cpp"
 
 class cf_redecl_analyzer : public base_analyzer {
 public:
-    cf_redecl_analyzer(ast* ast_, FILE* yyin, error_reporter* reporter, std::string luna_source)  {
+    cf_redecl_analyzer(ast* ast_, FILE* yyin, AstErrorReporter::ErrorReporter* reporter, std::string luna_source)  {
         this->ast_ = ast_;
         this->file_ = yyin;
         this->reporter_ = reporter;
@@ -31,9 +32,10 @@ public:
         std::vector<luna_sub_def *> duplicated = find_pairs<luna_sub_def *>(&luna_funcs);
 
         for (auto i : duplicated) {
-            details detail = details("SYN6.2");
-            detail.add_cf(cf(i->code_id_->to_string(), "struct", get_file(), i->line_));
-            reporter_->report_json(detail);
+            AstErrorReporter::CF cf{i->code_id_->to_string(), "struct", get_file(), i->code_id_->line_};
+            std::vector<AstErrorReporter::CF> cfs;
+            cfs.push_back(cf);
+            reporter_->addSYN6_2(cfs);
         }
 
         return duplicated.size() > 0;

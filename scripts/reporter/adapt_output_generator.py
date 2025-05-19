@@ -278,7 +278,7 @@ def report_error(
                 .replace("$id_name",
                          error["details"]["identifier"]["name"])
                 .replace("$call_stack_entry",
-                         get_call_stack_entry(error["details"]["identifier"]["call_stack_entry"], text_info))
+                         get_call_stack_entry(error["details"]["identifier"]["declared"], text_info))
             )
 
         case 'SYN9':
@@ -287,7 +287,7 @@ def report_error(
                 .replace("$id_name",
                          error["details"]["identifier"]["name"])
                 .replace("$call_stack_entry",
-                         get_call_stack_entry(error["details"]["identifier"]["call_stack_entry"], text_info))
+                         get_call_stack_entry(error["details"]["identifier"]["declared"], text_info))
             )
 
         case 'SYN10':
@@ -393,10 +393,10 @@ def report_error(
         case 'SEM4':
             output_file.write(
                 (templates_map[error_code] + '\n')
-                .replace('$id_name',
-                         error['details']['df']['name'])
-                .replace('$df',
-                         get_df(error['details']['df'], text_info, include_name=False))
+                .replace("$id_name",
+                         error["details"]["identifier"]["name"])
+                .replace("$call_stack_entry",
+                         get_call_stack_entry(error["details"]["identifier"]["declared"], text_info))
             )
 
         case 'SEM5' | 'SEM6':
@@ -425,7 +425,7 @@ def report_error(
             output_file.write(
                 (templates_map[error_code] + '\n')
                 .replace('$callstack',
-                         get_call_stack(error['details']['call_stack'], text_info))
+                         get_call_stack(error['details']['where'], text_info))
             )
 
         case 'SEM9':
