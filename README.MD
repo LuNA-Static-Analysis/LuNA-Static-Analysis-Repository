@@ -12,7 +12,7 @@
    3. `g++` с поддержкой `C++20` или выше (`sudo apt-get install g++`)
    4. [SWI-Prolog](https://www.swi-prolog.org/download/stable) (`sudo apt-get install swi-prolog`)
    5. [LuNA](https://gitlab.ssd.sscc.ru/luna/luna)
-   6. [Python3.10+](https://www.python.org/downloads/)
+   6. [Python3.13+](https://www.python.org/downloads/)
    7. [requirements.txt](requirements.txt) (`python3 -m pip install -r requirements.txt`) 
 
 #### 3. Сборка проекта 
