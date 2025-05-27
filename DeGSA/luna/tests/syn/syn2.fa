@@ -1,0 +1,10 @@
+import printint(int) as printint;
+sub main(){
+        print(1);
+        printint(2);
+        foo();
+}
+sub foo(){
+        print(3);
+        printint(4);
+}

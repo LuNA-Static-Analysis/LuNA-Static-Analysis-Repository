@@ -1,0 +1,9 @@
+import printint(int) as print;
+sub main() {
+    let a = 2 {
+        print(1);
+    }
+    let a = 2 {
+        print(a);
+    }
+}

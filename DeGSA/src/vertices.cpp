@@ -76,10 +76,45 @@ void Vertex::printGenericInfo(std::ostream* outputTarget) {
     *outputTarget << std::endl;
 
     *outputTarget << "Vertex type: ";
-    *outputTarget << m_vertexType << std::endl;
+    std::string type;
+    switch (m_vertexType) {
+        case forVF: {
+            type = "for";
+            break;
+        }
+        case ifVF: {
+            type = "if";
+            break;
+        }
+        case whileVF: {
+            type = "while";
+            break;
+        }
+        case letVF: {
+            type = "let";
+            break;
+        }
+        case importVF: {
+            type = "import";
+            break;
+        }
+        case subVF: {
+            type = "sub";
+            break;
+        }
+    }
+    *outputTarget << type << std::endl;
+
+    *outputTarget << "Facts amount: ";
+    *outputTarget << m_facts.size() << std::endl;
 }
 
-void SubVertex::initializeVertex() {
+bool SubVertex::initializeVertex() {
+    if (m_parent == nullptr && m_name != "main") {
+        std::cout << "INTERNAL ERROR: initializing SubVertex before setting its parent" << std::endl;
+        return false;
+    }
+
     _arguments = {};
     m_declaredBothIdsMap = {};
     m_declaredInsideIdsMap = {};
@@ -87,16 +122,32 @@ void SubVertex::initializeVertex() {
 
     if (_callArgs.size() != _declaredArgs.size() && m_name != "main") {
         //todo wip report error (old code luna06)
-        //REPORTS.push_back(JsonReporter::create06());
+        //REPORTS.push_back(JsonReporter::createSYN3());
         std::cout << "INTERNAL ERROR: call args size and declared args size are not equal in call " << m_name << " at line " << m_line << std::endl;
-        return;
+        return false;
+    }
+
+    // SEM8: check for unconditional recursion
+    Vertex* callerVertex = m_parent;
+    VertexType callerType;
+    bool conditional = false;
+    while (callerVertex != nullptr) {
+        callerType = callerVertex->getVertexType();
+        if (callerType == subVF && callerVertex->getName() == m_name) {
+            //if (!conditional)
+            //    REPORTS.push_back(JsonReporter::createSEM8(callerVertex, this));
+            return false; // to avoid infinite recursion in DeGSA itself
+        }
+        if (callerType == ifVF || callerType == forVF || callerType == whileVF) {
+            conditional = true; // condition found, error is not present
+        }
+        callerVertex = callerVertex->getParent();
     }
 
     std::vector<Identifier*> declaredNamesVector = {};
 
     // in case of a "sub": add args as an inside Ids and map them to call args
-    // IMPORTANT EXCEPTION: no mapping done to args of main(); also these names cannot be initialized and
-    // indexed, so they are pretty special and have a class of their own: MainArgName
+    // IMPORTANT EXCEPTION: no mapping done to args of main()
 
     // iterate through this vector and for every arg create a MutableArgName or an ImmutableArgName object
     for (int i = 0; i < _declaredArgs.size(); i++){
@@ -128,19 +179,23 @@ void SubVertex::initializeVertex() {
         } else {
             std::cout << "INTERNAL ERROR: created nullptr sub/main arg name because of name duplication" << std::endl;
 
-            std::vector<std::string> dfList = {};//todo
-            //dfList.push_back(JsonReporter::createDF(identifierDeclaredName, "[]", "[]", "[]"));//todo callstacks
-            //dfList.push_back(JsonReporter::createDF(identifierDeclaredName, "[]", "[]", "[]"));//todo callstacks
-            REPORTS.push_back(JsonReporter::create13(
-                dfList
-            ));
+            /*REPORTS.push_back(JsonReporter::createSYN8_5(
+                identifierDeclaredName,
+                this
+            ));*/
         }
     }
 
     enterBlock();
+    return true;
 }
 
-void ImportVertex::initializeVertex() {
+bool ImportVertex::initializeVertex() {
+    if (m_parent == nullptr) {
+        std::cout << "INTERNAL ERROR: initializing ImportVertex before setting its parent" << std::endl;
+        return false;
+    }
+
     _arguments = {};
 
     std::cout << "Import entered" << std::endl;
@@ -164,31 +219,35 @@ void ImportVertex::initializeVertex() {
                 std::cout << "INTERNAL ERROR: initializeVertex -- import: found DF with unexpected UseDef!" << std::endl;
         }
     }
-    return;
+    return true;
 }
 
-void ForVertex::initializeVertex() {
+bool ForVertex::initializeVertex() {
+    if (m_parent == nullptr) {
+        std::cout << "INTERNAL ERROR: initializing ForVertex before setting its parent" << std::endl;
+        return false;
+    }
+
     const for_statement* innerStatementForVF = dynamic_cast<const for_statement*>(m_statement);
 
     // check for duplicate name
     std::string forIteratorString = innerStatementForVF->name_->to_string();
     if (m_declaredOutsideIdsMap.find(forIteratorString) != m_declaredOutsideIdsMap.end()){
-        std::vector<std::string> dfList = {};
-        Identifier* identifier = m_declaredOutsideIdsMap.find(forIteratorString)->second;
-        dfList.push_back(JsonReporter::createDF(identifier));//todo callstacks
-        //dfList.push_back(JsonReporter::createDF(forIteratorString, "[]", "[]", "[]"));//todo callstacks
-        //todo find all duplicate dfs
-        REPORTS.push_back(JsonReporter::create13(
-            dfList
-        ));
+        
+        /*REPORTS.push_back(JsonReporter::createSYN8_2(
+            forIteratorString,
+            this
+        ));*/
 
         std::cout << "INTERNAL ERROR: aborted initializing \"for\" vertex" << std::endl;
-        return;
+        return false;
     }
+
+    //todo check conditions here perhaps
 
     _iterator = new ForIteratorName(forIteratorString, this);
 
-    m_declaredOutsideIdsMap.insert( { forIteratorString, _iterator } );
+    m_declaredInsideIdsMap.insert( { forIteratorString, _iterator } );
     m_declaredBothIdsMap.insert( { forIteratorString, _iterator } );
 
     // all names inside "for" expressions must be marked as used
@@ -201,31 +260,37 @@ void ForVertex::initializeVertex() {
     if (_rightBorder != nullptr)
         _rightBorder->markAsUse(this, 0);//todo why 0
 
+    Expression* iteratorExpression = new Expression(_iterator, intNode, this);
+    m_facts.insert(new GLeNFact(greaterOrEqualNode, iteratorExpression, _leftBorder));
+    m_facts.insert(new GLeNFact(lesserOrEqualNode, iteratorExpression, _rightBorder));
+
     enterBlock();
+    return true;
 }
 
-void WhileVertex::initializeVertex() {
+bool WhileVertex::initializeVertex() {
+    if (m_parent == nullptr) {
+        std::cout << "INTERNAL ERROR: initializing WhileVertex before setting its parent" << std::endl;
+        return false;
+    }
+
     const while_statement* innerStatementWhileVF = dynamic_cast<const while_statement*>(m_statement);
 
     // check for duplicate name
     std::string whileIteratorString = innerStatementWhileVF->left_->to_string();
     if (m_declaredOutsideIdsMap.find(whileIteratorString) != m_declaredOutsideIdsMap.end()){
 
-        std::vector<std::string> dfList = {};
-        Identifier* identifier = m_declaredOutsideIdsMap.find(whileIteratorString)->second;
-        dfList.push_back(JsonReporter::createDF(identifier));//todo callstacks
-        //dfList.push_back(JsonReporter::createDF(whileIteratorString, "[]", "[]", "[]"));//todo callstacks
-        //todo find all duplicate dfs
-        REPORTS.push_back(JsonReporter::create13(
-            dfList
-        ));
+        /*REPORTS.push_back(JsonReporter::createSYN8_3(
+            whileIteratorString,
+            this
+        ));*/
 
         std::cout << "INTERNAL ERROR: aborted initializing \"while\" vertex" << std::endl;
-        return;
+        return false;
     }
 
     _iterator = new WhileIteratorName(whileIteratorString, this);
-    m_declaredOutsideIdsMap.insert( { whileIteratorString, _iterator } );
+    m_declaredInsideIdsMap.insert( { whileIteratorString, _iterator } );
     m_declaredBothIdsMap.insert( { whileIteratorString, _iterator } );
 
     Expression* whileOutNameExpr = new Expression(innerStatementWhileVF->id_, m_declaredOutsideIdsMap, this);
@@ -247,20 +312,29 @@ void WhileVertex::initializeVertex() {
     if (_startExpr != nullptr)
         _startExpr->markAsUse(this, 0);//todo why 0
 
-    if (_outName != nullptr){
+    if (_outName != nullptr)
         _outName->markAsDef(this, 0); //todo why 0
-    }
-
-    if (_outName == nullptr)
-        REPORTS.push_back(JsonReporter::create26(
+    else 
+        REPORTS.push_back(JsonReporter::createSYN1(
             whileOutNameExpr->getASTExpr()->to_string(),
-            this
+            this,
+            nullptr//todo
         ));
 
+    Expression* iteratorExpression = new Expression(_iterator, intNode, this);
+    m_facts.insert(new GLeNFact(greaterOrEqualNode, iteratorExpression, _startExpr));
+    m_facts.insert(new GLeNFact(nonEqualNode, _conditionExpr, new Expression("0", intNode, this)));
+
     enterBlock();
+    return true;
 }
 
-void IfVertex::initializeVertex() {
+bool IfVertex::initializeVertex() {
+    if (m_parent == nullptr) {
+        std::cout << "INTERNAL ERROR: initializing IfVertex before setting its parent" << std::endl;
+        return false;
+    }
+
     const if_statement* innerStatementIfVF = dynamic_cast<const if_statement*>(m_statement);
 
     _conditionExpr = new Expression(innerStatementIfVF->expr_, m_declaredOutsideIdsMap, this);
@@ -269,10 +343,18 @@ void IfVertex::initializeVertex() {
     if (_conditionExpr != nullptr)
         _conditionExpr->markAsUse(this, 0);
 
+    m_facts.insert(new GLeNFact(nonEqualNode, _conditionExpr, new Expression("0", intNode, this)));
+
     enterBlock();
+    return true;
 }
 
-void LetVertex::initializeVertex() {
+bool LetVertex::initializeVertex() {
+    if (m_parent == nullptr) {
+        std::cout << "INTERNAL ERROR: initializing LetVertex before setting its parent" << std::endl;
+        return false;
+    }
+
     const let_statement* innerStatementLetVF = dynamic_cast<const let_statement*>(m_statement);
 
     // map expressions to new letNames
@@ -284,25 +366,24 @@ void LetVertex::initializeVertex() {
         std::string letString = *(assignment->name_->get_value());
         if (m_declaredOutsideIdsMap.find(letString) != m_declaredOutsideIdsMap.end()){
 
-            std::vector<std::string> dfList = {};
-            Identifier* identifier = m_declaredOutsideIdsMap.find(letString)->second;
-            dfList.push_back(JsonReporter::createDF(identifier));//todo callstacks
-            //dfList.push_back(JsonReporter::createDF(letString, "[]", "[]", "[]"));//todo callstacks
-            //todo find all duplicate dfs
-            REPORTS.push_back(JsonReporter::create13(dfList));
+            /*REPORTS.push_back(JsonReporter::createSYN8_4(
+                letString,
+                this
+            ));*/
 
             std::cout << "INTERNAL ERROR: aborted initializing \"let\" vertex" << std::endl;
-            return;
+            return false;
         }
 
         Expression* letExpr = new Expression(assignment->expr_, m_declaredOutsideIdsMap, this);
         LetName* letName = new LetName(*(assignment->name_->get_value()), letExpr, this);
-        m_declaredOutsideIdsMap.insert( { letString, letName } );
+        m_declaredInsideIdsMap.insert( { letString, letName } );
         m_declaredBothIdsMap.insert( { letString, letName } );
         letNamesVector->push_back(letName);
     }
 
     enterBlock();
+    return true;
 }
 
 void Vertex::enterBlock() {
@@ -334,16 +415,13 @@ void Vertex::scanForDFDecls() {
                 m_declaredBothIdsMap.insert( { nextDFName, newBaseDFName } );
                 BASENAMES.insert(newBaseDFName);
             } else {
-                Identifier* previousDF = previousDFIterator->second;
-                // error code: 13
-                // df list
-                std::vector<std::string> dfList = {};
-                dfList.push_back(JsonReporter::createDF(previousDF));//todo callstacks
-                //dfList.push_back(JsonReporter::createDF(dfName, "[]", "[]", "[]"));//todo callstacks
-                //todo find all duplicate dfs (just create new and then immediately delete)
-                REPORTS.push_back(JsonReporter::create13(
-                    dfList
-                ));
+
+                /*REPORTS.push_back(JsonReporter::createSYN8_1(
+                    nextDFName,
+                    this
+                ));*/
+
+                //this error is actually tolerable
             }
         }
 
@@ -372,7 +450,7 @@ void Vertex::iterateThroughBlockStatements() {
             std::string cfName = *(cfStatement->code_id_->value_);
             auto cfDeclaration = CFDECLARATIONS.find(*(cfStatement->code_id_->value_));
             if (cfDeclaration != CFDECLARATIONS.end()) {
-                if (cfDeclaration->second.type == importCF) {
+                if (cfDeclaration->second->type == importCF) {
                     handleImport(cfStatement);
                 } else {
                     handleSub(cfStatement);
@@ -381,7 +459,7 @@ void Vertex::iterateThroughBlockStatements() {
                 std::cout << "INTERNAL ERROR: no sub with name " << cfName << " found" << std::endl;
                 // error code: 02
                 // callstack entry
-                REPORTS.push_back(JsonReporter::create2(
+                REPORTS.push_back(JsonReporter::createSYN2(
                     m_fileName,
                     cfStatement->line_,
                     cfName
@@ -439,11 +517,37 @@ void Vertex::handleSub(cf_statement* cfStatement) {
     for (auto rawArgument : *rawArguments)
         callArgs.push_back(new Expression(rawArgument, m_declaredBothIdsMap, this));
 
-    CFDeclaration cfDeclaration = CFDECLARATIONS.find(calledSubName)->second;//todo this object will be deleted, do pointers
-    SubVertex* nextVertex = new SubVertex(calledSubName, this, subVF, m_depth + 1, cfStatement->line_, m_fileName, cfDeclaration.cfBlock, cfStatement, m_declaredBothIdsMap, callArgs, cfDeclaration.declaredArgs);
-    VERTICES.push_back(nextVertex);
-    addInside(nextVertex);
-    nextVertex->initializeVertex();
+    auto cfDeclarationPair = CFDECLARATIONS.find(calledSubName);
+    if (cfDeclarationPair == CFDECLARATIONS.end()) {
+        //todo report non-existing CF?
+        std::cout << "INTERNAL ERROR" << std::endl;
+        return;
+    }
+    CFDeclaration* cfDeclaration = cfDeclarationPair->second; // todo this will be deleted? do pointers?
+    CFDECLARATIONS.find(calledSubName)->second->isUsed = true;
+
+    SubVertex* nextVertex = new SubVertex(calledSubName, this, subVF, m_depth + 1, cfStatement->line_, m_fileName, cfDeclaration->cfBlock, cfStatement, cfDeclaration, m_declaredBothIdsMap, m_facts, callArgs, cfDeclaration->declaredArgs);
+    if (cfDeclaration->declaredArgs.size() != callArgs.size()) {
+        REPORTS.push_back(JsonReporter::createSYN3(nextVertex, cfDeclaration));
+        std::cout << "INTERNAL ERROR: call of CF " << calledSubName << " has wrong amount of args" << std::endl;
+        return;
+    } else {
+        for (int i = 0; i < cfDeclaration->declaredArgs.size(); i++) {
+            if (callArgs[i]->getValueType() != cfDeclaration->declaredArgs[i].type) {
+                REPORTS.push_back(JsonReporter::createSYN1(
+                    callArgs[i]->getASTExpr()->to_string(),
+                    nextVertex,
+                    cfDeclaration
+                ));
+            }
+        }
+    }
+    
+    if (nextVertex->initializeVertex()) {
+        VERTICES.push_back(nextVertex);
+        addInside(nextVertex);
+    } else
+        std::cout << "INTERNAL ERROR: unable to initialize SubVertex" << std::endl;
 }
 
 void Vertex::handleImport(cf_statement* cfStatement) {
@@ -461,39 +565,78 @@ void Vertex::handleImport(cf_statement* cfStatement) {
     for (auto rawArgument : *rawArguments)
         callArgs.push_back(new Expression(rawArgument, m_declaredBothIdsMap, this));//TODO WIP this is wrong, create Identifier and send it (update 23.10.2024 what the fuck does that mean)
 
-    CFDeclaration cfDeclaration = CFDECLARATIONS.find(calledImportName)->second;//todo this object will be deleted, do pointers
-    ImportVertex* nextVertex = new ImportVertex(calledImportName, this, importVF, m_depth + 1, cfStatement->line_, m_fileName, cfStatement->block_, cfStatement, m_declaredBothIdsMap, callArgs, cfDeclaration.declaredArgs);
-    VERTICES.push_back(nextVertex);
-    addInside(nextVertex);
-    nextVertex->initializeVertex();
+    auto cfDeclarationPair = CFDECLARATIONS.find(calledImportName);
+    if (cfDeclarationPair == CFDECLARATIONS.end()) {
+        //todo report non-existing CF?
+        std::cout << "INTERNAL ERROR" << std::endl;
+        return;
+    }
+    CFDeclaration* cfDeclaration = cfDeclarationPair->second;
+    CFDECLARATIONS.find(calledImportName)->second->isUsed = true;
+
+    ImportVertex* nextVertex = new ImportVertex(calledImportName, this, importVF, m_depth + 1, cfStatement->line_, m_fileName, cfStatement->block_, cfStatement, cfDeclaration, m_declaredBothIdsMap, m_facts, callArgs, cfDeclaration->declaredArgs);
+    //todo wip check for LUNA04 and LUNA06
+    if (cfDeclaration->declaredArgs.size() != callArgs.size()) {
+        REPORTS.push_back(JsonReporter::createSYN3(nextVertex, cfDeclaration));
+        std::cout << "INTERNAL ERROR: call of CF " << calledImportName << " has wrong amount of args" << std::endl;
+        return;
+    } else {
+        for (int i = 0; i < cfDeclaration->declaredArgs.size(); i++) {
+            if (callArgs[i]->getValueType() != cfDeclaration->declaredArgs[i].type) {
+                REPORTS.push_back(JsonReporter::createSYN1(
+                    callArgs[i]->getASTExpr()->to_string(),
+                    nextVertex,
+                    cfDeclaration
+                ));
+            }
+        }
+    }
+    
+    if (nextVertex->initializeVertex()) {
+        VERTICES.push_back(nextVertex);
+        addInside(nextVertex);
+    } else
+        std::cout << "INTERNAL ERROR: unable to initialize ImportVertex" << std::endl;
 }
 
 void Vertex::handleFor(for_statement* forStatement) {
-    ForVertex* nextVertex = new ForVertex(this, m_depth + 1, forStatement->line_, m_fileName, forStatement->block_, forStatement, m_declaredBothIdsMap);
-    VERTICES.push_back(nextVertex);
-    addInside(nextVertex);
-    nextVertex->initializeVertex();
+    ForVertex* nextVertex = new ForVertex(this, m_depth + 1, forStatement->line_, m_fileName, forStatement->block_, forStatement, m_declaredBothIdsMap, m_facts);
+    
+    if (nextVertex->initializeVertex()) {
+        VERTICES.push_back(nextVertex);
+        addInside(nextVertex);
+    } else
+        std::cout << "INTERNAL ERROR: unable to initialize ForVertex" << std::endl;
 }
 
 void Vertex::handleWhile(while_statement* whileStatement) {
-    WhileVertex* nextVertex = new WhileVertex(this, m_depth + 1, whileStatement->line_, m_fileName, whileStatement->block_, whileStatement, m_declaredBothIdsMap);
-    VERTICES.push_back(nextVertex);
-    addInside(nextVertex);
-    nextVertex->initializeVertex();
+    WhileVertex* nextVertex = new WhileVertex(this, m_depth + 1, whileStatement->line_, m_fileName, whileStatement->block_, whileStatement, m_declaredBothIdsMap, m_facts);
+    
+    if (nextVertex->initializeVertex()) {
+        VERTICES.push_back(nextVertex);
+        addInside(nextVertex);
+    } else
+        std::cout << "INTERNAL ERROR: unable to initialize WhileVertex" << std::endl;
 }
 
 void Vertex::handleIf(if_statement* ifStatement) {
-    IfVertex* nextVertex = new IfVertex(this, m_depth + 1, ifStatement->line_, m_fileName, ifStatement->block_, ifStatement, m_declaredBothIdsMap);
-    VERTICES.push_back(nextVertex);
-    addInside(nextVertex);
-    nextVertex->initializeVertex();
+    IfVertex* nextVertex = new IfVertex(this, m_depth + 1, ifStatement->line_, m_fileName, ifStatement->block_, ifStatement, m_declaredBothIdsMap, m_facts);
+    
+    if (nextVertex->initializeVertex()) {
+        VERTICES.push_back(nextVertex);
+        addInside(nextVertex);
+    } else
+        std::cout << "INTERNAL ERROR: unable to initialize IfVertex" << std::endl;
 }
 
 void Vertex::handleLet(let_statement* letStatement) {
-    LetVertex* nextVertex = new LetVertex(this, m_depth + 1, letStatement->line_, m_fileName, letStatement->block_, letStatement, m_declaredBothIdsMap);
-    VERTICES.push_back(nextVertex);
-    addInside(nextVertex);
-    nextVertex->initializeVertex();
+    LetVertex* nextVertex = new LetVertex(this, m_depth + 1, letStatement->line_, m_fileName, letStatement->block_, letStatement, m_declaredBothIdsMap, m_facts);
+    
+    if (nextVertex->initializeVertex()) {
+        VERTICES.push_back(nextVertex);
+        addInside(nextVertex);
+    } else
+        std::cout << "INTERNAL ERROR: unable to initialize LetVertex" << std::endl;
 }
 
 void SubVertex::printInfo(std::ostream* outputTarget) {
@@ -511,18 +654,18 @@ void ImportVertex::printInfo(std::ostream* outputTarget) {
 void ForVertex::printInfo(std::ostream* outputTarget){
     printGenericInfo(outputTarget);
 
-    *outputTarget << "Iterator: " + this->getIterator()->getName() << std::endl;
-    *outputTarget << "Left border: " + this->getLeftBorder()->getASTExpr()->to_string() << std::endl;
-    *outputTarget << "Right border: " + this->getRightBorder()->getASTExpr()->to_string() << std::endl;
+    *outputTarget << "Iterator: " + (this->getIterator() != nullptr ? this->getIterator()->getName() : "NULL") << std::endl;
+    *outputTarget << "Left border: " + (this->getLeftBorder() != nullptr ? this->getLeftBorder()->getASTExpr()->to_string() : "NULL") << std::endl;
+    *outputTarget << "Right border: " + (this->getRightBorder() != nullptr ? this->getRightBorder()->getASTExpr()->to_string() : "NULL") << std::endl;
 }
 
 void WhileVertex::printInfo(std::ostream* outputTarget){
     printGenericInfo(outputTarget);
 
-    *outputTarget << "Iterator: " + _iterator->getName() << std::endl;
-    *outputTarget << "Out name: " + _outName->getName() << std::endl;
-    *outputTarget << "Condition expression: " + _conditionExpr->getASTExpr()->to_string() << std::endl;
-    *outputTarget << "Start expression: " + _startExpr->getASTExpr()->to_string() << std::endl;
+    *outputTarget << "Iterator: " + (this->_iterator != nullptr ? _iterator->getName() : "NULL") << std::endl;
+    *outputTarget << "Out name: " + (this->_outName != nullptr ? _outName->getName() : "NULL") << std::endl;
+    *outputTarget << "Condition expression: " + (this->_conditionExpr != nullptr ? _conditionExpr->getASTExpr()->to_string() : "NULL") << std::endl;
+    *outputTarget << "Start expression: " + (this->_startExpr != nullptr ? _startExpr->getASTExpr()->to_string() : "NULL") << std::endl;
 }
 
 void IfVertex::printInfo(std::ostream* outputTarget){

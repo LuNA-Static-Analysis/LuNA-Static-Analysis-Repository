@@ -1,0 +1,7 @@
+import printint(int) as print;
+sub foo() {
+    print(1);
+}
+sub main() {
+    print(1);
+}

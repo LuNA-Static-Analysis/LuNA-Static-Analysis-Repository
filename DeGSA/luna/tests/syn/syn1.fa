@@ -1,0 +1,10 @@
+import printint(int) as printint;
+import printstr(string) as printstr;
+sub main(){
+        let a = 1 + 2 {
+                printstr(a);
+                printint(a);
+        }
+        printint("text");
+        printstr("text");
+}

@@ -1,0 +1,23 @@
+import printint(int) as print;
+sub foo1() {
+    print(1);
+    foo2();
+}
+sub foo2() {
+    print(2);
+    foo1();
+}
+sub foo3() {
+    if (0) {
+        foo(1);
+    }
+}
+sub foo4() {
+    print(4);
+    foo3();
+}
+sub main() {
+    foo1();
+    foo2();
+    foo3();
+}

@@ -18,7 +18,8 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
     this->_identifier = nullptr;
     this->_leftExpr = nullptr;
     this->_rightExpr = nullptr;
-    this->_type = noneNode;
+    this->_expressionType = noneNode;
+    this->_valueType = notCalculated;
     this->_vertex = currentVertex;
 
     luna_string* lunaString = dynamic_cast<luna_string*>(ASTexpr);
@@ -26,13 +27,13 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
 
         std::string s = *(lunaString->get_value());
         if (std::regex_match(s, std::regex("[0-9]+"))){ // int
-            this->_type = intNode;
+            this->_expressionType = intNode;
         }
         if (std::regex_match(s, std::regex("[0-9]+[.][0-9]+"))){ // real
-            this->_type = realNode;
+            this->_expressionType = realNode;
         }
         if (std::regex_match(s, std::regex("\"[^\"]*\""))){ // string
-            this->_type = stringNode;
+            this->_expressionType = stringNode;
         }
 
         this->_constant = s;
@@ -44,15 +45,15 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
 
         to_int* intCast = dynamic_cast<to_int*>(lunaCast);
         if (intCast != nullptr)
-            this->_type = intCastNode;
+            this->_expressionType = intCastNode;
         
         to_real* realCast = dynamic_cast<to_real*>(lunaCast);
         if (realCast != nullptr)
-            this->_type = realCastNode;
+            this->_expressionType = realCastNode;
 
         to_str* stringCast = dynamic_cast<to_str*>(lunaCast);
         if (stringCast != nullptr)
-            this->_type = stringCastNode;
+            this->_expressionType = stringCastNode;
 
         this->_leftExpr = new Expression(lunaCast->expr_, nameTable, currentVertex);
         return;
@@ -68,37 +69,37 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
             op = op.substr(1, op.size() - 1);
         }
         switch(op[0]){
-            case '+': _type = addNode; break;
-            case '-': _type = subtractNode; break;
-            case '*': _type = multiplyNode; break;
-            case '/': _type = divideNode; break;
-            case '%': _type = modulusNode; break;
+            case '+': _expressionType = addNode; break;
+            case '-': _expressionType = subtractNode; break;
+            case '*': _expressionType = multiplyNode; break;
+            case '/': _expressionType = divideNode; break;
+            case '%': _expressionType = modulusNode; break;
             case '>':
                 if (op.size() > 1 && op[1] == '=') {
-                    _type = greaterOrEqualNode; break;
+                    _expressionType = greaterOrEqualNode; break;
                 } else {
-                    _type = greaterNode; break;
+                    _expressionType = greaterNode; break;
                 }
             case '<':
                 if (op.size() > 1 && op[1] == '=') {
-                    _type = lesserOrEqualNode; break;
+                    _expressionType = lesserOrEqualNode; break;
                 } else {
-                    _type = lesserNode; break;
+                    _expressionType = lesserNode; break;
                 }
-            case '=': if (op.size() > 1 && op[1] == '=') { _type = equalNode; break; }
-            case '!': if (op.size() > 1 && op[1] == '=') { _type = nonEqualNode; break; }
+            case '=': if (op.size() > 1 && op[1] == '=') { _expressionType = equalNode; break; }
+            case '!': if (op.size() > 1 && op[1] == '=') { _expressionType = nonEqualNode; break; }
             case '&':
                 if (op.size() > 1 && op[1] == '&') {
-                    _type = andNode;
+                    _expressionType = andNode;
                 }
                 break;
             case '|':
                 if (op.size() > 1 && op[1] == '|') {
-                    _type = andNode;
+                    _expressionType = andNode;
                 }
                 break;
             default: std::cout << "INTERNAL ERROR: unknown operation in Expression constructor at line " << ASTexpr->line_ << ": " << op[0] << std::endl;
-                _type = noneNode;
+                _expressionType = noneNode;
         }
 
         _leftExpr = new Expression(lunaBinOp->left_, nameTable, currentVertex);
@@ -110,7 +111,7 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
     id* df = dynamic_cast<id*>(ASTexpr);
     if (df != NULL){
 
-        _type = identifierNode;
+        _expressionType = identifierNode;
 
         simple_id* simpleDF = dynamic_cast<simple_id*>(ASTexpr);
         // this is whatever name -- for iterator, while iterator, DF...
@@ -143,9 +144,9 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
                 Identifier* nonExistingIdentifier = new ForIteratorName(simpleDFName, _vertex);
                 //nonExistingIdentifier->markAsUse(currentVertex, 0);
                 //todo
-                REPORTS.push_back(JsonReporter::create14(
+                /*REPORTS.push_back(JsonReporter::createSYN9(
                     nonExistingIdentifier
-                ));
+                ));*/
             }
 
             return;
@@ -171,23 +172,215 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
     return;
 }
 
-Expression Expression::binOp(){
+void Expression::calculateValueType(){
+    switch(_expressionType) {
+        case addNode:
+        case subtractNode:
+        case multiplyNode:
+        case divideNode:
+        case modulusNode: {
+            ExpressionType leftValueType = _leftExpr->getExpressionType();
+            ExpressionType rightValueType = _rightExpr->getExpressionType();
+            if (leftValueType == realNode && rightValueType == realNode ||
+                leftValueType == intNode && rightValueType == realNode || 
+                leftValueType == realNode && rightValueType == intNode){ // result is real
+                if (_expressionType == modulusNode)
+                    _valueType = nonCalculatable; // modulus can not be used with real
+                else
+                    _valueType = realType;
+            } else if (leftValueType == intNode && rightValueType == intNode){ // result is int
+                _valueType = intType;
+            } else { // erroreous operation
+                _valueType = nonCalculatable;
+            }
+            return;
+        }
+
+        case greaterNode:
+        case greaterOrEqualNode:
+        case lesserNode:
+        case lesserOrEqualNode:
+        case equalNode:
+        case nonEqualNode:
+        case andNode:
+        case orNode:
+        case intNode:
+        case intCastNode: {
+            _valueType = intType;
+            return;
+        }
+
+        case stringNode:
+        case stringCastNode: {
+            _valueType = stringType;
+            return;
+        }
+
+        case realNode:
+        case realCastNode: {
+            _valueType = realType;
+            return;
+        }
+
+        // identifier
+        case identifierNode: {
+            Identifier* identifier = getAsIdentifier();
+            if (identifier != nullptr)
+                _valueType = identifier->getValueType();
+            else
+                _valueType = nonCalculatable;
+            return;
+        }
+
+        case noneNode: {
+            _valueType = nonCalculatable;
+            return;
+        }
+    }
+}
+
+std::string Expression::getAsTrueString(){
+    //todo how to avoid duplication of names?
+    //answer: names must be coded in such a way that different are different and same are the same
+    switch(_expressionType) {
+        case addNode: {
+            return "(" + _leftExpr->getAsTrueString() + "+" + _rightExpr->getAsTrueString() + ")";
+        }
+        case subtractNode: {
+            return "(" + _leftExpr->getAsTrueString() + "-" + _rightExpr->getAsTrueString() + ")";
+        }
+        case multiplyNode: {
+            return "(" + _leftExpr->getAsTrueString() + "*" + _rightExpr->getAsTrueString() + ")";
+        }
+        case divideNode: {
+            return "(" + _leftExpr->getAsTrueString() + "/" + _rightExpr->getAsTrueString() + ")";
+        }
+        case modulusNode: {
+            return "(" + _leftExpr->getAsTrueString() + "%" + _rightExpr->getAsTrueString() + ")";
+        }
+        case greaterNode: {
+            return "(" + _leftExpr->getAsTrueString() + ">" + _rightExpr->getAsTrueString() + ")";
+        }
+        case greaterOrEqualNode: {
+            return "(" + _leftExpr->getAsTrueString() + ">=" + _rightExpr->getAsTrueString() + ")";
+        }
+        case lesserNode: {
+            return "(" + _leftExpr->getAsTrueString() + "<" + _rightExpr->getAsTrueString() + ")";
+        }
+        case lesserOrEqualNode: {
+            return "(" + _leftExpr->getAsTrueString() + "<=" + _rightExpr->getAsTrueString() + ")";
+        }
+        case equalNode: {
+            return "(" + _leftExpr->getAsTrueString() + "==" + _rightExpr->getAsTrueString() + ")";
+        }
+        case nonEqualNode: {
+            return "(" + _leftExpr->getAsTrueString() + "!=" + _rightExpr->getAsTrueString() + ")";
+        }
+        case andNode: {
+            return "(" + _leftExpr->getAsTrueString() + "&&" + _rightExpr->getAsTrueString() + ")";
+        }
+        case orNode: {
+            return "(" + _leftExpr->getAsTrueString() + "||" + _rightExpr->getAsTrueString() + ")";
+        }
+        case intNode: {
+            //todo
+        }
+        case intCastNode: {
+            //todo
+        }
+        case stringNode: {
+            //todo
+        }
+        case stringCastNode: {
+            //todo
+        }
+        case realNode: {
+            //todo
+        }
+        case realCastNode: {
+            //todo
+        }
+        // identifier
+        case identifierNode: {
+            return getAsIdentifier()->getName();
+            //todo this is not strictly true, for IDFs for example
+        }
+        case noneNode: {
+            logInternalError("noneNode when trying to convert to Exprtk");
+            return "";
+        }
+    }
+}
+
+ExprtkExpressionDouble* Expression::toExprkDouble(){
+    // check for types
+}
+
+//todo templates?
+ExprtkExpressionInt* Expression::toExprkInt(){
+    if (_valueType == nonCalculatable){
+        logInternalError("trying to convert non-calculatable type expression to Exprtk");
+        return nullptr;
+    } else if (_valueType == notCalculated){
+        calculateValueType();
+    }
+
+    //todo how to easily convert my ast to his?
+
+    std::string result = getAsTrueString();
+    //basically recursively build overly curly expression string
+    
+}
+
+ExprtkExpressionString* Expression::toExprkString(){
+
+}
+
+Expression* Expression::simplify(
+    const Expression* currentExpression, const Vertex* currentVertex
+){
+    //todo
+    //convert to Exprtk
+    //simplify
+    //convert back
+    //return
+}
+
+std::pair<Expression*, Expression> Expression::mimplify(
+    const Expression* leftExpression, const Vertex* leftVertex, const Expression* rightExpression, const Vertex* rightVertex
+){
+    //todo
+    //convert both to Exprtk
+    //simplify mutually
+    //convert both back
+    //return
+}
+
+ExpressionEquality Expression::equals(
+    const Expression* leftExpression, const Vertex* leftVertex, const Expression* rightExpression, const Vertex* rightVertex
+){
+    //todo
+    //convert both to exprtk
+    //"equals"?
+    //return
+}
+
+Expression Expression::calculateValue(){
     Expression left = _leftExpr->getAsConstant();
     Expression right = _rightExpr->getAsConstant();
 
-    if (left._type == realNode && right._type == realNode ||
-        left._type == intNode && right._type == realNode || 
-        left._type == realNode && right._type == intNode){ // result is double
+    if (left._expressionType == realNode && right._expressionType == realNode ||
+        left._expressionType == intNode && right._expressionType == realNode || 
+        left._expressionType == realNode && right._expressionType == intNode){ // result is real
 
         double l = std::stod(left._constant);
         double r = std::stod(right._constant);
-        switch(_type){
+        switch(_expressionType){
             case addNode: return Expression(std::to_string(l + r), realNode, nullptr);
             case subtractNode: return Expression(std::to_string(l - r), realNode, nullptr);
             case multiplyNode: return Expression(std::to_string(l * r), realNode, nullptr);
             case divideNode: return Expression(std::to_string(l / r), realNode, nullptr);
             case modulusNode:
-                //todo how is this an error?
                 std::cout << "INTERNAL ERROR: attempt to use modulus with double" << std::endl;
                 return Expression("", noneNode, nullptr);
             case greaterNode: return Expression(std::to_string(l > r), intNode, nullptr);
@@ -200,14 +393,14 @@ Expression Expression::binOp(){
             case orNode: return Expression(std::to_string(l || r), intNode, nullptr);
 
             default:
-                std::cout << "INTERNAL ERROR: binOp reached default in switch" << std::endl;
+                std::cout << "INTERNAL ERROR: CalculateValue reached default in switch" << std::endl;
                 return Expression("", noneNode, nullptr);
         }
             
-    } else if (left._type == intNode && right._type == intNode){ // result is int
+    } else if (left._expressionType == intNode && right._expressionType == intNode){ // result is int
         int l = std::stoi(left._constant);
         int r = std::stoi(right._constant);
-        switch(_type){
+        switch(_expressionType){
             case addNode: return Expression(std::to_string(l + r), intNode, nullptr);
             case subtractNode: return Expression(std::to_string(l - r), intNode, nullptr);
             case multiplyNode: return Expression(std::to_string(l * r), intNode, nullptr);
@@ -223,19 +416,19 @@ Expression Expression::binOp(){
             case orNode: return Expression(std::to_string(l || r), intNode, nullptr);
             
             default:
-                std::cout << "INTERNAL ERROR: binOp reached default in switch" << std::endl;
+                std::cout << "INTERNAL ERROR: calculateValue reached default in switch" << std::endl;
                 return Expression("", noneNode, nullptr);
         }
 
     } else {
-        std::cout << "INTERNAL ERROR: binOp calculation used with unsuitable type:" << std::endl;
-        std::cout << "Left: " << left._type << "; right: " << right._type << std::endl;
+        std::cout << "INTERNAL ERROR: calculateValue calculation used with unsuitable type:" << std::endl;
+        std::cout << "Left: " << left._expressionType << "; right: " << right._expressionType << std::endl;
         return Expression("", noneNode, nullptr);
     }
 }
 
 Identifier* Expression::getAsIdentifier(){
-    if (_type == identifierNode){
+    if (_expressionType == identifierNode){
         return _identifier;
     } else {
         return nullptr;
@@ -245,7 +438,7 @@ Identifier* Expression::getAsIdentifier(){
 // naive implementation: returns noneNode once encounters an identifier
 // creates new object and returns a pointer; never return already existing object!
 Expression Expression::getAsConstant(){
-    switch (_type){
+    switch (_expressionType){
 
         // binary operations
         case addNode:
@@ -261,7 +454,7 @@ Expression Expression::getAsConstant(){
         case nonEqualNode:
         case andNode:
         case orNode:
-            return binOp();
+            return calculateValue();
         
         // constants
         case intNode:
@@ -299,7 +492,7 @@ Expression Expression::getAsConstant(){
 
         case intCastNode: {
             Expression insideExpression = _leftExpr->getAsConstant();
-            switch(insideExpression._type){
+            switch(insideExpression._expressionType){
                 case intNode: return insideExpression;
                 case realNode: return Expression(std::to_string((int)std::stod(insideExpression._constant)), intNode, nullptr);
                 default: return Expression("", noneNode, nullptr);
@@ -308,7 +501,7 @@ Expression Expression::getAsConstant(){
 
         case realCastNode: {
             Expression insideExpression = _leftExpr->getAsConstant();
-            switch(insideExpression._type){
+            switch(insideExpression._expressionType){
                 case intNode: {
                     return Expression(std::to_string((double)std::stoi(insideExpression._constant)), realNode, nullptr);
                 }
@@ -326,7 +519,7 @@ Expression Expression::getAsConstant(){
 
 void Expression::markAsUse(Vertex* currentVertex, int size){
     std::cout << "Expression " << _ASTexpr->to_string() << " is being marked as used" << std::endl;
-    switch(_type){
+    switch(_expressionType){
 
         case addNode:
         case subtractNode:
@@ -374,7 +567,7 @@ void Expression::markAsUse(Vertex* currentVertex, int size){
 
 void Expression::markAsDef(Vertex* currentVertex, int size){
     std::cout << "Expression " << _ASTexpr->to_string() << " is being marked as defined" << std::endl;
-    switch(_type){
+    switch(_expressionType){
         case addNode:
         case subtractNode:
         case multiplyNode:
@@ -388,9 +581,10 @@ void Expression::markAsDef(Vertex* currentVertex, int size){
         case nonEqualNode:
         case andNode:
         case orNode:{
-            REPORTS.push_back(JsonReporter::create26(
+            REPORTS.push_back(JsonReporter::createSYN1(
                 this->getASTExpr()->to_string(),
-                currentVertex
+                currentVertex,
+                nullptr
             ));
             return;
         }
@@ -405,28 +599,33 @@ void Expression::markAsDef(Vertex* currentVertex, int size){
                     mutableArgName->getReference()->markAsDef(currentVertex, size);
                     return;
                 }
+                
                 case baseDFNameClass: {//ok
                     BaseDFName* baseDFName = dynamic_cast<BaseDFName*>(_identifier);
                     baseDFName->markAsDef(currentVertex, size);
                     return;
                 }
+
                 case indexedDFNameClass: {//ok
                     IndexedDFName* indexedDFName = dynamic_cast<IndexedDFName*>(_identifier);
                     indexedDFName->markAsDef(currentVertex, size);
                     return;
                 }
+
                 case forIteratorNameClass: {//error
-                    REPORTS.push_back(JsonReporter::create26(
+                    REPORTS.push_back(JsonReporter::createSYN1(
                         this->getASTExpr()->to_string(),
-                        currentVertex
+                        currentVertex,
+                        nullptr
                     ));
                     return;
                 }
-                
+
                 case whileIteratorNameClass:{ //error
-                    REPORTS.push_back(JsonReporter::create26(
+                    REPORTS.push_back(JsonReporter::createSYN1(
                         this->getASTExpr()->to_string(),
-                        currentVertex
+                        currentVertex,
+                        nullptr
                     ));
                     return;
                 }
@@ -439,10 +638,12 @@ void Expression::markAsDef(Vertex* currentVertex, int size){
                     letName->getReference()->markAsDef(currentVertex, size);
                     return;
                 }
-                case immutableArgNameClass: {
-                    REPORTS.push_back(JsonReporter::create26(
+
+                case immutableArgNameClass: {//error
+                    REPORTS.push_back(JsonReporter::createSYN1(
                         this->getASTExpr()->to_string(),
-                        currentVertex
+                        currentVertex,
+                        nullptr
                     ));
                     return;
                 }
@@ -459,9 +660,10 @@ void Expression::markAsDef(Vertex* currentVertex, int size){
         case intCastNode:
         case realCastNode:
         case stringCastNode:
-            REPORTS.push_back(JsonReporter::create26(
+            REPORTS.push_back(JsonReporter::createSYN1(
                 _ASTexpr->to_string(),
-                currentVertex
+                currentVertex,
+                nullptr
             ));
             return;
 
@@ -476,7 +678,7 @@ void Expression::markAsDef(Vertex* currentVertex, int size){
 
 bool Expression::isIndexable(){
     // only identifiers are indexable
-    if (_type == identifierNode){
+    if (_expressionType == identifierNode){
         return _identifier->isIndexable();
     } else {
         return false;

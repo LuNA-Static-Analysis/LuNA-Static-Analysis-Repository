@@ -2,12 +2,19 @@
 #include "json_reporter.cpp"
 
 //todo check if this is true
-int Identifier::getLine(){
+int Identifier::getLine() const{
     if (m_vertex != nullptr){
         return m_vertex->getLine();
     } else {
         return -1;
     }
+}
+
+void Identifier::calculateValueType(){
+    if (m_reference != nullptr)
+        m_valueType = m_reference->getValueType();
+    else
+        m_valueType = nonCalculatable;
 }
 
 void BaseDFName::markAsUse(Vertex* vertex, int size){
@@ -23,10 +30,7 @@ void BaseDFName::markAsUse(Vertex* vertex, int size){
         // then add this vertex as use
         maybeUseVector->push_back(vertex);
     } else { // create new pair and a new vector
-        _sizeToUseDefVectors.insert(std::make_pair(size, std::make_pair(
-            new std::vector<Vertex*>(),
-            new std::vector<Vertex*>()
-        )));
+        _sizeToUseDefVectors.insert( { size, { new std::vector<Vertex*>(), new std::vector<Vertex*>() } } );
         _sizeToUseDefVectors.find(size)->second.first->push_back(vertex);
     }
 }
@@ -44,10 +48,7 @@ void BaseDFName::markAsDef(Vertex* vertex, int size){
         // then add this vertex as def
         maybeDefVector->push_back(vertex);
     } else { // create new pair and a new vector
-        _sizeToUseDefVectors.insert(std::make_pair(size, std::make_pair(
-            new std::vector<Vertex*>(),
-            new std::vector<Vertex*>()
-        )));
+        _sizeToUseDefVectors.insert( { size, { new std::vector<Vertex*>(), new std::vector<Vertex*>() } } );
         _sizeToUseDefVectors.find(size)->second.second->push_back(vertex);
     }
 }
@@ -92,7 +93,7 @@ bool IndexedDFName::isIndexable() {
 }
 
 IndexedDFName::IndexedDFName(std::string name, Vertex* currentVertex, Identifier* base, std::vector<Expression*> expressionsVector) : 
-    Identifier(name, nullptr, currentVertex, indexedDFNameClass, noneType /*todo when to init it accurately?*/) {
+    Identifier(name, nullptr, currentVertex, indexedDFNameClass, notCalculated /*todo when to init it accurately?*/) {
 
     if (
         (base->getClass() == baseDFNameClass) ||
@@ -102,7 +103,7 @@ IndexedDFName::IndexedDFName(std::string name, Vertex* currentVertex, Identifier
         _base = base;
     } else {
         _base = nullptr;
-        REPORTS.push_back(JsonReporter::create36(name, currentVertex));
+        REPORTS.push_back(JsonReporter::createSYN11(name, currentVertex));
         std::cout << "INTERNAL ERROR: indexation of an unsuitable Identifier" << std::endl;
     }
 
@@ -133,15 +134,12 @@ void ForIteratorName::markAsUse(Vertex* currentVertex, int size){
 }
 
 void ForIteratorName::markAsDef(Vertex* currentVertex, int size){
-    m_defSet.insert(currentVertex);//todo is it ok?
-    //todo: if marking as def, then there is only error 26 left; if not, then there will be more errors like using of nondefined shit
-    // decide what philosophy we are pursuing here
     std::cout << "INTERNAL ERROR: for iterator " << m_name << " is being marked as defined" << std::endl;
-    // error (iterator should be marked as defined by ForVertex automatically)
-    
-    REPORTS.push_back(JsonReporter::create26(
+    // error (iterator should be marked as defined at the time of a ForVertex creation)
+    REPORTS.push_back(JsonReporter::createSYN1(
         m_name,
-        currentVertex
+        currentVertex,
+        nullptr
     ));
 }
 
@@ -163,20 +161,16 @@ Expression* WhileIteratorName::getStartExpr(){
 
 void WhileIteratorName::markAsUse(Vertex* currentVertex, int size){
     m_useSet.insert(currentVertex);
-
     std::cout << "While iterator " << m_name << " is being marked as used" << std::endl;
-    m_useSet.insert(currentVertex);
 }
 
 void WhileIteratorName::markAsDef(Vertex* currentVertex, int size){
-    m_defSet.insert(currentVertex);//todo is it ok?
-
     std::cout << "INTERNAL ERROR: while iterator " << m_name << " is being marked as defined" << std::endl;
-    // error (iterator should be marked as defined by WhileVertex automatically)
-    //todo
-    REPORTS.push_back(JsonReporter::create26(
+    // error (iterator should be marked as defined at the time of a WhileVertex creation)
+    REPORTS.push_back(JsonReporter::createSYN1(
         m_name,
-        currentVertex
+        currentVertex,
+        nullptr
     ));
 }
 
@@ -229,9 +223,10 @@ void ImmutableArgName::markAsDef(Vertex* currentVertex, int size){
 
     std::cout << "Immutable arg name " << m_name << " is being marked as defined" << std::endl;
     //todo
-    REPORTS.push_back(JsonReporter::create26(
+    REPORTS.push_back(JsonReporter::createSYN1(
         m_name,
-        currentVertex
+        currentVertex,
+        nullptr
     ));
 }
 
@@ -278,7 +273,7 @@ IndexedDFName* parseIndexedDFExpression(expr* expression, std::map<std::string, 
             std::cout << "INTERNAL ERROR: aborted creating new IndexedDFName object -- base is not indexable: " << baseName << std::endl;
             //std::string report = "ERROR: not indexable name \"" + baseName + "\" indexed at line " + std::to_string(line) + "\n";
             //todo
-            REPORTS.push_back(JsonReporter::create36(
+            REPORTS.push_back(JsonReporter::createSYN11(
                 baseName,
                 currentVertex
             ));
@@ -287,9 +282,9 @@ IndexedDFName* parseIndexedDFExpression(expr* expression, std::map<std::string, 
     } else {
         std::cout << "INTERNAL ERROR: aborted creating new IndexedDFName object -- no base name found visible: " << baseName << std::endl;
         //std::string report = "ERROR: no name \"" + baseName + "\" found at line " + std::to_string(line) + "\n";
-        REPORTS.push_back(JsonReporter::create14(//todo
+        /*REPORTS.push_back(JsonReporter::createSYN9(//todo
             base->second
-        ));
+        ));*/
         return nullptr;
     }
 }

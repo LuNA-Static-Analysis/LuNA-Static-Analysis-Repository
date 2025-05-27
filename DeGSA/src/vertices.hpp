@@ -7,6 +7,7 @@
 
 #include "global.hpp"
 #include "ids.hpp"
+#include "facts.hpp"
 
 // this class represents a vertex in a DDG
 // vertex is a computational fragment (VF), so it could require some (or none) VFs to be ran before, and also allow other VFs to run
@@ -57,6 +58,8 @@ class Vertex {
         std::set<Identifier*> m_useSet = {}; // list of DFs that are used in this vertex
         std::set<Identifier*> m_defSet = {}; // list of DFs that are defined in this vertex
 
+        std::set<GLeNFact*> m_facts = {}; // set of facts dictated by for, if, while
+
         std::string m_name; // name of a vertex ("for", "while", ..., and CF names)
         Vertex* m_parent; // vertex that has current vertex inside its block
         VertexType m_vertexType; // type of a vertex (VF type)
@@ -69,8 +72,8 @@ class Vertex {
         void printGenericInfo(std::ostream* outputTarget);
 
     public:
-        Vertex(std::string name, Vertex* parent, VertexType vertexType, int depth, int line, std::string fileName, block* block, statement* statement, std::map<std::string, Identifier*> declaredOutsideIdsMap) :
-            m_name(name), m_parent(parent), m_vertexType(vertexType), m_depth(depth), m_line(line), m_fileName(fileName), m_block(block), m_statement(statement), m_declaredOutsideIdsMap(declaredOutsideIdsMap), m_declaredBothIdsMap(declaredOutsideIdsMap) {};
+        Vertex(std::string name, Vertex* parent, VertexType vertexType, int depth, int line, std::string fileName, block* block, statement* statement, std::map<std::string, Identifier*> declaredOutsideIdsMap, std::set<GLeNFact*> facts) :
+            m_name(name), m_parent(parent), m_vertexType(vertexType), m_depth(depth), m_line(line), m_fileName(fileName), m_block(block), m_statement(statement), m_declaredOutsideIdsMap(declaredOutsideIdsMap), m_declaredBothIdsMap(declaredOutsideIdsMap), m_facts(facts) {};
 
         virtual ~Vertex() {};
 
@@ -94,7 +97,7 @@ class Vertex {
 
         int getLine() { return m_line; };
 
-        Vertex* getParent() { return m_parent; };
+        Vertex* getParent() const { return m_parent; };
 
         const std::map<std::string, Identifier*>& getDeclaredInsideIdsMap() { return m_declaredInsideIdsMap; };
 
@@ -118,7 +121,7 @@ class Vertex {
         // this information in Use and Def sets of a vertice (this is later used in bindVertices() to fully create a graph)
         // Identifier objects (except for SubArgNames) and Expressions are being created in enterBlock(), Vertex objects are being created in initializeVertex()
         //todo redo these docs
-        virtual void initializeVertex() = 0;
+        virtual bool initializeVertex() = 0;
         void enterBlock();
 
         void scanForDFDecls();
@@ -141,14 +144,17 @@ class SubVertex: public Vertex {
         std::vector<Identifier*> _arguments; // vector of MutableArgNames and ImmutableArgNames
         std::vector<Expression*> _callArgs;
         std::vector<DeclaredArg> _declaredArgs;
+        CFDeclaration* _cfDeclaration;
 
     public:
 
-        SubVertex(std::string name, Vertex* parent, VertexType vertexType, int depth, int line, std::string fileName, block* block, statement* statement, std::map<std::string, Identifier*> declaredOutsideIdsMap, std::vector<Expression*> callArgs, std::vector<DeclaredArg> declaredArgs) :
-            Vertex(name, parent, vertexType, depth, line, fileName, block, statement, declaredOutsideIdsMap), _callArgs(callArgs), _declaredArgs(declaredArgs) {};
+        SubVertex(std::string name, Vertex* parent, VertexType vertexType, int depth, int line, std::string fileName, block* block, statement* statement, CFDeclaration* cfDeclaration, std::map<std::string, Identifier*> declaredOutsideIdsMap, std::set<GLeNFact*> facts, std::vector<Expression*> callArgs, std::vector<DeclaredArg> declaredArgs) :
+            Vertex(name, parent, vertexType, depth, line, fileName, block, statement, declaredOutsideIdsMap, facts), _callArgs(callArgs), _declaredArgs(declaredArgs), _cfDeclaration(cfDeclaration) {};
 
         void printInfo(std::ostream* outputTarget);
-        virtual void initializeVertex();
+        virtual bool initializeVertex();
+
+        CFDeclaration* getDeclaration() const { return _cfDeclaration; };
 };
 
 class ImportVertex: public Vertex {
@@ -158,14 +164,17 @@ class ImportVertex: public Vertex {
         std::vector<Identifier*> _arguments; // vector of MutableArgNames and ImmutableArgNames
         std::vector<Expression*> _callArgs;
         std::vector<DeclaredArg> _declaredArgs;
+        CFDeclaration* _cfDeclaration;
 
     public:
 
-        ImportVertex(std::string name, Vertex* parent, VertexType vertexType, int depth, int line, std::string fileName, block* block, statement* statement, std::map<std::string, Identifier*> declaredOutsideIdsMap, std::vector<Expression*> callArgs, std::vector<DeclaredArg> declaredArgs) :
-            Vertex(name, parent, vertexType, depth, line, fileName, block, statement, declaredOutsideIdsMap), _callArgs(callArgs), _declaredArgs(declaredArgs) {};
+        ImportVertex(std::string name, Vertex* parent, VertexType vertexType, int depth, int line, std::string fileName, block* block, statement* statement, CFDeclaration* cfDeclaration, std::map<std::string, Identifier*> declaredOutsideIdsMap, std::set<GLeNFact*> facts, std::vector<Expression*> callArgs, std::vector<DeclaredArg> declaredArgs) :
+            Vertex(name, parent, vertexType, depth, line, fileName, block, statement, declaredOutsideIdsMap, facts), _callArgs(callArgs), _declaredArgs(declaredArgs), _cfDeclaration(cfDeclaration) {};
 
         void printInfo(std::ostream* outputTarget);
-        virtual void initializeVertex();
+        virtual bool initializeVertex();
+
+        CFDeclaration* getDeclaration() const { return _cfDeclaration; };
 };
 
 class ForVertex: public Vertex {
@@ -178,8 +187,8 @@ class ForVertex: public Vertex {
 
     public:
 
-        ForVertex(Vertex* parent, int depth, int line, std::string fileName, block* block, statement* statement, std::map<std::string, Identifier*> declaredOutsideIdsMap) :
-            Vertex("for", parent, forVF, depth, line, fileName, block, statement, declaredOutsideIdsMap) {};
+        ForVertex(Vertex* parent, int depth, int line, std::string fileName, block* block, statement* statement, std::map<std::string, Identifier*> declaredOutsideIdsMap, std::set<GLeNFact*> facts) :
+            Vertex("for", parent, forVF, depth, line, fileName, block, statement, declaredOutsideIdsMap, facts) {};
 
         ForIteratorName* getIterator() { return _iterator; };
 
@@ -188,7 +197,7 @@ class ForVertex: public Vertex {
         Expression* getRightBorder() { return _rightBorder; };
 
         void printInfo(std::ostream* outputTarget);
-        virtual void initializeVertex();
+        virtual bool initializeVertex();
 };
 
 class WhileVertex: public Vertex {
@@ -202,8 +211,8 @@ class WhileVertex: public Vertex {
 
     public:
 
-        WhileVertex(Vertex* parent, int depth, int line, std::string fileName, block* block, statement* statement, std::map<std::string, Identifier*> declaredOutsideIdsMap) :
-            Vertex("while", parent, whileVF, depth, line, fileName, block, statement, declaredOutsideIdsMap) {};
+        WhileVertex(Vertex* parent, int depth, int line, std::string fileName, block* block, statement* statement, std::map<std::string, Identifier*> declaredOutsideIdsMap, std::set<GLeNFact*> facts) :
+            Vertex("while", parent, whileVF, depth, line, fileName, block, statement, declaredOutsideIdsMap, facts) {};
 
         WhileIteratorName* getIterator() { return _iterator; };
 
@@ -214,7 +223,7 @@ class WhileVertex: public Vertex {
         Expression* getStartExpr() { return _startExpr; };
 
         void printInfo(std::ostream* outputTarget);
-        virtual void initializeVertex();
+        virtual bool initializeVertex();
 };
 
 class IfVertex: public Vertex {
@@ -225,13 +234,13 @@ class IfVertex: public Vertex {
 
     public:
 
-        IfVertex(Vertex* parent, int depth, int line, std::string fileName, block* block, statement* statement, std::map<std::string, Identifier*> declaredOutsideIdsMap) : 
-            Vertex("if", parent, ifVF, depth, line, fileName, block, statement, declaredOutsideIdsMap) {};
+        IfVertex(Vertex* parent, int depth, int line, std::string fileName, block* block, statement* statement, std::map<std::string, Identifier*> declaredOutsideIdsMap, std::set<GLeNFact*> facts) : 
+            Vertex("if", parent, ifVF, depth, line, fileName, block, statement, declaredOutsideIdsMap, facts) {};
 
         Expression* getConditionExpr() { return _conditionExpr; };
 
         void printInfo(std::ostream* outputTarget);
-        virtual void initializeVertex();
+        virtual bool initializeVertex();
 };
 
 class LetVertex: public Vertex {
@@ -242,13 +251,13 @@ class LetVertex: public Vertex {
 
     public:
 
-        LetVertex(Vertex* parent, int depth, int line, std::string fileName, block* block, statement* statement, std::map<std::string, Identifier*> declaredOutsideIdsMap) :
-            Vertex("let", parent, letVF, depth, line, fileName, block, statement, declaredOutsideIdsMap) {};
+        LetVertex(Vertex* parent, int depth, int line, std::string fileName, block* block, statement* statement, std::map<std::string, Identifier*> declaredOutsideIdsMap, std::set<GLeNFact*> facts) :
+            Vertex("let", parent, letVF, depth, line, fileName, block, statement, declaredOutsideIdsMap, facts) {};
 
         const std::vector<LetName*>& getLetNamesVector() { return _letNamesVector; };
 
         //todo add method to add names
 
         void printInfo(std::ostream* outputTarget);
-        virtual void initializeVertex();
+        virtual bool initializeVertex();
 };

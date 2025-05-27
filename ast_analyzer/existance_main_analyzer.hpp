@@ -1,12 +1,11 @@
 #include "base_analyzer.hpp"
 
 #include "../parser/ast.hpp"
-#include "error_reporter.hpp"
-#include "../error_message/error_entry.hpp"
+#include "ast_json_reporter.cpp"
 
 class existance_main_analyzer : public base_analyzer {
 public:
-    existance_main_analyzer(ast* ast_, FILE* yyin, error_reporter* reporter, std::string luna_source)  {
+    existance_main_analyzer(ast* ast_, FILE* yyin, AstErrorReporter::ErrorReporter* reporter, std::string luna_source)  {
         this->ast_ = ast_;
         this->file_ = yyin;
         this->reporter_ = reporter;
@@ -40,7 +39,7 @@ public:
 
         if (has_main) return false;
 
-        reporter_->report_json(details("SYN7"));
+        reporter_->addSYN7();
 
         return true;
     }

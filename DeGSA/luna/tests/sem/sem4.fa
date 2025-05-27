@@ -1,6 +1,6 @@
 import c_init_int(int, name) as init;
 sub main(){
-        df a, c;
+        df a;
         let b = a {
                 foo(b);
         }
@@ -8,4 +8,3 @@ sub main(){
 sub foo(name f){
         init(1, f);
 }
-

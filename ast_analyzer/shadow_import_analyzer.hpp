@@ -1,12 +1,10 @@
-
-
 #include "../parser/ast.hpp"
-#include "error_reporter.hpp"
 #include "base_analyzer.hpp"
+#include "ast_json_reporter.cpp"
 
 class shadow_import_analyzer : public base_analyzer {
 public:
-    shadow_import_analyzer(ast* ast_, FILE* yyin, error_reporter* reporter, std::string luna_source)  {
+    shadow_import_analyzer(ast* ast_, FILE* yyin, AstErrorReporter::ErrorReporter* reporter, std::string luna_source)  {
         this->ast_ = ast_;
         this->file_ = yyin;
         this->reporter_ = reporter;
@@ -39,13 +37,12 @@ public:
         for (auto i : map) {
             if (i.second.size() <= 1) continue;
 
-            details detail = details("SYN6.1");
-
-            for (auto line : i.second)  {
-                detail.add_cf(cf(i.first, "extern", get_file(), line));
+            std::vector<AstErrorReporter::CF> cfs;
+            for (auto line : i.second) {
+                AstErrorReporter::CF cf{i.first, "extern", get_file(), line};
+                cfs.push_back(cf);
             }
-            reporter_->report_json(detail);
-
+            reporter_->addSYN6_1(cfs);
             has_errors = true;
         }
         return has_errors;

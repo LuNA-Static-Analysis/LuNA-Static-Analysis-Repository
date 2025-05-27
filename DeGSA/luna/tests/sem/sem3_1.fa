@@ -9,4 +9,3 @@ sub main(){
 sub foo(name f){
         print(f);
 }
-

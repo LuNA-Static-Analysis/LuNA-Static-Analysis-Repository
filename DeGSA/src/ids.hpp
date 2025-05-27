@@ -17,29 +17,52 @@ protected:
     Expression* m_reference; // expression that is assigned to this variable (if possible)
     Vertex* m_vertex; // vertex where name was declared
     IdentifierClass m_identifierClass;
-    IdentifierType m_identifierType;
+    ValueType m_valueType;
     std::set<Vertex*> m_useSet = {};
     std::set<Vertex*> m_defSet = {};
 
+    void calculateValueType();
+
 public:
 
-    Vertex* getVertex() { return m_vertex; };
+    Vertex* getVertex() const { return m_vertex; };
 
-    Expression* getReference() { return m_reference; };
+    Expression* getReference() const { return m_reference; };
 
-    std::string getName() { return m_name; };
+    std::string getName() const { return m_name; };
 
-    IdentifierType getType() { return m_identifierType; };
+    ValueType getValueType() {//todo perhaps should be const?
+        if (m_valueType == notCalculated)
+        calculateValueType();
+        return m_valueType; 
+    };
 
-    IdentifierClass getClass() { return m_identifierClass; };
+    std::string getValueTypeAsString() const {
+        switch(m_valueType){
+            case intType:
+                return "int";
+            case realType:
+                return "real";
+            case stringType:
+                return "string";
+            case valueType:
+                return "value";
+            case nameType:
+                return "name";
+            default:
+                return "unknown";
+        }
+    }
+
+    IdentifierClass getClass() const { return m_identifierClass; };
 
     //todo check how this works actuaaly; perhaps use const &; also returning and creating a lot if string reports is retarded
-    std::set<Vertex*> getUseSet() { return m_useSet; };
+    std::set<Vertex*> getUseSet() const { return m_useSet; };
 
-    std::set<Vertex*> getDefSet() { return m_defSet; };
+    std::set<Vertex*> getDefSet() const { return m_defSet; };
 
     //todo wth is this
-    virtual int getLine();
+    virtual int getLine() const;
 
     //void setVertex(Vertex* currentVertex) { m_vertex = currentVertex; };
 
@@ -57,8 +80,8 @@ public:
 
     virtual bool isIndexable() = 0;
 
-    Identifier(std::string name, Expression* reference, Vertex* vertex, IdentifierClass identifierClass, IdentifierType identifierType)
-      : m_name(name), m_reference(reference), m_vertex(vertex), m_identifierClass(identifierClass), m_identifierType(identifierType) {};
+    Identifier(std::string name, Expression* reference, Vertex* vertex, IdentifierClass identifierClass, ValueType valueType)
+      : m_name(name), m_reference(reference), m_vertex(vertex), m_identifierClass(identifierClass), m_valueType(valueType) {};
 
     virtual ~Identifier() {};
 };
@@ -187,7 +210,7 @@ public:
 
     bool isIndexable() { return m_reference->isIndexable(); };
 
-    LetName(std::string name, Expression* reference, Vertex* currentVertex) : Identifier(name, reference, currentVertex, letNameClass, noneType /* todo calculate the type using reference*/) {};
+    LetName(std::string name, Expression* reference, Vertex* currentVertex) : Identifier(name, reference, currentVertex, letNameClass, notCalculated) {};
 
     ~LetName() {};
 };
@@ -214,7 +237,7 @@ public:
 
     bool isIndexable() { return true; }
 
-    MutableArgName(std::string name, Expression* reference, Vertex* currentVertex, IdentifierType type) : Identifier(name, reference, currentVertex, mutableArgNameClass, type/*todo calculate later dynamically*/) {};
+    MutableArgName(std::string name, Expression* reference, Vertex* currentVertex, ValueType valueType) : Identifier(name, reference, currentVertex, mutableArgNameClass, valueType/*todo calculate later dynamically*/) {};
 
     ~MutableArgName() {};
 };
@@ -232,7 +255,7 @@ public:
     // in case of a "main()" function argument Expression reference must be nullptr
     // this will tell us that we can not predict its value
     // todo: use this philosophy everywhere else
-    ImmutableArgName(std::string name, Expression* reference, Vertex* currentVertex, IdentifierType type) : Identifier(name, reference, currentVertex, immutableArgNameClass, type) {}
+    ImmutableArgName(std::string name, Expression* reference, Vertex* currentVertex, ValueType valueType) : Identifier(name, reference, currentVertex, immutableArgNameClass, valueType) {}
 
     ~ImmutableArgName() {};
 };

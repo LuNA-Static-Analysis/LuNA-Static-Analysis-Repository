@@ -1,4 +1,0 @@
-sub main(){
-        print(1);
-}
-

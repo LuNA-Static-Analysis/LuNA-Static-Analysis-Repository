@@ -49,8 +49,6 @@ int main(int argc, char **argv) {
 
   out.close(); 
 
-  error_reporter reporter = error_reporter();
-
   std::vector<base_analyzer *> analyzers = {
       new undeclarated_names_analyzer(ast_, yyin, &reporter),
       new unused_names_analyzer(ast_, yyin, &reporter),

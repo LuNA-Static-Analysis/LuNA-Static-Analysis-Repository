@@ -1,0 +1,5 @@
+#define M(X) $X
+import printint(int) as print;
+sub main() {
+    print(1);
+}

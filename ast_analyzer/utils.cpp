@@ -26,14 +26,3 @@ static std::string print_type(luna_type type) {
     }
     throw new std::runtime_error("invalid type");
 }
-
-// static bool is_valid_for_statement_type(const expr* e1, const expr* e2) {
-//     if (is_real(e1->to_string())) {
-//         return false;
-//     }
-
-//     if (is_real(e2->to_string())) {
-
-//     }
-// }
-

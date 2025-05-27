@@ -12,6 +12,7 @@
 #include "./ast_analyzer/undecl_func_analyzer.hpp"
 #include "./ast_analyzer/df_redecl_analyzer.hpp"
 #include "./ast_analyzer/threadpool/threadpool.h"
+#include "./ast_analyzer/ast_json_reporter.cpp"
 #include "./DeGSA/src/ddg.cpp"
 
 const int EXIT_ERROR = 1;
@@ -23,7 +24,6 @@ std::string line, prev_line;
 uint tokens = 0;
 ast *ast_ = new ast();
 
-//todo wip: check and redo all of this, perhaps merge with master and overwrite
 int main(int argc, char **argv){
 
     auto realStart = std::chrono::steady_clock::now();
@@ -43,7 +43,7 @@ int main(int argc, char **argv){
             launchASTAnalyzer = true;
         } else if (arg == "-degsa"){
             launchDeGSA = true;
-        } else if (arg == "-o"){//todo unused
+        } else if (arg == "-o"){
             std::cout << arg << std::endl;
             if (i < argc - 1){
                 i++;
@@ -65,7 +65,7 @@ int main(int argc, char **argv){
         launchDeGSA = true;
     }
 
-    std::ofstream outputFile(outputFileName);//todo perhaps need to add name check
+    std::ofstream outputFile(outputFileName);
 
     auto astBuildStart = std::chrono::steady_clock::now();
     auto astBuildStartSystem = std::chrono::system_clock::now();
@@ -97,15 +97,9 @@ int main(int argc, char **argv){
     }
 
     out.close();
-//wip
-    std::ofstream o;
-        o.open("./reporter/found_errors.json");
-o << "[]";
-
-        o.close();
 
     if (launchASTAnalyzer){
-        error_reporter reporter = error_reporter();
+        AstErrorReporter::ErrorReporter reporter;
 
         std::vector<base_analyzer *> analyzers = {
             new undeclarated_names_analyzer(ast_, yyin, &reporter, realLunaSource),
@@ -128,7 +122,7 @@ o << "[]";
 
         if (o.is_open())
         {
-            o << reporter.get_errors();
+            o << reporter.get_all_errors_json();
         }
 
         o.close();

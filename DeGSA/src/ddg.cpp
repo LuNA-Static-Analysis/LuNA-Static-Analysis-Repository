@@ -6,6 +6,7 @@
 
 #include <chrono>
 #include <fstream>
+#include <queue>
 
 using ns = std::chrono::nanoseconds;
 
@@ -39,7 +40,7 @@ class DDG {
                     std::vector<DeclaredArg> declaredArgs = {};
                     if (subDecl->params_->param_seq_ != nullptr){
                         for (auto arg : *(subDecl->params_->param_seq_->params_)) {
-                            IdentifierType type;
+                            ValueType type;
                             std::string lunaType = *(arg->type_->value_);
                             if (lunaType == "int") { //todo check all this
                                 type = intType;
@@ -58,11 +59,14 @@ class DDG {
                         }
                     }
 
-                    if (CFDECLARATIONS.find(subName) == CFDECLARATIONS.end()) {
-                        CFDECLARATIONS.insert( { subName, CFDeclaration(subName, subCF, declaredArgs, subDecl->block_, subDecl->line_) } );
-                    } else {
-                        //todo duplicate sub decl report
+                    auto subCFDecl = CFDECLARATIONS.find(subName);
+                    CFDeclaration* newDeclaration = new CFDeclaration(subName, subCF, declaredArgs, subDecl->block_, subDecl->line_, fileName);
+                    if (subCFDecl != CFDECLARATIONS.end()) {
+
+                        REPORTS.push_back(JsonReporter::createSYN6_2(subCFDecl->second, newDeclaration));
+                        CFDECLARATIONS.erase(subName); // LuNA overwrites declarations with same names and uses the last one
                     }
+                    CFDECLARATIONS.insert( { subName, newDeclaration } );
 
                 } else if (importDecl != NULL) { // found an import
 
@@ -73,7 +77,7 @@ class DDG {
                     std::vector<DeclaredArg> declaredArgs = {};
                     if (importDecl->params_->seq_ != nullptr){
                         for (auto arg : *(importDecl->params_->seq_->params_)) {
-                            IdentifierType type;
+                            ValueType type;
                             std::string lunaType = *(arg->type_->value_);
                             if (lunaType == "int") { //todo check all this
                                 type = intType;
@@ -92,11 +96,13 @@ class DDG {
                         }
                     }
 
-                    if (CFDECLARATIONS.find(importName) == CFDECLARATIONS.end()) {
-                        CFDECLARATIONS.insert( { importName, CFDeclaration(importName, importCF, declaredArgs, nullptr, importDecl->line_) } );
-                    } else {
-                        //todo duplicate import decl report
+                    auto importCFDecl = CFDECLARATIONS.find(importName);
+                    CFDeclaration* newDeclaration = new CFDeclaration(importName, importCF, declaredArgs, nullptr, importDecl->line_, fileName);
+                    if (importCFDecl != CFDECLARATIONS.end()) {
+                        REPORTS.push_back(JsonReporter::createSYN6_1(importCFDecl->second, newDeclaration));
+                        CFDECLARATIONS.erase(importName); // LuNA overwrites declarations with same names and uses the last one
                     }
+                    CFDECLARATIONS.insert( { importName, newDeclaration } );
 
                 } else {
                     std::cout << "INTERNAL ERROR: unknown CF of name " + subDef->to_string() 
@@ -127,12 +133,164 @@ class DDG {
 
     public:
 
-        // TODO
-        // this function uses breadth search to find cycles in DDG, as this indicates cyclic dependencies
-        void checkCyclicDependence(){
-
+        // SYN5.2, 3, 6, 7, 8 if both use and def sets are empty
+        // SEM4 is def set is not empty, but use is empty
+        void checkUnusedIdentifiers(){
+            for (auto vertex: VERTICES){
+                for (auto nameIdPair: vertex->getDeclaredInsideIdsMap()){
+                    Identifier* identifier = nameIdPair.second;
+                    if (identifier->getUseSet().size() == 0) {
+                        if (identifier->getDefSet().size() == 0) { // SYN5
+                            switch (identifier->getClass()) {
+                                case letNameClass: {
+                                    REPORTS.push_back(JsonReporter::createSYN5_2(
+                                        identifier
+                                    ));
+                                    break;
+                                }
+                                case baseDFNameClass: {
+                                    REPORTS.push_back(JsonReporter::createSYN5_3(
+                                        identifier
+                                    ));
+                                    break;
+                                }
+                                case mutableArgNameClass:
+                                case immutableArgNameClass:
+                                {
+                                    REPORTS.push_back(JsonReporter::createSYN5_6(
+                                        identifier
+                                    ));
+                                    break;
+                                }
+                                case forIteratorNameClass: {
+                                    REPORTS.push_back(JsonReporter::createSYN5_7(
+                                        identifier
+                                    ));
+                                    break;
+                                }
+                                case whileIteratorNameClass: {
+                                    REPORTS.push_back(JsonReporter::createSYN5_8(
+                                        identifier
+                                    ));
+                                    break;
+                                }
+                            }
+                        } else { // SEM4
+                            /*REPORTS.push_back(JsonReporter::createSEM4(
+                                identifier
+                            ));*/
+                        }
+                    }
+                }
+            }
         }
 
+        // SYN5.4, SYN5.5
+        void checkUnusedCFs(){
+            for (auto cfDeclaration : CFDECLARATIONS){
+                if (!cfDeclaration.second->isUsed) {
+                    if (cfDeclaration.second->type == importCF)
+                        REPORTS.push_back(JsonReporter::createSYN5_4(
+                            cfDeclaration.second
+                        ));
+                    else
+                        REPORTS.push_back(JsonReporter::createSYN5_5(
+                            cfDeclaration.second
+                        ));
+                }
+            }
+        }
+
+        // this function uses breadth search to find cycles in DDG, as this indicates cyclic dependencies
+        // SEM3.2
+        void checkCyclicDependence(){
+
+            class VertexCycleDependence {
+            
+            public:
+
+                std::vector<Vertex*> callstack;
+
+                VertexCycleDependence(std::vector<Vertex*> iCallstack) : callstack(iCallstack) {};
+
+                VertexCycleDependence(const VertexCycleDependence& iVCD) : callstack(iVCD.callstack) {};
+
+                bool operator<(const VertexCycleDependence& other) const { // todo check
+
+                    if (this->callstack.size() < other.callstack.size()) {
+                        return true;
+                    } else if (this->callstack.size() > other.callstack.size()) {
+                        return false;
+                    } else { // check this stuff
+                        int biggerTimes = 0;
+                        for (auto thisElement : this->callstack) {
+                            bool found = false;
+                            for (auto otherElement : other.callstack) {
+                                if (thisElement == otherElement) {
+                                    break;
+                                }
+                            }
+                            if (!found) {
+                                return false;
+                            }
+                        }
+                        return false; //todo why
+                    }
+                }
+
+                static std::set<VertexCycleDependence> DFS(Vertex* vertex, std::set<Vertex*> marked, std::vector<Vertex*> callstack) {
+                    std::set<VertexCycleDependence> foundCycles = {};
+                    if (marked.find(vertex) != marked.end()) {
+                        // already marked -> cycle found, i.e. find this vertex in a callstack and create a cycle
+                        VertexCycleDependence newFoundCycle({});
+                        // find last same vertex, i.e. beginning of the cycle
+                        int lastSameVertex = -1;
+                        for (int i = 0; i < callstack.size(); i++) {
+                            if (vertex == callstack[i])
+                                lastSameVertex = i;
+                        }
+                        // now create a cycle beginning from lastSameVertex up until the callstack end
+                        for (int i = lastSameVertex; i < callstack.size(); i++) {
+                            newFoundCycle.callstack.push_back(callstack[i]);
+                        }
+                        foundCycles.insert(newFoundCycle);
+                        return foundCycles;
+                    }
+                    callstack.push_back(vertex);
+                    marked.insert(vertex);
+                    for (auto nextBinding : vertex->getOutSet()) {
+                        if (nextBinding->getId()->getClass() == indexedDFNameClass && dynamic_cast<IndexedDFName*>(nextBinding->getId())->getExpressionsVector().size() > 0) {
+                            continue; // indexed DF, ingore it for now TODO do cool things after DFTS
+                        } else {
+                            // found simple DF or iterator
+                            for (auto newFoundCycle : DFS(nextBinding->getPointerTo(), marked, callstack)) {
+                                if (foundCycles.find(newFoundCycle) == foundCycles.end())
+                                    foundCycles.insert(newFoundCycle);
+                            }
+                        }
+                    }
+                    return foundCycles;
+                }
+
+            };
+
+            std::set<VertexCycleDependence> foundCycles = {};
+
+            // now use DFS for every Vertex
+            for (auto vertex : VERTICES) {
+                for (auto additionalFoundCycle : VertexCycleDependence::DFS(vertex, {}, {})) {
+                    if (foundCycles.find(additionalFoundCycle) == foundCycles.end()) {
+                        foundCycles.insert(additionalFoundCycle);
+                    }
+                }
+            }
+
+            for (auto cycle : foundCycles) {
+                REPORTS.push_back(JsonReporter::createSEM3_2(cycle.callstack));
+            }
+        }
+
+        //todo rename codes
         // this function goes through BASENAMES and finds few types of errors:
         // 1. multiple DF initialization (03)
         // 2. using uninitialized DFs (05)
@@ -159,9 +317,9 @@ class DDG {
                             // error code: 03
                             // details: df
                             //todo callstacks
-                            REPORTS.push_back(JsonReporter::create3(
+                            /*REPORTS.push_back(JsonReporter::createSEM2_1(
                                 bn
-                            ));
+                            ));*/
                         }
                     } else { // indexed DFs
                         //TODO add warnings?
@@ -175,9 +333,9 @@ class DDG {
                         // error code: 10
                         // details: df
                         //todo callstacks
-                        REPORTS.push_back(JsonReporter::create10(
+                        /*REPORTS.push_back(JsonReporter::createSEM4(
                             bn
-                        ));
+                        ));*/
                     } else {
                         // using uninitialized DFs
                         if (defs.size() == 0){
@@ -191,9 +349,9 @@ class DDG {
                             // error code: 05
                             // details: df
                             //todo callstacks
-                            REPORTS.push_back(JsonReporter::create5(
+                            /*REPORTS.push_back(JsonReporter::createSEM3_1(
                                 bn
-                            ));
+                            ));*/
                         }
                     }
 
@@ -203,9 +361,9 @@ class DDG {
                     // error code: 10
                     // details: df
                     //todo callstacks
-                    REPORTS.push_back(JsonReporter::create10(
+                    /*REPORTS.push_back(JsonReporter::createSEM4(
                         bn
-                    ));
+                    ));*/
                 }
             }
 
@@ -216,11 +374,11 @@ class DDG {
                 if (vertex->getVertexType() == ifVF){
                     IfVertex* ifVertex = dynamic_cast<IfVertex*>(vertex);
                     Expression conditionConstant = ifVertex->getConditionExpr()->getAsConstant();
-                    if (conditionConstant.getType() != noneNode){
-                        switch(conditionConstant.getType()){
+                    if (conditionConstant.getExpressionType() != noneNode){
+                        switch(conditionConstant.getExpressionType()){
                             case realNode: {
                                 if (std::stod(conditionConstant.getConstant()) == 0){
-                                    REPORTS.push_back(JsonReporter::create23(
+                                    REPORTS.push_back(JsonReporter::createSEM5(
                                         false,
                                         ifVertex->getConditionExpr()->getASTExpr()->to_string(),
                                         fileName,
@@ -228,7 +386,7 @@ class DDG {
                                         "if"
                                     ));
                                 } else {
-                                    REPORTS.push_back(JsonReporter::create23(
+                                    REPORTS.push_back(JsonReporter::createSEM5(
                                         true,
                                         ifVertex->getConditionExpr()->getASTExpr()->to_string(),
                                         fileName,
@@ -241,7 +399,7 @@ class DDG {
                             case intNode: {
                                 std::string conditionConstantString = conditionConstant.getConstant();
                                 if (std::stoi(conditionConstantString) == 0) {
-                                    REPORTS.push_back(JsonReporter::create23(
+                                    REPORTS.push_back(JsonReporter::createSEM5(
                                         false,
                                         ifVertex->getConditionExpr()->getASTExpr()->to_string(),
                                         fileName,
@@ -249,7 +407,7 @@ class DDG {
                                         "if"
                                     ));
                                 } else {
-                                    REPORTS.push_back(JsonReporter::create23(
+                                    REPORTS.push_back(JsonReporter::createSEM5(
                                         true,
                                         ifVertex->getConditionExpr()->getASTExpr()->to_string(),
                                         fileName,
@@ -268,11 +426,11 @@ class DDG {
                 if (vertex->getVertexType() == whileVF){
                     WhileVertex* whileVertex = dynamic_cast<WhileVertex*>(vertex);
                     Expression conditionConstant = whileVertex->getConditionExpr()->getAsConstant();
-                    if (conditionConstant.getType() != noneNode){
-                        switch(conditionConstant.getType()){
+                    if (conditionConstant.getExpressionType() != noneNode){
+                        switch(conditionConstant.getExpressionType()){
                             case realNode:
                                 if (std::stod(conditionConstant.getConstant()) == 0) {
-                                    REPORTS.push_back(JsonReporter::create23(
+                                    REPORTS.push_back(JsonReporter::createSEM5(
                                         false,
                                         whileVertex->getConditionExpr()->getASTExpr()->to_string(),
                                         fileName,
@@ -280,7 +438,7 @@ class DDG {
                                         "while"
                                     ));
                                 } else {
-                                    REPORTS.push_back(JsonReporter::create23(
+                                    REPORTS.push_back(JsonReporter::createSEM5(
                                         true,
                                         whileVertex->getConditionExpr()->getASTExpr()->to_string(),
                                         fileName,
@@ -292,7 +450,7 @@ class DDG {
                             case intNode: {
                                 std::string conditionConstantString = conditionConstant.getConstant();
                                 if (std::stoi(conditionConstantString) == 0) {
-                                    REPORTS.push_back(JsonReporter::create23(
+                                    REPORTS.push_back(JsonReporter::createSEM5(
                                         false,
                                         whileVertex->getConditionExpr()->getASTExpr()->to_string(),
                                         fileName,
@@ -300,7 +458,7 @@ class DDG {
                                         "while"
                                     ));
                                 } else {
-                                    REPORTS.push_back(JsonReporter::create23(
+                                    REPORTS.push_back(JsonReporter::createSEM5(
                                         true,
                                         whileVertex->getConditionExpr()->getASTExpr()->to_string(),
                                         fileName,
@@ -330,7 +488,17 @@ class DDG {
             checkConstantConditions();
             std::cout << "\ncheckConstantConditions finished\n" << std::endl;
 
-            //TODO cyclic dependence
+            std::cout << "\ncheckUnusedIdentifiers started\n" << std::endl;
+            checkUnusedIdentifiers();
+            std::cout << "\ncheckUnusedIdentifiers finished\n" << std::endl;
+
+            std::cout << "\ncheckUnusedCFs started\n" << std::endl;
+            checkUnusedCFs();
+            std::cout << "\ncheckUnusedCFs finished\n" << std::endl;
+
+            std::cout << "\ncheckCyclicDependence started\n" << std::endl;
+            checkCyclicDependence();
+            std::cout << "\ncheckCyclicDependence finished\n" << std::endl;
 
         }
 
@@ -352,12 +520,23 @@ class DDG {
             // 2. create all the vertices
             auto mainDeclaration = CFDECLARATIONS.find("main");
             if (mainDeclaration != CFDECLARATIONS.end()) {
-                SubVertex* mainVertex = new SubVertex("main", nullptr, subVF, 1, mainDeclaration->second.line, fileName, mainDeclaration->second.cfBlock, nullptr, {}, {}, mainDeclaration->second.declaredArgs);
-                VERTICES.push_back(mainVertex);
-                mainVertex->initializeVertex();
+                CFDECLARATIONS.find("main")->second->isUsed = true;
+                SubVertex* mainVertex = new SubVertex("main", nullptr, subVF, 1, mainDeclaration->second->line, fileName, mainDeclaration->second->cfBlock, nullptr, mainDeclaration->second, {}, {}, {}, mainDeclaration->second->declaredArgs);
+                //VERTICES.push_back(mainVertex);
                 std::cout << "Created a [MAIN] vertex: " << mainVertex << std::endl;
+                std::cout << "Initializing [MAIN] vertex" << std::endl;
+                if (mainVertex->initializeVertex()) {
+                    VERTICES.push_back(mainVertex);
+                } else {
+                    std::cout << "INTERNAL ERROR: not able to initialize [MAIN] vertex" << std::endl;
+                }
+                
             } else {
+                REPORTS.push_back(JsonReporter::createSYN7());
                 std::cout << "INTERNAL ERROR: No main found" << std::endl;
+                for (auto r: REPORTS){
+                    *outputTarget << r << std::endl;//todo does not work as a part of the ADAPT
+                }
                 return;
             }
 
@@ -370,7 +549,6 @@ class DDG {
             auto graphBuildTotal = std::chrono::duration_cast<ns>(graphBuildEnd - graphBuildStart).count();
             auto graphBuildTotalSystem = std::chrono::duration_cast<ns>(graphBuildEndSystem - graphBuildStartSystem).count();
 
-            // printing out information does not count towards time to use and build graph
             *outputTarget << "Total vertices: " << VERTICES.size() << std::endl << std::endl; 
             for (Vertex* vertex : VERTICES){
                 vertex->printInfo(outputTarget);
@@ -415,7 +593,6 @@ class DDG {
             auto errorsFindTotal = std::chrono::duration_cast<ns>(errorsFindEnd - errorsFindStart).count();
             auto errorsFindTotalSystem = std::chrono::duration_cast<ns>(errorsFindEndSystem - errorsFindStartSystem).count();
 
-            // printing out information does not count towards time to find errors
             if (REPORTS.size() == 0){
                 *outputTarget << "\nNo errors found\n" << std::endl;
             } else {

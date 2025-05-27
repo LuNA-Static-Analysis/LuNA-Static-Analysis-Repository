@@ -1,9 +1,10 @@
 #include "base_analyzer.hpp"
 #include "utils.cpp"
+#include "ast_json_reporter.cpp"
 
 class undecl_func_analyzer : public base_analyzer {
 public:
-    undecl_func_analyzer(ast* ast_, FILE* yyin, error_reporter* reporter, std::string luna_source)  {
+    undecl_func_analyzer(ast* ast_, FILE* yyin, AstErrorReporter::ErrorReporter* reporter, std::string luna_source)  {
         this->ast_ = ast_;
         this->file_ = yyin;
         this->reporter_ = reporter;
@@ -46,6 +47,7 @@ public:
 
             luna_sub_def* luna_sub_def_decl = dynamic_cast<luna_sub_def *> (i); 
             if (luna_sub_def_decl != nullptr) {
+                current_cf = luna_sub_def_decl->code_id_->to_string();
                 std::vector<luna_type>* params = new std::vector<luna_type>();
 
                 if (luna_sub_def_decl->params_->param_seq_ != nullptr) {
@@ -65,9 +67,8 @@ public:
                 std::vector<luna_string> cfs = get_cfs(luna_sub_def_decl->block_);
                 for (auto i : cfs) {
                     if (i.to_string() == luna_sub_def_decl->code_id_->to_string()) {
-                        details detail = details("SEM8");
-                        detail.add_call_stack_entry(call_stack_entry(get_file(), i.line_, current_cf));
-                        reporter_->report_json(detail);
+                        AstErrorReporter::CallStackEntry call_stack_entry{get_file(), i.line_, current_cf};
+                        reporter_->addSEM8(call_stack_entry);
                     }
                 }
             }
@@ -113,10 +114,9 @@ public:
                 has_such_cf = true;
 
                 if (func_decl.second->size() != call.second->size()) {
-                    details detail = details("SYN3");
-                    detail.add_call_stack_entry(call_stack_entry(get_file(), call.first.line_, current_cf));
-                    detail.add_cf(cf(func_decl.first.to_string(), "extern", get_file(), func_decl.first.line_));
-                    reporter_->report_json(detail);
+                    AstErrorReporter::CF cf{func_decl.first.to_string(), "extern", get_file(), func_decl.first.line_};
+                    AstErrorReporter::CallStackEntry call_stack_entry{get_file(), call.first.line_, current_cf};
+                    reporter_->addSYN3(call_stack_entry, cf);
 
                     break;
                 }
@@ -126,21 +126,20 @@ public:
                     luna_type cur_call_param_type = call.second->at(k);
                     luna_type cur_func_delc_call_param_type = func_decl.second->at(k);
 
-                    ERROR_LEVEL level = is_valid_convert(cur_call_param_type, cur_func_delc_call_param_type);
+                    AstErrorReporter::ERROR_LEVEL level = is_valid_convert(cur_call_param_type, cur_func_delc_call_param_type);
 
-                    if (level == ERROR_LEVEL::NO_ERROR) continue;
+                    if (level == AstErrorReporter::ERROR_LEVEL::NO_ERROR) continue;
 
-                    details detail = details("SYN1");
-                    detail.add_call_stack_entry(call_stack_entry(get_file(), call.first.line_, current_cf));
-                    detail.add_cf(cf(func_decl.first.to_string(), "extern", get_file(), func_decl.first.line_));
-                    reporter_->report_json(detail);
+                    AstErrorReporter::CF cf{func_decl.first.to_string(), "extern", get_file(), func_decl.first.line_};
+                    AstErrorReporter::CallStackEntry call_stack_entry{get_file(), call.first.line_, current_cf};
+
+                    reporter_->addSYN1(call_stack_entry, cf);
                 }
             }
 
             if (!has_such_cf) {
-                details detail = details("SYN2");
-                detail.add_call_stack_entry(call_stack_entry(get_file(), call.first.line_, current_cf));
-                reporter_->report_json(detail);
+                AstErrorReporter::CallStackEntry call_stack_entry{get_file(), call.first.line_, current_cf};
+                reporter_->addSYN2(call_stack_entry);
             }
         }
 
@@ -294,25 +293,25 @@ public:
         return LUNA_UNDEFINED;
     }
 
-    ERROR_LEVEL is_valid_convert(luna_type from, luna_type to) {
+   AstErrorReporter::ERROR_LEVEL is_valid_convert(luna_type from, luna_type to) {
 
         // bool is_valid = true;
 
-        if (from == LUNA_INT && to == LUNA_REAL) return ERROR_LEVEL::WARNING; 
-        if (from == LUNA_REAL && to == LUNA_INT) return ERROR_LEVEL::WARNING; 
-        if (from == LUNA_INT && to == LUNA_STRING) return ERROR_LEVEL::WARNING; 
+        if (from == LUNA_INT && to == LUNA_REAL) return AstErrorReporter::ERROR_LEVEL::WARNING; 
+        if (from == LUNA_REAL && to == LUNA_INT) return AstErrorReporter::ERROR_LEVEL::WARNING; 
+        if (from == LUNA_INT && to == LUNA_STRING) return AstErrorReporter::ERROR_LEVEL::WARNING; 
 
-        if (from == LUNA_STRING && to == LUNA_INT) return ERROR_LEVEL::ERROR;  
-        if (from == LUNA_STRING && to == LUNA_REAL) return ERROR_LEVEL::ERROR; 
+        if (from == LUNA_STRING && to == LUNA_INT) return AstErrorReporter::ERROR_LEVEL::ERROR;  
+        if (from == LUNA_STRING && to == LUNA_REAL) return AstErrorReporter::ERROR_LEVEL::ERROR; 
 
-        if (from == LUNA_INT && to == LUNA_NAME) return ERROR_LEVEL::ERROR; 
-        if (from == LUNA_REAL && to == LUNA_NAME) return ERROR_LEVEL::ERROR; 
-        if (from == LUNA_STRING && to == LUNA_NAME) return ERROR_LEVEL::ERROR; 
+        if (from == LUNA_INT && to == LUNA_NAME) return AstErrorReporter::ERROR_LEVEL::ERROR; 
+        if (from == LUNA_REAL && to == LUNA_NAME) return AstErrorReporter::ERROR_LEVEL::ERROR; 
+        if (from == LUNA_STRING && to == LUNA_NAME) return AstErrorReporter::ERROR_LEVEL::ERROR; 
 
-        if (from == LUNA_UNDEFINED) return ERROR_LEVEL::NO_ERROR;
-        if (from == LUNA_ERROR_TYPE) return ERROR_LEVEL::ERROR;
+        if (from == LUNA_UNDEFINED) return AstErrorReporter::ERROR_LEVEL::NO_ERROR;
+        if (from == LUNA_ERROR_TYPE) return AstErrorReporter::ERROR_LEVEL::ERROR;
 
-        return ERROR_LEVEL::NO_ERROR;
+        return AstErrorReporter::ERROR_LEVEL::NO_ERROR;
         // throw new std::runtime_error("unexpected type");
     }
 
