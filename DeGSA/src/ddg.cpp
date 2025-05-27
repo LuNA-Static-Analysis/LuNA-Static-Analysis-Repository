@@ -176,9 +176,9 @@ class DDG {
                                 }
                             }
                         } else { // SEM4
-                            REPORTS.push_back(JsonReporter::createSEM4(
+                            /*REPORTS.push_back(JsonReporter::createSEM4(
                                 identifier
-                            ));
+                            ));*/
                         }
                     }
                 }
@@ -317,9 +317,9 @@ class DDG {
                             // error code: 03
                             // details: df
                             //todo callstacks
-                            REPORTS.push_back(JsonReporter::createSEM2_1(
+                            /*REPORTS.push_back(JsonReporter::createSEM2_1(
                                 bn
-                            ));
+                            ));*/
                         }
                     } else { // indexed DFs
                         //TODO add warnings?
@@ -333,9 +333,9 @@ class DDG {
                         // error code: 10
                         // details: df
                         //todo callstacks
-                        REPORTS.push_back(JsonReporter::createSEM4(
+                        /*REPORTS.push_back(JsonReporter::createSEM4(
                             bn
-                        ));
+                        ));*/
                     } else {
                         // using uninitialized DFs
                         if (defs.size() == 0){
@@ -349,9 +349,9 @@ class DDG {
                             // error code: 05
                             // details: df
                             //todo callstacks
-                            REPORTS.push_back(JsonReporter::createSEM3_1(
+                            /*REPORTS.push_back(JsonReporter::createSEM3_1(
                                 bn
-                            ));
+                            ));*/
                         }
                     }
 
@@ -361,9 +361,9 @@ class DDG {
                     // error code: 10
                     // details: df
                     //todo callstacks
-                    REPORTS.push_back(JsonReporter::createSEM4(
+                    /*REPORTS.push_back(JsonReporter::createSEM4(
                         bn
-                    ));
+                    ));*/
                 }
             }
 

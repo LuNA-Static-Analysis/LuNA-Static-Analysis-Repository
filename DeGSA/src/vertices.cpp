@@ -134,8 +134,8 @@ bool SubVertex::initializeVertex() {
     while (callerVertex != nullptr) {
         callerType = callerVertex->getVertexType();
         if (callerType == subVF && callerVertex->getName() == m_name) {
-            if (!conditional)
-                REPORTS.push_back(JsonReporter::createSEM8(callerVertex, this));
+            //if (!conditional)
+            //    REPORTS.push_back(JsonReporter::createSEM8(callerVertex, this));
             return false; // to avoid infinite recursion in DeGSA itself
         }
         if (callerType == ifVF || callerType == forVF || callerType == whileVF) {
@@ -179,10 +179,10 @@ bool SubVertex::initializeVertex() {
         } else {
             std::cout << "INTERNAL ERROR: created nullptr sub/main arg name because of name duplication" << std::endl;
 
-            REPORTS.push_back(JsonReporter::createSYN8_5(
+            /*REPORTS.push_back(JsonReporter::createSYN8_5(
                 identifierDeclaredName,
                 this
-            ));
+            ));*/
         }
     }
 
@@ -234,10 +234,10 @@ bool ForVertex::initializeVertex() {
     std::string forIteratorString = innerStatementForVF->name_->to_string();
     if (m_declaredOutsideIdsMap.find(forIteratorString) != m_declaredOutsideIdsMap.end()){
         
-        REPORTS.push_back(JsonReporter::createSYN8_2(
+        /*REPORTS.push_back(JsonReporter::createSYN8_2(
             forIteratorString,
             this
-        ));
+        ));*/
 
         std::cout << "INTERNAL ERROR: aborted initializing \"for\" vertex" << std::endl;
         return false;
@@ -280,10 +280,10 @@ bool WhileVertex::initializeVertex() {
     std::string whileIteratorString = innerStatementWhileVF->left_->to_string();
     if (m_declaredOutsideIdsMap.find(whileIteratorString) != m_declaredOutsideIdsMap.end()){
 
-        REPORTS.push_back(JsonReporter::createSYN8_3(
+        /*REPORTS.push_back(JsonReporter::createSYN8_3(
             whileIteratorString,
             this
-        ));
+        ));*/
 
         std::cout << "INTERNAL ERROR: aborted initializing \"while\" vertex" << std::endl;
         return false;
@@ -366,10 +366,10 @@ bool LetVertex::initializeVertex() {
         std::string letString = *(assignment->name_->get_value());
         if (m_declaredOutsideIdsMap.find(letString) != m_declaredOutsideIdsMap.end()){
 
-            REPORTS.push_back(JsonReporter::createSYN8_4(
+            /*REPORTS.push_back(JsonReporter::createSYN8_4(
                 letString,
                 this
-            ));
+            ));*/
 
             std::cout << "INTERNAL ERROR: aborted initializing \"let\" vertex" << std::endl;
             return false;
@@ -416,10 +416,10 @@ void Vertex::scanForDFDecls() {
                 BASENAMES.insert(newBaseDFName);
             } else {
 
-                REPORTS.push_back(JsonReporter::createSYN8_1(
+                /*REPORTS.push_back(JsonReporter::createSYN8_1(
                     nextDFName,
                     this
-                ));
+                ));*/
 
                 //this error is actually tolerable
             }

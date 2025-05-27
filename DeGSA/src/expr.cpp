@@ -144,9 +144,9 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
                 Identifier* nonExistingIdentifier = new ForIteratorName(simpleDFName, _vertex);
                 //nonExistingIdentifier->markAsUse(currentVertex, 0);
                 //todo
-                REPORTS.push_back(JsonReporter::createSYN9(
+                /*REPORTS.push_back(JsonReporter::createSYN9(
                     nonExistingIdentifier
-                ));
+                ));*/
             }
 
             return;

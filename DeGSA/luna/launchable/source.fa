@@ -1,7 +1,11 @@
-import printint(int) as print;
-sub main() {
-    df i, o;
-    while (1), i=1..out o {
-        print(i);
-    }
+import c_init_int(int, name) as init;
+sub main(){
+        df a;
+        init(1, a);
+        let b = a {
+                foo(b);
+        }
+}
+sub foo(name f){
+        init(2, f);
 }

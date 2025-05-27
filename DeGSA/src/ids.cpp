@@ -282,9 +282,9 @@ IndexedDFName* parseIndexedDFExpression(expr* expression, std::map<std::string, 
     } else {
         std::cout << "INTERNAL ERROR: aborted creating new IndexedDFName object -- no base name found visible: " << baseName << std::endl;
         //std::string report = "ERROR: no name \"" + baseName + "\" found at line " + std::to_string(line) + "\n";
-        REPORTS.push_back(JsonReporter::createSYN9(//todo
+        /*REPORTS.push_back(JsonReporter::createSYN9(//todo
             base->second
-        ));
+        ));*/
         return nullptr;
     }
 }

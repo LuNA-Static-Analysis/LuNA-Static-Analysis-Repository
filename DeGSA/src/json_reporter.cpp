@@ -124,7 +124,8 @@ public:
         map.insert( { "df", df } );
         map.insert( { "local", localExpression } );
         map.insert( { "true", trueExpression } );
-        map.insert( { "where", callStack } );
+        map.insert( { "where", createCallStack({createCallStackEntry("todo", "0", "todo")}) } );//todo callstack is wrong
+        map.insert( { "conditions", createArray({}) } );//todo
         return createJson(map);
     }
 
