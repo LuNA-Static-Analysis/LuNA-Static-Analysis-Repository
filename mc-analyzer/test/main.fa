@@ -1,0 +1,12 @@
+import c_init_int(int, name) as init;
+import c_print_int(int) as print;
+
+sub main() {
+    df a;
+    if a > 0 {
+        init(1, a) @ {
+            delete a;
+        };
+        print(a);
+    }
+}

@@ -1,0 +1,18 @@
+{
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/minimist": "^1.2.5",
+    "@types/node": "^20.12.7",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
+    "ts-node": "^10.9.2",
+    "tslib": "^2.6.2",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "fp-ts": "^2.16.9",
+    "graphlib": "^2.1.8",
+    "mathjs": "^12.4.2",
+    "minimist": "^1.2.8"
+  }
+}

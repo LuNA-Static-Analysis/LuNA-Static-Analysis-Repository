@@ -1,0 +1,12 @@
+import c_init_int(int, name) as init; // Объявления ФК init
+import c_print_int(int) as print;     // Объявления ФК print
+
+
+sub main() {             // Объявление ФК main
+    df x, y;             // Объявление ФД x
+    init(1, x);          // Вызов ФК. Инициализация x
+    init(1, y);          // Повторная инициализация y
+    if x > y || x <= y { // Всегда истина
+        print(x);        // Вызов ФК print. Использование x
+    }
+}

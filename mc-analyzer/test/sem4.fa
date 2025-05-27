@@ -1,0 +1,7 @@
+import c_print_int(int) as print;
+import init2(name, int) as init;
+
+sub main() {
+    df a;
+    init(a, 1);
+}

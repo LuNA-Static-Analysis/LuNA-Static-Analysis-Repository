@@ -16,11 +16,11 @@ else:
 @click.option(
     '--run',
     multiple=True,
-    default=['ast', 'degsa', 'prolog'],
+    default=['ast', 'degsa', 'prolog', 'mc'],
     required=False,
     show_default=True,
     help='Only run specified analyzers.',
-    type=click.Choice(['ast', 'degsa', 'prolog'], case_sensitive=False)
+    type=click.Choice(['ast', 'degsa', 'prolog', 'mc'], case_sensitive=False)
 )
 @click.option(
     '--no-cleanup',
@@ -54,6 +54,10 @@ def main(
 
     prolog_analyzer_output_dir = project_dir / '.prolog-analyzer'
     prolog_analyzer_output_dir.mkdir(parents=True, exist_ok=True)
+
+    mc_analyzer_output_dir = project_dir / '.mc-analyzer'
+    mc_analyzer_output_dir.mkdir(parents=True, exist_ok=True)
+
 
     build_dir = project_dir / '.luna-build'
     build_dir.mkdir(parents=True, exist_ok=True)
@@ -114,6 +118,23 @@ def main(
                     luna_src
                 ],
                 env=os.environ | {'PROLOG_ANALYZER_HOME': ADAPT_HOME / 'prolog-analyzer'},
+                capture_output=True,
+                check=True
+            )
+        if 'mc' in run:
+            print(f'\rRunning mc-analyzer                 \r', end='')
+            subprocess.run(
+                args=[
+                    'ts-node',
+                    ADAPT_HOME / 'mc-analyzer' / 'src' / 'app' / 'main.ts',
+                    '--project-dir', project_dir,
+                    '--build-dir', build_dir,
+                    '--errors-file', errors_file,
+                    '--output-dir', mc_analyzer_output_dir,
+                    '--no-cleanup',
+                    luna_src
+                ],
+                env=os.environ | {'MC_ANALYZER_HOME': ADAPT_HOME / 'mc-analyzer'},
                 capture_output=True,
                 check=True
             )

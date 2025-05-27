@@ -45,8 +45,8 @@ class TextInfo:
 
 def get_call_stack_entry(call: dict[str, Any], text_info: TextInfo) -> str:
     assert isinstance(call, dict), str(type(call))
-    return f'  File "{call["file"]}", line {call["line"]}, in {call["name"]}\n' \
-           f'    {text_info.code_line(int(call["line"]))}\n'
+    return f'  File "{call["file"]}", line {call["line"]}, in {call["name"]}\n' #\
+           # f'    {text_info.code_line(int(call["line"]))}\n'
 
 
 def get_call_stack(callstack: list[dict[str, Any]], text_info: TextInfo) -> str:
@@ -144,10 +144,8 @@ def get_df_ref_or_index_range(
 ) -> str:
     if 'loop' in ref_or_index_range:
         return get_index_range(ref_or_index_range, text_info, include_declared)
-
     if {'df', 'true', 'local', 'where'} <= ref_or_index_range.keys():
         return get_df_ref(ref_or_index_range, text_info, include_declared)
-
     raise NotImplementedError(f'Not a \'df_ref\' or \'index_range\': {ref_or_index_range}')
 
 
@@ -331,10 +329,10 @@ def report_error(
                          error["details"]["initialized"]["true"])
                 .replace("$initialized",
                          get_df_ref(error["details"]["initialized"], text_info, include_declared=True))
-                .replace("$other_initializations",
-                    REF_SEPARATOR.join(
-                        get_df_ref_or_index_range(it, text_info) for it in error["details"]["other_initializations"])
-                )
+                .replace("$other_initializations", "")
+                #     REF_SEPARATOR.join(
+                #         get_df_ref_or_index_range(it, text_info) for it in error["details"]["other_initializations"])
+                # )
             )
 
         case 'SEM2.2':
@@ -355,8 +353,8 @@ def report_error(
                          error['details']['used']['true'])
                 .replace('$used',
                          get_df_ref(error['details']['used'], text_info, include_declared=True))
-                .replace('$initialized',
-                         REF_SEPARATOR.join(get_df_ref_or_index_range(it, text_info) for it in error['details']['initialized']))
+                .replace('$initialized', "")
+                         # REF_SEPARATOR.join(get_df_ref_or_index_range(it, text_info) for it in error['details']['initialized']))
             )
         
         case 'SEM3.2':

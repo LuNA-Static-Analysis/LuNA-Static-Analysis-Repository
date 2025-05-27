@@ -1,0 +1,34 @@
+never SEM3_1_var0 {    /* !([] ((! ((main@enddef_var0))) || ((! ((use_count_var0>0))) || ((init_count_var0>0))))) */
+T0_init:
+	do
+	:: atomic { (! (((! ((main@enddef_var0))) || ((! ((use_count_var0>0))) || ((init_count_var0>0)))))) -> assert(!(! (((! ((main@enddef_var0))) || ((! ((use_count_var0>0))) || ((init_count_var0>0))))))) }
+	:: (1) -> goto T0_init
+	od;
+accept_all:
+	skip
+}
+never SEM4_var0 {    /* !([] ((! ((main@enddef_var0))) || ((! ((init_count_var0>0))) || ((use_count_var0>0))))) */
+T0_init:
+	do
+	:: atomic { (! (((! ((main@enddef_var0))) || ((! ((init_count_var0>0))) || ((use_count_var0>0)))))) -> assert(!(! (((! ((main@enddef_var0))) || ((! ((init_count_var0>0))) || ((use_count_var0>0))))))) }
+	:: (1) -> goto T0_init
+	od;
+accept_all:
+	skip
+}
+never SEM6_cond0 {    /* !([] (((! ((true_count_cond0>0))) || (<> ((false_count_cond0>0)))) && ((! ((false_count_cond0>0))) || (<> ((true_count_cond0>0)))))) */
+T0_init:
+	do
+	:: (! ((! ((false_count_cond0>0)))) && ! (((true_count_cond0>0)))) -> goto accept_S5
+	:: (! ((! ((true_count_cond0>0)))) && ! (((false_count_cond0>0)))) -> goto accept_S10
+	:: (1) -> goto T0_init
+	od;
+accept_S5:
+	do
+	:: (! (((true_count_cond0>0)))) -> goto accept_S5
+	od;
+accept_S10:
+	do
+	:: (! (((false_count_cond0>0)))) -> goto accept_S10
+	od;
+}
