@@ -1,0 +1,54 @@
+#!/bin/bash
+
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 LUNA_SOURCE"
+    exit 1
+fi
+
+WORK_DIR=/tmp/lpv
+LUNA_SOURCE="$(realpath "$1")"
+
+if [ ! -v "${LPV_MAIN}" ]; then
+  #  LPV_MAIN="$(realpath "$0")/../src/app/main.ts"
+  LPV_MAIN="$(realpath "$0")/../src/app/nodes/promela-node.ts"
+fi
+
+rm -rf $WORK_DIR
+mkdir -p $WORK_DIR
+cd $WORK_DIR || exit
+parser "$LUNA_SOURCE" -o ast.json
+AST=$(ts-node "$LPV_MAIN" "$(realpath ast.json)")
+spin -a verification.pml > /dev/null
+gcc -w -o pan pan.c
+
+errors=
+while read -r key value; do
+    if ! ./pan -a -N "$key" | grep -q 'pan: wrote verification.pml.trail'; then
+        continue
+    fi
+    echo "$value" | jq -r '.details'
+    promela_line=$(spin -t verification.pml | awk '/verification.pml:[0-9]*/ {print substr($0, match($0, /verification.pml:[0-9]*/), RLENGTH)}' | tail -n1 | awk -F ':' '{print $2}')
+    luna_symbol=$(grep "$promela_line" verification.pml.si | tail -n1 | awk -F ':' '{print $2}')
+    index="$luna_symbol"
+    if [[ ! $luna_symbol =~ ^[0-9]+$ ]]; then
+        continue
+    fi
+    line_number=0
+    char_count=0
+    content=$(cat "$LUNA_SOURCE")
+    while IFS= read -r line; do
+        char_count=$((char_count + ${#line} + 1))
+        line_number=$((line_number + 1))
+        if [ $char_count -ge "$index" ]; then
+            char_index=$((index - (char_count - ${#line}) + 2))
+            printf "${line}\n%${char_index}s^--Here\nat $1 ($LUNA_SOURCE:$line_number:$char_index)\n\n"
+            if [ ! "$errors" ]; then
+                errors="$value"
+            else
+                errors="$errors,\n$value"
+            fi
+            break
+        fi
+    done <<< "$content"
+done < <(echo "$AST" | jq -r 'to_entries[] | "\(.key) \(.value)"')
+echo -e "[$errors]"

@@ -1,0 +1,11 @@
+import c_print_int(int) as print;
+import init2(name, int) as init;
+
+sub main() {
+    df a, b;
+    if b != b {
+        print(a);
+    }
+    init(a);
+    init(a);
+}

@@ -1,0 +1,15 @@
+import c_init_int(name, int) as init;
+import c_print_int(int) as print;
+
+sub foo(name x, int a) {
+    if a > 0 {
+        init(x, 1);
+    }
+}
+
+sub main() {
+    df x;                // Объявление ФД x
+    //init(x, 1);          // Вызов ФК. Инициализация x
+    foo(x, 1); // if 1 > 0
+    foo(x, 2); // if 2 > 0
+}
