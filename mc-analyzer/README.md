@@ -16,11 +16,13 @@
 ## Зависимости
 - Node.js 16+ (`node`)
 - SPIN (`spin`)
-- GCC (`gcc`)s
+- GCC (`gcc`)
 - Парсер LuNA (`parser`)
 
 ## Установка
+В коренной директории (`./mc-analyzer`) выполнить следующие команды:
 ```bash
+    sudo apt install nodejs npm -y
     sudo apt install gcc spin
     npm install
     npm install -g ts-node typescript
