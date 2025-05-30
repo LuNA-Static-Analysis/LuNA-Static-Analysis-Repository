@@ -12,18 +12,6 @@ export type TLtl = {
     readonly begin?: number;
 };
 
-type TSEM2_1Error = {
-    error_code: 'SEM2.1',
-    details: {
-        initialized: {
-            true: string,
-            local: string,
-            conditions: string[],
-            where: ""
-        }
-    }
-}
-
 export const Ltl = (promelaDfs: readonly TPromelaDf[],
                     code: string, condition: string,
                     description: string, bool = undefined): TLtl => {
@@ -94,12 +82,14 @@ export const LtlSem3_6 = (promelaDf: TPromelaDf): TLtl =>
         `${promelaDf.lunaDf.fullName} может быть использован после удаления`
     );
 
-export const LtlSem4 = (promelaDf: TPromelaDf): TLtl =>
-    Ltl([promelaDf],
-        getSem4Code(),
-        `{[] (check_usage(${promelaDf.promelaName}))}`,
-        `${promelaDf.lunaDf.fullName} инициализируется, но может не использоваться`
-    );
+export const LtlSem4 = (promelaDf: TPromelaDf, begin: number): TLtl =>
+    ({
+        ...Ltl([promelaDf],
+            getSem4Code(),
+            `{[] (check_usage(${promelaDf.promelaName}))}`,
+            `${promelaDf.lunaDf.fullName} инициализируется, но может не использоваться`),
+        begin
+    });
 
 export const LtlSem3_2 = (promelaDfs: readonly TPromelaDf[]): TLtl =>
     Ltl(promelaDfs,

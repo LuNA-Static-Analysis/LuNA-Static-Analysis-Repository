@@ -97,13 +97,9 @@ const Sem2_1AdaptError = (ltl: TLtl, prettyAST: TPromelaAST, promelaLine: number
             true: ltl.promelaDfs[0].lunaDf.fullName,
             local: ltl.promelaDfs[0].lunaDf.fullName,
             conditions: [ltl.promelaDfs[0].lunaDf.fullName],
-            where: [{
-                file: lunaSourcePath,
-                line: getDeclaredPosition(ltl.promelaDfs[0].lunaDf.begin)(prettyAST.lunaSourceLines)(lunaSourcePath).line,
-                name: "main"
-            }],
+            where: [getDeclaredPosition(promelaLine)(prettyAST.lunaSourceLines)(lunaSourcePath)],
             df: {
-                declared: [[getDeclaredPosition(promelaLine)(prettyAST.lunaSourceLines)(lunaSourcePath)]],
+                declared: [[getDeclaredPosition(ltl.promelaDfs[0].lunaDf.begin)(prettyAST.lunaSourceLines)(lunaSourcePath)]],
                 name: ltl.promelaDfs[0].lunaDf.fullName,
                 true: ltl.promelaDfs[0].lunaDf.fullName,
                 local: ltl.promelaDfs[0].lunaDf.fullName
@@ -113,13 +109,9 @@ const Sem2_1AdaptError = (ltl: TLtl, prettyAST: TPromelaAST, promelaLine: number
             true: ltl.promelaDfs[0].lunaDf.fullName,
             local: ltl.promelaDfs[0].lunaDf.fullName,
             conditions: [ltl.promelaDfs[0].lunaDf.fullName],
-            where: [{
-                file: lunaSourcePath,
-                line: getDeclaredPosition(ltl.promelaDfs[0].lunaDf.begin)(prettyAST.lunaSourceLines)(lunaSourcePath).line,
-                name: "main"
-            }],
+            where: [getDeclaredPosition(promelaLine)(prettyAST.lunaSourceLines)(lunaSourcePath)],
             df: {
-                declared: [[getDeclaredPosition(promelaLine)(prettyAST.lunaSourceLines)(lunaSourcePath)]],
+                declared: [[getDeclaredPosition(ltl.promelaDfs[0].lunaDf.begin)(prettyAST.lunaSourceLines)(lunaSourcePath)]],
                 name: ltl.promelaDfs[0].lunaDf.fullName,
                 true: ltl.promelaDfs[0].lunaDf.fullName,
                 local: ltl.promelaDfs[0].lunaDf.fullName
@@ -135,11 +127,7 @@ const Sem3_1AdaptError = (ltl: TLtl, prettyAST: TPromelaAST, promelaLine: number
             true: ltl.promelaDfs[0].lunaDf.fullName,
             local: ltl.promelaDfs[0].lunaDf.fullName,
             conditions: [ltl.promelaDfs[0].lunaDf.fullName],
-            where: [{
-                file: lunaSourcePath,
-                line: getDeclaredPosition(ltl.begin)(prettyAST.lunaSourceLines)(lunaSourcePath).line,
-                name: 'main'
-            }],
+            where: [getDeclaredPosition(ltl.begin)(prettyAST.lunaSourceLines)(lunaSourcePath)],
             df: {
                 declared: [[getDeclaredPosition(ltl.promelaDfs[0].lunaDf.begin)(prettyAST.lunaSourceLines)(lunaSourcePath)]],
                 name: ltl.promelaDfs[0].lunaDf.fullName,
@@ -170,7 +158,7 @@ const Sem4AdaptError = (ltl: TLtl, prettyAST: TPromelaAST, promelaLine: number, 
     details: {
         identifier: {
             name: ltl.promelaDfs[0].lunaDf.fullName,
-            declared: getDeclaredPosition(promelaLine)(prettyAST.lunaSourceLines)(lunaSourcePath)
+            declared: getDeclaredPosition(ltl.begin)(prettyAST.lunaSourceLines)(lunaSourcePath)
         }
     }
 });

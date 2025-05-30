@@ -179,11 +179,11 @@ const createNodeState = (getDf: State<TDfPull, TPromelaDf>) =>
 
 const ltlTable =
     {
-        'init': (promelaDf: TPromelaDf) =>
+        'init': (begin: number) => (promelaDf: TPromelaDf) =>
                 (nodeCreator: TNodeCreator) =>
                     nodeCreator.initializedOnes.has(promelaDf.promelaName)
-                        ? [LtlSem2_1(promelaDf), LtlSem4(promelaDf)]
-                        : [LtlSem4(promelaDf)],
+                        ? [LtlSem2_1(promelaDf), LtlSem4(promelaDf, begin)]
+                        : [LtlSem4(promelaDf, begin)],
         'use': (begin: number) => (promelaDf: TPromelaDf) => () => [LtlSem3_1(promelaDf, begin)],
         'destroy': (promelaDf: TPromelaDf) => () => [LtlSem3_6(promelaDf)],
         'depends': ([promelaDfUse, promelaDfInit]: [TPromelaDf, TPromelaDf]) =>
@@ -197,7 +197,7 @@ const ltlTable =
 
 export const InitNodeState = (lunaDf: TLunaDf, parentInfo: TContextInfo, begin: number): NodeState =>
     createNodeState(getFromLunaDf(parentInfo)(lunaDf))
-                   (ltlTable.init)
+                   (ltlTable.init(begin))
                    ((ltls: readonly TLtl[]) => ProctypeBodyNode(`init({0});`, [begin], ltls))
                    (updateInitNode);
 
