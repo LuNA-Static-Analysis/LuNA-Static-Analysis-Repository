@@ -1,0 +1,13 @@
+import c_print_int(int) as print;
+import init2(name, int) as init;
+
+sub print_if_gt_5(int n) {
+    if n > 5 {
+        print(n);
+    }
+}
+
+sub main() {
+    print_if_gt_5(7); // -> if 7 > 5
+    print_if_gt_5(8); // -> if 8 > 5
+}
