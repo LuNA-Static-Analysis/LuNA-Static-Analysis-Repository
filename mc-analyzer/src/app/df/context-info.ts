@@ -24,16 +24,7 @@ export const EmptyContextInfo = () =>
 
 export const getCanonicalLunaDf = (contextInfo: TContextInfo) =>
                                   (lunaDf: TLunaDf): TLunaDf => {
-    const newName = lunaDf.fullName; //replaceChars(lunaDf)(contextInfo.aliases);
-
-    // console.error({
-    //     // contextInfo,
-    //     // aliases: JSON.stringify(contextInfo.aliases),
-    //     lunaDf,
-    //     caninical: contextInfo.dfRegistry.get(contextInfo.aliases.get(lunaDf.fullName))?.lunaDf ||
-    //         contextInfo.dfRegistry.get(newName)?.lunaDf ||
-    //         LunaDf(CondNode(parseIndices(newName)) as TDfCond)
-    // });
+    const newName = replaceChars(lunaDf)(contextInfo.aliases);
     return contextInfo.dfRegistry.get(contextInfo.aliases.get(lunaDf.fullName))?.lunaDf ||
         contextInfo.dfRegistry.get(newName)?.lunaDf ||
         LunaDf(CondNode(lunaDf.begin)(parseIndices(newName)) as TDfCond);
@@ -66,7 +57,7 @@ export const getEntryDf = (contextInfo: TContextInfo) =>
     if (isNotConstant(contextInfo)(canonicalLunaDf)) {
         return contextInfo.dfRegistry.get(canonicalLunaDf.fullName);
     }
-    return undefined//createPromelaDf(canonicalLunaDf)('constant');
+    return undefined;
 }
 
 export const addEntryDfs = (contextInfo: TContextInfo) =>
