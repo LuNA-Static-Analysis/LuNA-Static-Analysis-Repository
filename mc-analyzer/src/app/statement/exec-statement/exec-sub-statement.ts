@@ -10,9 +10,15 @@ import {parseCondNode} from '../../condition';
 import {UseNodeState, TNodeCreator, updateDfPull} from '../../promela-node/node-creator';
 import {reduce} from '../../utils';
 import {getFromLunaDf} from '../../df/df-pull';
-import {Context, Statement, TContext} from "../statement";
+import {Context, Statement, TContext, TStatement} from "../statement";
+
+const subNames = new Set<string>();
 
 export const ExecSubStatement = (execNode: ExecNode, context: TContext): TExecStatement => {
+    if (subNames.has(execNode.code)) {
+        return ExecStatement(Statement(context, []), execNode);
+    }
+    subNames.add(execNode.code);
     const sub = getSub(context.metaInfo)(execNode.code);
     const [newNodeCreator, newContextInfo] =
         execNode.args.reduce(([previousNodeCreator, previousContextInfo]: [TNodeCreator, TContextInfo], arg: TCondNode, index: number) => {

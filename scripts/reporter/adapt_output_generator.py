@@ -23,14 +23,18 @@ class TextInfo:
         return re.sub(r'(\./)+', './', path)
 
     def line_number(self, position: int) -> int:
-        _, ln, _, _ = self._text_info['text'][position]
-        if ln is None:
-            ln = 0
-        return ln + 1
+        if position < len(self._text_info['text']):
+            _, ln, _, _ = self._text_info['text'][position]
+            if ln is None:
+                ln = 0
+            return ln + 1
+        return -1
 
     def code_line(self, line_number: int) -> str:
         position = 0
         while self.line_number(position) < line_number:
+            if self.line_number(position) == -1:
+                return 1
             position += 1
         path = self._project_dir / self.file_name(position)
         line_index = line_number - 1

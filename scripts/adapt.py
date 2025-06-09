@@ -148,7 +148,8 @@ def main(
                         '--errors-file', errors_file,
                         '--output-dir', mc_analyzer_output_dir,
                         '--no-cleanup',
-                        luna_src
+                        '--luna-src', luna_src,
+                        preprocessed_file
                     ],
                     env=os.environ | {'MC_ANALYZER_HOME': ADAPT_HOME / 'mc-analyzer'},
                     capture_output=True,

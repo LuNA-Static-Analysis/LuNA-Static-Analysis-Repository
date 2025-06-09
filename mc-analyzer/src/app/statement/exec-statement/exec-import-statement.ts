@@ -22,6 +22,7 @@ export const ExecImportStatement = (execNode: ExecNode, context: TContext): TExe
         { action: UseNodeState, param: dfUses },
         { action: DestroyNodeState, param: getDfDestroys(execNode.rules) }
     ];
+
     const newStatement =
         reduce(steps)
               (Statement(context, []))

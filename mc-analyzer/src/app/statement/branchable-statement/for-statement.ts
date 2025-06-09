@@ -1,12 +1,14 @@
-import {BiOperatorCond, DfCond, ForNode} from '../../luna-ast';
+import {BiOperatorCond, BranchableNode, DfCond, ForNode} from '../../luna-ast';
 import {TMetaInfo, updateNodeCreator} from '../../meta-info';
 import {TCondition, parseCondNode} from '../../condition';
-import {addEntryDfs, TContextInfo, updateRegistry} from '../../df/context-info';
+import {addEntryDfs, isConstant, isNotConstant, TContextInfo, updateRegistry} from '../../df/context-info';
 import {Context, Statement, TContext, TStatement} from '../statement';
 import {BodyStatement} from '../body-statement';
 import {LunaDf} from '../../df/luna-df';
-import {DefNodeState, EndDefNodeState, InitNodeState} from '../../promela-node/node-creator';
-import {getStatementByBranchCondition, handleIDK} from './branchable-statement';
+import {
+    DefNodeState, EndDefNodeState, FormulaStatement, getFormulaName, IfNode, InitNodeState, processNodes, UseNodeState
+} from '../../promela-node/node-creator';
+import {getStatementByBranchCondition, _handleIDK} from './branchable-statement';
 
 export const ForStatement = (forNode: ForNode, context: TContext): TStatement => {
     const getCondition = (node: ForNode): TCondition => parseCondNode(BiOperatorCond('<=', [node.first, node.last]));
@@ -14,7 +16,7 @@ export const ForStatement = (forNode: ForNode, context: TContext): TStatement =>
     return getStatementByBranchCondition(condition.branchCondition)
                                         (() => Statement(context, []))
                                         (() => handleTRUE(context)(forNode))
-                                        (() => handleIDK(context)(forNode)(getCondition));
+                                        (() => _handleIDK(context)(forNode)(getCondition));
 };
 
 const handleTRUE = (context: TContext) =>

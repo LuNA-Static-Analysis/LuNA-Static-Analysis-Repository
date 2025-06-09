@@ -1,0 +1,484 @@
+#!/usr/bin/luna
+/*
+Conveer alghoritm
+*/
+import c_rinit(real, name) as rinit;
+import c_vinit(name) as vinit;
+import c_intinit(int, name) as intinit;
+import getFG_Size(string, name `size_x, name `size_y, name `size_z, name `fg_size) as getFG_Size;
+import loadData(int `rank, int `size, name `params,  name `rank_x, name `rank_y, name `rank_z,
+                name `dim_x, name `dim_y, name `dim_z,
+                name `u) as loadData;
+import initforParams(int `rank, int `typeDim, value `params, name `cntfor, name `cntstep) as initforParams;
+import initconst(value `params, name `T, name `tprint, name `tau) as initConst;
+import calcCoef_x(value `params, value `uOld, name `a, name `b, name `c, name `f) as calcCoef_x;
+import calcCoef_y(value `params, value `uOld, value `u, name `a, name `b, name `c, name `f) as calcCoef_y;
+import calcCoef_z(value `params, value `uOld, value `u, name `a, name `b, name `c, name `f) as calcCoef_z;
+import init_alfa_beta(int `cntstep, name `albt_out) as init_alfa_beta;
+import init_uend(int `cntstep, name `uend) as init_uend;
+import calccoef_pr_x(int `rank,int `cnt, int `j, value `params,
+              value `a, value `b, value `c, value `f,name `alfa, name `beta,
+              value `alfabetabeg, name `alfabetaend) as calccoef_pr_x;
+import calccoef_pr_y(int `cnt, int `k, value `params,
+              value `a, value `b, value `c, value `f, name `alfa, name `beta,
+              value `alfabetabeg, name `alfabetaend) as calccoef_pr_y;
+import calccoef_pr_z(int `cnt, int `i, value `params,
+              value `a, value `b, value `c, value `f, name `alfa, name `beta,
+              value `alfabetabeg, name `alfabetaend) as calccoef_pr_z;
+import calcVal(int `rank, int `step, int `cnt, value `params, value `alfa, value `beta,
+             name `u,name `ubeg,value `uend) as calcVal;
+import fill_u(int `step, int `cnt,value `params, value `u_t, name `u) as fill_u;
+import setBorder_x(value `params, value `uOld,
+               name `sendar_x_L, name `sendar_x_R) as setBorder_x;
+import setBorder_y(value `params, value `uOld,
+               name `sendar_y_T, name `sendar_y_B) as setBorder_y;
+import setBorder_z(value `params, value `uOld,
+               name `sendar_z_F, name `sendar_z_B) as setBorder_z;
+import loadBorder(value `params, name `u, value `uOld, value `recvar_x_L, value `recvar_x_R,
+                value `recvar_y_B, value `recvar_y_T,
+                value `recvar_z_B, value `recvar_z_F) as loadBorder;
+import outputData(int `iter, int `rank, value `params, value `u)as outputData;
+import gather_arr(value, value, name) as gather_arr;
+import copy_vector(value, name) as copy_v;
+//import outputDataAll(int `iter, value `params, value `u);
+
+#define FGC 2
+#define PPN 16
+
+sub reduce_u(int cnt, int x, int y, int z, name u_cur, name u_c) {
+    df sums;
+    if (cnt==2) {
+        cf finaly_g[x][y][z]: gather_arr(u_cur[0][x][y][z], u_cur[1][x][y][z], u_c)-->(u_cur[0][x][y][z], u_cur[1][x][y][z]) @ { locator_cyclic: 0; };
+    } @ { locator_cyclic: 0; }
+    if (cnt>2) {
+        if (cnt%2==0) {
+           for i=0..cnt/2-1 {
+              cf gather[i][x][y][z]: gather_arr(u_cur[i*2][x][y][z], u_cur[i*2+1][x][y][z], sums[i][x][y][z])-->(u_cur[i*2][x][y][z], u_cur[i*2+1][x][y][z]) @ { locator_cyclic: 0; };
+           } @ { locator_cyclic: 0; }
+           reduce_u(cnt/2, x, y, z, sums, u_c) @ { locator_cyclic: 0; };
+       } @ { locator_cyclic: 0; }
+       if (cnt%2!=0) {
+          for i=0..cnt/2-1 {
+            cf gather[i][x][y][z]: gather_arr(u_cur[i*2][x][y][z], u_cur[i*2+1][x][y][z], sums[i][x][y][z])-->(u_cur[i*2][x][y][z], u_cur[i*2+1][x][y][z]) @ { locator_cyclic: 0; };
+          } @ { locator_cyclic: 0; }
+          cf copy_g[cnt/2][x][y][z]: copy_v(u_cur[cnt-1][x][y][z],sums[cnt/2][x][y][z])-->(u_cur[cnt-1][x][y][z]) @ { locator_cyclic: 0; };
+          reduce_u(cnt/2+1, x, y, z, sums,u_c) @ { locator_cyclic: 0; };
+       } @ { locator_cyclic: 0; }
+    } @ { locator_cyclic: 0; }
+} @ {
+	locator_cyclic sums[a][b][c][d]=>0;
+	locator_cyclic u_cur[a][b][c][d]=>0;
+	locator_cyclic u_c=>0;
+}
+
+sub main(string arg1)
+{
+    df size, size_x, size_y, size_z,rnx,rny,rnz,
+    cntfor,cntstep, rank_x,rank_y, rank_z,
+    beg_index_x,beg_index_y,beg_index_z,
+    end_index_x,end_index_y,end_index_z,
+    params, dim_x,dim_y, dim_z,
+
+    u_c,iter, curT, T,tprint,tau,
+	
+	ubeg;
+    getFG_Size(arg1,size_x, size_y, size_z, size);
+
+    for i=0..size_x-1 {
+            for j=0..size_y-1 {
+                    for k=0..size_z-1 {
+                        cf loadData[i][j][k]: loadData(k*size_y*size_x+j*size_x+i,size,params[i][j][k], rank_x[i][j][k],rank_y[i][j][k], rank_z[i][j][k],
+                                dim_x[i][j][k],dim_y[i][j][k],dim_z[i][j][k],u_c[1][1][i][j][k]) @ { locator_cyclic:( i*$FGC*$FGC+j*$FGC+k)/$PPN; };
+
+                        cf initpar_x[i][j][k]: initforParams(k*size_y*size_x+j*size_x+i,1,params[i][j][k],cntfor[1][i][j][k],cntstep[1][i][j][k]) @ { locator_cyclic: (i*$FGC*$FGC+j*$FGC+k)/$PPN; };
+                        cf initpar_y[i][j][k]: initforParams(k*size_y*size_x+j*size_x+i,2,params[i][j][k],cntfor[2][i][j][k],cntstep[2][i][j][k]) @ { locator_cyclic: (i*$FGC*$FGC+j*$FGC+k)/$PPN; };
+                        cf initpar_y[i][j][k]: initforParams(k*size_y*size_x+j*size_x+i,3,params[i][j][k],cntfor[3][i][j][k],cntstep[3][i][j][k]) @ { locator_cyclic: (i*$FGC*$FGC+j*$FGC+k)/$PPN; };
+                        //outputData(4000,k*size_x*size_y+j*size_x+j, params[i][j][k],u_c[1][1][i][j][k]) @ {locator_cyclic: (i*$FGC*$FGC+j*$FGC+k)/$PPN;} ;
+
+                    }
+            }
+    }
+    initConst(params[0][0][0],T,tprint,tau);
+    rinit(0.0,curT[0]);
+    while(real(curT[it-1]<T)), it = 1 .. out iter
+    {
+        df a,b,c,f,alfa,beta,alfa_beta_beg,alfa_beta_beg6,alfa_beta_end,
+        u_cur,uend,ubeg6,u,
+        sendar_x_L, sendar_x_R, sendar_y_T, sendar_y_B, sendar_z_B,sendar_z_F;
+
+        rinit(curT[it-1]+tau,curT[it]);
+
+//        step1
+//        cntfor=1*(rny-end_index_y-beg_index_y);
+//        cntstep=1*(rnz-end_index_z-beg_index_z);
+//        alfa = new double *[2*(size_x-rank_x)-1];
+//        beta = new double *[2*(size_x-rank_x)-1];
+//        alfa_beta_beg=new double[2*cntstep];
+//        alfa_beta_end=new double[2*cntstep];
+//        u_cur=new double [cntstep*(rnx+1)];
+//        uend=new double[cntstep];
+//        ubeg=new double[cntstep];
+//        for (int i = 0; i < 2*(size_x-rank_x)-1; ++i) {
+//            alfa[i]=new double[cntstep*(rnx+1)];
+//            beta[i] = new double[cntstep*(rnx+1)];
+//        }
+
+
+
+        for y=0..size_y-1{
+           for z=0..size_z-1{
+              cf init_alfa_beta_x[0][y][z]: init_alfa_beta(cntstep[1][0][y][z],alfa_beta_beg[1][it][0][y][z]) @ { locator_cyclic: (0*$FGC*$FGC+y*$FGC+z)/$PPN; };
+              for x=0..size_x-1{
+                   cf calcCoef_x[x][y][z]: calcCoef_x(params[x][y][z],u_c[1][it][x][y][z],a[1][it][x][y][z],b[1][it][x][y][z],c[1][it][x][y][z],f[1][it][x][y][z]) @ { locator_cyclic: (x*$FGC*$FGC+y*$FGC+z)/$PPN; };
+              }
+              cf init_uend_x[size_x-1][y][z]: init_uend(cntstep[1][size_x-1][y][z], ubeg[1][it][size_x-1][y][z]) @ { 
+			  	locator_cyclic: ((size_x-1)*$FGC*$FGC+y*$FGC+z)/$PPN;
+			  };
+           }
+        }
+        //cntcoef=0;
+        //cntu=0;reduce_u
+
+        for y=0..size_y-1{
+           for z=0..size_z-1{
+              for j=0..cntfor[1][0][y][z]-1{
+                 cf calccoef_pr_x[j][0][y][z]: calccoef_pr_x(z*size_y*size_z+y*size_x,cntstep[1][0][y][z],j,params[0][y][z],a[1][it][0][y][z],b[1][it][0][y][z],c[1][it][0][y][z],f[1][it][0][y][z],
+                                                alfa[1][it][j][0][y][z],beta[1][it][j][0][y][z],alfa_beta_beg[1][it][0][y][z],alfa_beta_beg6[1][it][j][1][y][z]) @ { locator_cyclic: (0*$FGC*$FGC+y*$FGC+z)/$PPN; };
+                 if (size_x>1) {
+                    cf calcVal_x[j][0][y][z]: calcVal(z*size_y*size_z+y*size_x,1,cntstep[1][0][y][z],params[0][y][z],alfa[1][it][j][0][y][z],beta[1][it][j][0][y][z],
+                                            u_cur[1][it][j][0][y][z],ubeg6[1][it][j][0-1][y][z],ubeg6[1][it][j][0][y][z])-->(alfa[1][it][j][0][y][z],beta[1][it][j][0][y][z],ubeg6[1][it][j][0][y][z],ubeg6[1][it][j][0-1][y][z]) @ { locator_cyclic: (0*$FGC*$FGC+y*$FGC+z)/$PPN; };
+                 }
+              }
+              for x=1..size_x-2{
+                 for j=0..cntfor[1][x][y][z]-1{
+                    cf calccoef_pr_x[j][x][y][z]: calccoef_pr_x(z*size_y*size_z+y*size_x+x,cntstep[1][x][y][z],j,params[x][y][z],a[1][it][x][y][z],b[1][it][x][y][z],c[1][it][x][y][z],f[1][it][x][y][z],
+                                                   alfa[1][it][j][x][y][z],beta[1][it][j][x][y][z],alfa_beta_beg6[1][it][j][x][y][z],alfa_beta_beg6[1][it][j][x+1][y][z])-->(alfa_beta_beg6[1][it][j][x][y][z]) @ { locator_cyclic: (x*$FGC*$FGC+y*$FGC+z)/$PPN; };
+
+                    cf calcVal_x[j][x][y][z]: calcVal(z*size_y*size_z+y*size_x+x,1,cntstep[1][x][y][z],params[x][y][z],alfa[1][it][j][x][y][z],beta[1][it][j][x][y][z],
+                                                u_cur[1][it][j][x][y][z],ubeg6[1][it][j][x-1][y][z],ubeg6[1][it][j][x][y][z])-->(alfa[1][it][j][x][y][z],beta[1][it][j][x][y][z],ubeg6[1][it][j][x][y][z]) @ { locator_cyclic: (x*$FGC*$FGC+y*$FGC+z)/$PPN; };
+                 }
+              }
+              for j=0..cntfor[1][size_x-1][y][z]-1{
+                 if (size_x>1) {
+                    cf calccoef_pr_x[j][size_x-1][y][z]: calccoef_pr_x(z*size_y*size_z+(y+1)*size_x-1,cntstep[1][size_x-1][y][z],j,params[size_x-1][y][z],a[1][it][size_x-1][y][z],b[1][it][size_x-1][y][z],c[1][it][size_x-1][y][z],f[1][it][size_x-1][y][z],
+                                                alfa[1][it][j][size_x-1][y][z],beta[1][it][j][size_x-1][y][z],alfa_beta_beg6[1][it][j][size_x-1][y][z],alfa_beta_beg6[1][it][j][size_x][y][z])-->(alfa_beta_beg6[1][it][j][size_x-1][y][z],alfa_beta_beg6[1][it][j][size_x][y][z]) @ { locator_cyclic: ((size_x-1)*$FGC*$FGC+y*$FGC+z)/$PPN; };
+                 }
+                 cf calcVal_x[j][size_x-1][y][z]: calcVal(z*size_y*size_z+(y+1)*size_x-1,1,cntstep[1][size_x-1][y][z],params[size_x-1][y][z],alfa[1][it][j][size_x-1][y][z],beta[1][it][j][size_x-1][y][z],
+                                                    u_cur[1][it][j][size_x-1][y][z],ubeg6[1][it][j][size_x-2][y][z],ubeg[1][it][size_x-1][y][z])-->(alfa[1][it][j][size_x-1][y][z],beta[1][it][j][size_x-1][y][z]) @ { locator_cyclic: ((size_x-1)*$FGC*$FGC+y*$FGC+z)/$PPN; };
+
+              }
+
+
+           }
+        }
+        for x=0..size_x-1{
+           for y=0..size_y-1{
+              for z=0..size_z-1{
+                 reduce_u(cntfor[1][x][y][z], x, y, z, u_cur[1][it], u[1][it][x][y][z]) @ { locator_cyclic: (x*$FGC*$FGC+y*$FGC+z)/$PPN; };
+                 cf fill_u_x[x][y][z]: fill_u(1,cntstep[1][x][y][z], params[x][y][z], u[1][it][x][y][z], u_c[2][it][x][y][z])-->(u[1][it][x][y][z],a[1][it][x][y][z],b[1][it][x][y][z],c[1][it][x][y][z],f[1][it][x][y][z]) @ { locator_cyclic: (x*$FGC*$FGC+y*$FGC+z)/$PPN; };
+//                 outputData(100+it,z*size_x*size_y+y*size_x+x, params[x][y][z],u_c[2][it][x][y][z]);
+
+              }
+           }
+        }
+
+//        step2(iter, rank, size, params, u, uOld);
+//        fprintf(stderr,"beg step 2 rank=%d\n",rank);
+//        cntfor=1*(rnz-end_index_z-beg_index_z);
+//        cntstep=1*(rnx-end_index_x-beg_index_x);
+
+//        fprintf(stderr,"beg step 2 rank=%d cntfor=%d cntstep=%d\n",rank,cntfor,cntstep);
+
+//        alfa = new double *[2*(size_y-rank_y)-1];
+//        beta = new double *[2*(size_y-rank_y)-1];
+//        alfa_beta_beg=new double[2*cntstep];
+//        alfa_beta_end=new double[2*cntstep];
+//        u_cur=new double [cntstep*(rny+1)];
+//        uend=new double[cntstep];
+//        ubeg=new double[cntstep];
+//        for (int i = 0; i < 2*(size_y-rank_y)-1; ++i) {
+//            alfa[i]=new double[cntstep*(rny+1)];
+//            beta[i] = new double[cntstep*(rny+1)];
+//        }
+
+//        calcCoef_y(params,uOld,u_c,a,b,c,f);
+        for x=0..size_x-1{
+           for z=0..size_z-1{
+              cf init_alfa_beta_y[x][0][z]: init_alfa_beta(cntstep[2][x][0][z],alfa_beta_beg[2][it][x][0][z]) @ { locator_cyclic: (x*$FGC*$FGC+0*$FGC+z)/$PPN; };
+              for y=0..size_y-1{
+                    cf calcCoef_y[x][y][z]: calcCoef_y(params[x][y][z],u_c[1][it][x][y][z],u_c[2][it][x][y][z], a[2][it][x][y][z],b[2][it][x][y][z],c[2][it][x][y][z],f[2][it][x][y][z]) @ { locator_cyclic: (x*$FGC*$FGC+y*$FGC+z)/$PPN; };
+              }
+              cf init_uend_y[x][size_y-1][z]: init_uend(cntstep[2][x][size_y-1][z], ubeg[2][it][x][size_y-1][z]) @ {
+			  	locator_cyclic: (x*$FGC*$FGC+(size_y-1)*$FGC+z)/$PPN;
+			  };
+           }
+        }
+        for x=0..size_x-1{
+           for z=0..size_z-1{
+              for k=0..cntfor[2][x][0][z]-1{
+                 cf calccoef_pr_y[k][x][0][z]: calccoef_pr_y(cntstep[2][x][0][z],k,params[x][0][z],a[2][it][x][0][z],b[2][it][x][0][z],c[2][it][x][0][z],f[2][it][x][0][z],
+                                                alfa[2][it][k][x][0][z],beta[2][it][k][x][0][z],alfa_beta_beg[2][it][x][0][z],alfa_beta_beg6[2][it][k][x][1][z]) @ { locator_cyclic: (x*$FGC*$FGC+0*$FGC+z)/$PPN; };
+
+                 if (size_y>1) {
+                    cf calcVal_y[k][x][0][z]: calcVal(z*size_y*size_z+x,2,cntstep[2][x][0][z],params[x][0][z],alfa[2][it][k][x][0][z],beta[2][it][k][x][0][z],
+                                            u_cur[2][it][k][x][0][z],ubeg6[2][it][k][x][0-1][z],ubeg6[2][it][k][x][0][z])-->(alfa[2][it][k][x][0][z],beta[2][it][k][x][0][z],ubeg6[2][it][k][x][0][z],ubeg6[2][it][k][x][0-1][z]) @ { locator_cyclic: (x*$FGC*$FGC+0*$FGC+z)/$PPN; };
+                 }
+              }
+              for y=1..size_y-2{
+                 for k=0..cntfor[2][x][y][z]-1{
+                    cf calccoef_pr_y[k][x][y][z]: calccoef_pr_y(cntstep[2][x][y][z],k,params[x][y][z],a[2][it][x][y][z],b[2][it][x][y][z],c[2][it][x][y][z],f[2][it][x][y][z],
+                                                   alfa[2][it][k][x][y][z],beta[2][it][k][x][y][z],alfa_beta_beg6[2][it][k][x][y][z],alfa_beta_beg6[2][it][k][x][y+1][z])-->(alfa_beta_beg6[2][it][k][x][y][z]) @ { locator_cyclic: (x*$FGC*$FGC+y*$FGC+z)/$PPN; };
+
+                    cf calcVal_y[k][x][y][z]:calcVal(z*size_y*size_z+y*size_x+x,2,cntstep[2][x][y][z],params[x][y][z],alfa[2][it][k][x][y][z],beta[2][it][k][x][y][z],
+                                              u_cur[2][it][k][x][y][z],ubeg6[2][it][k][x][y-1][z],ubeg6[2][it][k][x][y][z])-->(alfa[2][it][k][x][y][z],beta[2][it][k][x][y][z],ubeg6[2][it][k][x][y][z]) @ { locator_cyclic: (x*$FGC*$FGC+y*$FGC+z)/$PPN; };
+                 }
+              }
+             for k=0..cntfor[2][x][size_y-1][z]-1{
+                if (size_y>1) {
+
+                   cf calccoef_pr_y[k][x][size_y-1][z]: calccoef_pr_y(cntstep[2][x][size_y-1][z],k,params[x][size_y-1][z],a[2][it][x][size_y-1][z],b[2][it][x][size_y-1][z],c[2][it][x][size_y-1][z],f[2][it][x][size_y-1][z],
+                                                        alfa[2][it][k][x][size_y-1][z],beta[2][it][k][x][size_y-1][z],alfa_beta_beg6[2][it][k][x][size_y-1][z],alfa_beta_beg6[2][it][k][x][size_y][z])
+                                                        -->(alfa_beta_beg6[2][it][k][x][size_y-1][z],alfa_beta_beg6[2][it][k][x][size_y][z]) @ { locator_cyclic: (x*$FGC*$FGC+(size_y-1)*$FGC+z)/$PPN; };
+                }
+                cf calcVal_y[k][x][size_y-1][z]:calcVal(z*size_y*size_z+(size_y-1)*size_x+x,2,cntstep[2][x][size_y-1][z],params[x][size_y-1][z],alfa[2][it][k][x][size_y-1][z],beta[2][it][k][x][size_y-1][z],
+                                                  u_cur[2][it][k][x][size_y-1][z],ubeg6[2][it][k][x][size_y-2][z],ubeg[2][it][x][size_y-1][z])-->(alfa[2][it][k][x][size_y-1][z],beta[2][it][k][x][size_y-1][z]) @ { locator_cyclic: (x*$FGC*$FGC+(size_y-1)*$FGC+z)/$PPN; };
+
+            }
+
+
+           }
+        }
+        for x=0..size_x-1{
+           for y=0..size_y-1{
+              for z=0..size_z-1{
+                 reduce_u(cntfor[2][x][y][z], x, y, z, u_cur[2][it], u[2][it][x][y][z]) @ { locator_cyclic: 0; };
+                 cf fill_u_x[x][y][z]: fill_u(2,cntstep[2][x][y][z], params[x][y][z], u[2][it][x][y][z], u_c[3][it][x][y][z])-->(u[2][it][x][y][z],a[2][it][x][y][z],b[2][it][x][y][z],c[2][it][x][y][z],f[2][it][x][y][z]) @ { locator_cyclic: (x*$FGC*$FGC+y*$FGC+z)/$PPN; };
+//                 outputData(200+it,z*size_x*size_y+y*size_x+x, params[x][y][z],u_c[3][it][x][y][z]);
+              }
+           }
+        }
+
+//        step3(iter, rank, size, params, u, uOld);
+//        fprintf(stderr,"beg step 3 rank=%d\n",rank);
+
+//        cntfor=1*(rnx-end_index_x-beg_index_x);
+//        cntstep=1*(rny-end_index_y-beg_index_y);
+//        alfa = new double *[2*(size_z-rank_z)-1];
+//        beta = new double *[2*(size_z-rank_z)-1];
+//        alfa_beta_beg=new double[2*cntstep];
+//        alfa_beta_end=new double[2*cntstep];
+//        u_cur=new double[cntstep*(rnz+1)];
+//        uend=new double[cntstep];
+//        ubeg=new double[cntstep];
+
+//        for (int i = 0; i < 2*(size_z-rank_z)-1; ++i) {
+//            alfa[i]=new double[cntstep*(rnz+1)];
+//            beta[i] = new double[cntstep*(rnz+1)];
+//        }
+
+//        calcCoef_z(params,uOld,u_c,a,b,c,f);
+
+        for x=0..size_x-1{
+           for y=0..size_y-1{
+              cf init_alfa_beta_z[x][y][0]:init_alfa_beta(cntstep[3][x][y][0],alfa_beta_beg[3][it][x][y][0]) @ { locator_cyclic: (x*$FGC*$FGC+y*$FGC+0)/$PPN; };
+              for z=0..size_z-1{
+                    cf calcCoef_z[x][y][z]: calcCoef_z(params[x][y][z],u_c[1][it][x][y][z],u_c[3][it][x][y][z], a[3][it][x][y][z],b[3][it][x][y][z],c[3][it][x][y][z],f[3][it][x][y][z]) @ { locator_cyclic: (x*$FGC*$FGC+y*$FGC+z)/$PPN; };
+              }
+              cf init_uend_z[x][y][size_z-1]: init_uend(cntstep[3][x][y][size_z-1], ubeg[3][it][x][y][size_z-1]) @ {
+			  	locator_cyclic: (x*$FGC*$FGC+y*$FGC+size_z-1)/$PPN;
+			  };
+           }
+        }
+        for x=0..size_x-1{
+           for y=0..size_y-1{
+              for i=0..cntfor[3][x][y][0]-1{
+                 cf calccoef_pr_z[i][x][y][0]: calccoef_pr_z(cntstep[3][x][y][0],i,params[x][y][0],a[3][it][x][y][0],b[3][it][x][y][0],c[3][it][x][y][0],f[3][it][x][y][0],
+                                                alfa[3][it][i][x][y][0],beta[3][it][i][x][y][0],alfa_beta_beg[3][it][x][y][0],alfa_beta_beg6[3][it][i][x][y][1]) @ { locator_cyclic: (x*$FGC*$FGC+y*$FGC+0)/$PPN; };
+
+                 if (size_z>1) {
+                    cf calcVal_z[i][x][y][0]: calcVal(y*size_x+x,3,cntstep[3][x][y][0],params[x][y][0],alfa[3][it][i][x][y][0],beta[3][it][i][x][y][0],
+                                            u_cur[3][it][i][x][y][0],ubeg6[3][it][i][x][y][0-1],ubeg6[3][it][i][x][y][0])-->(alfa[3][it][i][x][y][0],beta[3][it][i][x][y][0],ubeg6[3][it][i][x][y][0],ubeg6[3][it][i][x][y][0-1]) @ { locator_cyclic: (x*$FGC*$FGC+y*$FGC+0)/$PPN; };
+                 }
+              }
+              for z=1..size_z-2{
+                 for i=0..cntfor[3][x][y][z]-1{
+                    cf calccoef_pr_z[i][x][y][z]:calccoef_pr_z(cntstep[3][x][y][z],i,params[x][y][z],a[3][it][x][y][z],b[3][it][x][y][z],c[3][it][x][y][z],f[3][it][x][y][z],
+                                                  alfa[3][it][i][x][y][z],beta[3][it][i][x][y][z],alfa_beta_beg6[3][it][i][x][y][z],alfa_beta_beg6[3][it][i][x][y][z+1])-->(alfa_beta_beg6[3][it][i][x][y][z]) @ { locator_cyclic: (x*$FGC*$FGC+y*$FGC+z)/$PPN; };
+
+                    cf calcVal_z[i][x][y][z]: calcVal(z*size_y*size_z+y*size_x+x,3,cntstep[3][x][y][z],params[x][y][z],alfa[3][it][i][x][y][z],beta[3][it][i][x][y][z],
+                                               u_cur[3][it][i][x][y][z],ubeg6[3][it][i][x][y][z-1],ubeg6[3][it][i][x][y][z])-->(alfa[3][it][i][x][y][z],beta[3][it][i][x][y][z],ubeg6[3][it][i][x][y][z]) @ { locator_cyclic: (x*$FGC*$FGC+y*$FGC+z)/$PPN; };
+                 }
+              }
+              for i=0..cntfor[3][x][y][size_z-1]-1{
+                 if (size_z>1) {
+                    cf calccoef_pr_z[i][x][y][size_z-1]:calccoef_pr_z(cntstep[3][x][y][size_z-1],i,params[x][y][size_z-1],a[3][it][x][y][size_z-1],b[3][it][x][y][size_z-1],c[3][it][x][y][size_z-1],f[3][it][x][y][size_z-1],
+                                                      alfa[3][it][i][x][y][size_z-1],beta[3][it][i][x][y][size_z-1],alfa_beta_beg6[3][it][i][x][y][size_z-1],alfa_beta_beg6[3][it][i][x][y][size_z])-->(alfa_beta_beg6[3][it][i][x][y][size_z-1],alfa_beta_beg6[3][it][i][x][y][size_z]) @ { locator_cyclic: (x*$FGC*$FGC+y*$FGC+size_z-1)/$PPN; };
+                 }
+                 cf calcVal_z[i][x][y][size_z-1]: calcVal((size_z-1)*size_y*size_z+y*size_x+x,3,cntstep[3][x][y][size_z-1],params[x][y][size_z-1],alfa[3][it][i][x][y][size_z-1],beta[3][it][i][x][y][size_z-1],
+                                                   u_cur[3][it][i][x][y][size_z-1],ubeg6[3][it][i][x][y][size_z-2],ubeg[3][it][x][y][size_z-1])-->(alfa[3][it][i][x][y][size_z-1],beta[3][it][i][x][y][size_z-1]) @ { locator_cyclic: (x*$FGC*$FGC+y*$FGC+size_z-1)/$PPN; };
+              }
+
+
+           }
+        }
+        for x=0..size_x-1{
+           for y=0..size_y-1{
+              for z=0..size_z-1{
+                 reduce_u(cntfor[3][x][y][z], x, y, z, u_cur[3][it], u[3][it][x][y][z]) @ { locator_cyclic: (x*$FGC*$FGC+y*$FGC+z)/$PPN; };
+                 cf fill_u_z[x][y][z]: fill_u(3,cntstep[3][x][y][z], params[x][y][z], u[3][it][x][y][z], u_c[4][it][x][y][z])-->(u[3][it][x][y][z],a[3][it][x][y][z],b[3][it][x][y][z],c[3][it][x][y][z],f[3][it][x][y][z]) @ { locator_cyclic: (x*$FGC*$FGC+y*$FGC+z)/$PPN; };
+//                 outputData(300+it,z*size_x*size_y+y*size_x+x, params[x][y][z],u_c[4][it][x][y][z]);
+              }
+           }
+        }
+
+/*
+        if (it%tprint==0) {
+           for x=0..size_x-1{
+              for y=0..size_y-1{
+                 for z=0..size_z-1{
+                    cf outputData[x][y][z]: outputData(it,z*size_x*size_y+y*size_x+x, params[x][y][z],u_c[4][it][x][y][z]) @ { locator_cyclic: (x*$FGC*$FGC+y*$FGC+z)/$PPN; };
+                 }
+              }
+           }
+        }
+*/
+
+        // пересылка теневых граней
+
+        for x=0..size_x-1{
+           for y=0..size_y-1{
+              for z=0..size_z-1{
+                  cf setBorder_x[x][y][z]: setBorder_x(params[x][y][z],u_c[4][it][x][y][z],sendar_x_L[x-1][y][z],sendar_x_R[x+1][y][z]) @ { locator_cyclic: (x*$FGC*$FGC+y*$FGC+z)/$PPN; };
+                  cf setBorder_y[x][y][z]: setBorder_y(params[x][y][z],u_c[4][it][x][y][z],sendar_y_T[x][y+1][z],sendar_y_B[x][y-1][z]) @ { locator_cyclic: (x*$FGC*$FGC+y*$FGC+z)/$PPN; };
+                  cf setBorder_z[x][y][z]: setBorder_z(params[x][y][z],u_c[4][it][x][y][z],sendar_z_F[x][y][z+1],sendar_z_B[x][y][z-1]) @ { locator_cyclic: (x*$FGC*$FGC+y*$FGC+z)/$PPN; };
+              }
+           }
+        }
+        for y=0..size_y-1{
+           for z=0..size_z-1{
+//                copy_v(sendar_x_L[0][y][z],sendar_x_R[0][y][z]);
+                vinit(sendar_x_R[0][y][z]) @ { locator_cyclic: (0*$FGC*$FGC+y*$FGC+z)/$PPN; };
+           }
+        }
+        for y=0..size_y-1{
+           for z=0..size_z-1{
+//                copy_v(sendar_x_R[size_x-1][y][z],sendar_x_L[size_x-1][y][z]);
+                vinit(sendar_x_L[size_x-1][y][z]) @ { locator_cyclic: ((size_x-1)*$FGC*$FGC+y*$FGC+z)/$PPN; };
+
+           }
+        }
+
+
+        for x=0..size_x-1{
+           for z=0..size_z-1{
+//                copy_v(sendar_y_B[x][0][z],sendar_y_T[x][0][z]);
+                vinit(sendar_y_T[x][0][z]) @ { locator_cyclic: (x*$FGC*$FGC+0*$FGC+z)/$PPN; };
+
+           }
+        }
+        for x=0..size_x-1{
+           for z=0..size_z-1{
+//                copy_v(sendar_y_T[x][size_y-1][z],sendar_y_B[x][size_y-1][z]);
+                vinit(sendar_y_B[x][size_y-1][z]) @ { locator_cyclic: (x*$FGC*$FGC+(size_y-1)*$FGC+z)/$PPN; };
+
+           }
+        }
+
+        for x=0..size_x-1{
+           for y=0..size_y-1{
+//                copy_v(sendar_z_B[x][y][0],sendar_z_F[x][y][0]);
+                vinit(sendar_z_F[x][y][0]) @ { locator_cyclic: (x*$FGC*$FGC+y*$FGC+0)/$PPN; };
+
+           }
+        }
+        for x=0..size_x-1{
+           for y=0..size_y-1{
+//                copy_v(sendar_z_F[x][y][size_z-1],sendar_z_B[x][y][size_z-1]);
+                vinit(sendar_z_B[x][y][size_z-1]) @ { locator_cyclic: (x*$FGC*$FGC+y*$FGC+size_z-1)/$PPN; };
+
+           }
+        }
+
+
+        for x=0..size_x-1{
+           for y=0..size_y-1{
+              for z=0..size_z-1{
+                  cf loadBorder[x][y][z]: loadBorder(params[x][y][z],u_c[1][it+1][x][y][z],u_c[4][it][x][y][z],
+                  sendar_x_R[x][y][z],sendar_x_L[x][y][z],
+                  sendar_y_T[x][y][z],sendar_y_B[x][y][z],
+                  sendar_z_F[x][y][z],sendar_z_B[x][y][z])-->(u_c[4][it][x][y][z],
+				  											  u_c[3][it][x][y][z],
+				  											  u_c[2][it][x][y][z],
+				  											  u_c[1][it][x][y][z],
+                                                                sendar_x_R[x][y][z],sendar_x_L[x][y][z],
+                                                                sendar_y_T[x][y][z],sendar_y_B[x][y][z],
+                                                                sendar_z_F[x][y][z],sendar_z_B[x][y][z]) @ { locator_cyclic: (x*$FGC*$FGC+y*$FGC+z)/$PPN; };
+              }
+           }
+        }
+
+
+
+    } @ {
+        locator_cyclic a[i][ii][x][y][z]	=>( x*$FGC*$FGC+y*$FGC+z)/$PPN;
+        locator_cyclic b[i][ii][x][y][z]	=>( x*$FGC*$FGC+y*$FGC+z)/$PPN;
+        locator_cyclic c[i][ii][x][y][z]	=>( x*$FGC*$FGC+y*$FGC+z)/$PPN;
+        locator_cyclic f[i][ii][x][y][z]	=>( x*$FGC*$FGC+y*$FGC+z)/$PPN;
+        locator_cyclic alfa[i][ii][iii][x][y][z]	=>( x*$FGC*$FGC+y*$FGC+z)/$PPN;
+        locator_cyclic beta[i][ii][iii][x][y][z]	=>( x*$FGC*$FGC+y*$FGC+z)/$PPN;
+		locator_cyclic alfa_beta_beg[i][ii][x][y][z]	=>( x*$FGC*$FGC+y*$FGC+z)/$PPN;
+		locator_cyclic alfa_beta_beg6[i][ii][iii][x][y][z]	=>( x*$FGC*$FGC+y*$FGC+z)/$PPN;
+		locator_cyclic alfa_beta_end	=> 0; // UNUSED
+		
+        locator_cyclic u_cur[i][ii][iii][iv][v][vi]	=> 0; // REDUCE
+		locator_cyclic uend	=> 0; // UNUSED
+		locator_cyclic ubeg[i][ii][x][y][z]	=>( x*$FGC*$FGC+y*$FGC+z)/$PPN;
+		locator_cyclic ubeg6[i][ii][iii][x][y][z]	=>( x*$FGC*$FGC+y*$FGC+z)/$PPN;
+		locator_cyclic u[i][ii][iii][iv][v]	=> 0; // REDUCE
+        
+		locator_cyclic sendar_x_L[x][y][z]	=>( x*$FGC*$FGC+y*$FGC+z)/$PPN;
+		locator_cyclic sendar_x_R[x][y][z]	=>( x*$FGC*$FGC+y*$FGC+z)/$PPN;
+		locator_cyclic sendar_y_T[x][y][z]	=>( x*$FGC*$FGC+y*$FGC+z)/$PPN;
+		locator_cyclic sendar_y_B[x][y][z]	=>( x*$FGC*$FGC+y*$FGC+z)/$PPN;
+		locator_cyclic sendar_z_B[x][y][z]	=>( x*$FGC*$FGC+y*$FGC+z)/$PPN;
+		locator_cyclic sendar_z_F[x][y][z]	=>( x*$FGC*$FGC+y*$FGC+z)/$PPN;
+		
+	}
+    //end while (curT<params->T);
+} @ {
+    locator_cyclic size 	=> 0; // "GLOBAL"
+	locator_cyclic size_x	=> 0; // "GLOBAL"
+	locator_cyclic size_y	=> 0; // "GLOBAL"
+	locator_cyclic size_z	=> 0; // "GLOBAL"
+	locator_cyclic rnx	=> 0; // UNUSED
+	locator_cyclic rny	=> 0; // UNUSED
+	locator_cyclic rnz	=> 0; // UNUSED
+    
+	locator_cyclic cntfor[a][b][c][d]	=> 0; // for loops
+	locator_cyclic cntstep[a][x][y][z]	=>( x*$FGC*$FGC+y*$FGC+z)/$PPN; 
+	locator_cyclic rank_x[x][y][z]	=>( x*$FGC*$FGC+y*$FGC+z)/$PPN; 
+	locator_cyclic rank_y[x][y][z]	=>( x*$FGC*$FGC+y*$FGC+z)/$PPN; 
+	locator_cyclic rank_z[x][y][z]	=>( x*$FGC*$FGC+y*$FGC+z)/$PPN; 
+    
+	locator_cyclic beg_index_x	=> 0; // UNUSED
+	locator_cyclic beg_index_y	=> 0; // UNUSED
+	locator_cyclic beg_index_z	=> 0; // UNUSED
+    
+	locator_cyclic end_index_x	=> 0; // UNUSED
+	locator_cyclic end_index_y	=> 0; // UNUSED
+	locator_cyclic end_index_z	=> 0; // UNUSED
+    
+	locator_cyclic params[x][y][z]	=>( x*$FGC*$FGC+y*$FGC+z)/$PPN; 
+	locator_cyclic dim_x[x][y][z]	=>( x*$FGC*$FGC+y*$FGC+z)/$PPN; 
+	locator_cyclic dim_y[x][y][z]	=>( x*$FGC*$FGC+y*$FGC+z)/$PPN; 
+	locator_cyclic dim_z[x][y][z]	=>( x*$FGC*$FGC+y*$FGC+z)/$PPN; 
+    
+	locator_cyclic u_c[a][b][x][y][z]	=>( x*$FGC*$FGC+y*$FGC+z)/$PPN;
+	locator_cyclic iter	=> 0; 
+	locator_cyclic curT[a]	=> 0; 
+	locator_cyclic T	=> 0;
+	locator_cyclic tprint	=> 0;
+	locator_cyclic tau	=> 0;
+
+}
+

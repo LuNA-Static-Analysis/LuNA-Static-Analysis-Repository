@@ -27,7 +27,7 @@ export const getCanonicalLunaDf = (contextInfo: TContextInfo) =>
     const newName = replaceChars(lunaDf)(contextInfo.aliases);
     return contextInfo.dfRegistry.get(contextInfo.aliases.get(lunaDf.fullName))?.lunaDf ||
         contextInfo.dfRegistry.get(newName)?.lunaDf ||
-        LunaDf(CondNode(lunaDf.begin)(parseIndices(newName)) as TDfCond);
+        {...LunaDf(CondNode(lunaDf.begin)(parseIndices(newName)) as TDfCond), begin: lunaDf.begin};
 };
 
 export const updateRegistry = (contextInfo: TContextInfo) =>

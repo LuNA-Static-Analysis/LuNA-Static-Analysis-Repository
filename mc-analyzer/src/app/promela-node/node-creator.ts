@@ -50,13 +50,13 @@ export const NodeCreator = (subName: string): TNodeCreator => {
             '#define CONCAT3(a, b, c) a##b##c',
             '#define def(name) isdef_##name = true; true',
             '#define destroy(name) destroy_count_##name = destroy_count_##name + 1',
-            '#define enddef(name) enddef_##name: isdef_##name = false;use_count_##name = 0;init_count_##name = 0;destroy_count_##name = 0;',
+            '#define enddef(name) enddef_##name = 1;isdef_##name = false;use_count_##name = 0;init_count_##name = 0;destroy_count_##name = 0;',
             '#define init(name) init_count_##name = init_count_##name + 1; init_count_##name = init_count_##name',
             '#define use(name) use_count_##name = use_count_##name + 1',
             '#define define_check_init(is_used, enddef_label, is_init) (enddef_label -> (is_used -> is_init))',
             '#define define_check_usage(is_used, enddef_label, is_init) (enddef_label -> (is_init -> is_used))',
-            `#define check_init(name) define_check_init(use_count_##name > 0, ${subName}@enddef_##name, init_count_##name > 0)`,
-            `#define check_usage(name) define_check_usage(use_count_##name > 0, ${subName}@enddef_##name, init_count_##name > 0)`,
+            `#define check_init(name) define_check_init(use_count_##name > 0, enddef_##name, init_count_##name > 0)`,
+            `#define check_usage(name) define_check_usage(use_count_##name > 0, enddef_##name, init_count_##name > 0)`,
             '#define depends_on(varA, varB) CONCAT3(depends_on_, varA, _##varB)=true;true;',
             '#define inc_true(name) true_count_##name = true_count_##name + 1; true_count_##name = true_count_##name',
             '#define inc_false(name) false_count_##name = false_count_##name + 1; true_count_##name = true_count_##name',
@@ -66,7 +66,8 @@ export const NodeCreator = (subName: string): TNodeCreator => {
                                    'int use_count_##name = 0;' +
                                    'int destroy_count_##name = 0;' +
                                    'int true_count_##name = 0;' +
-                                   'int false_count_##name = 0'
+                                   'int false_count_##name = 0;' +
+                                   'int enddef_##name = 0'
             ]
         ),
         ltls: [],
@@ -231,11 +232,27 @@ export const DependsNodeState = ([dfUse, dfInit]: [TLunaDf, TLunaDf], parentInfo
     );
 
 export const IfNode = (nodeSequence: readonly TProctypeBodyNode[], contextInfo: TContextInfo, formula: TFormulaStatement): TProctypeBodyNode => {
+    if (formula.promelaFormula === 'condNoName') {
+        const begins = [-1, -1]
+            .concat(flatMapArray(getNodeBegins)(nodeSequence))
+            .concat([-1, -1]);
+        const [head, ...tail]: readonly string[] = ['', ...mapArray(getNodeContent)(nodeSequence)];
+        const header = 'if\n::';
+        const firstNode = addIndent(1)(head).trim();
+        const otherNodes = joinNewLine(mapArray(addIndent(1))(tail));
+        const allNodes = `${firstNode}\n${otherNodes}${otherNodes.length > 0 ? '\n' : ''}`;
+        const footer = ':: else -> skip;\nfi';
+        const content = `${header}${allNodes}${footer}`;
+        const ltl = EmptyLtl(
+            flatMapArray(extractPromelaDfsFromNode)(nodeSequence)
+        );
+        return ProctypeBodyNode(content, begins, [ltl]);
+    }
     const cond = getCond(formula, contextInfo.constants);
     const begins = [-1, -1]
         .concat(flatMapArray(getNodeBegins)(nodeSequence))
         .concat([-1, -1]);
-    console.error({nodeSequence})
+    // console.error({nodeSequence})
     const [head, ...tail]: readonly string[] = ['', ...mapArray(getNodeContent)(nodeSequence)];
     const header = (cond === 'false')
         ? `if\n:: false ->`
@@ -249,6 +266,7 @@ export const IfNode = (nodeSequence: readonly TProctypeBodyNode[], contextInfo: 
         flatMapArray(extractPromelaDfsFromNode)(nodeSequence)
     );
     return ProctypeBodyNode(content, begins, [ltl]);
+
 };
 
 export const DestroyNodeState = (lunaDf: TLunaDf, parentInfo: TContextInfo, begin: number): NodeState =>

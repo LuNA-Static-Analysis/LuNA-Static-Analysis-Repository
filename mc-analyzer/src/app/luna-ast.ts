@@ -38,6 +38,12 @@ export const DfCond = (ref: readonly [string, ...TCondNode[]], begin: number): T
 
 
 export const CondNode = (begin: number) => (value: string | readonly [string, ...readonly NestedStringArray[]]): TCondNode => {
+    if (value[0] === 'x') {
+        console.log('in:', {value, begin})
+        if (begin === 17) {
+            console.log('out:', {value})
+        }
+    }
     const intRegExp = /^\d*$/;
     const floatRegExp = /^\d*\.\d*$/;
     const operatorRegExp = /[=+\-*/<%>!&|?:]/;
@@ -45,7 +51,7 @@ export const CondNode = (begin: number) => (value: string | readonly [string, ..
         return {
             type: 'id',
             ref: [value[0], ...value.slice(1).map(CondNode(begin))],
-            begin: begin
+            begin
         };
     }
     if (operatorRegExp.exec(value)) {
@@ -53,7 +59,7 @@ export const CondNode = (begin: number) => (value: string | readonly [string, ..
         try {
             const workFile = path.join(workDir, 'main.fa');
             const jsonFile = path.join(workDir, 'a.json');
-            writeFileSync(workFile, `sub main() { foo(${value}); }`);
+            writeFileSync(workFile, `sub main() { foo(${' '.repeat(begin-17)}${value}); }`);
             execSync(`parser -o ${jsonFile} ${workFile}`);
             return JSON.parse(readFileSync(jsonFile, 'utf8'))['main'].body[1].args[0];
         } finally {

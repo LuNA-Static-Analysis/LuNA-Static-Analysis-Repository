@@ -120,24 +120,29 @@ const Sem2_1AdaptError = (ltl: TLtl, prettyAST: TPromelaAST, promelaLine: number
     }
 });
 
-const Sem3_1AdaptError = (ltl: TLtl, prettyAST: TPromelaAST, promelaLine: number, lunaSourcePath: string) => ({
-    error_code: ltl.code,
-    details: {
-        used: {
-            true: ltl.promelaDfs[0].lunaDf.fullName,
-            local: ltl.promelaDfs[0].lunaDf.fullName,
-            conditions: [ltl.promelaDfs[0].lunaDf.fullName],
-            where: [getDeclaredPosition(ltl.begin)(prettyAST.lunaSourceLines)(lunaSourcePath)],
-            df: {
-                declared: [[getDeclaredPosition(ltl.promelaDfs[0].lunaDf.begin)(prettyAST.lunaSourceLines)(lunaSourcePath)]],
-                name: ltl.promelaDfs[0].lunaDf.fullName,
-                true: ltl.promelaDfs[0].lunaDf.fullName,
-                local: ltl.promelaDfs[0].lunaDf.fullName
-            }
-        },
-        initialized: []
+const Sem3_1AdaptError = (ltl: TLtl, prettyAST: TPromelaAST, promelaLine: number, lunaSourcePath: string) => {
+    if (getDeclaredPosition(ltl.promelaDfs[0].lunaDf.begin)(prettyAST.lunaSourceLines)(lunaSourcePath).line === 2) {
+        console.log(JSON.stringify(ltl, null, 2));
     }
-});
+    return ({
+        error_code: ltl.code,
+        details: {
+            used: {
+                true: ltl.promelaDfs[0].lunaDf.fullName,
+                local: ltl.promelaDfs[0].lunaDf.fullName,
+                conditions: [ltl.promelaDfs[0].lunaDf.fullName],
+                where: [getDeclaredPosition(ltl.begin)(prettyAST.lunaSourceLines)(lunaSourcePath)],
+                df: {
+                    declared: [[getDeclaredPosition(ltl.promelaDfs[0].lunaDf.begin)(prettyAST.lunaSourceLines)(lunaSourcePath)]],
+                    name: ltl.promelaDfs[0].lunaDf.fullName,
+                    true: ltl.promelaDfs[0].lunaDf.fullName,
+                    local: ltl.promelaDfs[0].lunaDf.fullName
+                }
+            },
+            initialized: []
+        }
+    });
+};
 
 const Sem3_2AdaptError = (ltl: TLtl, prettyAST: TPromelaAST, promelaLine: number, lunaSourcePath: string) => ({
     error_code: ltl.code,
@@ -193,27 +198,17 @@ const Sem6AdaptError = (ltl: TLtl, prettyAST: TPromelaAST, promelaLine: number, 
 
 const getDeclaredPosition = (index: number) =>
                             (lunaSourceLines: readonly string[]) =>
-                            (lunaSourcePath: string) => {
+                            (file: string) => {
     let charCount = 0;
-    let lineNumber = 0;
-    let charIndex = 0;
-    let foundLine = lunaSourceLines[0];
-    for (const line of lunaSourceLines) {
-        ++lineNumber;
-        charCount += line.length + 1;
+    let line = 0;
+    for (const curLine of lunaSourceLines) {
+        ++line;
+        charCount += curLine.length + 1;
         if (charCount >= index) {
-            charIndex = index - (charCount - line.length) + 2;
-            foundLine = line;
             break;
         }
     }
-    return {
-        file: lunaSourcePath,
-        line: lineNumber,
-        name: 'main',
-        charIndex,
-        foundLine
-    };
+    return { file, line, name: 'main' };
 };
 
 const readFile = (path: string): string =>
@@ -231,11 +226,12 @@ const timer = (timerName: string) => (func: () => unknown) => {
 };
 
 const config = pipe(
-    minimist(process.argv.slice(2), {string: ['project-dir', 'errors-file', 'output-dir'] }),
+    minimist(process.argv.slice(2), {string: ['project-dir', 'errors-file', 'output-dir', 'luna-src'] }),
     (parsedArgs: ParsedArgs) => ({
         lunaSourcePath: path.resolve(parsedArgs._[0]),
         errorsFile: fromNullable(parsedArgs['errors-file'] && path.resolve(parsedArgs['errors-file'])),
-        workDir: parsedArgs['output-dir'] ?? mkdtempSync(path.join(tmpdir(), 'lpv-'))
+        workDir: parsedArgs['output-dir'] ?? mkdtempSync(path.join(tmpdir(), 'lpv-')),
+        lunaSrc: parsedArgs['luna-src'] ?? path.resolve(parsedArgs._[0])
     })
 );
 
@@ -276,7 +272,7 @@ const getPromelaAST = (config: McAnalyzeConfig): TPromelaAST =>
 
 const handleErrors = (mcAnalyserErrors: AdaptError[]) =>
     match(
-        () => undefined, //console.log(JSON.stringify(mcAnalyserErrors)),
+        () => console.log(JSON.stringify(mcAnalyserErrors)),
         (file: string) =>
             pipe(
                 tryCatch(() => JSON.parse(readFile(file))),
@@ -291,6 +287,6 @@ pipe(
     timer('parseLunaFile')(parseLunaFile),
     (f: LunaAST) => timer('createPromelaAST')(() => PromelaAST(getLunaLines(), f)),
     (f: TPromelaAST) => timer('createPromelaBin')(() => createPromelaBin(f)),
-    (f: TPromelaAST) => timer('verify')(() => verify(config.lunaSourcePath)(f)),
+    (f: TPromelaAST) => timer('verify')(() => verify(config.lunaSrc)(f)),
     (f: AdaptError[]) => timer('handleErrors')(() => handleErrors(f))
 );

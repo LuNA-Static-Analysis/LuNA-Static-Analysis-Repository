@@ -65,6 +65,31 @@ export const handleIDK = (context: TContext) =>
     return func();
 };
 
+export const _handleIDK = (context: TContext) =>
+    (node: BranchableNode) =>
+        (getCondition: (branchableNode: BranchableNode) => TCondition): TStatement => {
+            const metaInfo = context.metaInfo;
+            const childInfo = context.childInfo;
+            const condition = getCondition(node);
+            const iteratorStatement = processNodes(node)(UseNodeState)(condition.lunaDfs.filter(isNotConstant(childInfo)))(context);
+            const bodyStatement = BodyStatement(node.body, iteratorStatement.context);
+            const promelaBodyNodes = bodyStatement.promelaNodes;
+            const func = () => Statement(
+                Context(iteratorStatement.context.childInfo, bodyStatement.context.metaInfo),
+                iteratorStatement.promelaNodes
+            );
+            if (promelaBodyNodes.length > 0 || condition.lunaDfs.find(isConstant(childInfo))) {
+                return Statement(
+                    Context(iteratorStatement.context.childInfo, bodyStatement.context.metaInfo),
+                        [
+                            ...iteratorStatement.promelaNodes,
+                            IfNode(promelaBodyNodes, iteratorStatement.context.childInfo, FormulaStatement('x', 'x', 'condNoName'))
+                        ]
+                );
+            }
+            return func();
+        };
+
 export const getStatementByBranchCondition = (branchCondition: BranchCondition) =>
                                              (f1: () => TStatement) =>
                                              (f2: () => TStatement) =>

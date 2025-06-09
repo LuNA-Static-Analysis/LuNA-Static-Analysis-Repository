@@ -8,7 +8,7 @@ export enum BranchCondition { FALSE, TRUE, IDK }
 
 export type TCondition = {
     readonly value: number | undefined;
-    readonly formula: string;
+    readonly  formula: string;
     readonly prettyFormula: string;
     readonly branchCondition: BranchCondition;
     readonly lunaDfs: readonly TLunaDf[];
@@ -27,7 +27,10 @@ export const parseCondNode = (condition: TCondNode): TCondition => {
     if (condition.type === 'id') {
         return Condition(undefined, condition, BranchCondition.IDK, [LunaDf(condition)]);
     }
-    return undefined;
+    if (condition.type as any === 'rcast') {
+        return parseCondNode((condition as any).expr);
+    }
+    return Condition(undefined, condition, BranchCondition.IDK, []);
 };
 
 export const getBaseLunaDf = (cond: TCondition) =>
