@@ -27,7 +27,7 @@ export const parseCondNode = (condition: TCondNode): TCondition => {
     if (condition.type === 'id') {
         return Condition(undefined, condition, BranchCondition.IDK, [LunaDf(condition)]);
     }
-    if (condition.type as any === 'rcast') {
+    if (condition.type as any === 'icast' || condition.type as any === 'rcast') {
         return parseCondNode((condition as any).expr);
     }
     return Condition(undefined, condition, BranchCondition.IDK, []);

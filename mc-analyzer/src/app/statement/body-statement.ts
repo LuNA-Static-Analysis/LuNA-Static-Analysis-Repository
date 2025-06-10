@@ -1,5 +1,5 @@
 import {parseStatement, Statement, TStatement, TContext, Context} from './statement';
-import {BodyNode, DfCond, getNames, StatementNode} from '../luna-ast';
+import {BodyNode, DfCond, DfNode, getNames, StatementNode} from '../luna-ast';
 import {TMetaInfo, updateNodeCreator} from '../meta-info';
 import {LunaDf} from '../df/luna-df';
 import {getPromelaDfFullName, isDeclared} from '../df/promela-df';
@@ -9,8 +9,12 @@ import {DefNodeState, EndDefNodeState, processNodes} from '../promela-node/node-
 import {filter, flatMapArray, mapArray, reduce} from '../utils';
 
 export const BodyStatement = (bodyNode: BodyNode, context: TContext): TStatement => {
-    const [dfNode, ...statements] = bodyNode;
-    const dfDeclaredStatement = processNodes(dfNode)(DefNodeState)(getNames(dfNode))(context);
+    const [dfNode, ...statements] = (bodyNode[0].names !== undefined)
+        ? bodyNode
+        : [{names: [], begin: -1}, ...bodyNode.map(k => k) as StatementNode[]];
+    const dfDeclaredStatement = dfNode.names.length === 0
+        ? Statement(context, [])
+        : processNodes(dfNode)(DefNodeState)(getNames(dfNode))(context);
     const statement = handleStatements(statements)(dfDeclaredStatement.context);
     const declaredDfNames: string[] = [...new Set(
         flatMapArray((node: TProctypeBodyNode) =>
@@ -42,6 +46,9 @@ const handleStatements = (statements: StatementNode[]) =>
     reduce(statements)
           (Statement(context, []))
           ((previousValue: TStatement) => (statementNode) => {
+              if (statementNode.type === 'let') {
+                  return previousValue;
+              }
               const statement = parseStatement(statementNode)(previousValue.context);
               const contextInfo = updateRegistry(previousValue.context.childInfo)(statement.context.childInfo);
               const context2 = Context(contextInfo, statement.context.metaInfo);
@@ -59,6 +66,6 @@ const handleDeclaredDfNames = (declaredDfNames: string[]) =>
               const [endDefNode, nodeCreator2] = EndDefNodeState(lunaDf, previousValue.context.childInfo, begin)(nodeCreator1);
               const context = Context(
                   addEntryDfs(previousValue.context.childInfo)(defNode.promelaDfs),
-                  updateNodeCreator(statement.context.metaInfo)(nodeCreator2))
+                  updateNodeCreator(statement.context.metaInfo)(nodeCreator2));
               return NodesInformation([...previousValue.allDefNodes, defNode], [...previousValue.endDefNodes, endDefNode], context);
           });

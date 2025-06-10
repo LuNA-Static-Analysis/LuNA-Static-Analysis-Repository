@@ -3,6 +3,7 @@ import {NodeCreator, TNodeCreator} from './promela-node/node-creator';
 import {Import, TImport} from './import';
 import {Sub, TSub} from './sub';
 import {filter, mapArray} from './utils';
+import {ExecImportStatement} from "./statement/exec-statement/exec-import-statement";
 
 export type TMetaInfo = {
     readonly imports: Map<string, TImport>;
@@ -21,7 +22,7 @@ export const MetaInfo = (ast: LunaAST): TMetaInfo => {
     );
     const imports = new Map(
         mapArray((alias: string): [string, TImport] => [alias, Import(ast[alias] as ExternNode)])(
-            filter((alias: string) => ast[alias].type === 'extern')(keys)
+            filter((alias: string) => ast[alias].type === 'extern' || ast[alias].type === 'foreign_cpp')(keys)
         ));
     return {
         imports,

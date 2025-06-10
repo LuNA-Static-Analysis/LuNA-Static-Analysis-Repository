@@ -11,9 +11,13 @@ export const LunaDfIndex = (cond: TCondNode): TLunaDfIndex => {
     if (!cond) {
         return {name: "0", nestedDfs: []};
     }
+    if (cond.type as any === 'icast' || cond.type as any === 'rcast') {
+        cond = (cond as any).expr as TCondNode;
+    }
     switch (cond.type) {
         case 'rconst':
         case 'iconst':
+        case 'sconst':
             return { name: literalToString(cond), nestedDfs: [] };
         case 'id': {
             const df: TLunaDf = LunaDf(cond);
@@ -30,9 +34,13 @@ export const LunaDfIndex = (cond: TCondNode): TLunaDfIndex => {
 };
 
 export const Expr = (cond: TCondNode): string => {
+    if (cond.type as any === 'icast' || cond.type as any === 'rcast') {
+        cond = (cond as any).expr as TCondNode;
+    }
     switch (cond.type) {
         case 'rconst':
         case 'iconst':
+        case 'sconst':
             return `(${literalToString(cond)})`;
         case 'id':
             return `(${LunaDf(cond).fullName})`;

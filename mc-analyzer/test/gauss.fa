@@ -1,0 +1,202 @@
+import real_print(real) as real_print;
+import real_print_wait(int, real, name) as real_print_wait;
+import int_print(int) as int_print;
+import int_print_wait(int, int, name) as int_print_wait;
+import mat_read_block(string, int, int, name) as mat_read_block;
+import mat_init_from_block(value, int, int, int, name) as mat_init_from_block;
+
+C++ sub real_set(name x, real v) ${{ x = v; $}}
+
+C++ sub int_set(name x, int v) ${{ x = v; $}}
+
+C++ sub print(string s) ${{ printf("%s\n", s); $}}
+
+C++ sub empty() ${{$}}
+
+#define EPS 0.0001
+
+#define is_zero(V) (-$EPS <= $V && $V <= $EPS)
+
+sub vec_axpy(real A, name x, name y, int size, name dst) {
+    for i = 0..(size - 1) {
+        real_set(dst[i], A * x[i] + y[i]);
+    }
+}
+
+sub find_nonzero(name src, int height, int i0, int j0, name leading_i) {
+    while i < height && $is_zero(src[i < height ? i : height - 1][j0]), i = i0..out leading_i {
+        empty();
+    }
+}
+
+sub vec_copy(name src, int size, name dst) {
+    for i = 0..(size - 1) {
+        real_set(dst[i], src[i]);
+    }
+}
+
+sub mat_copy(name src, int height, int width, name dst) {
+    for i = 0..(height - 1) {
+        vec_copy(src[i], width, dst[i]);
+    }
+}
+
+sub to_row_echelon_step(name src, int height, int width, int i0, int j0, name dst, name found_nonzero) {
+    df leading_i;
+    find_nonzero(src, height, i0, j0, leading_i);
+
+    int_set(found_nonzero, leading_i < height);
+
+    if 0 == found_nonzero {
+        mat_copy(src, height, width, dst);
+    }
+
+    if found_nonzero {
+        mat_copy(src, i0, width, dst);
+
+        vec_copy(src[leading_i], width, dst[i0]);
+
+        for src_i = i0..(height - 1) {
+            if src_i != leading_i {
+                let dst_i = (src_i < leading_i) ? (src_i + 1) : src_i,
+                    m = real(src[src_i][j0]) / src[leading_i][j0] {
+                    vec_axpy(-m, src[leading_i], src[src_i], width, dst[dst_i]);
+                }
+            }
+        }
+    }
+}
+
+sub to_row_echelon(name src, int height, int width, name dst) {
+    df i0, j0, tmp;
+
+    int_set(i0[0], 0);
+    int_set(j0[0], 0);
+
+    mat_copy(src, height, width, tmp[-1]);
+    mat_copy(tmp[width - 2], height, width, dst);
+
+    for t = 0..(width - 2) {
+        df found_nonzero;
+        to_row_echelon_step(tmp[t - 1], height, width, i0[t], j0[t], tmp[t], found_nonzero);
+
+        int_set(j0[t + 1], j0[t] + 1);
+        int_set(i0[t + 1], found_nonzero ? (i0[t] + 1) : i0[t]);
+    }
+}
+
+sub gauss_forward(name A, int height, int width, name A_triangular) {
+    to_row_echelon(A, height, width, A_triangular);
+}
+
+sub gauss_backward(name mat, int height, int width, name x) {
+    for i1 = 0..width-2 {
+        df x_i;
+
+        let i = width - 2 - i1 {
+            real_set(x_i[i], mat[i][width - 1] / mat[i][i]);
+
+            for c = (i + 1)..(width - 2) {
+                real_set(x_i[c], x_i[c - 1] - mat[i][c] * x[c] / mat[i][i]);
+            }
+
+            real_set(x[i], x_i[width - 2]);
+        }
+    }
+}
+
+sub vec_is_zero(name v, int size, name result) {
+    df leading_i;
+
+    while i < size && $is_zero(v[i < size ? i : size - 1]), i = 0..out leading_i {
+        empty();
+    }
+
+    int_set(result, leading_i >= size);
+}
+
+sub check_single_solution(name A_triangular, int height, int width, name solvable) {
+    df non_zero_rows_count, invalid_rows_count;
+
+    int_set(non_zero_rows_count[-1], 0);
+    int_set(invalid_rows_count[-1], 0);
+
+    for i = 0..(height - 1) {
+        df row_is_zero;
+
+        vec_is_zero(A_triangular[i], width - 1, row_is_zero);
+
+        int_set(non_zero_rows_count[i], non_zero_rows_count[i - 1] + (0 == row_is_zero));
+        int_set(
+            invalid_rows_count[i], 
+            invalid_rows_count[i - 1] + (row_is_zero && 0 == $is_zero(A_triangular[i][width - 1]))
+        );
+    }
+
+    int_set(solvable, (width - 1) == non_zero_rows_count[height - 1] && 0 == invalid_rows_count[height - 1]);
+}
+
+sub gauss_try_solve(name A, int height, int width, name x, name solvable) {
+    df A_triangular, z;
+
+    gauss_forward(A, height, width, A_triangular);
+
+    // vec_is_zero(A_triangular[0], 4, z[0]);
+    // vec_is_zero(A_triangular[1], 4, z[1]);
+    // vec_is_zero(A_triangular[2], 4, z[2]);
+    // int_print(z[0]);
+    // int_print(z[1]);
+    // int_print(z[2]);
+
+    check_single_solution(A_triangular, height, width, solvable);
+
+    if solvable {
+        gauss_backward(A_triangular, height, width, x);
+    }
+}
+
+sub vec_print(name v, int size) {
+    df lock;
+
+    int_set(lock[0], 1);
+
+    for i = 0..size-1 {
+        real_print_wait(lock[i], v[i], lock[i + 1]);
+    }
+}
+
+sub mat_print(name m, int height, int width) {
+    df lock;
+
+    int_set(lock[0], 1);
+
+    for i = 0..height-1 {
+        for j = 0..width-1 {
+            let lock_i = i * width + j {
+                real_print_wait(lock[lock_i], m[i][j], lock[lock_i + 1]);
+            }
+        }
+    }
+}
+
+sub main(string input_path, int height, int width) {
+    df data, A, x, solvable;
+
+    mat_read_block(input_path, height, width, data);
+
+    for i = 0..(height - 1) {
+        for j = 0..(width - 1) {
+            mat_init_from_block(data, width, i, j, A[i][j]);
+        }
+    }
+
+    gauss_try_solve(A, height, width, x, solvable);
+
+    if solvable {
+        vec_print(x, width - 1);
+    }
+
+    if 0 == solvable {
+        print("Cannot compute single solution");
+    }
+}
