@@ -11,6 +11,7 @@ extern "C" int yywrap() { return 1; }
 
 void next_line();
 std::string yystring();
+std::string remove_quotes(const std::string& str);
 void next_token(const std::string&);
 extern bool has_errors;
 using namespace std;
@@ -26,7 +27,12 @@ bool is_end_of_define = false;
 				l->set_position(cur_position_in_line); \
 				yylval.string_ = l; \
 				ast_->push_token(token)
-				
+
+#define SAVE_TOKEN_WITHOUT_QUOTES std::string* token = new std::string(remove_quotes(yytext)); \
+				luna_string* l = new luna_string(token); \
+				l->set_position(cur_position_in_line); \
+				yylval.string_ = l; \
+				ast_->push_token(token)
 
 #define YY_USER_ACTION yylloc.first_line = line_num; \
 	yylloc.first_column = cur_position_in_line;
@@ -118,7 +124,7 @@ NOCPU { next_token(yystring()); return KW_NOCPU;}
 \/\/.*$ { next_token(yystring()); std::cerr << std::string(yytext, yyleng) << std::endl;/* comments */ }
 
 \"[^\"]*\" { 
-	SAVE_TOKEN;
+	SAVE_TOKEN_WITHOUT_QUOTES;
 	next_token(yystring());
 	return STRING; 
 }
@@ -168,6 +174,17 @@ void next_token(const std::string &s) {
 
 std::string yystring() {
 	return std::string(yytext, yyleng);
+}
+
+std::string remove_quotes(const std::string& str) {
+    if (str.length() >= 2 && 
+        str.front() == '"' && 
+        str.back() == '"') 
+	{
+		std::cerr << "hello";
+        return str.substr(1, str.length() - 2);
+    }
+    return str;
 }
 
 void yyerror(const char* msg) {
