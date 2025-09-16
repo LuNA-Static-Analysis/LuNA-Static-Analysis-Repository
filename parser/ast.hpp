@@ -1336,7 +1336,10 @@ class let_statement : public statement {
         std::stringstream s;
         std::string rep = std::string(shift, ' ');
 
-        s << rep << "\"let_statement\" : {\n" << assign_seq_->to_json(shift + 1) << "\n}\n";
+        s << rep << "\"let_statement\" : {\n" 
+        << assign_seq_->to_json(shift + 1) 
+        << (block_ == nullptr ? "" : ",\n" + block_->to_json(shift + 1)) 
+        << "\n}\n";
 
         return s.str();
     }
