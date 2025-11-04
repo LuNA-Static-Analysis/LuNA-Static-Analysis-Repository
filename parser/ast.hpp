@@ -57,7 +57,7 @@ public:
     }
 
     std::string to_json(const uint shift) const override {
-        return "\"value\" : \"" + (*value_) + "\"";
+        return "\"value\" : \"" + (*value_) + "\", " + "\"line\" : " + std::to_string(this->line_) + "";
     }
 
 
