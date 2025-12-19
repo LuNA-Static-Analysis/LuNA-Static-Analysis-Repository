@@ -2,9 +2,12 @@
 #define LUNA_AST
 
 #include <iostream>
+#include <string>
 #include <vector>
 #include <cstring>
 #include <sstream>      
+
+extern std::string fa_name;
 
 enum luna_type {
     LUNA_INT,
@@ -981,7 +984,7 @@ class program : public virtual_token {
 
             std::string str = s.str();
 
-            s << "\n]" << "\n}";
+            s << "\n]" << ",\n" << "\"fa_name\" : \"" << fa_name << "\"\n}";
 
             return s.str();
         }

@@ -23,6 +23,7 @@ int line_num = 1;
 std::string line, prev_line;
 uint tokens = 0;
 ast *ast_ = new ast();
+extern std::string fa_name;
 
 int main(int argc, char **argv){
 
@@ -33,6 +34,7 @@ int main(int argc, char **argv){
     char* inputFileName = argv[1];
     std::string outputFileName = "output.txt";
 
+    fa_name = std::string(argv[2]);
     std::string realLunaSource(argv[2]);
 
     for (int i = 3; i < argc; i++){

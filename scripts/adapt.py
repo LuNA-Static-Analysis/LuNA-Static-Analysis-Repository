@@ -3,6 +3,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from typing import List
 
 import click
 
@@ -12,15 +13,28 @@ else:
     ADAPT_HOME = Path(__file__).parent.resolve()
 
 
+def collect_cpp_files(paths: List[Path]) -> List[Path]:
+    cpp_files = []
+    for path in paths:
+        if path.is_file():
+            if path.suffix in ['.cpp', '.cc', '.cxx', '.c++']:
+                cpp_files.append(path)
+        elif path.is_dir():
+            # Recursively find all .cpp files in directory
+            for ext in ['.cpp', '.cc', '.cxx', '.c++']:
+                cpp_files.extend(path.rglob(f'*{ext}'))
+    return cpp_files
+
+
 @click.command()
 @click.option(
     '--run',
     multiple=True,
-    default=['ast', 'degsa', 'prolog', 'mc'],
+    default=['ast', 'degsa', 'prolog', 'mc', 'bilangir'],
     required=False,
     show_default=True,
     help='Only run specified analyzers.',
-    type=click.Choice(['ast', 'degsa', 'prolog', 'mc'], case_sensitive=False)
+    type=click.Choice(['ast', 'degsa', 'prolog', 'mc', 'bilangir'], case_sensitive=False)
 )
 @click.option(
     '--no-cleanup',
@@ -38,14 +52,32 @@ else:
         path_type=Path
     )
 )
+@click.argument(
+    'cpp-src',
+    nargs=-1,
+    required=True,
+    type=click.Path(
+        exists=True,
+        path_type=Path
+    )
+)
+
 def main(
         run: list[str],
         luna_src: Path,
-        no_cleanup: bool
+        no_cleanup: bool,
+        cpp_src: tuple[Path]
 ) -> None:
     if not run:
         print('Nothing to run')
         exit()
+
+    # Collect all cpp files from provided paths/directories
+    cpp_files = collect_cpp_files(list(cpp_src))
+    
+    if not cpp_files:
+        print('ERROR: No C++ files found in specified paths', file=sys.stderr)
+        exit(1)
 
     project_dir = luna_src.resolve().parent
 
@@ -58,9 +90,11 @@ def main(
     mc_analyzer_output_dir = project_dir / '.mc-analyzer'
     mc_analyzer_output_dir.mkdir(parents=True, exist_ok=True)
 
-
     build_dir = project_dir / '.luna-build'
     build_dir.mkdir(parents=True, exist_ok=True)
+    
+    bilangir_dir = project_dir / '.BiLangIR'
+    bilangir_dir.mkdir(parents=True, exist_ok=True)
 
     preprocessed_file = output_dir / 'preprocessed.fa'
     preprocessed_file.unlink(missing_ok=True)
@@ -84,7 +118,7 @@ def main(
             check=True
         )
 
-        if 'ast' in run or 'degsa' in run:
+        if 'ast' in run or 'degsa' in run or 'bilangir' in run:
             args = [
                 ADAPT_HOME / 'bin' / 'ast-ddg-analyzer',
                 preprocessed_file.resolve(),
@@ -111,6 +145,12 @@ def main(
                     f'{e.stderr.decode("utf-8")}',
                     file=sys.stderr
                 )
+            
+            if 'bilangir' in run:
+                try:
+                    shutil.copyfile(src=output_dir / 'ast.json', dst=bilangir_dir / 'ast.json')
+                except:
+                    print(f'WARNING: the ast was not copied to BiLangIR')
 
         if 'prolog' in run:
             try:
@@ -137,6 +177,61 @@ def main(
                     f'{e.stderr.decode("utf-8")}',
                     file=sys.stderr
                 )
+                
+        if 'bilangir' in run:
+            try:
+                print(f'\rRunning BiLangIR                 \r', end='')
+                ll_files = []
+                
+                for cpp_file in cpp_files:
+                    cpp_ll_file = bilangir_dir / f'{cpp_file.stem}.ll'
+                    subprocess.run(
+                        args=[
+                            'clang++',
+                            '-S',
+                            '-emit-llvm',
+                            '-g',
+                            cpp_file.resolve(),
+                            '-o', 
+                            cpp_ll_file
+                        ],
+                        capture_output=True,
+                        check=True
+                    )
+                    ll_files.append(cpp_ll_file)
+                
+                subprocess.run(
+                    args=[
+                        ADAPT_HOME / 'llvm-manager' / 'build' / 'bin' /'BiLangIR',
+                        '-o', errors_file,
+                        '-p', project_dir,
+                        bilangir_dir / 'ast.json',
+                        *ll_files
+                    ],
+                    capture_output=True,
+                    check=True
+                )
+                
+                subprocess.run(
+                    args=[
+                        ADAPT_HOME / 'llvm-manager' / 'build' / 'bin' /'PhASAR-advisor',
+                        '--error-checking',
+                        bilangir_dir / 'definitions.txt',
+                        bilangir_dir / 'output.ll',
+                        errors_file
+                    ],
+                    capture_output=True,
+                    check=True
+                )
+                    
+            except subprocess.CalledProcessError as e:
+                print(
+                    f'WARNING: {" ".join(map(str, e.cmd))} '
+                    f'failed with exit code {e.returncode}:\n'
+                    f'{e.stderr.decode("utf-8")}',
+                    file=sys.stderr
+                )
+            
         if 'mc' in run:
             try:
                 print(f'\rRunning mc-analyzer                 \r', end='')
@@ -194,6 +289,8 @@ def main(
         exit_code = 1
     finally:
         if not no_cleanup:
+            shutil.rmtree(mc_analyzer_output_dir)
+            shutil.rmtree(bilangir_dir)
             shutil.rmtree(output_dir)
             shutil.rmtree(prolog_analyzer_output_dir)
             shutil.rmtree(build_dir)
