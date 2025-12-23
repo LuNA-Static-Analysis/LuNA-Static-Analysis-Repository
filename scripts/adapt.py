@@ -125,7 +125,7 @@ def main(
                 luna_src.resolve()
             ]
 
-            if 'ast' in run:
+            if 'ast' in run or 'bilangir' in run:
                 args += ['-ast']
             if 'degsa' in run:
                 args += ['-degsa']
