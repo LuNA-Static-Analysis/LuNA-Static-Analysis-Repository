@@ -12,7 +12,7 @@
 #include <exception>
 #include <fstream>
 #include <iostream>
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 #include <llvm/IR/Attributes.h>
 #include <set>
 #include <string>

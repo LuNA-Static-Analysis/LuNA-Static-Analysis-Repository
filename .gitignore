@@ -1,3 +1,4 @@
+llvm-manager/.cache/
 DeGSA/__pycache__
 parser/__pycache__
 DeGSA/source.fa

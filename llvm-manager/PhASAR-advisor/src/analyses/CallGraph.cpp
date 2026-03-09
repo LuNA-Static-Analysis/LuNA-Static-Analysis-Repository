@@ -1,5 +1,6 @@
 #include "CallGraph.hpp"
 
+#include <nlohmann/json.hpp>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/IntrinsicInst.h>
@@ -7,7 +8,6 @@
 #include <fstream>
 
 #include "phasar/PhasarLLVM/TypeHierarchy/DIBasedTypeHierarchy.h"
-#include "json.hpp"
 
 using namespace llvm;
 

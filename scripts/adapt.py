@@ -55,7 +55,7 @@ def collect_cpp_files(paths: List[Path]) -> List[Path]:
 @click.argument(
     'cpp-src',
     nargs=-1,
-    required=True,
+    required=False,
     type=click.Path(
         exists=True,
         path_type=Path
@@ -73,11 +73,15 @@ def main(
         exit()
 
     # Collect all cpp files from provided paths/directories
-    cpp_files = collect_cpp_files(list(cpp_src))
-    
-    if not cpp_files:
-        print('ERROR: No C++ files found in specified paths', file=sys.stderr)
-        exit(1)
+    cpp_files = collect_cpp_files(list(cpp_src)) if cpp_src else []
+
+    if 'bilangir' in run and not cpp_files:
+        print('WARNING: bilangir analyzer requires C++ files, skipping', file=sys.stderr)
+        run = [r for r in run if r != 'bilangir']
+
+    if not run:
+        print('Nothing to run after filtering analyzers that require C++ files')
+        exit()
 
     project_dir = luna_src.resolve().parent
 

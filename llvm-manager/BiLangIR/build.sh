@@ -62,8 +62,8 @@ if ! command -v cmake &> /dev/null; then
 fi
 
 # Проверка наличия LLVM
-if ! command -v llvm-config-15 &> /dev/null; then
-    print_error "LLVM 15 не найден. Убедитесь, что LLVM 15 установлен."
+if ! command -v llvm-config-16 &> /dev/null; then
+    print_error "LLVM 16 не найден. Убедитесь, что LLVM 16 установлен."
     exit 1
 fi
 

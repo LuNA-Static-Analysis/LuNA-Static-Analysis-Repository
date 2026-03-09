@@ -5,8 +5,8 @@
 ## Требования
 
 - **CMake** 3.16 или выше
-- **LLVM 15** с development headers
-- **Clang++ 15**
+- **LLVM 16** с development headers
+- **Clang++ 16**
 - **Luna framework**
 
 ## Быстрый старт

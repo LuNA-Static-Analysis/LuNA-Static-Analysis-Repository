@@ -20,7 +20,7 @@
 #include <phasar/PhasarLLVM/DB/LLVMProjectIRDB.h>
 #include <phasar/PhasarLLVM/Utils/LLVMShorthands.h>
 #include <phasar/Pointer/PointsToInfo.h>
-#include <phasar/PhasarLLVM/TypeHierarchy/LLVMTypeHierarchy.h>
+// #include <phasar/PhasarLLVM/TypeHierarchy/LLVMTypeHierarchy.h>
 
 // PhASAR analysis includes
 #include <phasar/PhasarLLVM/DataFlow/IfdsIde/Problems/IDELinearConstantAnalysis.h>

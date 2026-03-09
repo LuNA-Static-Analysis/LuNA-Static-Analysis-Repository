@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.16)
 project(BiLangIR VERSION 1.0.0 LANGUAGES C CXX)
 
 # Устанавливаем стандарт C++
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -14,7 +14,7 @@ endif()
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 
 # Поиск LLVM
-find_package(LLVM 15 REQUIRED CONFIG)
+find_package(LLVM 16 REQUIRED CONFIG)
 
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")

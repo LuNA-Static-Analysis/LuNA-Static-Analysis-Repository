@@ -20,7 +20,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include <llvm/IR/GlobalVariable.h>
 
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 #include <string>
 #include <vector>
 
