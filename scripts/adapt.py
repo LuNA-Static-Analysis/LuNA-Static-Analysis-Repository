@@ -30,7 +30,7 @@ def collect_cpp_files(paths: List[Path]) -> List[Path]:
 @click.option(
     '--run',
     multiple=True,
-    default=['ast', 'degsa', 'prolog', 'mc', 'bilangir'],
+    default=['ast', 'prolog', 'mc', 'bilangir'],
     required=False,
     show_default=True,
     help='Only run specified analyzers.',
