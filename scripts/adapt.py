@@ -16,7 +16,7 @@ else:
 @click.option(
     '--run',
     multiple=True,
-    default=['ast', 'degsa', 'prolog', 'mc'],
+    default=['ast', 'prolog', 'mc'],
     required=False,
     show_default=True,
     help='Only run specified analyzers.',
