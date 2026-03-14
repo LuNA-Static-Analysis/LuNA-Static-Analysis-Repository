@@ -236,15 +236,19 @@ const config = pipe(
 );
 
 const createPromelaBin = (promelaAST: TPromelaAST) => {
-    // console.log(promelaAST.promelaCode);
-    writeText(path.join(config.workDir, 'verification.pml'))(promelaAST.promelaCode);
+    let code = promelaAST.promelaCode;
+    // Fix empty main proctype for spin
+    if (code.includes('active proctype main() {\n\n}')) {
+        code = code.replace('active proctype main() {\n\n}', 'active proctype main() {\n    skip;\n}');
+    }
+    writeText(path.join(config.workDir, 'verification.pml'))(code);
     exec(`spin -a verification.pml`)(config.workDir);
     exec(`gcc -w -o ./pan ./pan.c`)(config.workDir);
     return promelaAST;
 }
 
 const parseLunaFile = (): LunaAST => {
-    exec(`parser -o ast.json ${config.lunaSourcePath}`)(config.workDir);
+    exec(`${process.env.LUNA_HOME}/bin/parser -o ast.json ${config.lunaSourcePath}`)(config.workDir);
     return pipe(
         path.join(config.workDir, 'ast.json'),
         readFile,

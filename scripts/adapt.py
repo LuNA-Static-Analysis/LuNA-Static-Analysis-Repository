@@ -142,6 +142,8 @@ def main(
                 print(f'\rRunning mc-analyzer                 \r', end='')
                 subprocess.run(
                     args=[
+                        'npx', 
+                        '--prefix', ADAPT_HOME / 'mc-analyzer', 
                         'ts-node', ADAPT_HOME / 'mc-analyzer' / 'src' / 'app' / 'main.ts',
                         '--project-dir', project_dir,
                         '--build-dir', build_dir,
@@ -196,6 +198,7 @@ def main(
         if not no_cleanup:
             shutil.rmtree(output_dir)
             shutil.rmtree(prolog_analyzer_output_dir)
+            shutil.rmtree(mc_analyzer_output_dir)
             shutil.rmtree(build_dir)
 
     exit(exit_code)

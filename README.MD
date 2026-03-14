@@ -71,7 +71,6 @@ sudo apt install         \
 
 ```bash
 npm install --prefix ./mc-analyzer
-sudo npm install -g ts-node typescript
 ```
 
 ### 6. Сборка проекта 
