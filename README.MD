@@ -2,17 +2,17 @@
 
 ## Требования / Зависимости
 
-- ОС: **Ubuntu / Debian** 
+- ОС: **Ubuntu / Debian**
 - **LuNA** — [репозиторий LuNA](https://gitlab.ssd.sscc.ru/luna/luna)
 - [JSON for Modern C++](https://json.nlohmann.me/)
 - **PhASAR** — [сайт PhASAR](https://phasar.org/)
 - **LLVM 16** (будет установлен с **PhASAR**)
 - Компилятор: **g++** с поддержкой **C++20** или новее
 - **Node.js** и **npm**
-- **Python** 3.13+ 
+- **Python** 3.13+
 - **flex** и **bison**
-- **SWI-Prolog** 
-- **SPIN** 
+- **SWI-Prolog**
+- **SPIN**
 
 ## Установка
 
@@ -30,28 +30,27 @@ cd [директория клонирования]
 ### 2. Использование Python3.13 или выше
 
 Пользователь может выбрать один из следующих вариантов:
-  - Нативная установка [Python3.13+](https://www.python.org/downloads/)
-  - Использование проектного менеджера, к примеру, [uv](https://docs.astral.sh/uv/)
+
+- Нативная установка [Python3.13+](https://www.python.org/downloads/)
+- Использование проектного менеджера, к примеру, [uv](https://docs.astral.sh/uv/)
 
 ### 3. Установка python-зависимостей
 
-1. Создание виртуального окружения 
-  - В случае нативного python:
-    ```bash
-    python3.13 -m venv .venv
-    ```
-  - В случае **uv**:
-    ```bash
-    uv venv --python 3.13 --seed
-    ```
-2. Активация виртуального окружения
-  ```bash
-  source .venv/bin/activate
-  ```
-3. Установка зависимостей 
-  ```bash
-  pip install -r requirements.txt
-  ```
+#### Нативный Python
+
+```bash
+python3.13 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+#### С использованием uv
+
+```bash
+uv venv --python 3.13 --seed
+source .venv/bin/activate
+pip install -r requirements.txt
+```
 
 ### 4. Установка системных пакетов
 
@@ -83,7 +82,7 @@ sudo npm install -g ts-node typescript
 ### 7. Сборка проекта 
 
 ```bash
-make # или make -j$(nproc)
+make
 python3 llvm-manager/manager.py rebuild
 ```
 
@@ -102,6 +101,7 @@ adapt [ОПЦИИ] LUNA_ПРОГРАММА
 ```
 
 Опции:
+
 - `--run [ast|degsa|prolog|mc|bilangir]`
   - Запустить только указанные анализаторы. Если опция не указана, будут запущены все анализаторы.
 - `--no-cleanup`
@@ -110,6 +110,7 @@ adapt [ОПЦИИ] LUNA_ПРОГРАММА
   - Напечатать сообщение с информацией об опциях запуска и выйти.
 
 Пример запуска:
+
 ```bash
 adapt src/main.fa --run degsa --run prolog --no-cleanup
 ```
