@@ -13,7 +13,7 @@ export type TProctypeNode = TPromelaASTNode & {
 
 export const ProctypeNode = (name: string, nodeSequence: readonly TProctypeBodyNode[]): TProctypeNode => {
     const contents = mapArray(getNodeContent)(nodeSequence);
-    const bodyText = joinNewLine(mapArray(addIndent(1))(contents));
+    const bodyText = contents.length === 0 ? "skip;" : joinNewLine(mapArray(addIndent(1))(contents));
     return { nodeSequence, content: `active proctype ${name}() {\n${bodyText}\n}` };
 };
 
