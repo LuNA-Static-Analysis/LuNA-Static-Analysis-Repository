@@ -70,7 +70,7 @@ class ProjectManager:
     
     def configure(self, build_type: str = "Debug", bilangir: bool = True, 
                   phasar_advisor: bool = True, llvm_dir: Optional[str] = None, 
-                  extra_args: Optional[List[str]] = None):
+                  extra_args: Optional[List[str]] = None, hide_warnings: bool = True):
         self.ensure_build_dir()
         
         cmake_args = [
@@ -78,6 +78,7 @@ class ProjectManager:
             f"-DCMAKE_BUILD_TYPE={build_type}",
             f"-DBUILD_BILANGIR={'ON' if bilangir else 'OFF'}",
             f"-DBUILD_PHASAR_ADVISOR={'ON' if phasar_advisor else 'OFF'}",
+            f"-DHIDE_WARNINGS={'ON' if hide_warnings else 'OFF'}",
             "-GNinja",
         ]
         
@@ -189,14 +190,16 @@ def cli():
 @click.option('--bilangir/--no-bilangir', default=True, help='Включить BiLangIR')
 @click.option('--phasar-advisor/--no-phasar-advisor', default=True, help='Включить PhASAR-advisor')
 @click.option('--llvm-dir', '-l', type=click.Path(exists=True), help='Путь к LLVM installation')
+@click.option('--hide-warnings/--show-warnings', default=True, help='Скрывать warnings сборки (по умолчанию скрывать)')
 @click.argument('cmake_args', nargs=-1)
-def configure(build_type, bilangir, phasar_advisor, llvm_dir, cmake_args):
+def configure(build_type, bilangir, phasar_advisor, llvm_dir, hide_warnings, cmake_args):
     """Конфигурация проекта с помощью CMake"""
     manager.configure(
         build_type=build_type,
         bilangir=bilangir,
         phasar_advisor=phasar_advisor,
         llvm_dir=llvm_dir,
+        hide_warnings=hide_warnings,
         extra_args=list(cmake_args) if cmake_args else None
     )
 
@@ -219,13 +222,14 @@ def clean(full):
 @cli.command()
 @click.option('--build-type', '-b', type=click.Choice(['Debug', 'Release']), default='Debug')
 @click.option('--jobs', '-j', type=int, help='Количество параллельных задач')
-def rebuild(build_type, jobs):
+@click.option('--hide-warnings/--show-warnings', default=True, help='Скрывать warnings сборки')
+def rebuild(build_type, jobs, hide_warnings):
     """Полная пересборка проекта (clean + configure + build)"""
     print_info("Шаг 1/3: Очистка")
     manager.clean(full=True)
     
     print_info("Шаг 2/3: Конфигурация")
-    manager.configure(build_type=build_type)
+    manager.configure(build_type=build_type, hide_warnings=hide_warnings)
     
     print_info("Шаг 3/3: Сборка")
     manager.build(jobs=jobs)

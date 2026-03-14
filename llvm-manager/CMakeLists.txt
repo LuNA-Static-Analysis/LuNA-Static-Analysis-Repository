@@ -31,6 +31,7 @@ endif()
 # Опции проекта
 option(BUILD_BILANGIR "Build BiLangIR" ON)
 option(BUILD_PHASAR_ADVISOR "Build PhASAR-advisor" ON)
+option(HIDE_WARNINGS "Hide compiler warnings" ON)
 
 # Добавляем подпроекты
 if(BUILD_BILANGIR)
@@ -48,4 +49,5 @@ message(STATUS "C++ compiler: ${CMAKE_CXX_COMPILER}")
 message(STATUS "C++ standard: ${CMAKE_CXX_STANDARD}")
 message(STATUS "Build BiLangIR: ${BUILD_BILANGIR}")
 message(STATUS "Build PhASAR-advisor: ${BUILD_PHASAR_ADVISOR}")
+message(STATUS "Hide warnings: ${HIDE_WARNINGS}")
 message(STATUS "====================================")

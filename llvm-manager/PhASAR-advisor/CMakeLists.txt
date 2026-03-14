@@ -22,8 +22,10 @@ message(STATUS "Found PhASAR")
 # Настройки компилятора
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-g)
-    add_compile_options(-Wall)
-    add_compile_options(-Wextra)
+    if(NOT HIDE_WARNINGS)
+        add_compile_options(-Wall)
+        add_compile_options(-Wextra)
+    endif()
 endif()
 
 # Исходные файлы
