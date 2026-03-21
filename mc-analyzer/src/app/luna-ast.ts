@@ -65,7 +65,7 @@ export const CondNode = (begin: number) => (value: string | readonly [string, ..
             } else {
                 writeFileSync(workFile, `sub main() { foo(${' '.repeat(begin-17)}${value}); }`);
             }
-            execSync(`parser -o ${jsonFile} ${workFile}`);
+            execSync(`${process.env.LUNA_HOME}/bin/parser -o ${jsonFile} ${workFile}`);
             const x = JSON.parse(readFileSync(jsonFile, 'utf8'))['main'].body[1].args[0];
             cache.set(value, x);
             return x;

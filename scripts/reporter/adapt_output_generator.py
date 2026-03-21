@@ -71,6 +71,14 @@ def get_all_callstacks(
 def get_cf(cf: dict[str, Any]) -> str:
     return f'Name: {cf["name"]}, type: {cf["type"]}, file: {cf["file"]}, line: {cf["line"]}\n'
 
+def get_global_const(global_const: dict[str, Any]) -> str:
+    return f'Name: {global_const["name"]}, file: {global_const["file"]}, line: {global_const["line"]}\n'
+
+def get_global_var(global_var: dict[str, Any]) -> str:
+    return f'Name: {global_var["name"]}, file: {global_var["file"]}, line: {global_var["line"]}\n'
+
+def get_cf_without_line(cf: dict[str, Any]) -> str:
+    return f'Name: {cf["name"]}, type: {cf["type"]}, file: {cf["file"]}\n'
 
 def get_all_cfs(cfs: list[dict[str, Any]]) -> str:
     result = ''
@@ -316,6 +324,28 @@ def report_error(
                 .replace("$cf",
                          get_cf(error["details"]["cf"]))
             )
+            
+        case 'SYN13':
+            output_file.write(
+                (templates_map[error_code] + "\n")
+                .replace("$constant_name",
+                         error["details"]["first"]["name"])
+                .replace("$first_def", 
+                         get_global_const(error["details"]["first"]))
+                .replace("$second_def", 
+                         get_global_const(error["details"]["second"]))
+            )
+            
+        case 'SYN14':
+            output_file.write(
+                (templates_map[error_code] + "\n")
+                .replace("$function_name",
+                         error["details"]["first"]["name"])
+                .replace("$first_def", 
+                         get_cf(error["details"]["first"]))
+                .replace("$second_def", 
+                         get_cf(error["details"]["second"]))
+            )
 
 
 
@@ -445,6 +475,13 @@ def report_error(
         case 'SEM11':
             output_file.write(
                 (templates_map[error_code] + '\n')
+            )
+            
+        case 'SEM13':
+            output_file.write(
+                (templates_map[error_code] + '\n')
+                .replace("$global_var", 
+                         get_global_var(error['details']['global_var']))
             )
         
         case _:
