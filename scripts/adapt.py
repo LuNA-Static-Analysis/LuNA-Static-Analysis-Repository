@@ -293,7 +293,6 @@ def main(
         exit_code = 1
     finally:
         if not no_cleanup:
-            shutil.rmtree(mc_analyzer_output_dir)
             shutil.rmtree(bilangir_dir)
             shutil.rmtree(output_dir)
             shutil.rmtree(prolog_analyzer_output_dir)
