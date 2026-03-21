@@ -32,6 +32,20 @@
         "MIMode": "gdb", // requires gdb to be installed
         "preLaunchTask": "ADAPT_compile"
 
+    },
+    {
+        "name": "BiLangIR debugger",
+        "type": "lldb-dap",
+        "request": "launch",
+        "program": "${workspaceFolder}/llvm-manager/build/bin/BiLangIR",
+        "args": [
+            "-d",
+            "../../IR/tmpFiles/correct/basic4/.BiLangIR/ast.json",
+            "../../IR/tmpFiles/correct/basic4/.BiLangIR/ucodes.ll"
+        ],
+        "stopOnEntry": false,
+        "cwd": "${workspaceFolder}",
+        "env": []
     }
     ]
 }

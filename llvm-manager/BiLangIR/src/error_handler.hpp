@@ -1,6 +1,7 @@
 #ifndef ERROR_HANDLER_HPP
 #define ERROR_HANDLER_HPP
 
+#include "debug.hpp"
 #include "error_nodes.hpp"
 
 #include <fstream>
@@ -48,6 +49,8 @@ class ErrorHandler {
             }
 
             j.push_back(tmpError);
+
+            DEBUG_OUT << "Reporting error: " << tmpError.dump(4) << std::endl;
         }
 
         if (outMode == output::CONSOLE) {

@@ -1618,6 +1618,8 @@ Value *CallExprAST::codegen() {  // Fixed: proper function call handling with in
                     std::to_string(defLine) + " line: expected " + getTypeName(expectedType) +
                     " but got " + getTypeName(actualType);
 
+                DEBUG_OUT << "CallExprAST::codegen: " << errMsg << std::endl;
+
                 ErrorBase error(ErrorType::SYN1);
                 error.setObjectDetail("call_stack_entry", std::make_unique<call_stack_entry>(
                                                               globalFaName, getPosition(), this->callPlace));
