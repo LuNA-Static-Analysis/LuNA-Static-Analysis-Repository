@@ -1391,7 +1391,7 @@ Value *CallExprAST::codegen() {  // Fixed: proper function call handling with in
 
         ErrorBase error(ErrorType::SYN2);
         error.setObjectDetail("call_stack_entry", std::make_unique<call_stack_entry>(
-                                                      globalFaName, getPosition(), Callee));
+                                                      globalFaName, getPosition(), this->callPlace));
 
         ErrorHandler::printError(errMsg, std::move(error));
         return nullptr;
@@ -1405,7 +1405,7 @@ Value *CallExprAST::codegen() {  // Fixed: proper function call handling with in
 
         ErrorBase error(ErrorType::SYN3);
         error.setObjectDetail("call_stack_entry", std::make_unique<call_stack_entry>(
-                                                      globalFaName, getPosition(), Callee));
+                                                      globalFaName, getPosition(), this->callPlace));
         error.setObjectDetail("cf",
                               std::make_unique<cf_struct>(Callee, typeStr, globalFaName, defLine));
 
@@ -1425,7 +1425,7 @@ Value *CallExprAST::codegen() {  // Fixed: proper function call handling with in
 
         ErrorBase error(ErrorType::SYN2);
         error.setObjectDetail("call_stack_entry", std::make_unique<call_stack_entry>(
-                                                      globalFaName, getPosition(), Callee));
+                                                      globalFaName, getPosition(), this->callPlace));
 
         ErrorHandler::printError(errMsg, std::move(error));
         return nullptr;
@@ -1620,7 +1620,7 @@ Value *CallExprAST::codegen() {  // Fixed: proper function call handling with in
 
                 ErrorBase error(ErrorType::SYN1);
                 error.setObjectDetail("call_stack_entry", std::make_unique<call_stack_entry>(
-                                                              globalFaName, getPosition(), Callee));
+                                                              globalFaName, getPosition(), this->callPlace));
                 error.setObjectDetail(
                     "cf", std::make_unique<cf_struct>(Callee, typeStr, globalFaName, defLine));
 
@@ -1674,7 +1674,7 @@ InitStatus CallExprAST::tryResolveInitStatus() {
 
         ErrorBase error(ErrorType::SYN2);
         error.setObjectDetail("call_stack_entry", std::make_unique<call_stack_entry>(
-                                                      globalFaName, getPosition(), Callee));
+                                                      globalFaName, getPosition(), this->callPlace));
 
         ErrorHandler::printError(errMsg, std::move(error));
         subsWhichTaged.push_back(Callee);

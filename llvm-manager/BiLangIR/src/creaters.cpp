@@ -1417,7 +1417,7 @@ std::unique_ptr<ExprAST> createCallStatementNode(const json &data, bool initMode
         initPosInSubs[subName] = initPositions;
     }
 
-    return std::make_unique<CallExprAST>(codeId, std::move(Args), initMode, dataLine);
+    return std::make_unique<CallExprAST>(codeId, std::move(Args), tempSubName, initMode, dataLine);
 }
 
 std::pair<std::unique_ptr<CheckableExprAST>, InitStatus>
@@ -1457,23 +1457,23 @@ altCreateCallStatementNode(const json &data) {
         keyStr = FunctionProtos[codeId];
 
         if (initMemoryMap.find(keyStr) != initMemoryMap.end()) {
-            return {std::make_unique<CallExprAST>(codeId, std::move(Args), false, dataLine),
+            return {std::make_unique<CallExprAST>(codeId, std::move(Args), tempSubName, false, dataLine),
                     InitStatus::INIT};
         } else {
-            return {std::make_unique<CallExprAST>(codeId, std::move(Args), false, dataLine),
+            return {std::make_unique<CallExprAST>(codeId, std::move(Args), tempSubName, false, dataLine),
                     InitStatus::NORMAL};
         }
     } else {
         if (subsStatusMap.find(codeId) != subsStatusMap.end()) {
-            return {std::make_unique<CallExprAST>(codeId, std::move(Args), false, dataLine),
+            return {std::make_unique<CallExprAST>(codeId, std::move(Args), tempSubName, false, dataLine),
                     subsStatusMap[codeId]};
         } else {
-            return {std::make_unique<CallExprAST>(codeId, std::move(Args), false, dataLine),
+            return {std::make_unique<CallExprAST>(codeId, std::move(Args), tempSubName, false, dataLine),
                     InitStatus::UNKNOWN};
         }
     }
 
-    return {std::make_unique<CallExprAST>(codeId, std::move(Args), false, dataLine),
+    return {std::make_unique<CallExprAST>(codeId, std::move(Args), tempSubName, false, dataLine),
             InitStatus::UNKNOWN};
 }
 
