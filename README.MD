@@ -5,6 +5,8 @@
 - ОС: **Ubuntu / Debian**
 - **LuNA** — [репозиторий LuNA](https://gitlab.ssd.sscc.ru/luna/luna)
 - [JSON for Modern C++](https://json.nlohmann.me/)
+- **PhASAR** — [сайт PhASAR](https://phasar.org/)
+- **LLVM 16** (будет установлен с **PhASAR**)
 - Компилятор: **g++** с поддержкой **C++20** или новее
 - **Node.js** и **npm**
 - **Python** 3.13+
@@ -70,13 +72,17 @@ sudo apt install         \
 
 ```bash
 npm install --prefix ./mc-analyzer
-sudo npm install -g ts-node typescript
 ```
 
-### 6. Сборка проекта
+### 6. Установка PhASAR и LLVM 16
+
+Инструкция по установке есть на [сайте](https://phasar.org/tutorial/) и в [репозитории](https://github.com/secure-software-engineering/phasar/blob/development/BUILD.md) **PhASAR**
+
+### 7. Сборка проекта 
 
 ```bash
-make 
+make
+python3 llvm-manager/manager.py rebuild
 ```
 
 ### 7. Настройка переменных окружения
@@ -95,7 +101,7 @@ adapt [ОПЦИИ] LUNA_ПРОГРАММА
 
 Опции:
 
-- `--run [ast|degsa|prolog|mc]`
+- `--run [ast|degsa|prolog|mc|bilangir]`
   - Запустить только указанные анализаторы. Если опция не указана, будут запущены все анализаторы.
 - `--no-cleanup`
   - Не удалять сгенерированные файлы.

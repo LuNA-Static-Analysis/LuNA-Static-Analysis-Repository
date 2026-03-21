@@ -244,7 +244,7 @@ const createPromelaBin = (promelaAST: TPromelaAST) => {
 }
 
 const parseLunaFile = (): LunaAST => {
-    exec(`parser -o ast.json ${config.lunaSourcePath}`)(config.workDir);
+    exec(`${process.env.LUNA_HOME}/bin/parser -o ast.json ${config.lunaSourcePath}`)(config.workDir);
     return pipe(
         path.join(config.workDir, 'ast.json'),
         readFile,
