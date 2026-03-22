@@ -530,6 +530,7 @@ Value *VariableExprAST::codegen() {  // Fixed: proper variable loading
             std::string errMsg = "Unknown variable name '" + Name + "'";
             ErrorBase error(ErrorType::SYN9);
             error.setStringDetail("expression", Name);
+            // error.setObjectDetail("identifier", std::make_unique<df_struct>(Name, {}));
             ErrorHandler::printError(errMsg, std::move(error));
             return nullptr;
         }

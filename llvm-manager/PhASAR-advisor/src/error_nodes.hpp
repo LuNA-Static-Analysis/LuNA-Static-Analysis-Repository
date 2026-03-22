@@ -197,7 +197,7 @@ enum class ErrorType {
     SYN61,
     SYN62,
     SYN7,
-    SYN8,
+    SYN81,
     SYN9,
     SYN10,
     SYN11,
