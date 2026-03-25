@@ -8,6 +8,7 @@
 #include "analyses/CallGraph.hpp"
 #include "analyses/AliasInfo.hpp"
 #include "analyses/CodeComplexity.hpp"
+#include "html_reporter.hpp"
 
 #include <cstdlib>
 #include <vector>
@@ -53,6 +54,7 @@ void printUsage(const string& programName) {
     cout << "  --both             - Both types of analysis\n";
     cout << "  --logging          - Enable detailed logging\n";
     cout << "  --include-private  - Include private/mangled functions (with _)\n";
+    cout << "  --html-report      - Generate HTML report instead of console output\n";
     cout << "  --error-checking   - Error checking mode (requires helper file and output file path)\n";
     cout << "  -h, --help         - Show this help message\n\n";
 
@@ -78,6 +80,7 @@ bool isOptionFlag(const string& arg) {
            arg == "--both" || 
            arg == "--logging" ||
            arg == "--include-private" ||
+           arg == "--html-report" ||
            arg == "-h" ||
            arg == "--help";
 }
@@ -100,6 +103,7 @@ Options parseOptions(const vector<string>& optionArgs) {
     opts.choice = AnalysisChoice::PhasarAnalysis;  // По умолчанию
     opts.logging = false;                          // По умолчанию выключено
     opts.includePrivateFunctions = false;          // По умолчанию пропускаем
+    opts.outputFormat = OutputFormat::CONSOLE;     // По умолчанию вывод в консоль
     
     for (const string& arg : optionArgs) {
         if (arg == "--my-analysis") {
@@ -112,7 +116,9 @@ Options parseOptions(const vector<string>& optionArgs) {
             opts.logging = true;
         } else if (arg == "--include-private") {
             opts.includePrivateFunctions = true;
-        }
+        } else if (arg == "--html-report") {
+            opts.outputFormat = OutputFormat::HTML;
+        } 
     }
     
     return opts;
@@ -238,10 +244,65 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
     
+    // Initialize HTML reporter if needed
+    HTMLReporter htmlReporter("PhASAR Analysis Report");
+    
+    // Add general info to HTML report
+    if (opts.outputFormat == OutputFormat::HTML) {
+        htmlReporter.addSection("Analysis Configuration", 
+            "<strong>Input File:</strong> " + llvmIRFile + "<br/>" +
+            "<strong>Analysis Mode:</strong> " + 
+            (opts.choice == AnalysisChoice::MyRealizedAnalysis ? "My Implementation" : 
+             opts.choice == AnalysisChoice::PhasarAnalysis ? "PhASAR" : "Both") + "<br/>" +
+            "<strong>Include Private Functions:</strong> " + (opts.includePrivateFunctions ? "Yes" : "No")
+        );
+    }
+    
     cout << "Initializing PhASAR for file: " << llvmIRFile << "\n";
 
     try {
         LLVMProjectIRDB IRDB(llvmIRFile);
+        
+        // Collect analysis names for report
+        vector<string> analysisNames;
+        for (AnalysisType analysis : analyses) {
+            switch (analysis) {
+                case AnalysisType::BASIC_INFO:
+                    analysisNames.push_back("Basic Info");
+                    break;
+                case AnalysisType::CALLGRAPH:
+                    analysisNames.push_back("Call Graph");
+                    break;
+                case AnalysisType::ALIAS:
+                    analysisNames.push_back("Alias Analysis");
+                    break;
+                case AnalysisType::CONSTANT_PROPAGATION:
+                    analysisNames.push_back("Constant Propagation");
+                    break;
+                case AnalysisType::UNINITIALIZED_VARIABLES:
+                    analysisNames.push_back("Uninitialized Variables");
+                    break;
+                case AnalysisType::TYPE_ANALYSIS:
+                    analysisNames.push_back("Type Analysis");
+                    break;
+                case AnalysisType::COMPLEXITY:
+                    analysisNames.push_back("Code Complexity");
+                    break;
+                case AnalysisType::ALL:
+                    break;
+                default:
+                    break;
+            }
+        }
+        
+        if (opts.outputFormat == OutputFormat::HTML && !analysisNames.empty()) {
+            string analysesList = "<ul>";
+            for (const auto& name : analysisNames) {
+                analysesList += "<li>" + name + "</li>";
+            }
+            analysesList += "</ul>";
+            htmlReporter.addSection("Executed Analyses", analysesList);
+        }
         
         for (AnalysisType analysis : analyses) {
             switch (analysis) {
@@ -280,6 +341,11 @@ int main(int argc, char* argv[]) {
         
         cout << "\n=== ALL ANALYSES COMPLETED ===\n";
         
+        // Generate final report if needed
+        if (opts.outputFormat == OutputFormat::HTML) {
+            htmlReporter.addSuccess("All analyses completed successfully!");
+            htmlReporter.saveToFile("phasar_analysis_report.html");
+        }
     } catch (const exception& e) {
         cerr << "Critical Error: " << e.what() << "\n";
         return EXIT_FAILURE;

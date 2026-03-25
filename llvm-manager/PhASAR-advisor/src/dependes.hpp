@@ -20,7 +20,7 @@
 #include <phasar/PhasarLLVM/DB/LLVMProjectIRDB.h>
 #include <phasar/PhasarLLVM/Utils/LLVMShorthands.h>
 #include <phasar/Pointer/PointsToInfo.h>
-// #include <phasar/PhasarLLVM/TypeHierarchy/LLVMTypeHierarchy.h>
+#include "phasar/PhasarLLVM/TypeHierarchy.h"
 
 // PhASAR analysis includes
 #include <phasar/PhasarLLVM/DataFlow/IfdsIde/Problems/IDELinearConstantAnalysis.h>
@@ -47,10 +47,16 @@ enum class AnalysisChoice {
     Both
 };
 
+enum class OutputFormat {
+    CONSOLE,  
+    HTML
+};
+
 struct Options {
     AnalysisChoice choice = AnalysisChoice::Both;
     bool logging = false;
     bool includePrivateFunctions = false;  // Анализировать функции с _ (методы классов)
+    OutputFormat outputFormat = OutputFormat::CONSOLE;
     
     // Вспомогательная функция для проверки, нужно ли пропустить функцию
     bool shouldSkipFunction(const std::string& funcName) const {

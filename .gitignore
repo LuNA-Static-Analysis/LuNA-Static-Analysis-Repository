@@ -1,4 +1,6 @@
 llvm-manager/.cache/
+llvm-manager/BiLangIR/.cache/
+llvm-manager/PhASAR-advisor/.cache/
 DeGSA/__pycache__
 parser/__pycache__
 DeGSA/source.fa

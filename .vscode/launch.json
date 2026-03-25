@@ -32,6 +32,18 @@
         "MIMode": "gdb", // requires gdb to be installed
         "preLaunchTask": "ADAPT_compile"
 
+    },
+    {
+        "name": "PhASAR-advisor debugger",
+        "type":"lldb-dap",
+        "request": "launch",
+        "program": "${workspaceFolder}/llvm-manager/build/bin/PhASAR-advisor",
+        "args": [
+            "/home/pyro/WorkDir/Study/practice/IR/tmpFiles/myVariants/base6/output.ll",
+            "--html-report"
+        ],
+        "stopOnEntry": false,
+        "cwd": "${workspaceFolder}"
     }
     ]
 }

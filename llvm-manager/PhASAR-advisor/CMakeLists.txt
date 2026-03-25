@@ -6,16 +6,18 @@ project(PhASAR-advisor VERSION 1.0.0 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Настройки сборки
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
 endif()
-set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+
+# set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 
 # Поиск PhASAR
-find_package(phasar REQUIRED)
+find_package(phasar REQUIRED CONFIG)
 
 message(STATUS "Found PhASAR")
 
@@ -50,7 +52,7 @@ set(HEADERS
 add_executable(PhASAR-advisor ${SOURCES} ${HEADERS})
 
 # Связываем с библиотеками PhASAR
-target_link_libraries(PhASAR-advisor phasar)
+target_link_libraries(PhASAR-advisor PRIVATE phasar::phasar)
 
 # Устанавливаем свойства целевого файла
 set_target_properties(PhASAR-advisor PROPERTIES
@@ -88,11 +90,11 @@ if(CLANG_FORMAT)
 endif()
 
 # Установка
-install(TARGETS PhASAR-advisor
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-)
+# install(TARGETS PhASAR-advisor
+#     RUNTIME DESTINATION bin
+#     LIBRARY DESTINATION lib
+#     ARCHIVE DESTINATION lib
+# )
 
 # Вывод информации о сборке
 message(STATUS "=== PhASAR-advisor Configuration ===")
