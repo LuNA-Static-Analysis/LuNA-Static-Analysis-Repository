@@ -248,16 +248,26 @@ def run():
 @click.pass_context
 def run_bilangir(ctx):
     """Запуск BiLangIR"""
-    args = ctx.args
-    manager.run_bilangir(args=args if args else None)
+    args = list(ctx.args) if ctx.args else []
+    manager.run_bilangir(args=args)
 
 
 @run.command(name='phasar-advisor', context_settings=dict(ignore_unknown_options=True, allow_extra_args=True))
 @click.pass_context
 def run_phasar_advisor(ctx):
     """Запуск PhASAR-advisor"""
-    args = ctx.args
-    manager.run_phasar_advisor(args=args if args else None)
+    args = list(ctx.args) if ctx.args else []
+    manager.run_phasar_advisor(args=args)
+
+
+@cli.command(name='report', context_settings=dict(ignore_unknown_options=True, allow_extra_args=True))
+@click.pass_context
+def report(ctx):
+    """Генерация HTML отчета через PhASAR-advisor"""
+    args = list(ctx.args) if ctx.args else []
+    args.append('--html-report')
+        
+    manager.run_phasar_advisor(args=args)
 
 
 @cli.command()

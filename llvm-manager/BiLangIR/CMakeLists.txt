@@ -17,7 +17,7 @@ endif()
 # set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 
 # Поиск LLVM
-find_package(LLVM 16 REQUIRED CONFIG)
+find_package(LLVM 15 REQUIRED CONFIG)
 
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
@@ -48,6 +48,7 @@ llvm_map_components_to_libnames(llvm_libs
 # Настройки компилятора
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-g)
+    # add_link_options(-fuse-ld=lld)
     if(NOT HIDE_WARNINGS)
         add_compile_options(-Wall)
         add_compile_options(-Wextra)

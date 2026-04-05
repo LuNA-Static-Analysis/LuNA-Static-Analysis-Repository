@@ -17,13 +17,14 @@ endif()
 # set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 
 # Поиск PhASAR
-find_package(phasar REQUIRED CONFIG)
+find_package(phasar REQUIRED)
 
 message(STATUS "Found PhASAR")
 
 # Настройки компилятора
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-g)
+    add_link_options(-fuse-ld=lld)
     if(NOT HIDE_WARNINGS)
         add_compile_options(-Wall)
         add_compile_options(-Wextra)
@@ -52,7 +53,7 @@ set(HEADERS
 add_executable(PhASAR-advisor ${SOURCES} ${HEADERS})
 
 # Связываем с библиотеками PhASAR
-target_link_libraries(PhASAR-advisor PRIVATE phasar::phasar)
+target_link_libraries(PhASAR-advisor phasar::phasar)
 
 # Устанавливаем свойства целевого файла
 set_target_properties(PhASAR-advisor PROPERTIES

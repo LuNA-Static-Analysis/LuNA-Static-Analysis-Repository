@@ -1,4 +1,5 @@
 #include "ConstantPropagation.hpp"
+#include "html_reporter.hpp"
 
 #include <iomanip>
 #include <llvm/Support/raw_ostream.h>
@@ -26,46 +27,52 @@ static unordered_map<string, unordered_map<int, ConstantValue>> functionReturnVa
 static unordered_map<string, vector<ConstantValue>> functionParameterEffects;
 
 // Вспомогательные функции
-void analyzeFunctionWithOptions(llvm::Function& F, const ConstPropOptions& opts);
+void analyzeFunctionWithOptions(llvm::Function& F, const ConstPropOptions& opts, std::ostream& out);
 void analyzeCallSiteAdvanced(llvm::CallInst* CI, unordered_map<llvm::Value*, ConstantValue>& constants, const ConstPropOptions& opts);
 ConstantValue getConstValueAdvanced(llvm::Value* val, const unordered_map<llvm::Value*, ConstantValue>& constants);
-void printVerbose(const string& msg, const ConstPropOptions& opts);
+void printVerbose(const string& msg, const ConstPropOptions& opts, std::ostream& out);
 
 // Основная функция
-void runConstantPropagation(LLVMProjectIRDB& IRDB, const Options& opts) {
+void runConstantPropagation(LLVMProjectIRDB& IRDB, const Options& opts, HTMLReporter& htmlReporter) {
     ConstPropOptions defaultOpts;
     defaultOpts.verbose = false;
     defaultOpts.interProcedural = true;
     defaultOpts.trackPointers = true;
     defaultOpts.showOptimizations = true;
-    runConstantPropagationWithOptions(IRDB, opts, defaultOpts);
+    runConstantPropagationWithOptions(IRDB, opts, defaultOpts, htmlReporter);
 }
 
-static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& funcOpts, const ConstPropOptions& opts) {
-    cout << "\n=== АНАЛИЗ РАСПРОСТРАНЕНИЯ КОНСТАНТ ===\n";
+static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& funcOpts, const ConstPropOptions& opts, HTMLReporter& htmlReporter) {
+    std::stringstream htmlOut;
+    std::ostream& out = (funcOpts.outputFormat == OutputFormat::HTML) ? static_cast<std::ostream&>(htmlOut) : static_cast<std::ostream&>(std::cout);
+
+    out << "\n=== АНАЛИЗ РАСПРОСТРАНЕНИЯ КОНСТАНТ ===\n";
     
     if (opts.interProcedural) {
-        cout << "\nРежим: Межпроцедурный анализ\n";
+        out << "\nРежим: Межпроцедурный анализ\n";
     } else {
-        cout << "\nРежим: Внутрипроцедурный анализ\n";
+        out << "\nРежим: Внутрипроцедурный анализ\n";
     }
     
     if (!opts.verbose) {
-        cout << "Краткий режим вывода\n";
+        out << "Краткий режим вывода\n";
     }
     
     try {
         auto* M = IRDB.getModule();
         if (!M) {
             cerr << "Error: Не удалось получить модуль из IRDB.\n";
+            if (funcOpts.outputFormat == OutputFormat::HTML) {
+                htmlReporter.addError("Не удалось получить модуль из IRDB (анализ распространения констант).");
+            }
             return;
         }
 
-        cout << "Анализ модуля: " << M->getName().str() << "\n\n";
+        out << "Анализ модуля: " << M->getName().str() << "\n\n";
         
         // Межпроцедурная подготовка
         if (opts.interProcedural) {
-            cout << "Подготовка межпроцедурного анализа...\n";
+            out << "Подготовка межпроцедурного анализа...\n";
             for (auto& F : *M) {
                 if (!F.isDeclaration()) {
                     string funcName = F.getName().str();
@@ -74,10 +81,10 @@ static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& funcOpts
                     }
                     functionReturnValues[funcName] = {};
                     functionParameterEffects[funcName] = vector<ConstantValue>(F.arg_size());
-                    printVerbose("  Функция зарегистрирована: " + funcName, opts);
+                    printVerbose("  Функция зарегистрирована: " + funcName, opts, out);
                 }
             }
-            cout << "\n";
+            out << "\n";
         }
         
         // Анализ каждой функции
@@ -87,20 +94,20 @@ static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& funcOpts
                 if (funcOpts.shouldSkipFunction(funcName)) {
                     continue;
                 }
-                cout << "Функция: " << funcName << "\n";
-                analyzeFunctionWithOptions(F, opts);
-                cout << "\n";
+                out << "Функция: " << funcName << "\n";
+                analyzeFunctionWithOptions(F, opts, out);
+                out << "\n";
             }
         }
         
         // Межпроцедурные выводы
         if (opts.interProcedural) {
-            cout << "МЕЖПРОЦЕДУРНЫЕ ВЫВОДЫ:\n";
+            out << "МЕЖПРОЦЕДУРНЫЕ ВЫВОДЫ:\n";
             for (const auto& [funcName, retVals] : functionReturnValues) {
                 if (!retVals.empty()) {
                     for (const auto& [idx, val] : retVals) {
                         if (val.isConstant()) {
-                            cout << "  " << funcName << " всегда возвращает: " << val.value << "\n";
+                            out << "  " << funcName << " всегда возвращает: " << val.value << "\n";
                         }
                     }
                 }
@@ -109,19 +116,29 @@ static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& funcOpts
             for (const auto& [funcName, params] : functionParameterEffects) {
                 for (size_t i = 0; i < params.size(); ++i) {
                     if (params[i].isConstant()) {
-                        cout << "  " << funcName << " параметр " << i << " всегда: " << params[i].value << "\n";
+                        out << "  " << funcName << " параметр " << i << " всегда: " << params[i].value << "\n";
                     }
                 }
             }
         }
+
+        if (funcOpts.outputFormat == OutputFormat::HTML) {
+            htmlReporter.addSection("Анализ распространения констант (Basic)", "<pre>" + htmlOut.str() + "</pre>");
+        }
         
     } catch (const exception& e) {
         cerr << "Error: " << e.what() << "\n";
+        if (funcOpts.outputFormat == OutputFormat::HTML) {
+            htmlReporter.addError("Исключение при выполнении анализа распространения констант: " + string(e.what()));
+        }
     }
 }
 
-static void runPhasarAnalysis(LLVMProjectIRDB& IRDB, const Options& funcOpts, const ConstPropOptions& opts) {
-    cout << "\n=== АНАЛИЗ РАСПРОСТРАНЕНИЯ КОНСТАНТ С ИСПОЛЬЗОВАНИЕМ PhASAR ===\n";
+static void runPhasarAnalysis(LLVMProjectIRDB& IRDB, const Options& funcOpts, const ConstPropOptions& opts, HTMLReporter& htmlReporter) {
+    std::stringstream htmlOut;
+    std::ostream& out = (funcOpts.outputFormat == OutputFormat::HTML) ? static_cast<std::ostream&>(htmlOut) : static_cast<std::ostream&>(std::cout);
+
+    out << "\n=== АНАЛИЗ РАСПРОСТРАНЕНИЯ КОНСТАНТ С ИСПОЛЬЗОВАНИЕМ PhASAR ===\n";
     
     psr::LLVMBasedICFG ICFG(&IRDB, psr::CallGraphAnalysisType::OTF, {"main"});
     psr::IDELinearConstantAnalysis LCAProblem(&IRDB, &ICFG, {"main"});
@@ -130,6 +147,9 @@ static void runPhasarAnalysis(LLVMProjectIRDB& IRDB, const Options& funcOpts, co
     auto* M = IRDB.getModule();
     if (!M) {
         llvm::errs() << "Error: Не удалось получить модуль.\n";
+        if (funcOpts.outputFormat == OutputFormat::HTML) {
+            htmlReporter.addError("Не удалось получить модуль (анализ распространения констант).");
+        }
         return;
     }
     
@@ -327,36 +347,41 @@ static void runPhasarAnalysis(LLVMProjectIRDB& IRDB, const Options& funcOpts, co
         
         // Выводим функцию только если есть оптимизации
         if (funcOptimizations > 0) {
-            llvm::outs() << "\n━━━ Функция: " << F.getName() << " (" << funcOptimizations << " оптимизаций) ━━━\n";
-            llvm::outs() << funcOutput.str();
+            out << "\n━━━ Функция: " << F.getName().str() << " (" << funcOptimizations << " оптимизаций) ━━━\n";
+            out << funcOutput.str();
+
             functionsWithOptimizations++;
             totalOptimizations += funcOptimizations;
         }
     }
     
     // Общая статистика
-    llvm::outs() << "\nИТОГОВАЯ СТАТИСТИКА:\n";
-    llvm::outs() << "Функций с оптимизациями: " << functionsWithOptimizations << "\n";
-    llvm::outs() << "Всего найдено оптимизаций: " << totalOptimizations << "\n";
-}
+    out << "\nИТОГОВАЯ СТАТИСТИКА:\n";
+    out << "Функций с оптимизациями: " << functionsWithOptimizations << "\n";
+    out << "Всего найдено оптимизаций: " << totalOptimizations << "\n";
 
-void runConstantPropagationWithOptions(LLVMProjectIRDB& IRDB, const Options& funcOpts, const ConstPropOptions& opts) {
-    if (funcOpts.choice == AnalysisChoice::MyRealizedAnalysis || funcOpts.choice == AnalysisChoice::Both) {
-        runMyRealizedAnalysis(IRDB, funcOpts, opts);
-    }
-
-    if (funcOpts.choice == AnalysisChoice::PhasarAnalysis || funcOpts.choice == AnalysisChoice::Both) {
-        runPhasarAnalysis(IRDB, funcOpts, opts);
+    if (funcOpts.outputFormat == OutputFormat::HTML) {
+        htmlReporter.addSection("Анализ распространения констант (Detailed)", "<pre>" + htmlOut.str() + "</pre>");
     }
 }
 
-void printVerbose(const string& msg, const ConstPropOptions& opts) {
+void runConstantPropagationWithOptions(LLVMProjectIRDB& IRDB, const Options& funcOpts, const ConstPropOptions& opts, HTMLReporter& htmlReporter) {
+    if (funcOpts.choice == AnalysisChoice::BasicAnalysis || funcOpts.choice == AnalysisChoice::Both) {
+        runMyRealizedAnalysis(IRDB, funcOpts, opts, htmlReporter);
+    }
+
+    if (funcOpts.choice == AnalysisChoice::DetailedAnalysis || funcOpts.choice == AnalysisChoice::Both) {
+        runPhasarAnalysis(IRDB, funcOpts, opts, htmlReporter);
+    }
+}
+
+void printVerbose(const string& msg, const ConstPropOptions& opts, std::ostream& out) {
     if (opts.verbose) {
-        cout << msg << "\n";
+        out << msg << "\n";
     }
 }
 
-void analyzeFunctionWithOptions(llvm::Function& F, const ConstPropOptions& opts) {
+void analyzeFunctionWithOptions(llvm::Function& F, const ConstPropOptions& opts, std::ostream& out) {
     unordered_map<llvm::Value*, ConstantValue> constants;
     
     int constantsFound = 0;
@@ -431,7 +456,7 @@ void analyzeFunctionWithOptions(llvm::Function& F, const ConstPropOptions& opts)
                         constants[BO].setConstant(result);
                         optimizableOps++;
                         printVerbose("    ✓ Вычислено: " + to_string(op1.value) + " " + opName + " " + 
-                                   to_string(op2.value) + " = " + to_string(result), opts);
+                                   to_string(op2.value) + " = " + to_string(result), opts, out);
                     } else {
                         constants[BO].setVarying();
                     }
@@ -453,7 +478,7 @@ void analyzeFunctionWithOptions(llvm::Function& F, const ConstPropOptions& opts)
                 if (BI->isConditional()) {
                     ConstantValue cond = getConstValueAdvanced(BI->getCondition(), constants);
                     if (cond.isConstant()) {
-                        printVerbose("    ✓ Константное условие: " + to_string(cond.value), opts);
+                        printVerbose("    ✓ Константное условие: " + to_string(cond.value), opts, out);
                         optimizableOps++;
                     }
                 }
@@ -474,15 +499,15 @@ void analyzeFunctionWithOptions(llvm::Function& F, const ConstPropOptions& opts)
     }
     
     // Статистика
-    cout << "  Найдено констант: " << constantsFound 
+    out << "  Найдено констант: " << constantsFound 
          << " | Оптимизируемых операций: " << optimizableOps
          << " | Всего инструкций: " << totalInstructions;
 
     if (totalInstructions > 0) {
         double optimizationPercent = (double)optimizableOps / totalInstructions * 100;
-        cout << " | Потенциал: " << fixed << setprecision(1) << optimizationPercent << "%";
+        out << " | Потенциал: " << fixed << setprecision(1) << optimizationPercent << "%";
     }
-    cout << "\n";
+    out << "\n";
 }
 
 void analyzeCallSiteAdvanced(llvm::CallInst* CI, unordered_map<llvm::Value*, ConstantValue>& constants, const ConstPropOptions& opts) {

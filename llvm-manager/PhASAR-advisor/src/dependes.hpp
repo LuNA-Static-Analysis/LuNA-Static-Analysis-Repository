@@ -10,6 +10,7 @@
 #include <filesystem>
 #include <algorithm>
 #include <exception>
+#include <cstdlib>
 
 // LLVM includes
 #include <llvm/IR/Module.h>
@@ -42,8 +43,8 @@ using namespace std;
 using namespace psr;
 
 enum class AnalysisChoice {
-    MyRealizedAnalysis,
-    PhasarAnalysis,
+    BasicAnalysis,
+    DetailedAnalysis,
     Both
 };
 
@@ -57,6 +58,12 @@ struct Options {
     bool logging = false;
     bool includePrivateFunctions = false;  // Анализировать функции с _ (методы классов)
     OutputFormat outputFormat = OutputFormat::CONSOLE;
+    std::string artifactsDir = "./PhASAR-artifacts"; // Директория для сохранения артефактов (графов, изображений и т.д.)
+    std::string cssFilePath = []() {
+        const char* adaptHome = std::getenv("ADAPT_HOME");
+        return adaptHome ? std::string(adaptHome) + "/llvm-manager/PhASAR-advisor/src/report_style.css" 
+                            : std::string("report_style.css");
+    }();
     
     // Вспомогательная функция для проверки, нужно ли пропустить функцию
     bool shouldSkipFunction(const std::string& funcName) const {

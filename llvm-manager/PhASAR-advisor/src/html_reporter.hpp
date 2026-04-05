@@ -8,224 +8,51 @@
 #include <sstream>
 #include <iomanip>
 #include <iostream>
+#include <filesystem>
 
 class HTMLReporter {
 private:
     std::string htmlContent;
     std::vector<std::string> sections;
     std::string title;
+    std::string cssFilePath;
+
+    std::string readCSS() const {
+        std::ifstream file(cssFilePath);
+        if (!file.is_open()) {
+            return "/* Could not open CSS file: " + cssFilePath + " */\n"
+                   "body { font-family: sans-serif; padding: 20px; }";
+        }
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+        return buffer.str();
+    }
 
 public:
-    HTMLReporter(const std::string& reportTitle = "PhASAR Analysis Report")
-        : title(reportTitle) {
+    HTMLReporter(const std::string& reportTitle = "PhASAR Analysis Report", 
+                 const std::string& stylePath = "report_style.css")
+        : title(reportTitle), cssFilePath(stylePath) {
         initializeHTML();
     }
 
     void initializeHTML() {
-        htmlContent = R"(<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>)" + title + R"(</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #333;
-            line-height: 1.6;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 40px;
-            text-align: center;
-        }
-        
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-        }
-        
-        .header p {
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
-        
-        .content {
-            padding: 40px;
-        }
-        
-        .timestamp {
-            color: #666;
-            font-size: 0.9em;
-            margin-bottom: 30px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .section {
-            margin-bottom: 40px;
-            border-left: 4px solid #667eea;
-            padding-left: 20px;
-        }
-        
-        .section h2 {
-            color: #667eea;
-            margin-bottom: 20px;
-            font-size: 1.8em;
-        }
-        
-        .section h3 {
-            color: #764ba2;
-            margin-top: 15px;
-            margin-bottom: 10px;
-            font-size: 1.3em;
-        }
-        
-        .section p {
-            margin-bottom: 15px;
-            color: #555;
-        }
-        
-        .info-box {
-            background: #f8f9fa;
-            border-left: 4px solid #667eea;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 4px;
-        }
-        
-        .info-box strong {
-            color: #667eea;
-        }
-        
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin: 20px 0;
-        }
-        
-        .stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-        }
-        
-        .stat-card .number {
-            font-size: 2em;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        
-        .stat-card .label {
-            font-size: 0.9em;
-            opacity: 0.9;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-        }
-        
-        table th {
-            background: #667eea;
-            color: white;
-            padding: 12px;
-            text-align: left;
-            font-weight: bold;
-        }
-        
-        table td {
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        table tr:hover {
-            background: #f5f5f5;
-        }
-        
-        .code-block {
-            background: #2d2d2d;
-            color: #f8f8f2;
-            padding: 15px;
-            border-radius: 4px;
-            overflow-x: auto;
-            margin: 15px 0;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9em;
-            line-height: 1.4;
-        }
-        
-        .footer {
-            background: #f8f9fa;
-            padding: 20px 40px;
-            text-align: center;
-            color: #666;
-            border-top: 1px solid #eee;
-            font-size: 0.9em;
-        }
-        
-        .warning {
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
-            color: #856404;
-            padding: 15px;
-            border-radius: 4px;
-            margin: 15px 0;
-        }
-        
-        .error {
-            background: #f8d7da;
-            border-left: 4px solid #dc3545;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 4px;
-            margin: 15px 0;
-        }
-        
-        .success {
-            background: #d4edda;
-            border-left: 4px solid #28a745;
-            color: #155724;
-            padding: 15px;
-            border-radius: 4px;
-            margin: 15px 0;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>)" + title + R"(</h1>
-            <p>PhASAR Dynamic Analysis Report</p>
-        </div>
-        <div class="content">
-            <div class="timestamp">
-)";
+        htmlContent = "<!DOCTYPE html>\n"
+                      "<html lang=\"ru\">\n"
+                      "<head>\n"
+                      "    <meta charset=\"UTF-8\">\n"
+                      "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+                      "    <title>" + title + "</title>\n"
+                      "    <style>\n" + readCSS() + "\n"
+                      "    </style>\n"
+                      "</head>\n"
+                      "<body>\n"
+                      "    <div class=\"container\">\n"
+                      "        <div class=\"header\">\n"
+                      "            <h1>" + title + "</h1>\n"
+                      "            <p>PhASAR Dynamic Analysis Report</p>\n"
+                      "        </div>\n"
+                      "        <div class=\"content\">\n"
+                      "            <div class=\"timestamp\">\n";
         
         // Add timestamp
         auto now = std::time(nullptr);
@@ -237,10 +64,10 @@ public:
     }
 
     void addSection(const std::string& title, const std::string& content) {
-        std::string section = R"(            <div class="section">
-                <h2>)" + title + R"(</h2>
-                <div>)" + content + R"(</div>
-            </div>
+        std::string section = R"(            <details class="section" open>
+                <summary><h2>)" + title + R"(</h2></summary>
+                <div class="section-content" style="overflow-x: auto; max-width: 100%;">)" + content + R"(</div>
+            </details>
 )";
         sections.push_back(section);
     }
@@ -311,8 +138,41 @@ public:
         sections.push_back(table);
     }
 
+    void addImage(const std::string& altText, const std::string& imagePath) {
+        std::string img = "                <img src=\"" + imagePath + "\" alt=\"" + altText + "\" style=\"max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin: 15px 0;\">\n";
+        
+        if (!sections.empty() && sections.back().find("</details>") != std::string::npos) {
+            std::string& lastSection = sections.back();
+            size_t insertPos = lastSection.rfind("</details>");
+            lastSection.insert(insertPos, img);
+        } else {
+            sections.push_back("            <div class=\"image-container\">\n" + img + "            </div>\n");
+        }
+    }
+
+    void addLinkedImage(const std::string& altText, const std::string& imagePath, bool showPreview = true) {
+        std::string content;
+        if (showPreview) {
+            content = "                <a href=\"" + imagePath + "\" target=\"_blank\" rel=\"noopener noreferrer\" title=\"Open in new window\">\n"
+                      "                    <img src=\"" + imagePath + "\" alt=\"" + altText + "\" style=\"max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin: 15px 0;\">\n"
+                      "                </a>\n";
+        } else {
+            content = "                <div style=\"margin: 15px 0;\">\n"
+                      "                    <strong>" + altText + ":</strong> <a href=\"" + imagePath + "\" target=\"_blank\" rel=\"noopener noreferrer\" title=\"Open in new window\">" + imagePath + "</a>\n"
+                      "                </div>\n";
+        }
+        
+        if (!sections.empty() && sections.back().find("</details>") != std::string::npos) {
+            std::string& lastSection = sections.back();
+            size_t insertPos = lastSection.rfind("</details>");
+            lastSection.insert(insertPos, content);
+        } else {
+            sections.push_back("            <div class=\"image-container\">\n" + content + "            </div>\n");
+        }
+    }
+
     bool saveToFile(const std::string& filepath) {
-        std::ofstream file(filepath);
+        std::ofstream file(filepath, std::ios::out | std::ios::trunc);
         if (!file.is_open()) {
             std::cerr << "Error: Could not open file '" << filepath << "' for writing.\n";
             return false;
@@ -329,17 +189,156 @@ public:
         std::ostringstream oss;
         oss << std::put_time(&tm, "%Y-%m-%d %H:%M:%S");
         
-        file << R"(        </div>
+        file << R"HTML(        </div>
         <div class="footer">
-            <p>Report generated by PhASAR-advisor at )" + oss.str() + R"(</p>
+            <p>Report generated by PhASAR-advisor at )HTML" + oss.str() + R"HTML(</p>
+        </div>
+        
+        <!-- Table of Contents -->
+        <div id="toc-container">
+            <div id="toc-panel">
+                <h3>Оглавление</h3>
+                <ul id="toc-list"></ul>
+            </div>
+            <div id="toc-resizer"></div>
+            <button id="toc-toggle-btn" title="Скрыть/Показать меню">❮</button>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                document.body.style.transition = "margin-left 0.3s ease";
+                const tocContainer = document.getElementById("toc-container");
+                const tocPanel = document.getElementById("toc-panel");
+                const resizer = document.getElementById("toc-resizer");
+                
+                let isResizing = false;
+                
+                resizer.addEventListener("mousedown", (e) => {
+                    isResizing = true;
+                    document.body.style.userSelect = "none";
+                    document.body.style.cursor = "ew-resize";
+                    document.body.style.transition = "none"; // Отключаем плавность при ресайзе
+                    tocContainer.style.transition = "none";
+                });
+                
+                document.addEventListener("mousemove", (e) => {
+                    if (!isResizing || !tocVisible) return;
+                    let newWidth = e.clientX;
+                    if (newWidth < 150) newWidth = 150;
+                    let maxW = window.innerWidth * 0.5;
+                    if (newWidth > maxW) newWidth = maxW;
+                    tocPanel.style.width = newWidth + "px";
+                });
+                
+                document.addEventListener("mouseup", () => {
+                    if (isResizing) {
+                        isResizing = false;
+                        document.body.style.userSelect = "";
+                        document.body.style.cursor = "";
+                        document.body.style.transition = "margin-left 0.3s ease"; // Возвращаем анимацию
+                        tocContainer.style.transition = "transform 0.3s ease";
+                    }
+                });
+                
+                // Кнопка скрытия/показа меню (ищет её по ID)
+                const tocToggleBtn = document.getElementById("toc-toggle-btn");
+                let tocVisible = true;
+                
+                if (tocToggleBtn && tocContainer) {
+                    tocToggleBtn.addEventListener("click", () => {
+                        tocVisible = !tocVisible;
+                        if (tocVisible) {
+                            tocContainer.style.transform = "translateX(0)";
+                            tocToggleBtn.innerText = "❮";
+                            document.body.style.marginLeft = (tocPanel.offsetWidth + resizer.offsetWidth + 40) + "px";
+                        } else {
+                            tocContainer.style.transform = "translateX(-100%)";
+                            tocToggleBtn.innerText = "❯";
+                            document.body.style.marginLeft = "40px";
+                        }
+                    });
+                }
+                
+                // Настраиваем слежение за изменением ширины панели
+                new ResizeObserver(() => {
+                    if (tocVisible) {
+                        document.body.style.marginLeft = (tocPanel.offsetWidth + resizer.offsetWidth + 40) + "px";
+                    }
+                }).observe(tocPanel);
+                
+                const tocList = document.getElementById("toc-list");
+                const sections = document.querySelectorAll("details.section");
+                
+                sections.forEach((sec, index) => {
+                    const h2 = sec.querySelector("h2");
+                    if (!h2) return;
+                    
+                    const titleText = h2.innerText;
+                    const id = "sec-" + index;
+                    sec.id = id; // Даем секции ID для навигации
+                    
+                    const li = document.createElement("li");
+                    
+                    const a = document.createElement("a");
+                    a.href = "#" + id;
+                    a.innerText = titleText;
+                    
+                    // При клике: разворачиваем секцию и делаем плавный скролл
+                    a.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        sec.setAttribute("open", "");
+                        sec.scrollIntoView({behavior: "smooth", block: "start"});
+                    });
+                    
+                    li.appendChild(a);
+                    tocList.appendChild(li);
+                });
+            });
+        </script>
+
+        <!-- Theme Toggle Button -->
+        <button id="theme-toggle-btn" title="Переключить тему">🌙</button>
+
+        <script>
+            // Theme Toggle Logic
+            const themeBtn = document.getElementById("theme-toggle-btn");
+            const savedTheme = localStorage.getItem("report_theme");
+            
+            const enableDark = () => {
+                document.body.classList.add("dark-mode");
+                themeBtn.innerText = "☀️";
+                localStorage.setItem("report_theme", "dark");
+            };
+            
+            const enableLight = () => {
+                document.body.classList.remove("dark-mode");
+                themeBtn.innerText = "🌙";
+                localStorage.setItem("report_theme", "light");
+            };
+            
+            if (savedTheme === "dark") enableDark();
+            
+            themeBtn.addEventListener("click", () => {
+                if (document.body.classList.contains("dark-mode")) enableLight();
+                else enableDark();
+            });
+        </script>
+
+        <!-- Floating Controls -->
+        <div class="floating-controls">
+            <div class="fc-group">
+                <button class="fc-btn fc-btn-expand" onclick="document.querySelectorAll('details').forEach(d => d.setAttribute('open', ''))" title="Развернуть все секции">&#x25BC;</button>
+                <button class="fc-btn fc-btn-collapse" onclick="document.querySelectorAll('details').forEach(d => d.removeAttribute('open'))" title="Свернуть все секции">&#x25B2;</button>
+            </div>
+            <button class="fc-btn-up" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" title="Прокрутить наверх">&#x2191;</button>
         </div>
     </div>
 </body>
 </html>
-)";
+)HTML";
 
         file.close();
-        std::cout << "HTML report saved to: " << filepath << "\n";
+        std::cout << "HTML report saved to: " << std::filesystem::absolute(filepath).string() << "\n";
         return true;
     }
 

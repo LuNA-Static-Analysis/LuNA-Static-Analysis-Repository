@@ -160,63 +160,69 @@ FunctionComplexityMetrics analyzeFunctionComplexity(llvm::Function& F) {
     return metrics;
 }
 
-void printComplexityMetrics(const FunctionComplexityMetrics& metrics) {
-    cout << "\n  Функция: " << metrics.functionName << "\n";
-    cout << "    Цикломатическая сложность: " << metrics.cyclomaticComplexity;
+void printComplexityMetrics(const FunctionComplexityMetrics& metrics, std::ostream& out) {
+    out << "\n  Функция: " << metrics.functionName << "\n";
+    out << "    Цикломатическая сложность: " << metrics.cyclomaticComplexity;
     if (metrics.cyclomaticComplexity > ComplexityThresholds::MAX_CYCLOMATIC_COMPLEXITY) {
-        cout << "  [ПРЕДУПРЕЖДЕНИЕ]";
+        out << "  [ПРЕДУПРЕЖДЕНИЕ]";
     }
-    cout << "\n";
+    out << "\n";
     
-    cout << "    Глубина вложенности: " << metrics.nestingDepth;
+    out << "    Глубина вложенности: " << metrics.nestingDepth;
     if (metrics.nestingDepth > ComplexityThresholds::MAX_NESTING_DEPTH) {
-        cout << "  [ПРЕДУПРЕЖДЕНИЕ]";
+        out << "  [ПРЕДУПРЕЖДЕНИЕ]";
     }
-    cout << "\n";
+    out << "\n";
     
-    cout << "    Количество инструкций: " << metrics.instructionCount;
+    out << "    Количество инструкций: " << metrics.instructionCount;
     if (metrics.instructionCount > ComplexityThresholds::MAX_INSTRUCTIONS) {
-        cout << "  [ПРЕДУПРЕЖДЕНИЕ]";
+        out << "  [ПРЕДУПРЕЖДЕНИЕ]";
     }
-    cout << "\n";
+    out << "\n";
     
-    cout << "    Количество параметров: " << metrics.parameterCount;
+    out << "    Количество параметров: " << metrics.parameterCount;
     if (metrics.parameterCount > ComplexityThresholds::MAX_PARAMETERS) {
-        cout << "  [ПРЕДУПРЕЖДЕНИЕ]";
+        out << "  [ПРЕДУПРЕЖДЕНИЕ]";
     }
-    cout << "\n";
+    out << "\n";
     
-    cout << "    Базовых блоков: " << metrics.basicBlockCount;
+    out << "    Базовых блоков: " << metrics.basicBlockCount;
     if (metrics.basicBlockCount > ComplexityThresholds::MAX_BASIC_BLOCKS) {
-        cout << "  [ПРЕДУПРЕЖДЕНИЕ]";
+        out << "  [ПРЕДУПРЕЖДЕНИЕ]";
     }
-    cout << "\n";
+    out << "\n";
     
-    cout << "    Точек ветвления: " << metrics.branchPoints << "\n";
+    out << "    Точек ветвления: " << metrics.branchPoints << "\n";
     
     if (!metrics.warnings.empty()) {
-        cout << "\n    ПРЕДУПРЕЖДЕНИЯ:\n";
+        out << "\n    ПРЕДУПРЕЖДЕНИЯ:\n";
         for (const auto& warning : metrics.warnings) {
-            cout << "      [ПРЕДУПРЕЖДЕНИЕ]  " << warning << "\n";
+            out << "      [ПРЕДУПРЕЖДЕНИЕ]  " << warning << "\n";
         }
     }
 }
 
-static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
-    cout << "\n=== АНАЛИЗ СЛОЖНОСТИ КОДА ===\n";
+static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& opts, HTMLReporter& htmlReporter) {
+    std::stringstream htmlOut;
+    std::ostream& out = (opts.outputFormat == OutputFormat::HTML) ? static_cast<std::ostream&>(htmlOut) : static_cast<std::ostream&>(std::cout);
+
+    out << "\n=== АНАЛИЗ СЛОЖНОСТИ КОДА ===\n";
     
     try {
         auto* M = IRDB.getModule();
         
         if (!M) {
             cerr << "Error: Не удалось получить модуль из IRDB.\n";
+            if (opts.outputFormat == OutputFormat::HTML) {
+                htmlReporter.addError("Не удалось получить модуль из IRDB (анализ сложности кода).");
+            }
             return;
         }
         
         vector<FunctionComplexityMetrics> allMetrics;
         size_t functionsWithWarnings = 0;
         
-        cout << "\nАНАЛИЗ СЛОЖНОСТИ ФУНКЦИЙ (без внешних и приватных):\n";
+        out << "\nАНАЛИЗ СЛОЖНОСТИ ФУНКЦИЙ (без внешних и приватных):\n";
         
         for (auto& F : *M) {
             if (F.isDeclaration()) {
@@ -235,14 +241,14 @@ static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
                 functionsWithWarnings++;
             }
             
-            printComplexityMetrics(metrics);
+            printComplexityMetrics(metrics, out);
         }
         
         // Статистика
         if (!allMetrics.empty()) {
-            cout << "\nОБЩАЯ СТАТИСТИКА:\n";
-            cout << "  Всего проанализировано функций: " << allMetrics.size() << "\n";
-            cout << "  Функций с предупреждениями: " << functionsWithWarnings << "\n";
+            out << "\nОБЩАЯ СТАТИСТИКА:\n";
+            out << "  Всего проанализировано функций: " << allMetrics.size() << "\n";
+            out << "  Функций с предупреждениями: " << functionsWithWarnings << "\n";
             
             // Вычисляем средние значения
             double avgCyclomatic = 0, avgNesting = 0, avgInstructions = 0, avgParams = 0, avgBlocks = 0;
@@ -260,46 +266,53 @@ static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
                 maxInstructions = max(maxInstructions, m.instructionCount);
             }
             
-            cout << "\n  МАКСИМАЛЬНЫЕ ЗНАЧЕНИЯ:\n";
-            cout << "    Цикломатическая сложность: " << maxCyclomatic << "\n";
-            cout << "    Глубина вложенности: " << maxNesting << "\n";
-            cout << "    Количество инструкций: " << maxInstructions << "\n";
+            out << "\n  МАКСИМАЛЬНЫЕ ЗНАЧЕНИЯ:\n";
+            out << "    Цикломатическая сложность: " << maxCyclomatic << "\n";
+            out << "    Глубина вложенности: " << maxNesting << "\n";
+            out << "    Количество инструкций: " << maxInstructions << "\n";
             
-            cout << "\n  ПОРОГОВЫЕ ЗНАЧЕНИЯ:\n";
-            cout << "    Макс. цикломатическая сложность: " << ComplexityThresholds::MAX_CYCLOMATIC_COMPLEXITY << "\n";
-            cout << "    Макс. глубина вложенности: " << ComplexityThresholds::MAX_NESTING_DEPTH << "\n";
-            cout << "    Макс. количество инструкций: " << ComplexityThresholds::MAX_INSTRUCTIONS << "\n";
-            cout << "    Макс. количество параметров: " << ComplexityThresholds::MAX_PARAMETERS << "\n";
-            cout << "    Макс. базовых блоков: " << ComplexityThresholds::MAX_BASIC_BLOCKS << "\n";
+            out << "\n  ПОРОГОВЫЕ ЗНАЧЕНИЯ:\n";
+            out << "    Макс. цикломатическая сложность: " << ComplexityThresholds::MAX_CYCLOMATIC_COMPLEXITY << "\n";
+            out << "    Макс. глубина вложенности: " << ComplexityThresholds::MAX_NESTING_DEPTH << "\n";
+            out << "    Макс. количество инструкций: " << ComplexityThresholds::MAX_INSTRUCTIONS << "\n";
+            out << "    Макс. количество параметров: " << ComplexityThresholds::MAX_PARAMETERS << "\n";
+            out << "    Макс. базовых блоков: " << ComplexityThresholds::MAX_BASIC_BLOCKS << "\n";
             
             if (functionsWithWarnings > 0) {
-                cout << "\n  РЕКОМЕНДАЦИИ:\n";
-                cout << "    Обнаружены функции с повышенной сложностью.\n";
-                cout << "    Рекомендуется рефакторинг для улучшения читаемости и поддерживаемости кода\n";
+                out << "\n  РЕКОМЕНДАЦИИ:\n";
+                out << "    Обнаружены функции с повышенной сложностью.\n";
+                out << "    Рекомендуется рефакторинг для улучшения читаемости и поддерживаемости кода\n";
             } else {
-                cout << "\n  ✓ Все функции имеют приемлемый уровень сложности!\n";
+                out << "\n  ✓ Все функции имеют приемлемый уровень сложности!\n";
             }
         } else {
-            cout << "\n  Не найдено функций для анализа.\n";
+            out << "\n  Не найдено функций для анализа.\n";
+        }
+
+        if (opts.outputFormat == OutputFormat::HTML) {
+            htmlReporter.addSection("Анализ сложности кода", "<pre>" + htmlOut.str() + "</pre>");
         }
         
     } catch (const exception& e) {
         cerr << "Error: Ошибка при анализе сложности кода: " << e.what() << "\n";
+        if (opts.outputFormat == OutputFormat::HTML) {
+            htmlReporter.addError("Ошибка при анализе сложности кода: " + string(e.what()));
+        }
     }
 }
 
-static void runPhasarAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
+static void runPhasarAnalysis(LLVMProjectIRDB& IRDB, const Options& opts, HTMLReporter& htmlReporter) {
     cout << "\n=== АНАЛИЗ СЛОЖНОСТИ С ИСПОЛЬЗОВАНИЕМ PhASAR ===\n";
     cout << "PhASAR не предоставляет встроенного анализа сложности кода.\n";
     cout << "Используйте --my-analysis или --both для запуска собственного анализа.\n";
 }
 
-void runCodeComplexityAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
-    if (opts.choice == AnalysisChoice::MyRealizedAnalysis || opts.choice == AnalysisChoice::Both) {
-        runMyRealizedAnalysis(IRDB, opts);
+void runCodeComplexityAnalysis(LLVMProjectIRDB& IRDB, const Options& opts, HTMLReporter& htmlReporter) {
+    if (opts.choice == AnalysisChoice::BasicAnalysis || opts.choice == AnalysisChoice::Both) {
+        runMyRealizedAnalysis(IRDB, opts, htmlReporter);
     }
     
-    if (opts.choice == AnalysisChoice::PhasarAnalysis) {
-        runPhasarAnalysis(IRDB, opts);
+    if (opts.choice == AnalysisChoice::DetailedAnalysis) {
+        runPhasarAnalysis(IRDB, opts, htmlReporter);
     }
 }

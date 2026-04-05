@@ -2,8 +2,11 @@
 
 #include "phasar/PhasarLLVM/TypeHierarchy/DIBasedTypeHierarchy.h"
 
-static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
-    cout << "\n=== TYPE ANALYSIS ===\n";
+static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& opts, HTMLReporter& htmlReporter) {
+    std::stringstream htmlOut;
+    std::ostream& out = (opts.outputFormat == OutputFormat::HTML) ? static_cast<std::ostream&>(htmlOut) : static_cast<std::ostream&>(std::cout);
+    
+    out << "\n=== TYPE ANALYSIS ===\n";
     
     try {
         int castCount = 0;
@@ -12,6 +15,9 @@ static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
 
         if (!M) {
             cerr << "Error: Не удалось получить модуль из IRDB.\n";
+            if (opts.outputFormat == OutputFormat::HTML) {
+                htmlReporter.addError("Не удалось получить модуль из IRDB (анализ типов).");
+            }
             return;
         }
 
@@ -28,19 +34,29 @@ static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
             }
         }
 
-        cout << "\nСтатистика анализа типов:\n";
-        cout << "  Всего приведений типов: " << castCount << "\n";
+        out << "\nСтатистика анализа типов:\n";
+        out << "  Всего приведений типов: " << castCount << "\n";
+
+        if (opts.outputFormat == OutputFormat::HTML) {
+            htmlReporter.addSection("Анализ типов (Basic)", "<pre>" + htmlOut.str() + "</pre>");
+        }
     } catch (const exception& e) {
         cerr << "Ошибка при выполнении type analysis: " << e.what() << "\n";
+        if (opts.outputFormat == OutputFormat::HTML) {
+            htmlReporter.addError("Ошибка при выполнении type analysis: " + string(e.what()));
+        }
     }
 }
 
-static void runPhasarAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
-    cout << "\n=== PHASAR ANALYSIS ===\n";
+static void runPhasarAnalysis(LLVMProjectIRDB& IRDB, const Options& opts, HTMLReporter& htmlReporter) {
+    std::stringstream htmlOut;
+    std::ostream& out = (opts.outputFormat == OutputFormat::HTML) ? static_cast<std::ostream&>(htmlOut) : static_cast<std::ostream&>(std::cout);
+
+    out << "\n=== PHASAR ANALYSIS ===\n";
 
     DIBasedTypeHierarchy TH(IRDB);
 
-    cout << "\nPhASAR статистика по типам:\n";
+    out << "\nPhASAR статистика по типам:\n";
     
     for (const auto& Ty : TH.getAllTypes()) {
         std::string typeName = Ty->getName().str();
@@ -48,7 +64,7 @@ static void runPhasarAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
             continue;
         }
 
-        llvm::outs() << "Тип: " << typeName << " (" << TH.getTypeName(Ty) << ")\n";
+        out << "Тип: " << typeName << " (" << TH.getTypeName(Ty).str() << ")\n";
         auto SubTypes = TH.getSubTypes(Ty);
 
         bool hasSubTypes = false;
@@ -59,25 +75,29 @@ static void runPhasarAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
             }
             
             if (!hasSubTypes) {
-                llvm::outs() << "  Подтипы:\n";
+                out << "  Подтипы:\n";
                 hasSubTypes = true;
             }
             
-            llvm::outs() << "    - " << SubTy->getName() << " (" << TH.getTypeName(SubTy) << ")\n";
+            out << "    - " << SubTy->getName().str() << " (" << TH.getTypeName(SubTy).str() << ")\n";
         }
         
         if (!hasSubTypes) {
-            llvm::outs() << "  Нет подтипов.\n";
+            out << "  Нет подтипов.\n";
         }
+    }
+
+    if (opts.outputFormat == OutputFormat::HTML) {
+        htmlReporter.addSection("Анализ типов (Detailed)", "<pre>" + htmlOut.str() + "</pre>");
     }
 }
 
-void runTypeAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
-    if (opts.choice == AnalysisChoice::MyRealizedAnalysis || opts.choice == AnalysisChoice::Both) {
-        runMyRealizedAnalysis(IRDB, opts);
+void runTypeAnalysis(LLVMProjectIRDB& IRDB, const Options& opts, HTMLReporter& htmlReporter) {
+    if (opts.choice == AnalysisChoice::BasicAnalysis || opts.choice == AnalysisChoice::Both) {
+        runMyRealizedAnalysis(IRDB, opts, htmlReporter);
     }
     
-    if (opts.choice == AnalysisChoice::PhasarAnalysis || opts.choice == AnalysisChoice::Both) {
-        runPhasarAnalysis(IRDB, opts);
+    if (opts.choice == AnalysisChoice::DetailedAnalysis || opts.choice == AnalysisChoice::Both) {
+        runPhasarAnalysis(IRDB, opts, htmlReporter);
     }
 }

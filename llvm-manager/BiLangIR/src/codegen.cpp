@@ -2109,8 +2109,8 @@ Value *TernaryExprAST::codegen() {  // NotUsed
     }
 
     Builder->CreateBr(MergeBB);
-    TheFunction->insert(TheFunction->end(), MergeBB);
-    // TheFunction->getBasicBlockList().push_back(MergeBB);
+    // TheFunction->insert(TheFunction->end(), MergeBB);
+    TheFunction->getBasicBlockList().push_back(MergeBB);
     Builder->SetInsertPoint(ElseBB);
 
     Value *ElseV = False->codegen();
@@ -2120,8 +2120,8 @@ Value *TernaryExprAST::codegen() {  // NotUsed
     }
 
     Builder->CreateBr(MergeBB);
-    TheFunction->insert(TheFunction->end(), MergeBB);
-    // TheFunction->getBasicBlockList().push_back(MergeBB);
+    // TheFunction->insert(TheFunction->end(), MergeBB);
+    TheFunction->getBasicBlockList().push_back(MergeBB);
     Builder->SetInsertPoint(MergeBB);
 
     return nullptr;

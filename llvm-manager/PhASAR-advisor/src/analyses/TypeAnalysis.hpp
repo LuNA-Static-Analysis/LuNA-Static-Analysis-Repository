@@ -3,6 +3,8 @@
 
 #include "../dependes.hpp"
 
-void runTypeAnalysis(LLVMProjectIRDB& IRDB, const Options& opts);
+#include <html_reporter.hpp>
+
+void runTypeAnalysis(LLVMProjectIRDB& IRDB, const Options& opts, HTMLReporter& htmlReporter);
 
 #endif // TYPE_ANALYSIS_HPP
