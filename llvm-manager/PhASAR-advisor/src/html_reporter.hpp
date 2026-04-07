@@ -139,7 +139,7 @@ public:
     }
 
     void addImage(const std::string& altText, const std::string& imagePath) {
-        std::string img = "                <img src=\"" + imagePath + "\" alt=\"" + altText + "\" style=\"max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin: 15px 0;\">\n";
+        std::string img = "                <img src=\"" + imagePath + "\" alt=\"" + altText + "\" class=\"zoomable-img\" style=\"max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin: 15px 0; cursor: zoom-in;\" title=\"Нажмите для увеличения\">\n";
         
         if (!sections.empty() && sections.back().find("</details>") != std::string::npos) {
             std::string& lastSection = sections.back();
@@ -306,12 +306,14 @@ public:
             
             const enableDark = () => {
                 document.body.classList.add("dark-mode");
+                document.documentElement.classList.add("dark-mode");
                 themeBtn.innerText = "☀️";
                 localStorage.setItem("report_theme", "dark");
             };
             
             const enableLight = () => {
                 document.body.classList.remove("dark-mode");
+                document.documentElement.classList.remove("dark-mode");
                 themeBtn.innerText = "🌙";
                 localStorage.setItem("report_theme", "light");
             };
@@ -322,6 +324,66 @@ public:
                 if (document.body.classList.contains("dark-mode")) enableLight();
                 else enableDark();
             });
+        </script>
+
+        <!-- Image Viewer Modal (Lightbox with Zoom) -->
+        <div id="img-modal" class="custom-modal">
+            <span class="custom-modal-close" title="Закрыть">&times;</span>
+            <img id="img-modal-content" class="custom-modal-content" title="Крутите колесико, чтобы приблизить/отдалить. Зажмите левую кнопку, чтобы перемещать изображение.">
+        </div>
+
+        <script>
+            // Обработчик для модального окна изображения
+            const imgModal = document.getElementById("img-modal");
+            const modalImg = document.getElementById("img-modal-content");
+            const spanClose = document.getElementsByClassName("custom-modal-close")[0];
+            let scale = 1, isDragging = false, startX, startY, translateX = 0, translateY = 0;
+
+            document.querySelectorAll(".zoomable-img").forEach(img => {
+                img.addEventListener("click", function(e) {
+                    e.preventDefault();
+                    imgModal.style.display = "flex";
+                    modalImg.src = this.src;
+                    scale = 1; translateX = 0; translateY = 0;
+                    updateTransform();
+                });
+            });
+
+            spanClose.onclick = () => { imgModal.style.display = "none"; };
+            imgModal.onclick = (e) => { if (e.target === imgModal) imgModal.style.display = "none"; };
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === "Escape" && imgModal.style.display === "flex") {
+                    imgModal.style.display = "none";
+                }
+            });
+
+            imgModal.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                scale += e.deltaY * -0.002;
+                scale = Math.min(Math.max(0.1, scale), 20); // Ограничение масштаба (от 0.1x до 20x)
+                updateTransform();
+            }, { passive: false });
+
+            modalImg.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                isDragging = true;
+                startX = e.clientX - translateX;
+                startY = e.clientY - translateY;
+            });
+
+            window.addEventListener('mouseup', () => { isDragging = false; });
+            window.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                e.preventDefault();
+                translateX = e.clientX - startX;
+                translateY = e.clientY - startY;
+                updateTransform();
+            });
+
+            function updateTransform() {
+                modalImg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+            }
         </script>
 
         <!-- Floating Controls -->

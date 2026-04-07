@@ -192,8 +192,8 @@ static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& opts, HT
 
         if (opts.outputFormat == OutputFormat::HTML) {
             htmlReporter.addSection("Граф Вызовов (CallGraph) (Basic)", "<pre>" + htmlOut.str() + "</pre>");
-            htmlReporter.addLinkedImage("CallGraph Image", "callgraph.png", true);
-            htmlReporter.addLinkedImage("CallGraph Legend", "callgraph_legend.png", true);
+            htmlReporter.addImage("CallGraph Image", "callgraph.png");
+            htmlReporter.addImage("CallGraph Legend", "callgraph_legend.png");
         }
     }
 }
@@ -312,7 +312,7 @@ static void runPhasarAnalysis(LLVMProjectIRDB& IRDB, const Options& opts, HTMLRe
 
     if (opts.outputFormat == OutputFormat::HTML) {
         htmlReporter.addSection("Граф Вызовов (CallGraph) (Detailed)", "<pre>" + htmlOut.str() + "</pre>");
-        htmlReporter.addLinkedImage("Phasar Callgraph Image", "phasar-callgraph.png", true);
+        htmlReporter.addImage("Phasar Callgraph Image", "phasar-callgraph.png");
     }
 }
 

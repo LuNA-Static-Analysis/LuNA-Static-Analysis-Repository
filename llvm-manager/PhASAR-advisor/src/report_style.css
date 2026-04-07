@@ -14,6 +14,27 @@ body {
     padding: 20px;
 }
 
+/* Scrollbar styling */
+html {
+    scrollbar-width: auto;
+    scrollbar-color: #cbd3da #e2e6ea; /* thumb track */
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+::-webkit-scrollbar-track {
+    background: #e2e6ea;
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd3da;
+    border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #adb5bd;
+}
+
 .container {
     max-width: 1200px;
     margin: 0 auto;
@@ -243,9 +264,14 @@ table tr:hover {
 /* =========================================
    DARK MODE STYLES
    ========================================= */
+html.dark-mode {
+    scrollbar-color: #4a5c96 #0d0f12;
+}
+
 body.dark-mode {
     background-color: #121416;
     color: #d1d5db;
+    color-scheme: dark;
 }
 
 body.dark-mode .container {
@@ -340,6 +366,19 @@ body.dark-mode .success {
     border-left-color: #3ed061;
 }
 
+html.dark-mode ::-webkit-scrollbar-track,
+html.dark-mode::-webkit-scrollbar-track {
+    background: #0d0f12;
+}
+html.dark-mode ::-webkit-scrollbar-thumb,
+html.dark-mode::-webkit-scrollbar-thumb {
+    background: #4a5c96;
+}
+html.dark-mode ::-webkit-scrollbar-thumb:hover,
+html.dark-mode::-webkit-scrollbar-thumb:hover {
+    background: #6eb5ff;
+}
+
 /* =========================================
    COMPONENTS (TOC, Controls, Theme Btn)
    ========================================= */
@@ -367,6 +406,15 @@ body.dark-mode .success {
 .fc-btn-collapse { background: #6c757d; border-left: 1px solid rgba(255,255,255,0.2); }
 .fc-btn-up { width: 100%; height: 40px; border-radius: 5px; border: none; background: #28a745; color: white; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2); font-size: 18px; font-weight: bold; display: flex; align-items: center; justify-content: center; transition: opacity 0.2s; }
 .fc-btn-up:hover { opacity: 0.8; }
+
+/* =========================================
+   IMAGE VIEWER MODAL
+   ========================================= */
+.custom-modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; overflow: hidden; background-color: rgba(0,0,0,0.85); align-items: center; justify-content: center; flex-direction: column; }
+.custom-modal-close { position: absolute; top: 20px; right: 80px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer; z-index: 2001; transition: color 0.3s, text-shadow 0.3s; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 10px rgba(0,0,0,0.5); }
+.custom-modal-close:hover { color: #bbb; text-decoration: none; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 15px rgba(0,0,0,0.8); }
+.custom-modal-content { margin: auto; display: block; cursor: grab; max-height: 90vh; max-width: 90vw; box-shadow: 0 5px 25px rgba(0,0,0,0.8); object-fit: contain; transition: transform 0.1s ease-out; }
+.custom-modal-content:active { cursor: grabbing; }
 
 /* Overrides for elements set via C++ properties & Dark Mode components */
 body.dark-mode #toc-panel { background: #1e2227; border-right-color: #333; }
