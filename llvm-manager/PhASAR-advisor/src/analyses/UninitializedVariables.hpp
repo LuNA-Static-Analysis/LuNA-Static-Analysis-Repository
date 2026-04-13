@@ -3,6 +3,8 @@
 
 #include "../dependes.hpp"
 
-void runUninitializedVariables(LLVMProjectIRDB& IRDB, const Options& opts);
+#include <html_reporter.hpp>
+
+void runUninitializedVariables(LLVMProjectIRDB& IRDB, const Options& opts, HTMLReporter& htmlReporter);
 
 #endif // UNINITIALIZED_VARIABLES_HPP

@@ -7,6 +7,7 @@
 // #include "phasar/PhasarLLVM/TaintConfig.h" // For the LLVMTaintConfig
 
 #include <llvm/Support/raw_ostream.h>
+#include <llvm/Support/raw_os_ostream.h>
 
 #include <phasar/ControlFlow/CallGraphAnalysisType.h>
 #include <phasar/PhasarLLVM/ControlFlow/LLVMBasedICFG.h>
@@ -67,25 +68,31 @@ void detectMemoryIssues(llvm::Function& F, vector<SecurityIssue>& issues);
 void detectBufferOverflows(llvm::Function& F, vector<SecurityIssue>& issues);
 string getFunctionNameFromCall(llvm::CallInst* CI);
 
-static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
-    cout << "\n=== АНАЛИЗ БЕЗОПАСНОСТИ ===\n\n";
+static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& opts, HTMLReporter& htmlReporter) {
+    std::stringstream htmlOut;
+    std::ostream& out = (opts.outputFormat == OutputFormat::HTML) ? static_cast<std::ostream&>(htmlOut) : static_cast<std::ostream&>(std::cout);
+
+    out << "\n=== АНАЛИЗ БЕЗОПАСНОСТИ ===\n\n";
 
     try {
         auto* M = IRDB.getModule();
 
         if (!M) {
             cerr << "Error: Не удалось получить модуль из IRDB.\n";
+            if (opts.outputFormat == OutputFormat::HTML) {
+                htmlReporter.addError("Error: Не удалось получить модуль из IRDB.");
+            }
             return;
         }
 
-        cout << "Анализ безопасности модуля: " << M->getName().str() << "\n\n";
+        out << "Анализ безопасности модуля: " << M->getName().str() << "\n\n";
         
         vector<SecurityIssue> allIssues;
         int functionsAnalyzed = 0;
         
         for (auto& F : *M) {
             if (!F.isDeclaration()) {
-                cout << "Анализ функции: " << F.getName().str() << "\n";
+                out << "Анализ функции: " << F.getName().str() << "\n";
                 functionsAnalyzed++;
                 
                 vector<SecurityIssue> functionIssues;
@@ -93,22 +100,22 @@ static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
                 
                 if (!functionIssues.empty()) {
                     for (const auto& issue : functionIssues) {
-                        cout << "  " << issue.severity << ": " << issue.description << "\n";
-                        cout << "     Расположение: " << issue.location << "\n";
+                        out << "  " << issue.severity << ": " << issue.description << "\n";
+                        out << "     Расположение: " << issue.location << "\n";
                         allIssues.push_back(issue);
                     }
                 } else {
-                    cout << "  Критических проблем не обнаружено\n";
+                    out << "  Критических проблем не обнаружено\n";
                 }
 
-                cout << "\n";
+                out << "\n";
             }
         }
         
         // Итоговая статистика
-        cout << "ИТОГОВАЯ СТАТИСТИКА БЕЗОПАСНОСТИ:\n";
-        cout << "  Проанализировано функций: " << functionsAnalyzed << "\n";
-        cout << "  Всего найдено проблем: " << allIssues.size() << "\n";
+        out << "ИТОГОВАЯ СТАТИСТИКА БЕЗОПАСНОСТИ:\n";
+        out << "  Проанализировано функций: " << functionsAnalyzed << "\n";
+        out << "  Всего найдено проблем: " << allIssues.size() << "\n";
 
         // Группировка по типам
         map<SecurityIssue::Type, int> issuesByType;
@@ -117,7 +124,7 @@ static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
         }
         
         if (!issuesByType.empty()) {
-            cout << "  Типы проблем:\n";
+            out << "  Типы проблем:\n";
             for (const auto& [type, count] : issuesByType) {
                 string typeName;
                 switch (type) {
@@ -130,16 +137,27 @@ static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
                     case SecurityIssue::NULL_DEREFERENCE: typeName = "NULL dereference"; break;
                     case SecurityIssue::UNINITIALIZED_USE: typeName = "Неинициализированные данные"; break;
                 }
-                cout << "    - " << typeName << ": " << count << "\n";
+                out << "    - " << typeName << ": " << count << "\n";
             }
         }
+
+        if (opts.outputFormat == OutputFormat::HTML) {
+            htmlReporter.addSection("Анализ загрязнения данных (Basic)", "<pre>" + htmlOut.str() + "</pre>");
+        }
+
     } catch (const exception& e) {
         cerr << "Error: Ошибка при выполнении анализа безопасности: " << e.what() << "\n";
+        if (opts.outputFormat == OutputFormat::HTML) {
+            htmlReporter.addError("Ошибка при выполнении анализа безопасности: " + string(e.what()));
+        }
     }
 }
 
-static void runPhasarAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
-    cout << "\n=== АНАЛИЗ ЗАГРЯЗНЕНИЯ ДАННЫХ (TAINT ANALYSIS) С ИСПОЛЬЗОВАНИЕМ PhASAR ===\n\n";
+static void runPhasarAnalysis(LLVMProjectIRDB& IRDB, const Options& opts, HTMLReporter& htmlReporter) {
+    std::stringstream htmlOut;
+    std::ostream& out = (opts.outputFormat == OutputFormat::HTML) ? static_cast<std::ostream&>(htmlOut) : static_cast<std::ostream&>(std::cout);
+
+    out << "\n=== АНАЛИЗ ЗАГРЯЗНЕНИЯ ДАННЫХ (TAINT ANALYSIS) С ИСПОЛЬЗОВАНИЕМ PhASAR ===\n\n";
 
     // LLVMTaintConfig TC(HA.getProjectIRDB());
     // TC.print();
@@ -158,28 +176,34 @@ static void runPhasarAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
     psr::LLVMAliasSet AS(&IRDB);
     psr::LLVMTaintConfig TC(IRDB);
 
-    TC.print();
+    llvm::raw_os_ostream raw_out(out);
+    TC.print(raw_out);
+    raw_out.flush();
 
     psr::IFDSTaintAnalysis TaintProblem(&IRDB, &AS, &TC, {"main"}, false);
     psr::LLVMBasedICFG ICFG(&IRDB, psr::CallGraphAnalysisType::OTF, {"main"}, nullptr, &AS);
     psr::solveIFDSProblem(TaintProblem, ICFG);
 
     for (const auto &[LeakInst, LeakFacts] : TaintProblem.Leaks) {
-        llvm::outs() << "Detected taint leak at " << psr::llvmIRToString(LeakInst) << '\n';
+        out << "Detected taint leak at " << psr::llvmIRToString(LeakInst) << '\n';
         for (const auto *Fact : LeakFacts) {
-            llvm::outs() << ">  leaking fact " << psr::llvmIRToShortString(Fact) << '\n';
+            out << ">  leaking fact " << psr::llvmIRToShortString(Fact) << '\n';
         }
-        llvm::outs() << '\n';
+        out << '\n';
+    }
+
+    if (opts.outputFormat == OutputFormat::HTML) {
+        htmlReporter.addSection("Анализ загрязнения данных (Detailed)", "<pre>" + htmlOut.str() + "</pre>");
     }
 }
 
-void runTaintAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
-    if (opts.choice == AnalysisChoice::MyRealizedAnalysis || opts.choice == AnalysisChoice::Both) {
-        runMyRealizedAnalysis(IRDB, opts);
+void runTaintAnalysis(LLVMProjectIRDB& IRDB, const Options& opts, HTMLReporter& htmlReporter) {
+    if (opts.choice == AnalysisChoice::BasicAnalysis || opts.choice == AnalysisChoice::Both) {
+        runMyRealizedAnalysis(IRDB, opts, htmlReporter);
     }
     
-    if (opts.choice == AnalysisChoice::PhasarAnalysis || opts.choice == AnalysisChoice::Both) {
-        runPhasarAnalysis(IRDB, opts);
+    if (opts.choice == AnalysisChoice::DetailedAnalysis || opts.choice == AnalysisChoice::Both) {
+        runPhasarAnalysis(IRDB, opts, htmlReporter);
     }
 }
 

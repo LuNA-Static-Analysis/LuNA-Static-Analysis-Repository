@@ -3,6 +3,8 @@
 
 #include "../dependes.hpp"
 
+#include <html_reporter.hpp>
+
 // Структура для хранения информации о вызове
 struct CallInfo {
     string caller;           // Вызывающая функция
@@ -22,12 +24,12 @@ struct CallGraphStats {
     size_t recursiveFunctions = 0;
 };
 
-void runCallGraphAnalysis(LLVMProjectIRDB& IRDB, const Options& opts);
+void runCallGraphAnalysis(LLVMProjectIRDB& IRDB, const Options& opts, HTMLReporter& htmlReporter);
 
-void printCallGraphStats(const CallGraphStats& stats);
-void exportCallGraphDot(const vector<CallInfo>& calls, const string& filename);
-void analyzeCallChains(const vector<CallInfo>& calls, const Options& opts);
-void analyzeUnreachableFunctions(const vector<CallInfo>& calls, const unordered_set<string>& allFunctions, const Options& opts);
+void printCallGraphStats(const CallGraphStats& stats, std::ostream& out);
+void exportCallGraphDot(const vector<CallInfo>& calls, const string& filename, const string& legendFilename);
+void analyzeCallChains(const vector<CallInfo>& calls, const Options& opts, std::ostream& out);
+void analyzeUnreachableFunctions(const vector<CallInfo>& calls, const unordered_set<string>& allFunctions, const Options& opts, std::ostream& out);
 void reportUnreachableFunctions(const vector<string>& unreachable, const Options& opts);
 
 #endif // PHASAR_ANALYSES_CALLGRAPH_H

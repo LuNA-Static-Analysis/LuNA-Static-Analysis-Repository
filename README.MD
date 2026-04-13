@@ -6,13 +6,14 @@
 - **LuNA** — [репозиторий LuNA](https://gitlab.ssd.sscc.ru/luna/luna)
 - [JSON for Modern C++](https://json.nlohmann.me/)
 - **PhASAR** — [сайт PhASAR](https://phasar.org/)
-- **LLVM 16** (будет установлен с **PhASAR**)
+- **LLVM 15**
 - Компилятор: **g++** с поддержкой **C++20** или новее
 - **Node.js** и **npm**
 - **Python** 3.13+
 - **flex** и **bison**
 - **SWI-Prolog**
 - **SPIN**
+- **graphviz**
 
 ## Установка
 
@@ -65,7 +66,8 @@ sudo apt install         \
     swi-prolog           \
     spin                 \
     nodejs               \
-    npm
+    npm                  \
+    graphviz
 ```
 
 ### 5. Установка node-зависимостей
@@ -74,18 +76,52 @@ sudo apt install         \
 npm install --prefix ./mc-analyzer
 ```
 
-### 6. Установка PhASAR и LLVM 16
+### 6. Установка PhASAR и LLVM 15
 
-Инструкция по установке есть на [сайте](https://phasar.org/tutorial/) и в [репозитории](https://github.com/secure-software-engineering/phasar/blob/development/BUILD.md) **PhASAR**
+#### Установка LLVM 15
 
-### 7. Сборка проекта 
+```bash
+sudo apt update # <-- рекомендуется перед установкой
+sudo apt install                          \
+                 libllvm-15-ocaml-dev     \
+                 libllvm15t64             \
+                 llvm-15                  \
+                 llvm-15-dev              \
+                 llvm-15-doc              \
+                 llvm-15-examples         \
+                 llvm-15-runtime          \
+                 clang-15                 \
+                 clang-tools-15           \
+                 clang-15-doc             \
+                 libclang-common-15-dev   \
+                 libclang-15-dev          \
+                 libclang1-15t64          \
+                 libclang-rt-15-dev       \
+                 lld-15
+```
+
+Если нет LLVM 15 в apt, то можно установить его с помощью официального [сайта](https://llvm.org/)
+
+#### Установка PhASAR
+
+1. скачать в удобную для пользователя директорию исходники PhASAR из [GitHub](https://github.com/secure-software-engineering/phasar/releases/tag/v2510)
+2. перейти в директорию исходников
+3. выполнить `git clone https://github.com/nlohmann/json.git external/json`
+4. выполнить `git clone https://github.com/pboettch/json-schema-validator.git external/json-schema-validator`
+5. найти и закомментировать строку `git submodule update --init` в скрипте `bootstrap.sh`
+6. выполнить `llvm-config-15 --prefix` -- так пользователь получит путь к LLVM 15
+7. выполнить `sudo ./bootstrap.sh --install -DLLVM_INSTALL_DIR=<path/to/llvm>`
+
+### 7. Сборка проекта
+
+В директории проекта ADAPT выполнить:
 
 ```bash
 make
 python3 llvm-manager/manager.py rebuild
 ```
 
-### 7. Настройка переменных окружения
+### 8. Настройка переменных окружения
 
 Одно из решений: редактирование файла `.bashrc` / `.zshrc` в домашней директории
 
@@ -95,8 +131,10 @@ python3 llvm-manager/manager.py rebuild
 
 ## Использование
 
+### Чтобы искать ошибки в LuNA-программах
+
 ```bash
-adapt [ОПЦИИ] LUNA_ПРОГРАММА
+adapt [ОПЦИИ] FA_FILE [CPP_FILE_1 CPP_FILE_2 ...]
 ```
 
 Опции:
@@ -111,5 +149,19 @@ adapt [ОПЦИИ] LUNA_ПРОГРАММА
 Пример запуска:
 
 ```bash
-adapt src/main.fa --run degsa --run prolog --no-cleanup
+adapt src/main.fa src/main.cpp --run degsa --run prolog --no-cleanup
 ```
+
+### Чтобы получить отчёт по LuNA-программам (в LLVM IR представлении)
+
+```bash
+llvm-manager report <path/to/llvm-ir> [analyses...]
+```
+
+Если не указывать конкретные виды анализов, выполнятся все, а посмотреть доступные виды анализов можно с помощью команды:
+
+```bash
+llvm-manager report -- --help
+```
+
+Для получения LLVM IR нужно воспользоваться программой adapt с использованием BiLangIR и флагом `--no-cleanup`

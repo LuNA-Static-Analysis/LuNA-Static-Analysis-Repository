@@ -8,6 +8,7 @@
 #include "analyses/CallGraph.hpp"
 #include "analyses/AliasInfo.hpp"
 #include "analyses/CodeComplexity.hpp"
+#include "html_reporter.hpp"
 
 #include <cstdlib>
 #include <vector>
@@ -48,13 +49,16 @@ void printUsage(const string& programName) {
     cout << "   or: " << programName << " --error-checking <helper_file> <llvm_ir_file> <output_file>\n\n";
     
     cout << "Options:\n";
-    cout << "  --my-analysis      - only my analysis implementation\n";
-    cout << "  --phasar           - only PhASAR analysis (default)\n";
-    cout << "  --both             - Both types of analysis\n";
-    cout << "  --logging          - Enable detailed logging\n";
-    cout << "  --include-private  - Include private/mangled functions (with _)\n";
-    cout << "  --error-checking   - Error checking mode (requires helper file and output file path)\n";
-    cout << "  -h, --help         - Show this help message\n\n";
+    cout << "  --basic                - only basic implementation\n";
+    cout << "  --detailed             - only detailed implementation\n";
+    cout << "  --both                 - Both types of analysis (default)\n";
+    cout << "  --logging              - Enable detailed logging\n";
+    cout << "  --include-private      - Include private/mangled functions (with _)\n";
+    cout << "  --html-report          - Generate HTML report instead of console output\n";
+    cout << "  --artifacts-dir=<path> - Directory to save generated artifacts (default: ./PhASAR-artifacts)\n";
+    cout << "  --css-file=<path>      - Path to CSS file for HTML report (default: $ADAPT_HOME/PhASAR-advisor/src/report_style.css)\n";
+    cout << "  --error-checking       - Error checking mode (requires helper file and output file path)\n";
+    cout << "  -h, --help             - Show this help message\n\n";
 
     cout << "Available analyses:\n";
     // cout << "  taint      - Taint analysis (tracking tainted data)\n";
@@ -73,11 +77,14 @@ bool fileExists(const string& filepath) {
 }
 
 bool isOptionFlag(const string& arg) {
-    return arg == "--my-analysis" || 
-           arg == "--phasar" || 
+    return arg == "--basic" || 
+           arg == "--detailed" || 
            arg == "--both" || 
            arg == "--logging" ||
            arg == "--include-private" ||
+           arg == "--html-report" ||
+           arg.starts_with("--artifacts-dir=") ||
+           arg.starts_with("--css-file=") ||
            arg == "-h" ||
            arg == "--help";
 }
@@ -97,21 +104,28 @@ void separateArguments(const vector<string>& args,
 Options parseOptions(const vector<string>& optionArgs) {
     Options opts;
 
-    opts.choice = AnalysisChoice::PhasarAnalysis;  // По умолчанию
+    opts.choice = AnalysisChoice::Both;            // По умолчанию выполняем оба анализа
     opts.logging = false;                          // По умолчанию выключено
     opts.includePrivateFunctions = false;          // По умолчанию пропускаем
+    opts.outputFormat = OutputFormat::CONSOLE;     // По умолчанию вывод в консоль
     
     for (const string& arg : optionArgs) {
-        if (arg == "--my-analysis") {
-            opts.choice = AnalysisChoice::MyRealizedAnalysis;
-        } else if (arg == "--phasar") {
-            opts.choice = AnalysisChoice::PhasarAnalysis;
+        if (arg == "--basic") {
+            opts.choice = AnalysisChoice::BasicAnalysis;
+        } else if (arg == "--detailed") {
+            opts.choice = AnalysisChoice::DetailedAnalysis;
         } else if (arg == "--both") {
             opts.choice = AnalysisChoice::Both;
         } else if (arg == "--logging") {
             opts.logging = true;
         } else if (arg == "--include-private") {
             opts.includePrivateFunctions = true;
+        } else if (arg == "--html-report") {
+            opts.outputFormat = OutputFormat::HTML;
+        } else if (arg.starts_with("--artifacts-dir=")) {
+            opts.artifactsDir = arg.substr(16); // length of "--artifacts-dir="
+        } else if (arg.starts_with("--css-file=")) {
+            opts.cssFilePath = arg.substr(11); // length of "--css-file="
         }
     }
     
@@ -171,8 +185,10 @@ void runErrorCheckingMode(const string& helperFile, const string& llvmIRFile, co
 
     LLVMProjectIRDB IRDB(llvmIRFile);
 
-    runCallGraphAnalysis(IRDB, opts);
-    runBasicInfo(IRDB, opts);
+    HTMLReporter htmlReporter("PhASAR Analysis Report", opts.cssFilePath);
+
+    runCallGraphAnalysis(IRDB, opts, htmlReporter);
+    runBasicInfo(IRDB, opts, htmlReporter);
 
     ErrorHandler::errorsReport(output::FILE, opts.outputFile);
 }
@@ -214,6 +230,9 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
     
+    string relativePath = llvmIRFile;
+    llvmIRFile = filesystem::absolute(relativePath).string();
+    
     vector<string> args;
     for (int i = 2; i < argc; ++i) {
         args.push_back(argv[i]);
@@ -229,6 +248,23 @@ int main(int argc, char* argv[]) {
     }
     
     Options opts = parseOptions(optionArgs);
+
+    error_code ec;
+            
+    if (!filesystem::exists(opts.artifactsDir)) {
+        if (!filesystem::create_directories(opts.artifactsDir, ec) && ec.value() != 0) {
+            cerr << "Error: Could not create directory '" << opts.artifactsDir << "': " << ec.message() << "\n";
+            exit(EXIT_FAILURE);
+        }
+    } else if (!filesystem::is_directory(opts.artifactsDir)) {
+        cerr << "Error: Path '" << opts.artifactsDir << "' exists but is not a directory.\n";
+        exit(EXIT_FAILURE);
+    }
+
+    if (!fileExists(opts.cssFilePath)) {
+        cerr << "Error: CSS file '" << opts.cssFilePath << "' not found.\n";
+        exit(EXIT_FAILURE);
+    }
     
     vector<AnalysisType> analyses = parseAnalyses(analysisArgs);
     
@@ -238,36 +274,101 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
     
+    // Initialize HTML reporter if needed
+    HTMLReporter htmlReporter("PhASAR Analysis Report", opts.cssFilePath);
+    
+    // Add general info to HTML report
+    if (opts.outputFormat == OutputFormat::HTML) {
+        htmlReporter.addSection("Analysis Configuration", 
+            "<strong>Input File:</strong> " + llvmIRFile + "<br/>" +
+            "<strong>Analysis Mode:</strong> " + 
+            (opts.choice == AnalysisChoice::BasicAnalysis ? "Basic Implementation" : 
+             opts.choice == AnalysisChoice::DetailedAnalysis ? "Detailed Implementation" : "Both") + "<br/>" +
+            "<strong>Include Private Functions:</strong> " + (opts.includePrivateFunctions ? "Yes" : "No")
+        );
+    }
+    
     cout << "Initializing PhASAR for file: " << llvmIRFile << "\n";
 
     try {
         LLVMProjectIRDB IRDB(llvmIRFile);
+
+        cout << "LLVM IR loaded successfully.\n";
+        
+        // Collect analysis names for report
+        vector<string> analysisNames;
+        for (AnalysisType analysis : analyses) {
+            switch (analysis) {
+                case AnalysisType::BASIC_INFO:
+                    analysisNames.push_back("Basic Info");
+                    break;
+                case AnalysisType::CALLGRAPH:
+                    analysisNames.push_back("Call Graph");
+                    break;
+                case AnalysisType::ALIAS:
+                    analysisNames.push_back("Alias Analysis");
+                    break;
+                case AnalysisType::CONSTANT_PROPAGATION:
+                    analysisNames.push_back("Constant Propagation");
+                    break;
+                case AnalysisType::UNINITIALIZED_VARIABLES:
+                    analysisNames.push_back("Uninitialized Variables");
+                    break;
+                case AnalysisType::TYPE_ANALYSIS:
+                    analysisNames.push_back("Type Analysis");
+                    break;
+                case AnalysisType::COMPLEXITY:
+                    analysisNames.push_back("Code Complexity");
+                    break;
+                case AnalysisType::ALL:
+                    break;
+                default:
+                    break;
+            }
+        }
+        
+        if (opts.outputFormat == OutputFormat::HTML && !analysisNames.empty()) {
+            string analysesList = "<ul>";
+            for (const auto& name : analysisNames) {
+                analysesList += "<li>" + name + "</li>";
+            }
+            analysesList += "</ul>";
+            htmlReporter.addSection("Executed Analyses", analysesList);
+        }
         
         for (AnalysisType analysis : analyses) {
             switch (analysis) {
                 case AnalysisType::BASIC_INFO:
-                    runBasicInfo(IRDB, opts);
+                    cout << "\n=== Running Basic Info Analysis ===\n";
+                    runBasicInfo(IRDB, opts, htmlReporter);
                     break;
                 case AnalysisType::CALLGRAPH:
-                    runCallGraphAnalysis(IRDB, opts);
+                    cout << "\n=== Running Call Graph Analysis ===\n";
+                    runCallGraphAnalysis(IRDB, opts, htmlReporter);
                     break;
                 case AnalysisType::ALIAS:
-                    runAliasAnalysis(IRDB, opts);
+                    cout << "\n=== Running Alias Analysis ===\n";
+                    runAliasAnalysis(IRDB, opts, htmlReporter);
                     break;
                 // case AnalysisType::TAINT: 
-                //     runTaintAnalysis(IRDB, opts);
+                //     cout << "\n=== Running Taint Analysis ===\n";
+                //     runTaintAnalysis(IRDB, opts, htmlReporter);
                 //     break;
                 case AnalysisType::CONSTANT_PROPAGATION:
-                    runConstantPropagation(IRDB, opts);
+                    cout << "\n=== Running Constant Propagation Analysis ===\n";
+                    runConstantPropagation(IRDB, opts, htmlReporter);
                     break;
                 case AnalysisType::UNINITIALIZED_VARIABLES:
-                    runUninitializedVariables(IRDB, opts);
+                    cout << "\n=== Running Uninitialized Variables Analysis ===\n";
+                    runUninitializedVariables(IRDB, opts, htmlReporter);
                     break;
                 case AnalysisType::TYPE_ANALYSIS:
-                    runTypeAnalysis(IRDB, opts);
+                    cout << "\n=== Running Type Analysis ===\n";
+                    runTypeAnalysis(IRDB, opts, htmlReporter);
                     break;
                 case AnalysisType::COMPLEXITY:
-                    runCodeComplexityAnalysis(IRDB, opts);
+                    cout << "\n=== Running Code Complexity Analysis ===\n";
+                    runCodeComplexityAnalysis(IRDB, opts, htmlReporter);
                     break;
                 case AnalysisType::ALL:
                     // Уже обработано в parseAnalyses
@@ -280,6 +381,11 @@ int main(int argc, char* argv[]) {
         
         cout << "\n=== ALL ANALYSES COMPLETED ===\n";
         
+        // Generate final report if needed
+        if (opts.outputFormat == OutputFormat::HTML) {
+            htmlReporter.addSuccess("All analyses completed successfully!");
+            htmlReporter.saveToFile(opts.artifactsDir + "/phasar_analysis_report.html");
+        }
     } catch (const exception& e) {
         cerr << "Critical Error: " << e.what() << "\n";
         return EXIT_FAILURE;

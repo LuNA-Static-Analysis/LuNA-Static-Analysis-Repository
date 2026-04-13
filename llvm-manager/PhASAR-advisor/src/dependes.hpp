@@ -10,6 +10,7 @@
 #include <filesystem>
 #include <algorithm>
 #include <exception>
+#include <cstdlib>
 
 // LLVM includes
 #include <llvm/IR/Module.h>
@@ -20,7 +21,7 @@
 #include <phasar/PhasarLLVM/DB/LLVMProjectIRDB.h>
 #include <phasar/PhasarLLVM/Utils/LLVMShorthands.h>
 #include <phasar/Pointer/PointsToInfo.h>
-// #include <phasar/PhasarLLVM/TypeHierarchy/LLVMTypeHierarchy.h>
+#include "phasar/PhasarLLVM/TypeHierarchy.h"
 
 // PhASAR analysis includes
 #include <phasar/PhasarLLVM/DataFlow/IfdsIde/Problems/IDELinearConstantAnalysis.h>
@@ -42,15 +43,27 @@ using namespace std;
 using namespace psr;
 
 enum class AnalysisChoice {
-    MyRealizedAnalysis,
-    PhasarAnalysis,
+    BasicAnalysis,
+    DetailedAnalysis,
     Both
+};
+
+enum class OutputFormat {
+    CONSOLE,  
+    HTML
 };
 
 struct Options {
     AnalysisChoice choice = AnalysisChoice::Both;
     bool logging = false;
     bool includePrivateFunctions = false;  // Анализировать функции с _ (методы классов)
+    OutputFormat outputFormat = OutputFormat::CONSOLE;
+    std::string artifactsDir = "./PhASAR-artifacts"; // Директория для сохранения артефактов (графов, изображений и т.д.)
+    std::string cssFilePath = []() {
+        const char* adaptHome = std::getenv("ADAPT_HOME");
+        return adaptHome ? std::string(adaptHome) + "/llvm-manager/PhASAR-advisor/src/report_style.css" 
+                            : std::string("report_style.css");
+    }();
     
     // Вспомогательная функция для проверки, нужно ли пропустить функцию
     bool shouldSkipFunction(const std::string& funcName) const {

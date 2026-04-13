@@ -3,6 +3,8 @@
 
 #include "../dependes.hpp"
 
-void runBasicInfo(LLVMProjectIRDB& IRDB, const Options& opts);
+#include <html_reporter.hpp>
+
+void runBasicInfo(LLVMProjectIRDB& IRDB, const Options& opts, HTMLReporter& htmlReporter);
 
 #endif // BASIC_INFO_HPP
