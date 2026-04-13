@@ -16,29 +16,43 @@
 #include <map>
 
 // Вспомогательные функции для анализа алиасов
-static void analyzeGlobalAliases(llvm::Module* M);
-static void analyzePointerRelationships(llvm::Function& F);
-static void analyzeMemoryAccesses(llvm::Function& F);
-static void detectPotentialAliases(llvm::Function& F);
+static void analyzeGlobalAliases(llvm::Module* M, const Options& opts, std::stringstream& htmlOut);
+static void analyzePointerRelationships(llvm::Function& F, const Options& opts, std::stringstream& htmlOut);
+static void analyzeMemoryAccesses(llvm::Function& F, const Options& opts, std::stringstream& htmlOut);
+static void detectPotentialAliases(llvm::Function& F, const Options& opts, std::stringstream& htmlOut);
+
 static string getValueDescription(const llvm::Value* V);
 static string getShortValueName(const llvm::Value* V);
 
-static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
-    cout << "\n=== АНАЛИЗ АЛИАСОВ (ALIAS ANALYSIS) ===\n";
+static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& opts, HTMLReporter& htmlReporter) {
+    std::stringstream htmlOut;
+
+    if (opts.outputFormat == OutputFormat::HTML) {
+        htmlOut << "\n=== АНАЛИЗ АЛИАСОВ (ALIAS ANALYSIS) ===\n";
+    } else {
+        cout << "\n=== АНАЛИЗ АЛИАСОВ (ALIAS ANALYSIS) ===\n";
+    }
     
     try {
         auto* M = IRDB.getModule();
         
         if (!M) {
             cerr << "Error: Не удалось получить модуль из IRDB.\n";
+            if (opts.outputFormat == OutputFormat::HTML) {
+                htmlReporter.addError("Не удалось получить модуль из IRDB (анализ алиасов).");
+            }
             return;
         }
         
         // Анализ глобальных алиасов
-        analyzeGlobalAliases(M);
+        analyzeGlobalAliases(M, opts, htmlOut);
         
         // Анализ алиасов для каждой функции
-        cout << "\n=== АНАЛИЗ АЛИАСОВ ПО ФУНКЦИЯМ ===\n";
+        if (opts.outputFormat == OutputFormat::HTML) {
+            htmlOut << "\n=== АНАЛИЗ АЛИАСОВ ПО ФУНКЦИЯМ ===\n";
+        } else {
+            cout << "\n=== АНАЛИЗ АЛИАСОВ ПО ФУНКЦИЯМ ===\n";
+        }
         
         for (auto& F : *M) {
             if (F.isDeclaration()) {
@@ -72,31 +86,51 @@ static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
                 continue;
             }
             
-            cout << "\n" << funcName << " (" << pointers.size() << " указателей):\n";
+            if (opts.outputFormat == OutputFormat::HTML) {
+                htmlOut << "\n" << funcName << " (" << pointers.size() << " указателей):\n";
+            } else {
+                cout << "\n" << funcName << " (" << pointers.size() << " указателей):\n";
+            }
             
             // Анализируем отношения между указателями
-            analyzePointerRelationships(F);
+            analyzePointerRelationships(F, opts, htmlOut);
             
             // Обнаруживаем потенциальные алиасы
-            detectPotentialAliases(F);
+            detectPotentialAliases(F, opts, htmlOut);
             
             // Анализируем обращения к памяти
-            analyzeMemoryAccesses(F);
+            analyzeMemoryAccesses(F, opts, htmlOut);
+        }
+        
+        if (opts.outputFormat == OutputFormat::HTML) {
+            htmlReporter.addSection("Анализ алиасов (Basic)", "<pre>" + htmlOut.str() + "</pre>");
         }
         
     } catch (const exception& e) {
         cerr << "Error: Ошибка при анализе алиасов: " << e.what() << "\n";
+        if (opts.outputFormat == OutputFormat::HTML) {
+            htmlReporter.addError("Ошибка при анализе алиасов: " + string(e.what()));
+        }
     }
 }
 
-static void runPhasarAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
-    cout << "\n=== АНАЛИЗ АЛИАСОВ С ИСПОЛЬЗОВАНИЕМ PhASAR (PhASAR ALIAS ANALYSIS) ===\n";
+static void runPhasarAnalysis(LLVMProjectIRDB& IRDB, const Options& opts, HTMLReporter& htmlReporter) {
+    std::stringstream htmlOut;
+
+    if (opts.outputFormat == OutputFormat::HTML) {
+        htmlOut << "\n=== АНАЛИЗ АЛИАСОВ С ИСПОЛЬЗОВАНИЕМ PhASAR (PhASAR ALIAS ANALYSIS) ===\n";
+    } else {
+        cout << "\n=== АНАЛИЗ АЛИАСОВ С ИСПОЛЬЗОВАНИЕМ PhASAR (PhASAR ALIAS ANALYSIS) ===\n";
+    }
     
     try {
         auto* M = IRDB.getModule();
         
         if (!M) {
             cerr << "Error: Не удалось получить модуль из IRDB.\n";
+            if (opts.outputFormat == OutputFormat::HTML) {
+                htmlReporter.addError("Не удалось получить модуль из IRDB (PhASAR анализ алиасов).");
+            }
             return;
         }
         
@@ -113,7 +147,11 @@ static void runPhasarAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
                 continue;
             }
             
-            cout << "\nФункция: " << F.getName().str() << "\n";
+            if (opts.outputFormat == OutputFormat::HTML) {
+                htmlOut << "\nФункция: " << F.getName().str() << "\n";
+            } else {
+                cout << "\nФункция: " << F.getName().str() << "\n";
+            }
             
             // Собираем информацию о всех указателях
             std::map<const llvm::Value*, std::vector<const llvm::Value*>> aliasGroups;
@@ -149,17 +187,27 @@ static void runPhasarAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
             }
             
             if (allPointers.empty()) {
-                cout << "  (нет указателей для анализа)\n";
+                if (opts.outputFormat == OutputFormat::HTML) 
+                    htmlOut << "  (нет указателей для анализа)\n";
+                else 
+                    cout << "  (нет указателей для анализа)\n";
                 continue;
             }
             
-            cout << "  Указателей: " << allPointers.size() << "\n";
+            if (opts.outputFormat == OutputFormat::HTML) 
+                htmlOut << "  Указателей: " << allPointers.size() << "\n";
+            else 
+                cout << "  Указателей: " << allPointers.size() << "\n";
             
             // Показываем только интересные алиасы
             if (!aliasGroups.empty()) {
-                cout << "  Обнаруженные алиасы:\n";
+                if (opts.outputFormat == OutputFormat::HTML) 
+                    htmlOut << "  Обнаруженные алиасы:\n";
+                else
+                    cout << "  Обнаруженные алиасы:\n";
                 
                 int shownAliases = 0;
+
                 for (const auto& [ptr, aliases] : aliasGroups) {
                     // Показываем только если есть реальные алиасы (не только сам указатель)
                     std::vector<const llvm::Value*> realAliases;
@@ -170,44 +218,81 @@ static void runPhasarAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
                     }
                     
                     if (!realAliases.empty() && shownAliases < 8) {
-                        cout << "     • " << getShortValueName(ptr) << " ≡ ";
+                        if (opts.outputFormat == OutputFormat::HTML) 
+                            htmlOut << "     • " << getShortValueName(ptr) << " ≡ ";
+                        else
+                            cout << "     • " << getShortValueName(ptr) << " ≡ ";
+
                         bool first = true;
                         int count = 0;
+
                         for (const auto* alias : realAliases) {
                             if (count >= 3) {
-                                cout << "... (+" << (realAliases.size() - 3) << ")";
+                                if (opts.outputFormat == OutputFormat::HTML) 
+                                    htmlOut << "... (+" << (realAliases.size() - 3) << ")";
+                                else
+                                    cout << "... (+" << (realAliases.size() - 3) << ")";
                                 break;
                             }
-                            if (!first) cout << ", ";
-                            cout << getShortValueName(alias);
+
+                            if (!first) { 
+                                if (opts.outputFormat == OutputFormat::HTML) 
+                                    htmlOut << ", "; 
+                                else
+                                    cout << ", ";
+                            }
+
+                            if (opts.outputFormat == OutputFormat::HTML) 
+                                htmlOut << getShortValueName(alias);
+                            else
+                                cout << getShortValueName(alias);
+
                             first = false;
                             count++;
                         }
-                        cout << "\n";
+
+                        if (opts.outputFormat == OutputFormat::HTML) 
+                            htmlOut << "\n";
+                        else
+                            cout << "\n";
+
                         shownAliases++;
                     }
                 }
                 
                 if (shownAliases >= 8 && aliasGroups.size() > 8) {
-                    cout << "  ... (еще " << (aliasGroups.size() - 8) << " указателей с алиасами)\n";
+                    if (opts.outputFormat == OutputFormat::HTML) 
+                        htmlOut << "  ... (еще " << (aliasGroups.size() - 8) << " указателей с алиасами)\n";
+                    else
+                        cout << "  ... (еще " << (aliasGroups.size() - 8) << " указателей с алиасами)\n";
                 }
             } else {
-                cout << "  (явных алиасов не обнаружено)\n";
+                if (opts.outputFormat == OutputFormat::HTML) 
+                    htmlOut << "  (явных алиасов не обнаружено)\n";
+                else
+                    cout << "  (явных алиасов не обнаружено)\n";
             }
         }
 
+        if (opts.outputFormat == OutputFormat::HTML) {
+            htmlReporter.addSection("Анализ алиасов (Detailed)", "<pre>" + htmlOut.str() + "</pre>");
+        }
+
     } catch (const exception& e) {
-        cerr << "Error: Ошибка при анализе алиасов: " << e.what() << "\n";
+        cerr << "Error: Ошибка при анализе алиасов Detailed: " << e.what() << "\n";
+        if (opts.outputFormat == OutputFormat::HTML) {
+            htmlReporter.addError("Ошибка при анализе алиасов Detailed: " + string(e.what()));
+        }
     }
 }
 
-void runAliasAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
-    if (opts.choice == AnalysisChoice::MyRealizedAnalysis || opts.choice == AnalysisChoice::Both) {
-        runMyRealizedAnalysis(IRDB, opts);
+void runAliasAnalysis(LLVMProjectIRDB& IRDB, const Options& opts, HTMLReporter& htmlReporter) {
+    if (opts.choice == AnalysisChoice::BasicAnalysis || opts.choice == AnalysisChoice::Both) {
+        runMyRealizedAnalysis(IRDB, opts, htmlReporter);
     }
     
-    if (opts.choice == AnalysisChoice::PhasarAnalysis || opts.choice == AnalysisChoice::Both) {
-        runPhasarAnalysis(IRDB, opts);
+    if (opts.choice == AnalysisChoice::DetailedAnalysis || opts.choice == AnalysisChoice::Both) {
+        runPhasarAnalysis(IRDB, opts, htmlReporter);
     }
 }
 
@@ -266,8 +351,11 @@ static string getShortValueName(const llvm::Value* V) {
     return "<unnamed>";
 }
 
-static void analyzeGlobalAliases(llvm::Module* M) {
-    cout << "\nГЛОБАЛЬНЫЕ АЛИАСЫ:\n";
+static void analyzeGlobalAliases(llvm::Module* M, const Options& opts, std::stringstream& htmlOut) {
+    if (opts.outputFormat == OutputFormat::HTML) 
+        htmlOut << "\nГЛОБАЛЬНЫЕ АЛИАСЫ:\n";
+    else
+        cout << "\nГЛОБАЛЬНЫЕ АЛИАСЫ:\n";
     
     vector<llvm::GlobalVariable*> globalPointers;
     
@@ -283,40 +371,71 @@ static void analyzeGlobalAliases(llvm::Module* M) {
     }
     
     if (globalPointers.empty() && aliases.empty()) {
-        cout << "  Глобальных указателей и алиасов не найдено\n";
+        if (opts.outputFormat == OutputFormat::HTML) 
+            htmlOut << "  Глобальных указателей и алиасов не найдено\n";
+        else
+            cout << "  Глобальных указателей и алиасов не найдено\n";
         return;
     }
     
     if (!globalPointers.empty()) {
-        cout << "Найдено глобальных указателей: " << globalPointers.size() << "\n";
+        if (opts.outputFormat == OutputFormat::HTML) 
+            htmlOut << "Найдено глобальных указателей: " << globalPointers.size() << "\n";
+        else
+            cout << "Найдено глобальных указателей: " << globalPointers.size() << "\n";
         
         for (auto* GV : globalPointers) {
-            cout << "  " << GV->getName().str();
+            if (opts.outputFormat == OutputFormat::HTML) 
+                htmlOut << "  " << GV->getName().str();
+            else 
+                cout << "  " << GV->getName().str();
             
             if (GV->hasInitializer()) {
                 auto* init = GV->getInitializer();
                 if (auto* GVInit = llvm::dyn_cast<llvm::GlobalVariable>(init)) {
-                    cout << " -> " << GVInit->getName().str();
+                    if (opts.outputFormat == OutputFormat::HTML) 
+                        htmlOut << " -> " << GVInit->getName().str();
+                    else 
+                        cout << " -> " << GVInit->getName().str();
                 }
             }
-            cout << "\n";
+            
+            if (opts.outputFormat == OutputFormat::HTML) 
+                htmlOut << "\n";
+            else 
+                cout << "\n";
         }
     }
     
     if (!aliases.empty()) {
-        cout << "\nГлобальные алиасы (LLVM GlobalAlias): " << aliases.size() << "\n";
+        if (opts.outputFormat == OutputFormat::HTML) 
+            htmlOut << "\nГлобальные алиасы (LLVM GlobalAlias): " << aliases.size() << "\n";
+        else 
+            cout << "\nГлобальные алиасы (LLVM GlobalAlias): " << aliases.size() << "\n";
+
         for (auto* GA : aliases) {
-            cout << "  " << GA->getName().str();
+            if (opts.outputFormat == OutputFormat::HTML) 
+                htmlOut << "  " << GA->getName().str();
+            else 
+                cout << "  " << GA->getName().str();
+
             auto* aliasee = GA->getAliasee();
             if (aliasee && aliasee->hasName()) {
-                cout << " -> " << aliasee->getName().str();
+                if (opts.outputFormat == OutputFormat::HTML) 
+                    htmlOut << " -> " << aliasee->getName().str();
+                else 
+                    cout << " -> " << aliasee->getName().str();
             }
-            cout << "\n";
+            
+            if (opts.outputFormat == OutputFormat::HTML) 
+                htmlOut << "\n";
+            else 
+                cout << "\n";
         }
     }
 }
 
-static void analyzePointerRelationships(llvm::Function& F) {
+static void analyzePointerRelationships(llvm::Function& F, const Options& opts, std::stringstream& htmlOut) {
     map<const llvm::Value*, set<const llvm::Value*>> pointsTo;
     
     for (auto& BB : F) {
@@ -357,33 +476,64 @@ static void analyzePointerRelationships(llvm::Function& F) {
     }
     
     if (!pointsTo.empty()) {
-        cout << "  [Отношения указателей]\n";
+        if (opts.outputFormat == OutputFormat::HTML) 
+            htmlOut << "  [Отношения указателей]\n";
+        else 
+            cout << "  [Отношения указателей]\n";
+
         int shown = 0;
+        
         for (const auto& [ptr, targets] : pointsTo) {
             if (shown >= 5) {
-                cout << "    ... (еще " << (pointsTo.size() - 5) << " отношений)\n";
+                if (opts.outputFormat == OutputFormat::HTML) 
+                    htmlOut << "    ... (еще " << (pointsTo.size() - 5) << " отношений)\n";
+                else 
+                    cout << "    ... (еще " << (pointsTo.size() - 5) << " отношений)\n";
                 break;
             }
-            cout << "    " << getShortValueName(ptr) << " -> ";
+
+            if (opts.outputFormat == OutputFormat::HTML) 
+                htmlOut << "    " << getShortValueName(ptr) << " -> ";
+            else 
+                cout << "    " << getShortValueName(ptr) << " -> ";
+
             bool first = true;
             int tcount = 0;
+
             for (const auto* target : targets) {
                 if (tcount >= 2) {
-                    cout << "... (еще " << (targets.size() - 2) << ")";
+                    if (opts.outputFormat == OutputFormat::HTML) 
+                        htmlOut << "... (еще " << (targets.size() - 2) << ")";
+                    else 
+                        cout << "... (еще " << (targets.size() - 2) << ")";
                     break;
                 }
-                if (!first) cout << ", ";
-                cout << getShortValueName(target);
+
+                if (!first) { 
+                    if (opts.outputFormat == OutputFormat::HTML) 
+                        htmlOut << ", "; 
+                    else 
+                        cout << ", "; 
+                }
+
+                if (opts.outputFormat == OutputFormat::HTML) 
+                    htmlOut << getShortValueName(target);
+                else 
+                    cout << getShortValueName(target);
+                
                 first = false;
                 tcount++;
             }
-            cout << "\n";
+            if (opts.outputFormat == OutputFormat::HTML) 
+                htmlOut << "\n";
+            else 
+                cout << "\n";
             shown++;
         }
     }
 }
 
-static void detectPotentialAliases(llvm::Function& F) {
+static void detectPotentialAliases(llvm::Function& F, const Options& opts, std::stringstream& htmlOut) {
     struct PointerInfo {
         const llvm::Value* pointer;
         const llvm::Value* source;
@@ -423,8 +573,13 @@ static void detectPotentialAliases(llvm::Function& F) {
                         for (size_t i = 0; i < ptrArgs.size(); ++i) {
                             for (size_t j = i + 1; j < ptrArgs.size(); ++j) {
                                 if (ptrArgs[i] == ptrArgs[j]) {
-                                    cout << "  Вызов " << called->getName().str() 
-                                         << "(): аргументы " << i << "==" << j << "\n";
+                                    if (opts.outputFormat == OutputFormat::HTML) {
+                                        htmlOut << "  Вызов " << called->getName().str() 
+                                                << "(): аргументы " << i << "==" << j << "\n";
+                                    } else {
+                                        cout << "  Вызов " << called->getName().str() 
+                                                << "(): аргументы " << i << "==" << j << "\n";
+                                    }
                                 }
                             }
                         }
@@ -440,13 +595,24 @@ static void detectPotentialAliases(llvm::Function& F) {
         for (size_t j = i + 1; j < pointerInfos.size(); ++j) {
             if (pointerInfos[i].source == pointerInfos[j].source) {
                 if (!headerShown) {
-                    cout << "  [Потенциальные алиасы]\n";
+                    if (opts.outputFormat == OutputFormat::HTML) 
+                        htmlOut << "  [Потенциальные алиасы]\n";
+                    else 
+                        cout << "  [Потенциальные алиасы]\n";
+
                     headerShown = true;
                 }
                 if (foundAliases < 3) {
-                    cout << "    " << getShortValueName(pointerInfos[i].pointer)
-                         << " == " << getShortValueName(pointerInfos[j].pointer)
-                         << " (источник: " << getShortValueName(pointerInfos[i].source) << ")\n";
+                    
+                    if (opts.outputFormat == OutputFormat::HTML) {
+                        htmlOut << "    " << getShortValueName(pointerInfos[i].pointer)
+                                << " == " << getShortValueName(pointerInfos[j].pointer)
+                                << " (источник: " << getShortValueName(pointerInfos[i].source) << ")\n";
+                    } else {
+                        cout << "    " << getShortValueName(pointerInfos[i].pointer)
+                                << " == " << getShortValueName(pointerInfos[j].pointer)
+                                << " (источник: " << getShortValueName(pointerInfos[i].source) << ")\n";
+                    }
                 }
                 foundAliases++;
             }
@@ -454,11 +620,14 @@ static void detectPotentialAliases(llvm::Function& F) {
     }
     
     if (foundAliases > 3) {
-        cout << "    ... (еще " << (foundAliases - 3) << " алиасов)\n";
+        if (opts.outputFormat == OutputFormat::HTML) 
+            htmlOut << "    ... (еще " << (foundAliases - 3) << " алиасов)\n";
+        else 
+            cout << "    ... (еще " << (foundAliases - 3) << " алиасов)\n";
     }
 }
 
-static void analyzeMemoryAccesses(llvm::Function& F) {
+static void analyzeMemoryAccesses(llvm::Function& F, const Options& opts, std::stringstream& htmlOut) {
     struct MemoryAccess {
         const llvm::Value* pointer;
         bool isLoad;
@@ -507,11 +676,20 @@ static void analyzeMemoryAccesses(llvm::Function& F) {
         }
     }
     
-    cout << "  [Обращения к памяти]\n";
-    cout << "    Чтений (read):  " << loads << "\n";
-    cout << "    Записей (write): " << stores << "\n";
+    if (opts.outputFormat == OutputFormat::HTML) {
+        htmlOut << "  [Обращения к памяти]\n";
+        htmlOut << "    Чтений (read):  " << loads << "\n";
+        htmlOut << "    Записей (write): " << stores << "\n";
+    } else {
+        cout << "  [Обращения к памяти]\n";
+        cout << "    Чтений (read):  " << loads << "\n";
+        cout << "    Записей (write): " << stores << "\n";
+    }
     
     if (conflicts > 0) {
-        cout << "    Потенциальных конфликтов: " << conflicts << "\n";
+        if (opts.outputFormat == OutputFormat::HTML) 
+            htmlOut << "    Потенциальных конфликтов: " << conflicts << "\n";
+        else 
+            cout << "    Потенциальных конфликтов: " << conflicts << "\n";
     }
 }

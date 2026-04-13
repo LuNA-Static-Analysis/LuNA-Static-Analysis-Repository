@@ -75,7 +75,7 @@ ninja  # или make
 
 ## Требования
 
-- LLVM 16
+- LLVM 15
 - PhASAR framework
 - CMake 3.12+
 - C++20 совместимый компилятор

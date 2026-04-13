@@ -3,6 +3,8 @@
 
 #include "../dependes.hpp"
 
+#include <html_reporter.hpp>
+
 // Опции для анализа
 struct ConstPropOptions {
     bool verbose = true;              // Подробный вывод
@@ -11,7 +13,7 @@ struct ConstPropOptions {
     bool showOptimizations = true;    // Показывать возможности оптимизации
 };
 
-void runConstantPropagation(LLVMProjectIRDB& IRDB, const Options& opts);
-void runConstantPropagationWithOptions(LLVMProjectIRDB& IRDB, const Options& funcOpts, const ConstPropOptions& opts);
+void runConstantPropagation(LLVMProjectIRDB& IRDB, const Options& opts, HTMLReporter& htmlReporter);
+void runConstantPropagationWithOptions(LLVMProjectIRDB& IRDB, const Options& funcOpts, const ConstPropOptions& opts, HTMLReporter& htmlReporter);
 
 #endif // CONSTANT_PROPAGATION_HPP

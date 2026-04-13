@@ -83,7 +83,7 @@ class ProjectManager:
         ]
         
         if llvm_dir:
-            cmake_args.append(f"-DLLVM_DIR={llvm_dir}")
+            cmake_args.append(f"-DLLVM_INSTALL_DIR={llvm_dir}")
         
         if extra_args:
             cmake_args.extend(extra_args)
@@ -220,16 +220,17 @@ def clean(full):
 
 
 @cli.command()
-@click.option('--build-type', '-b', type=click.Choice(['Debug', 'Release']), default='Debug')
+@click.option('--build-type', '-b', type=click.Choice(['Debug', 'Release']), default='Debug', help='Тип сборки для пересборки')
+@click.option('--llvm-dir', '-l', type=click.Path(exists=True), help='Путь к LLVM installation для пересборки')
+@click.option('--hide-warnings/--show-warnings', default=True, help='Скрывать warnings сборки (по умолчанию скрывать)')
 @click.option('--jobs', '-j', type=int, help='Количество параллельных задач')
-@click.option('--hide-warnings/--show-warnings', default=True, help='Скрывать warnings сборки')
-def rebuild(build_type, jobs, hide_warnings):
+def rebuild(build_type, llvm_dir, hide_warnings, jobs):
     """Полная пересборка проекта (clean + configure + build)"""
     print_info("Шаг 1/3: Очистка")
     manager.clean(full=True)
     
     print_info("Шаг 2/3: Конфигурация")
-    manager.configure(build_type=build_type, hide_warnings=hide_warnings)
+    manager.configure(build_type=build_type, llvm_dir=llvm_dir, hide_warnings=hide_warnings)
     
     print_info("Шаг 3/3: Сборка")
     manager.build(jobs=jobs)
@@ -247,16 +248,26 @@ def run():
 @click.pass_context
 def run_bilangir(ctx):
     """Запуск BiLangIR"""
-    args = ctx.args
-    manager.run_bilangir(args=args if args else None)
+    args = list(ctx.args) if ctx.args else []
+    manager.run_bilangir(args=args)
 
 
 @run.command(name='phasar-advisor', context_settings=dict(ignore_unknown_options=True, allow_extra_args=True))
 @click.pass_context
 def run_phasar_advisor(ctx):
     """Запуск PhASAR-advisor"""
-    args = ctx.args
-    manager.run_phasar_advisor(args=args if args else None)
+    args = list(ctx.args) if ctx.args else []
+    manager.run_phasar_advisor(args=args)
+
+
+@cli.command(name='report', context_settings=dict(ignore_unknown_options=True, allow_extra_args=True))
+@click.pass_context
+def report(ctx):
+    """Генерация HTML отчета через PhASAR-advisor"""
+    args = list(ctx.args) if ctx.args else []
+    args.append('--html-report')
+        
+    manager.run_phasar_advisor(args=args)
 
 
 @cli.command()

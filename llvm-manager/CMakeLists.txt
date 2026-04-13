@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.16)
 
 # Опция для использования LLVM компилятора (должна быть ДО project())
 option(USE_LLVM_COMPILER "Use LLVM/Clang compiler" ON)
-set(LLVM_INSTALL_DIR "/usr/local/llvm-16" CACHE PATH "LLVM installation directory")
+set(LLVM_INSTALL_DIR "/usr/lib/llvm-15" CACHE PATH "LLVM installation directory")
+set(LLVM_DIR "${LLVM_INSTALL_DIR}/lib/cmake/llvm" CACHE PATH "Path to LLVM config directory" FORCE)
 
 # Установка компилятора ДО вызова project() если требуется
 if(USE_LLVM_COMPILER)
@@ -18,7 +19,7 @@ endif()
 project(llvm-manager VERSION 1.0.0 LANGUAGES C CXX)
 
 # Настройки проекта
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

@@ -3,6 +3,8 @@
 
 #include "../dependes.hpp"
 
-void runAliasAnalysis(LLVMProjectIRDB& IRDB, const Options& opts);
+#include <html_reporter.hpp>
+
+void runAliasAnalysis(LLVMProjectIRDB& IRDB, const Options& opts, HTMLReporter& htmlReporter);
 
 #endif // ALIAS_INFO_HPP

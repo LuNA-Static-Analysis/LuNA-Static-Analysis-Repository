@@ -37,7 +37,7 @@ chmod +x manager.py
 ./manager.py configure --build-type Release
 
 # Конфигурация с указанием пути к LLVM
-./manager.py configure --llvm-dir /usr/local/llvm-16
+./manager.py configure --llvm-dir /usr/local/llvm-15
 ```
 
 ### Сборка
@@ -91,5 +91,5 @@ chmod +x manager.py
 - Python 3.6+
 - CMake 3.16+
 - Ninja (рекомендуется)
-- LLVM 16
-- PhASAR 
+- LLVM 15
+- PhASAR

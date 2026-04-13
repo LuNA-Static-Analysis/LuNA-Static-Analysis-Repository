@@ -6,6 +6,8 @@
 #include <llvm/IR/IntrinsicInst.h>
 #include <llvm/Demangle/Demangle.h>
 #include <fstream>
+#include <cstdlib>
+#include <string>
 
 #include "phasar/PhasarLLVM/TypeHierarchy/DIBasedTypeHierarchy.h"
 
@@ -32,9 +34,12 @@ bool isExternalFunction(const Function* F) {
     return F->isDeclaration() || F->empty();
 }
 
-static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
+static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& opts, HTMLReporter& htmlReporter) {
+    std::stringstream htmlOut;
+    std::ostream& out = (opts.outputFormat == OutputFormat::HTML) ? static_cast<std::ostream&>(htmlOut) : static_cast<std::ostream&>(std::cout);
+
     if (!opts.useErrorCheckingAlgorithm) {
-        cout << "\n=== АНАЛИЗ ГРАФА ВЫЗОВОВ ===\n";
+        out << "\n=== АНАЛИЗ ГРАФА ВЫЗОВОВ ===\n";
     }
     
     vector<CallInfo> allCalls;
@@ -45,11 +50,14 @@ static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
     
     if (!M) {
         cerr << "Error: не удалось получить модуль LLVM IR\n";
+        if (opts.outputFormat == OutputFormat::HTML) {
+            htmlReporter.addError("Не удалось получить модуль LLVM IR (анализ графа вызовов)");
+        }
         return;
     }
     
     if (!opts.useErrorCheckingAlgorithm) {
-        cout << "\nАнализ модуля: " << M->getName().str() << "\n";
+        out << "\nАнализ модуля: " << M->getName().str() << "\n";
     }
 
     for (const auto& F : *M) {
@@ -106,16 +114,16 @@ static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
                         }
                         
                         if (!functionHeaderPrinted && !opts.useErrorCheckingAlgorithm) {
-                            cout << "\nФункция: " << callerName << "\n";
+                            out << "\nФункция: " << callerName << "\n";
                             functionHeaderPrinted = true;
                         }
                         
                         if (!opts.useErrorCheckingAlgorithm) {
-                            cout << "  → Прямой вызов: " << callInfo.callee;
+                            out << "  → Прямой вызов: " << callInfo.callee;
                             if (callInfo.isExternal) {
-                                cout << " (внешняя)";
+                                out << " (внешняя)";
                             }
-                            cout << "\n";
+                            out << "\n";
                         }
                         
                         hasCalls = true;
@@ -127,12 +135,12 @@ static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
                         stats.indirectCalls++;
                         
                         if (!functionHeaderPrinted && !opts.useErrorCheckingAlgorithm) {
-                            cout << "\nФункция: " << callerName << "\n";
+                            out << "\nФункция: " << callerName << "\n";
                             functionHeaderPrinted = true;
                         }
                         
                         if (!opts.useErrorCheckingAlgorithm) {
-                            cout << "  → Косвенный вызов: " << callInfo.callee << "\n";
+                            out << "  → Косвенный вызов: " << callInfo.callee << "\n";
                         }
                         
                         hasCalls = true;
@@ -152,31 +160,61 @@ static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
     }
     
     if (!opts.useErrorCheckingAlgorithm) {
-        cout << "\n";
-        printCallGraphStats(stats);
-        cout << "\n";
+        out << "\n";
+        printCallGraphStats(stats, out);
+        out << "\n";
     }
     
-    analyzeCallChains(allCalls, opts);
+    analyzeCallChains(allCalls, opts, out);
+
+    string dotFilename = opts.artifactsDir + "/callgraph.dot";
+    string pngFilename = opts.artifactsDir + "/callgraph.png";
+    string legendDotFilename = opts.artifactsDir + "/callgraph_legend.dot";
+    string legendPngFilename = opts.artifactsDir + "/callgraph_legend.png";
 
     if (!opts.useErrorCheckingAlgorithm) {
-        string dotFilename = "callgraph.dot";
-        exportCallGraphDot(allCalls, dotFilename);
-        cout << "\nГраф вызовов экспортирован в файл: " << dotFilename << "\n";
-        cout << "Для визуализации выполните: dot -Tpng " << dotFilename << " -o callgraph.png\n";
+        exportCallGraphDot(allCalls, dotFilename, legendDotFilename);
+        out << "\nГраф вызовов экспортирован в файл: " << dotFilename << "\n";
+        
+        // Пытаемся сгенерировать PNG через Graphviz (dot)
+        int result = std::system(("dot -Tpng " + dotFilename + " -o " + pngFilename + " 2>/dev/null").c_str());
+        int legendResult = std::system(("dot -Tpng " + legendDotFilename + " -o " + legendPngFilename + " 2>/dev/null").c_str());
+        
+        if (result == 0) {
+            out << "Изображение графа успешно сгенерировано: " << pngFilename << "\n";
+        } else {
+            out << "Для визуализации выполните: dot -Tpng " << dotFilename << " -o " << pngFilename << "\n";
+        }
+
+        if (legendResult == 0) {
+            out << "Изображение легенды успешно сгенерировано: " << legendPngFilename << "\n";
+        }
+
+        if (opts.outputFormat == OutputFormat::HTML) {
+            htmlReporter.addSection("Граф Вызовов (CallGraph) (Basic)", "<pre>" + htmlOut.str() + "</pre>");
+            htmlReporter.addImage("CallGraph Image", "callgraph.png");
+            htmlReporter.addImage("CallGraph Legend", "callgraph_legend.png");
+        }
     }
 }
 
-static void runPhasarAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
-    cout << "\n=== АНАЛИЗ ГРАФА ВЫЗОВОВ С ИСПОЛЬЗОВАНИЕМ PhASAR ===\n";
+static void runPhasarAnalysis(LLVMProjectIRDB& IRDB, const Options& opts, HTMLReporter& htmlReporter) {
+    std::stringstream htmlOut;
+    std::ostream& out = (opts.outputFormat == OutputFormat::HTML) ? static_cast<std::ostream&>(htmlOut) : static_cast<std::ostream&>(std::cout);
+
+    out << "\n=== АНАЛИЗ ГРАФА ВЫЗОВОВ С ИСПОЛЬЗОВАНИЕМ PhASAR ===\n";
 
     if (!IRDB.getFunctionDefinition("main")) {
         llvm::errs() << "Required function 'main' not found\n";
+        if (opts.outputFormat == OutputFormat::HTML) {
+            htmlReporter.addError("Required function 'main' not found (PhASAR-based Callgraph)");
+        }
         return;
     }
 
     DIBasedTypeHierarchy TH(IRDB);
     LLVMBasedICFG ICFG(&IRDB, CallGraphAnalysisType::RTA, {"main"}, &TH);
+    // LLVMBasedICFG ICFG(&IRDB, CallGraphAnalysisType::CHA, {"main"}, &TH);
 
     // const auto& CG = ICFG.getCallGraph();
 
@@ -213,41 +251,97 @@ static void runPhasarAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
     // }
     
     // Экспорт ICFG в DOT формат
-    std::ofstream icfgDotFile("icfg.dot");
+
+    string dotFilename = opts.artifactsDir + "/phasar-callgraph.dot";
+    string pngFilename = opts.artifactsDir + "/phasar-callgraph.png";
+
+    std::ofstream icfgDotFile(dotFilename, std::ios::out | std::ios::trunc);
     if (!icfgDotFile.is_open()) {
-        llvm::errs() << "Error: Could not create file icfg.dot\n";
+        llvm::errs() << "Error: Could not create file " << dotFilename << "\n";
         return;
     }
 
-    std::string icfgDot = ICFG.exportICFGAsDot(false);
-    icfgDotFile << icfgDot;
+    // std::string icfgDot = ICFG.exportICFGAsDot(false);
+    // icfgDotFile << icfgDot;
+
+    const auto& CG = ICFG.getCallGraph();
+    icfgDotFile << "digraph PhasarCallGraph {\n";
+    icfgDotFile << "  rankdir=LR;\n";
+    icfgDotFile << "  node [shape=box, style=rounded];\n\n";
+
+    std::unordered_set<std::string> uniqueEdges;
+
+    for (const auto* Call : CG.getAllVertexCallSites()) {
+        if (Call->isDebugOrPseudoInst()) continue;
+        
+        const Function* CallerFun = Call->getFunction();
+        if (!CallerFun) continue;
+        
+        std::string callerName = CallerFun->getName().str();
+        if (opts.shouldSkipFunction(callerName)) continue;
+        
+        for (const auto* CalleeFun : CG.getCalleesOfCallAt(Call)) {
+            std::string calleeName = CalleeFun->getName().str();
+            
+            if (opts.shouldSkipFunction(calleeName)) continue;
+            
+            std::string demangledCaller = llvm::demangle(callerName);
+            std::string demangledCallee = llvm::demangle(calleeName);
+
+            std::string edge = "  \"" + demangledCaller + "\" -> \"" + demangledCallee + "\";\n";
+            
+            if (uniqueEdges.insert(edge).second) {
+                icfgDotFile << edge;
+            }
+        }
+    }
+    icfgDotFile << "}\n";
+    
     icfgDotFile.close();
 
-    cout << "\nICFG exported to icfg.dot\n";
-    cout << "To visualize, run: dot -Tpng icfg.dot -o icfg.png\n";
+    out << "\nPhASAR-CallGraph exported to " << dotFilename << "\n";
+    
+    // Пытаемся сгенерировать PNG через Graphviz (dot)
+    int result = std::system(("dot -Tpng " + dotFilename + " -o " + pngFilename + " 2>/dev/null").c_str());
+    
+    if (result == 0) {
+        out << "Image generated: " << pngFilename << "\n";
+    } else {
+        out << "To visualize, run: dot -Tpng " << dotFilename << " -o " << pngFilename << "\n";
+    }
+
+    if (opts.outputFormat == OutputFormat::HTML) {
+        htmlReporter.addSection("Граф Вызовов (CallGraph) (Detailed)", "<pre>" + htmlOut.str() + "</pre>");
+        htmlReporter.addImage("Phasar Callgraph Image", "phasar-callgraph.png");
+    }
 }
 
-void runCallGraphAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
+void runCallGraphAnalysis(LLVMProjectIRDB& IRDB, const Options& opts, HTMLReporter& htmlReporter) {
     if (opts.useErrorCheckingAlgorithm) {
-        runMyRealizedAnalysis(IRDB, opts);
+        runMyRealizedAnalysis(IRDB, opts, htmlReporter);
         return;
     }
 
-    runMyRealizedAnalysis(IRDB, opts);
-    runPhasarAnalysis(IRDB, opts);
+    if (opts.choice == AnalysisChoice::BasicAnalysis || opts.choice == AnalysisChoice::Both) {
+        runMyRealizedAnalysis(IRDB, opts, htmlReporter);
+    }
+
+    if (opts.choice == AnalysisChoice::DetailedAnalysis || opts.choice == AnalysisChoice::Both) {
+        runPhasarAnalysis(IRDB, opts, htmlReporter);
+    }
 }
 
-void printCallGraphStats(const CallGraphStats& stats) {
-    cout << "СТАТИСТИКА ГРАФА ВЫЗОВОВ:\n";
-    cout << "Всего функций: " << stats.totalFunctions << "\n";
-    cout << "Всего мест вызовов: " << stats.totalCallSites << "\n";
-    cout << "Прямые вызовы: " << stats.directCalls << "\n";
-    cout << "Вызовы внешних функций: " << stats.externalCalls << "\n";
-    cout << "Рекурсивных функций: " << stats.recursiveFunctions << "\n";
+void printCallGraphStats(const CallGraphStats& stats, std::ostream& out) {
+    out << "СТАТИСТИКА ГРАФА ВЫЗОВОВ:\n";
+    out << "Всего функций: " << stats.totalFunctions << "\n";
+    out << "Всего мест вызовов: " << stats.totalCallSites << "\n";
+    out << "Прямые вызовы: " << stats.directCalls << "\n";
+    out << "Вызовы внешних функций: " << stats.externalCalls << "\n";
+    out << "Рекурсивных функций: " << stats.recursiveFunctions << "\n";
 }
 
-void exportCallGraphDot(const vector<CallInfo>& calls, const string& filename) {
-    ofstream dotFile(filename);
+void exportCallGraphDot(const vector<CallInfo>& calls, const string& filename, const string& legendFilename) {
+    ofstream dotFile(filename, std::ios::out | std::ios::trunc);
     
     if (!dotFile.is_open()) {
         cerr << "Error: не удалось создать файл " << filename << "\n";
@@ -359,11 +453,34 @@ void exportCallGraphDot(const vector<CallInfo>& calls, const string& filename) {
     
     dotFile << "}\n";
     dotFile.close();
+
+    // Создаем отдельный файл для легенды
+    ofstream legendFile(legendFilename, std::ios::out | std::ios::trunc);
+    if (!legendFile.is_open()) {
+        cerr << "Error: не удалось создать файл легенды " << legendFilename << "\n";
+        return;
+    }
+    
+    legendFile << "digraph Legend {\n";
+    legendFile << "  rankdir=TB;\n";
+    legendFile << "  node [shape=none, margin=0];\n";
+    legendFile << "  legend [label=<\n";
+    legendFile << "    <TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" CELLPADDING=\"4\">\n";
+    legendFile << "      <TR><TD COLSPAN=\"2\" BORDER=\"0\"><B>Легенда</B></TD></TR>\n";
+    legendFile << "      <TR><TD BGCOLOR=\"lightgreen\"></TD><TD ALIGN=\"left\">Точка входа (main)</TD></TR>\n";
+    legendFile << "      <TR><TD BGCOLOR=\"white\"></TD><TD ALIGN=\"left\">Обычная функция</TD></TR>\n";
+    legendFile << "      <TR><TD BGCOLOR=\"lightgray\"></TD><TD ALIGN=\"left\">Внешняя функция</TD></TR>\n";
+    legendFile << "      <TR><TD BGCOLOR=\"lightsalmon\" COLOR=\"red\"></TD><TD ALIGN=\"left\">Недостижимая функция</TD></TR>\n";
+    legendFile << "      <TR><TD BGCOLOR=\"white\"><FONT COLOR=\"red\"><B>&#8594;</B></FONT></TD><TD ALIGN=\"left\">Рекурсивный вызов</TD></TR>\n";
+    legendFile << "    </TABLE>\n";
+    legendFile << "  >];\n";
+    legendFile << "}\n";
+    legendFile.close();
 }
 
-void analyzeUnreachableFunctions(const vector<CallInfo>& calls, const unordered_set<string>& allFunctions, const Options& opts) {
+void analyzeUnreachableFunctions(const vector<CallInfo>& calls, const unordered_set<string>& allFunctions, const Options& opts, std::ostream& out) {
     if (!opts.useErrorCheckingAlgorithm) {
-        cout << "\n=== АНАЛИЗ НЕДОСТИЖИМЫХ ФУНКЦИЙ ===\n";
+        out << "\n=== АНАЛИЗ НЕДОСТИЖИМЫХ ФУНКЦИЙ ===\n";
     }
     
     // Строим граф вызовов (без приватных функций)
@@ -406,15 +523,15 @@ void analyzeUnreachableFunctions(const vector<CallInfo>& calls, const unordered_
     }
     
     if (!opts.useErrorCheckingAlgorithm) {
-        cout << "\nДостижимых функций из main: " << reachable.size() << "\n";
-        cout << "Недостижимых функций из main: " << unreachable.size() << "\n";
+        out << "\nДостижимых функций из main: " << reachable.size() << "\n";
+        out << "Недостижимых функций из main: " << unreachable.size() << "\n";
     }
     
     if (!unreachable.empty()) {
         if (!opts.useErrorCheckingAlgorithm) {
-            cout << "\nСписок недостижимых функций:\n";
+            out << "\nСписок недостижимых функций:\n";
             for (const auto& func : unreachable) {
-                cout << "  - " << func << "\n";
+                out << "  - " << func << "\n";
             }
         } else {
             reportUnreachableFunctions(unreachable, opts);
@@ -493,9 +610,9 @@ void reportUnreachableFunctions(const vector<string> &unreachable, const Options
     }
 }
 
-void analyzeCallChains(const vector<CallInfo>& calls, const Options& opts) {
+void analyzeCallChains(const vector<CallInfo>& calls, const Options& opts, std::ostream& out) {
     if (!opts.useErrorCheckingAlgorithm) {
-        cout << "=== АНАЛИЗ ЦЕПОЧЕК ВЫЗОВОВ ===\n";
+        out << "=== АНАЛИЗ ЦЕПОЧЕК ВЫЗОВОВ ===\n";
     }
     
     unordered_map<string, vector<string>> callGraph;
@@ -515,12 +632,12 @@ void analyzeCallChains(const vector<CallInfo>& calls, const Options& opts) {
     }
     
     if (!opts.useErrorCheckingAlgorithm) {
-        cout << "\nФункции-листья (не вызывают другие функции):\n";
+        out << "\nФункции-листья (не вызывают другие функции):\n";
     }
 
     for (const auto& func : allFunctions) {
         if (callGraph[func].empty() && !opts.useErrorCheckingAlgorithm) {
-            cout << "  - " << func << "\n";
+            out << "  - " << func << "\n";
         }
     }
     
@@ -533,24 +650,24 @@ void analyzeCallChains(const vector<CallInfo>& calls, const Options& opts) {
     }
     
     if (!opts.useErrorCheckingAlgorithm) {
-        cout << "\nФункции верхнего уровня (точки входа):\n";
+        out << "\nФункции верхнего уровня (точки входа):\n";
     }
     
     for (const auto& func : allFunctions) {
         if (calledFunctions.find(func) == calledFunctions.end() && !opts.useErrorCheckingAlgorithm) {
-            cout << "  - " << func << "\n";
+            out << "  - " << func << "\n";
         }
     }
     
     if (!opts.useErrorCheckingAlgorithm) {
-        cout << "\nРекурсивные вызовы:\n";
+        out << "\nРекурсивные вызовы:\n";
     }
 
     bool foundRecursion = false;
     for (const auto& call : calls) {
         if (call.caller == call.callee) {
             if (!opts.useErrorCheckingAlgorithm) {
-                cout << "  - " << call.caller << " (прямая рекурсия)\n";
+                out << "  - " << call.caller << " (прямая рекурсия)\n";
             }
 
             foundRecursion = true;
@@ -558,9 +675,9 @@ void analyzeCallChains(const vector<CallInfo>& calls, const Options& opts) {
     }
 
     if (!foundRecursion && !opts.useErrorCheckingAlgorithm) {
-        cout << "  Прямых рекурсивных вызовов не обнаружено.\n";
+        out << "  Прямых рекурсивных вызовов не обнаружено.\n";
     }
     
     // Анализ недостижимых функций
-    analyzeUnreachableFunctions(calls, allFunctions, opts);
+    analyzeUnreachableFunctions(calls, allFunctions, opts, out);
 }

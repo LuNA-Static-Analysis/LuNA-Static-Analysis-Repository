@@ -4,6 +4,7 @@
 #include <llvm/IR/IntrinsicInst.h>
 #include <llvm/IR/DebugInfoMetadata.h>
 #include <llvm/IR/CFG.h>
+#include <llvm/Support/raw_os_ostream.h>
 
 #include "phasar/PhasarLLVM/TypeHierarchy/DIBasedTypeHierarchy.h"
 
@@ -219,14 +220,20 @@ void analyzeFunction(const Function& F, unordered_map<const AllocaInst*, Variabl
     }
 }
 
-static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
-    cout << "\n=== АНАЛИЗ НЕИНИЦИАЛИЗИРОВАННЫХ ПЕРЕМЕННЫХ ===\n";
+static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& opts, HTMLReporter& htmlReporter) {
+    std::stringstream htmlOut;
+    std::ostream& out = (opts.outputFormat == OutputFormat::HTML) ? static_cast<std::ostream&>(htmlOut) : static_cast<std::ostream&>(std::cout);
+
+    out << "\n=== АНАЛИЗ НЕИНИЦИАЛИЗИРОВАННЫХ ПЕРЕМЕННЫХ ===\n";
     
     try {
         auto* M = IRDB.getModule();
 
         if (!M) {
             cerr << "Error: не удалось получить модуль из IRDB.\n";
+            if (opts.outputFormat == OutputFormat::HTML) {
+                htmlReporter.addError("Error: не удалось получить модуль из IRDB.");
+            }
             return;
         }
         
@@ -328,36 +335,44 @@ static void runMyRealizedAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
             
             // Выводим функцию только если есть проблемы
             if (hasFunctionProblems) {
-                cout << "\nФункция: " << F.getName().str() << "\n";
-                cout << funcOutput.str();
+                out << "\nФункция: " << F.getName().str() << "\n";
+                out << funcOutput.str();
             }
         }
         
-        cout << "\nСТАТИСТИКА:\n";
-        cout << "Всего локальных переменных: " << totalVars << "\n";
-        cout << "Неинициализированных переменных: " << uninitVars << "\n";
-        cout << "Условно инициализированных: " << conditionalVars << "\n";
-        cout << "Неиспользуемых переменных: " << unusedVars << "\n";
+        out << "\nСТАТИСТИКА:\n";
+        out << "Всего локальных переменных: " << totalVars << "\n";
+        out << "Неинициализированных переменных: " << uninitVars << "\n";
+        out << "Условно инициализированных: " << conditionalVars << "\n";
+        out << "Неиспользуемых переменных: " << unusedVars << "\n";
         
         if (uninitVars > 0) {
-            cout << "\nВНИМАНИЕ: Обнаружены потенциально опасные неинициализированные переменные!\n";
+            out << "\nВНИМАНИЕ: Обнаружены потенциально опасные неинициализированные переменные!\n";
         }
         
         if (conditionalVars > 0) {
-            cout << "\nВНИМАНИЕ: Обнаружены переменные с условной инициализацией!\n";
-            cout << "   Эти переменные могут быть неинициализированы в некоторых путях выполнения.\n";
+            out << "\nВНИМАНИЕ: Обнаружены переменные с условной инициализацией!\n";
+            out << "   Эти переменные могут быть неинициализированы в некоторых путях выполнения.\n";
         }
         
         if (uninitVars == 0 && conditionalVars == 0) {
-            cout << "\nКритических проблем не обнаружено.\n";
+            out << "\nКритических проблем не обнаружено.\n";
         }
+
+        if (opts.outputFormat == OutputFormat::HTML) {
+            htmlReporter.addSection("Анализ неинициализированных переменных (Basic)", "<pre>" + htmlOut.str() + "</pre>");
+        }
+
     } catch (const exception& e) {
         cerr << "Critical error: " << e.what() << "\n";
     }
 }
 
-static void runPhasarAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
-    cout << "\n=== АНАЛИЗ НЕИНИЦИАЛИЗИРОВАННЫХ ПЕРЕМЕННЫХ С ИСПОЛЬЗОВАНИЕМ PhASAR ===\n\n";
+static void runPhasarAnalysis(LLVMProjectIRDB& IRDB, const Options& opts, HTMLReporter& htmlReporter) {
+    std::stringstream htmlOut;
+    std::ostream& out = (opts.outputFormat == OutputFormat::HTML) ? static_cast<std::ostream&>(htmlOut) : static_cast<std::ostream&>(std::cout);
+
+    out << "\n=== АНАЛИЗ НЕИНИЦИАЛИЗИРОВАННЫХ ПЕРЕМЕННЫХ С ИСПОЛЬЗОВАНИЕМ PhASAR ===\n\n";
 
     IFDSUninitializedVariables UninitProblem(&IRDB, {"main"});
     DIBasedTypeHierarchy TH(IRDB);
@@ -367,12 +382,14 @@ static void runPhasarAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
     IFDSSolver Solver(UninitProblem, &ICFG);
     Solver.solve();
 
-    UninitProblem.emitTextReport(Solver.getSolverResults(), llvm::outs());
+    llvm::raw_os_ostream raw_out(out);
+    UninitProblem.emitTextReport(Solver.getSolverResults(), raw_out);
+    raw_out.flush();
     
     // Дополнительная статистика
-    llvm::outs() << "\n" << string(64, '-') << "\n";
-    llvm::outs() << "Statistics:\n";
-    llvm::outs() << string(64, '-') << "\n";
+    // out << "\n" << string(64, '-') << "\n";
+    out << "Statistics:\n";
+    // out << string(64, '-') << "\n";
     
     const auto& UndefUses = UninitProblem.getAllUndefUses();
     std::set<const llvm::Function*> AffectedFunctions;
@@ -383,25 +400,29 @@ static void runPhasarAnalysis(LLVMProjectIRDB& IRDB, const Options& opts) {
         }
     }
     
-    llvm::outs() << "  * Functions with uninitialized variables: " << AffectedFunctions.size() << "\n";
+    out << "  * Functions with uninitialized variables: " << AffectedFunctions.size() << "\n";
     
     if (!AffectedFunctions.empty()) {
-        llvm::outs() << "\n  Affected functions:\n";
+        out << "\n  Affected functions:\n";
         
         for (const auto* F : AffectedFunctions) {
-            llvm::outs() << "    -> " << F->getName() << "\n";
+            out << "    -> " << F->getName().str() << "\n";
         }
     }
     
-    llvm::outs() << "\nAnalysis completed successfully!\n";
+    out << "\nAnalysis completed successfully!\n";
+    
+    if (opts.outputFormat == OutputFormat::HTML) {
+        htmlReporter.addSection("Анализ неинициализированных переменных (Detailed)", "<pre>" + htmlOut.str() + "</pre>");
+    }
 }
 
-void runUninitializedVariables(LLVMProjectIRDB& IRDB, const Options& opts) {
-    if (opts.choice == AnalysisChoice::MyRealizedAnalysis || opts.choice == AnalysisChoice::Both) {
-        runMyRealizedAnalysis(IRDB, opts);
+void runUninitializedVariables(LLVMProjectIRDB& IRDB, const Options& opts, HTMLReporter& htmlReporter) {
+    if (opts.choice == AnalysisChoice::BasicAnalysis || opts.choice == AnalysisChoice::Both) {
+        runMyRealizedAnalysis(IRDB, opts, htmlReporter);
     }
     
-    if (opts.choice == AnalysisChoice::PhasarAnalysis || opts.choice == AnalysisChoice::Both) {
-        runPhasarAnalysis(IRDB, opts);
+    if (opts.choice == AnalysisChoice::DetailedAnalysis || opts.choice == AnalysisChoice::Both) {
+        runPhasarAnalysis(IRDB, opts, htmlReporter);
     }
 }
