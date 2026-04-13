@@ -529,8 +529,9 @@ Value *VariableExprAST::codegen() {  // Fixed: proper variable loading
         } else {
             std::string errMsg = "Unknown variable name '" + Name + "'";
             ErrorBase error(ErrorType::SYN9);
-            error.setStringDetail("expression", Name);
-            // error.setObjectDetail("identifier", std::make_unique<df_struct>(Name, {}));
+            call_stack_entry cse(globalFaName, getPosition(), tempSubName);
+            // error.setStringDetail("expression", Name);
+            error.setObjectDetail("df", std::make_unique<df_struct>(Name, cse));
             ErrorHandler::printError(errMsg, std::move(error));
             return nullptr;
         }
@@ -592,9 +593,10 @@ Value *ComplexExprAST::codegen() {  // Fixed: proper DF array handling for dimen
         baseDF = NamedValues[idName];  // Parameter DF object
     } else {
         std::string errMsg = "Unknown base name '" + idName + "'";
-        ErrorBase error(ErrorType::SYN11);
-        error.setStringDetail("expression", idName);
-        ErrorHandler::printError(errMsg, std::move(error));
+        // ErrorBase error(ErrorType::SYN11);
+        // error.setStringDetail("expression", idName);
+        // ErrorHandler::printError(errMsg, std::move(error));
+        DEBUG_OUT << errMsg << std::endl;
         return nullptr;
     }
 
