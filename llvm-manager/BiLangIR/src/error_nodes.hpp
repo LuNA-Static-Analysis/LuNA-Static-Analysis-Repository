@@ -48,38 +48,45 @@ class call_stack : public base_object {
 
 class df_struct : public base_object {
     std::string name;
-    std::vector<call_stack> declared;
-    std::vector<call_stack> initialized;
-    std::vector<call_stack> used;
+    call_stack_entry declared;
+
+    // std::vector<call_stack> declared;
+    // std::vector<call_stack> initialized;
+    // std::vector<call_stack> used;
 
   public:
-    df_struct(const std::string &name, const std::vector<call_stack> &declared,
-              const std::vector<call_stack> &initialized = {},
-              const std::vector<call_stack> &used = {})
-        : name(name), declared(declared), initialized(initialized), used(used) {}
+    // df_struct(const std::string &name, const std::vector<call_stack> &declared,
+    //           const std::vector<call_stack> &initialized = {},
+    //           const std::vector<call_stack> &used = {})
+    //     : name(name), declared(declared), initialized(initialized), used(used) {}
+
+    df_struct(const std::string &name, const call_stack_entry &declared)
+        : name(name), declared(declared) {}
 
     nlohmann::json to_json() const override {
         nlohmann::json j;
+
         j["name"] = name;
+        j["declared"] = declared.to_json();
 
-        j["declared"] = nlohmann::json::array();
-        for (const auto &cs : declared) {
-            j["declared"].push_back(cs.to_json());
-        }
+        // j["declared"] = nlohmann::json::array();
+        // for (const auto &cs : declared) {
+        //     j["declared"].push_back(cs.to_json());
+        // }
 
-        if (!initialized.empty()) {
-            j["initialized"] = nlohmann::json::array();
-            for (const auto &cs : initialized) {
-                j["initialized"].push_back(cs.to_json());
-            }
-        }
+        // if (!initialized.empty()) {
+        //     j["initialized"] = nlohmann::json::array();
+        //     for (const auto &cs : initialized) {
+        //         j["initialized"].push_back(cs.to_json());
+        //     }
+        // }
 
-        if (!used.empty()) {
-            j["used"] = nlohmann::json::array();
-            for (const auto &cs : used) {
-                j["used"].push_back(cs.to_json());
-            }
-        }
+        // if (!used.empty()) {
+        //     j["used"] = nlohmann::json::array();
+        //     for (const auto &cs : used) {
+        //         j["used"].push_back(cs.to_json());
+        //     }
+        // }
 
         return j;
     }
@@ -174,7 +181,7 @@ enum class ErrorType {
     SYN61,
     SYN62,
     SYN7,
-    SYN8,
+    SYN81,
     SYN9,
     SYN10,
     SYN11,
@@ -284,20 +291,20 @@ class ErrorBase {
             j["error_code"] = "SYN7";
             break;
         }
-        // case ErrorType::SYN8: {
-        //     nlohmann::json details;
-        //     details["df"] = objDetails.at("df")->to_json();
-        //     j["details"] = details;
-        //     j["error_code"] = "SYN8";
-        //     break;
-        // }
-        // case ErrorType::SYN9: {
-        //     nlohmann::json details;
-        //     details["expression"] = getStringDetail("expression");
-        //     j["details"] = details;
-        //     j["error_code"] = "SYN9";
-        //     break;
-        // }
+        case ErrorType::SYN81: {
+            nlohmann::json details;
+            details["identifier"] = objDetails.at("df")->to_json();
+            j["details"] = details;
+            j["error_code"] = "SYN8.1";
+            break;
+        }
+        case ErrorType::SYN9: {
+            nlohmann::json details;
+            details["identifier"] = objDetails.at("df")->to_json();
+            j["details"] = details;
+            j["error_code"] = "SYN9";
+            break;
+        }
         case ErrorType::SYN10: {
             nlohmann::json details;
             details["cf"] = objDetails.at("cf")->to_json();

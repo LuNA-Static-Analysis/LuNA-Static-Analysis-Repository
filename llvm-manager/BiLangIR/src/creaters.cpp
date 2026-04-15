@@ -313,11 +313,11 @@ std::vector<std::unique_ptr<ExprAST>> getNameSeq(const json &data) {
                         std::string errMsg = "Duplicate name '" + name + "' in " +
                                              std::to_string(tmpLine) + " line found";
 
-                        ErrorBase errorDetails(ErrorType::SYN8);
+                        ErrorBase errorDetails(ErrorType::SYN81);
                         call_stack_entry cse(globalFaName, tmpLine, tempSubName);
-                        call_stack cs({cse});
+                        // call_stack cs({cse});
                         errorDetails.setObjectDetail(
-                            "df", std::make_unique<df_struct>(name, std::vector<call_stack>{cs}));
+                            "df", std::make_unique<df_struct>(name, cse));
 
                         ErrorHandler::printError(std::move(errMsg), std::move(errorDetails));
                         continue;
