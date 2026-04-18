@@ -4,5 +4,9 @@ if [[ -z "${ADAPT_HOME}" ]]; then
   SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
   ADAPT_HOME="$SCRIPT_DIR"/..
 fi
-python3 "$ADAPT_HOME"/llvm-manager/manager.py "$@"
 
+if [[ -z "${VIRTUAL_ENV}" ]] && [[ -f "${ADAPT_HOME}/.venv/bin/activate" ]]; then
+  source "${ADAPT_HOME}/.venv/bin/activate"
+fi
+
+python3 "$ADAPT_HOME"/llvm-manager/manager.py "$@"
