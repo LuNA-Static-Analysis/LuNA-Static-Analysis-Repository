@@ -34,13 +34,13 @@
 
     },
     {
-        "name": "PhASAR-advisor debugger",
+        "name": "BiLangIR debugger",
         "type":"lldb-dap",
         "request": "launch",
-        "program": "${workspaceFolder}/llvm-manager/build/bin/PhASAR-advisor",
+        "program": "${workspaceFolder}/llvm-manager/build/bin/BiLangIR",
         "args": [
-            "/home/pyro/WorkDir/Study/practice/IR/tmpFiles/myVariants/base6/output.ll",
-            "--html-report"
+            "/home/pyro/WorkDir/Study/practice/luna/examples/mxm/.BiLangIR/ast.json",
+            "/home/pyro/WorkDir/Study/practice/luna/examples/mxm/.BiLangIR/ucodes.ll"
         ],
         "stopOnEntry": false,
         "cwd": "${workspaceFolder}"

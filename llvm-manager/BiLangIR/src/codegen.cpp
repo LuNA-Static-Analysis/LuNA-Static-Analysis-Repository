@@ -8,6 +8,7 @@
 
 #include <exception>
 #include <iostream>
+#include <llvm-15/llvm/IR/Value.h>
 #include <memory>
 #include <string>
 
@@ -288,7 +289,9 @@ Value *getDFArrayElement(const std::string &baseName, Value *indexValue) {
         // For GlobalVariable, get the value type (this is the array type)
         gepType = globalVar->getValueType();
         DEBUG_OUT << "getDFArrayElement: Using GlobalVariable value type for GEP" << std::endl;
-    } else {
+    } 
+    
+    if (!gepType || !gepType->isArrayTy()) {
         // Fallback: assume it's a pointer to array type
         gepType = arrayType;
         DEBUG_OUT << "getDFArrayElement: Using constructed arrayType for GEP" << std::endl;
@@ -297,8 +300,14 @@ Value *getDFArrayElement(const std::string &baseName, Value *indexValue) {
     DEBUG_OUT << "getDFArrayElement: GEP type ID = " << gepType->getTypeID()
               << ", is array = " << gepType->isArrayTy() << std::endl;
 
-    Value *elementPtr =
-        Builder->CreateInBoundsGEP(gepType, arrayPtr, indices, baseName + "_element");
+    Value* elementPtr = nullptr;
+
+    try {
+        elementPtr = Builder->CreateInBoundsGEP(gepType, arrayPtr, indices, baseName + "_element");
+    } catch (const std::exception &e) {
+        DEBUG_OUT << "getDFArrayElement: Exception during GEP creation: " << e.what() << std::endl;
+        return nullptr;
+    }
 
     return elementPtr;
 }
@@ -551,7 +560,7 @@ Value *VariableExprAST::codegen() {  // Fixed: proper variable loading
 
         // Check if this is NOT a DF object type
         if (allocatedType == intType || allocatedType == doubleType ||
-            allocatedType == stringType) {
+            allocatedType == stringType || allocatedType->isIntegerTy()) {
             return Builder->CreateLoad(allocatedType, AI, Name + ".val");
         }
     }
@@ -1154,6 +1163,16 @@ Value *ForExprAST::codegen() {  // Fixed: proper for loop handling
     if (!StartVal || !EndVal) {
         return nullptr;
     }
+    
+    // Check if start or end are pointers (unsupported extraction from DF objects currently)
+    if (StartVal->getType()->isPointerTy()) {
+        DEBUG_OUT << "ForExprAST::codegen: WARNING - StartVal is a pointer! Using 0 as placeholder" << std::endl;
+        StartVal = ConstantInt::get(Int32Ty, 0);
+    }
+    if (EndVal->getType()->isPointerTy()) {
+        DEBUG_OUT << "ForExprAST::codegen: WARNING - EndVal is a pointer! Using 0 as placeholder" << std::endl;
+        EndVal = ConstantInt::get(Int32Ty, 0);
+    }
 
     // Convert values to int32 if needed
     if (!StartVal->getType()->isIntegerTy(32)) {
@@ -1165,6 +1184,8 @@ Value *ForExprAST::codegen() {  // Fixed: proper for loop handling
 
         if (StartVal->getType()->isDoubleTy()) {
             StartVal = Builder->CreateFPToSI(StartVal, Int32Ty, "start_int");
+        } else if (StartVal->getType()->isIntegerTy()) {
+            StartVal = Builder->CreateIntCast(StartVal, Int32Ty, true, "start_intcast");
         }
     }
     if (!EndVal->getType()->isIntegerTy(32)) {
@@ -1176,6 +1197,8 @@ Value *ForExprAST::codegen() {  // Fixed: proper for loop handling
 
         if (EndVal->getType()->isDoubleTy()) {
             EndVal = Builder->CreateFPToSI(EndVal, Int32Ty, "end_int");
+        } else if (EndVal->getType()->isIntegerTy()) {
+            EndVal = Builder->CreateIntCast(EndVal, Int32Ty, true, "end_intcast");
         }
     }
 
@@ -1224,6 +1247,10 @@ Value *ForExprAST::codegen() {  // Fixed: proper for loop handling
     // Generate condition block
     Builder->SetInsertPoint(condLoopBB);
     Value *currentVar = Builder->CreateLoad(Int32Ty, Alloca, VarName + ".val");
+    
+    DEBUG_OUT << "currentVar type: " << currentVar->getType()->getTypeID() 
+              << ", EndVal type: " << EndVal->getType()->getTypeID() << std::endl;
+              
     Value *condition = Builder->CreateICmpSLE(currentVar, EndVal, "forcmp");
     Builder->CreateCondBr(condition, bodyLoopBB, afterLoopBB);
 
