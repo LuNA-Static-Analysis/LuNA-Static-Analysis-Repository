@@ -679,7 +679,7 @@ std::unique_ptr<ExprAST> chooseLogicExpr(const json &data) {
         }
     }
 
-    return nullptr;
+    return std::make_unique<IntExprAST>(0, dataLine);
 }
 
 std::unique_ptr<ExprAST> chooseLogicExprIter(const json::const_iterator &it) {
@@ -1749,7 +1749,15 @@ altCreateWhileStatementNode(const json &data, std::string subName,
         return {nullptr, InitStatus::FAILED};
     }
 
-    int tmpPos = cond->getPosition();
+    int tmpPos = -1;
+
+    try {
+        if (cond != nullptr) 
+            tmpPos = cond->getPosition();
+    } catch (const std::exception &e) {
+        DEBUG_OUT << "Warning: Condition expression in while statement does not have a valid position. Setting position to -1." << std::endl;
+        tmpPos = -1;
+    }
 
     return {std::make_unique<WhileExprAST>(varName, std::move(outDfId), std::move(cond),
                                            std::move(altBlock.first), std::move(startVal), tmpPos),
@@ -1807,7 +1815,15 @@ altCreateIfStatementNode(const json &data, std::string subName, std::vector<std:
         return {nullptr, InitStatus::FAILED};
     }
 
-    int tmpPos = cond->getPosition();
+    int tmpPos = -1;
+
+    try {
+        if (cond != nullptr)
+            tmpPos = cond->getPosition();
+    } catch (const std::exception &e) {
+        DEBUG_OUT << "Warning: Condition expression in if statement does not have a valid position. Setting position to -1." << std::endl;
+        tmpPos = -1;
+    }
 
     return {std::make_unique<IfExprAST>(std::move(cond), std::move(altBlock.first), tmpPos),
             altBlock.second};
