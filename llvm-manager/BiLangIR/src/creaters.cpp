@@ -1176,7 +1176,7 @@ std::tuple<std::unique_ptr<SubExprAST>, InitStatus, bool> altCreateSubNode(const
         cfs.push_back(cf1);
         cf_struct cf2(codeId, "extern", globalFaName, FunctionProtoPositions[codeId]);
         cfs.push_back(cf2);
-        ErrorBase errorDetails(ErrorType::SYN62);
+        ErrorBase errorDetails(ErrorType::SYN61);
 
         errorDetails.setObjectDetail("cfs", std::make_unique<cf_struct_array>(std::move(cfs)));
         ErrorHandler::printError(std::move(errMsg), std::move(errorDetails));
