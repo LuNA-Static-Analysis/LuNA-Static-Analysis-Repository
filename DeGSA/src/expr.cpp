@@ -567,110 +567,89 @@ void Expression::markAsUse(Vertex* currentVertex, int size){
 
 void Expression::markAsDef(Vertex* currentVertex, int size){
     std::cout << "Expression " << _ASTexpr->to_string() << " is being marked as defined" << std::endl;
+
     switch(_expressionType){
-        case addNode:
-        case subtractNode:
-        case multiplyNode:
-        case divideNode:
-        case modulusNode:
-        case greaterNode:
-        case greaterOrEqualNode:
-        case lesserNode:
-        case lesserOrEqualNode:
-        case equalNode:
-        case nonEqualNode:
-        case andNode:
-        case orNode:{
-            REPORTS.push_back(JsonReporter::createSYN1(
-                this->getASTExpr()->to_string(),
-                currentVertex,
-                nullptr
-            ));
+    case addNode:
+    case subtractNode:
+    case multiplyNode:
+    case divideNode:
+    case modulusNode:
+    case greaterNode:
+    case greaterOrEqualNode:
+    case lesserNode:
+    case lesserOrEqualNode:
+    case equalNode:
+    case nonEqualNode:
+    case andNode:
+    case orNode: {
+        JsonReporter::createSYN1(this->getASTExpr()->to_string(), currentVertex, nullptr);
+        return;
+    }
+    case identifierNode: {
+        if (_identifier == nullptr)
             return;
-        }
-        
-        case identifierNode:
 
-            if (_identifier != nullptr)
-            switch(_identifier->getClass()){
-
-                case mutableArgNameClass: { //ok
-                    MutableArgName* mutableArgName = dynamic_cast<MutableArgName*>(_identifier);
-                    mutableArgName->getReference()->markAsDef(currentVertex, size);
-                    return;
-                }
-                
-                case baseDFNameClass: {//ok
-                    BaseDFName* baseDFName = dynamic_cast<BaseDFName*>(_identifier);
-                    baseDFName->markAsDef(currentVertex, size);
-                    return;
-                }
-
-                case indexedDFNameClass: {//ok
-                    IndexedDFName* indexedDFName = dynamic_cast<IndexedDFName*>(_identifier);
-                    indexedDFName->markAsDef(currentVertex, size);
-                    return;
-                }
-
-                case forIteratorNameClass: {//error
-                    REPORTS.push_back(JsonReporter::createSYN1(
-                        this->getASTExpr()->to_string(),
-                        currentVertex,
-                        nullptr
-                    ));
-                    return;
-                }
-
-                case whileIteratorNameClass:{ //error
-                    REPORTS.push_back(JsonReporter::createSYN1(
-                        this->getASTExpr()->to_string(),
-                        currentVertex,
-                        nullptr
-                    ));
-                    return;
-                }
-                
-                case valueNameClass://todo
-                    return;
-                
-                case letNameClass: {//ok
-                    LetName* letName = dynamic_cast<LetName*>(_identifier);
-                    letName->getReference()->markAsDef(currentVertex, size);
-                    return;
-                }
-
-                case immutableArgNameClass: {//error
-                    REPORTS.push_back(JsonReporter::createSYN1(
-                        this->getASTExpr()->to_string(),
-                        currentVertex,
-                        nullptr
-                    ));
-                    return;
-                }
-                
-                default:
-                    std::cout << "INTERNAL ERROR (WARNING): Expression.markAsDef() ended by default at identifier node" << std::endl;
-                    return;
-                
+        switch(_identifier->getClass()){
+            case mutableArgNameClass: { //ok
+                MutableArgName* mutableArgName = dynamic_cast<MutableArgName*>(_identifier);
+                mutableArgName->getReference()->markAsDef(currentVertex, size);
+                return;
             }
-        
-        case stringNode:
-        case intNode:
-        case realNode:
-        case intCastNode:
-        case realCastNode:
-        case stringCastNode:
-            REPORTS.push_back(JsonReporter::createSYN1(
-                _ASTexpr->to_string(),
-                currentVertex,
-                nullptr
-            ));
-            return;
+            case baseDFNameClass: {//ok
+                BaseDFName* baseDFName = dynamic_cast<BaseDFName*>(_identifier);
+                baseDFName->markAsDef(currentVertex, size);
+                return;
+            }
+            case indexedDFNameClass: {//ok
+                IndexedDFName* indexedDFName = dynamic_cast<IndexedDFName*>(_identifier);
+                indexedDFName->markAsDef(currentVertex, size);
+                return;
+            }
 
-        // only noneNode must be left
-        default: 
-            std::cout << "INTERNAL ERROR (WARNING): Expression.markAsDef ended as \"default\"" << std::endl;
-            return;
+            case forIteratorNameClass: {//error
+                JsonReporter::createSYN1(this->getASTExpr()->to_string(), currentVertex, nullptr);
+                return;
+            }
+
+            case whileIteratorNameClass:{ //error
+                JsonReporter::createSYN1(this->getASTExpr()->to_string(), currentVertex, nullptr);
+                return;
+            }
+            
+            case valueNameClass://todo
+                return;
+            
+            case letNameClass: {//ok
+                LetName* letName = dynamic_cast<LetName*>(_identifier);
+                letName->getReference()->markAsDef(currentVertex, size);
+                return;
+            }
+
+            case immutableArgNameClass: {//error
+                JsonReporter::createSYN1(this->getASTExpr()->to_string(), currentVertex, nullptr);
+                return;
+            }
+            
+            default: {
+                std::cout << "INTERNAL ERROR (WARNING): Expression.markAsDef() ended by default at identifier node" << std::endl;
+                return;
+            }
+        }
+    }
+    case stringNode:
+    case intNode:
+    case realNode:
+    case intCastNode:
+    case realCastNode:
+    case stringCastNode: {
+        JsonReporter::createSYN1(_ASTexpr->to_string(), currentVertex, nullptr);
+        return;
+    }
+    // only noneNode must be left
+    default: {
+        std::cout << "INTERNAL ERROR (WARNING): Expression.markAsDef ended as \"default\"" << std::endl;
+        return;
+    }
     }
 
     return;

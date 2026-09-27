@@ -175,7 +175,6 @@ bool SubVertex::initializeVertex() {
             _arguments.push_back(argName);
             m_declaredBothIdsMap.insert( { identifierDeclaredName, argName } );
             m_declaredInsideIdsMap.insert( { identifierDeclaredName, argName } );
-
         } else {
             std::cout << "INTERNAL ERROR: created nullptr sub/main arg name because of name duplication" << std::endl;
 
@@ -315,11 +314,7 @@ bool WhileVertex::initializeVertex() {
     if (_outName != nullptr)
         _outName->markAsDef(this, 0); //todo why 0
     else 
-        REPORTS.push_back(JsonReporter::createSYN1(
-            whileOutNameExpr->getASTExpr()->to_string(),
-            this,
-            nullptr//todo
-        ));
+        JsonReporter::createSYN1(whileOutNameExpr->getASTExpr()->to_string(), this, nullptr);//todo nullptr
 
     Expression* iteratorExpression = new Expression(_iterator, intNode, this);
     m_facts.insert(new GLeNFact(greaterOrEqualNode, iteratorExpression, _startExpr));
@@ -459,11 +454,7 @@ void Vertex::iterateThroughBlockStatements() {
                 std::cout << "INTERNAL ERROR: no sub with name " << cfName << " found" << std::endl;
                 // error code: 02
                 // callstack entry
-                REPORTS.push_back(JsonReporter::createSYN2(
-                    m_fileName,
-                    cfStatement->line_,
-                    cfName
-                ));
+                JsonReporter::createSYN2(m_fileName, cfStatement->line_, cfName);
             }
             continue;
         }
@@ -528,17 +519,13 @@ void Vertex::handleSub(cf_statement* cfStatement) {
 
     SubVertex* nextVertex = new SubVertex(calledSubName, this, subVF, m_depth + 1, cfStatement->line_, m_fileName, cfDeclaration->cfBlock, cfStatement, cfDeclaration, m_declaredBothIdsMap, m_facts, callArgs, cfDeclaration->declaredArgs);
     if (cfDeclaration->declaredArgs.size() != callArgs.size()) {
-        REPORTS.push_back(JsonReporter::createSYN3(nextVertex, cfDeclaration));
+        JsonReporter::createSYN3(nextVertex, cfDeclaration);
         std::cout << "INTERNAL ERROR: call of CF " << calledSubName << " has wrong amount of args" << std::endl;
         return;
     } else {
         for (int i = 0; i < cfDeclaration->declaredArgs.size(); i++) {
             if (callArgs[i]->getValueType() != cfDeclaration->declaredArgs[i].type) {
-                REPORTS.push_back(JsonReporter::createSYN1(
-                    callArgs[i]->getASTExpr()->to_string(),
-                    nextVertex,
-                    cfDeclaration
-                ));
+                JsonReporter::createSYN1(callArgs[i]->getASTExpr()->to_string(), nextVertex, cfDeclaration);
             }
         }
     }
@@ -577,17 +564,13 @@ void Vertex::handleImport(cf_statement* cfStatement) {
     ImportVertex* nextVertex = new ImportVertex(calledImportName, this, importVF, m_depth + 1, cfStatement->line_, m_fileName, cfStatement->block_, cfStatement, cfDeclaration, m_declaredBothIdsMap, m_facts, callArgs, cfDeclaration->declaredArgs);
     //todo wip check for LUNA04 and LUNA06
     if (cfDeclaration->declaredArgs.size() != callArgs.size()) {
-        REPORTS.push_back(JsonReporter::createSYN3(nextVertex, cfDeclaration));
+        JsonReporter::createSYN3(nextVertex, cfDeclaration);
         std::cout << "INTERNAL ERROR: call of CF " << calledImportName << " has wrong amount of args" << std::endl;
         return;
     } else {
         for (int i = 0; i < cfDeclaration->declaredArgs.size(); i++) {
             if (callArgs[i]->getValueType() != cfDeclaration->declaredArgs[i].type) {
-                REPORTS.push_back(JsonReporter::createSYN1(
-                    callArgs[i]->getASTExpr()->to_string(),
-                    nextVertex,
-                    cfDeclaration
-                ));
+                JsonReporter::createSYN1(callArgs[i]->getASTExpr()->to_string(), nextVertex, cfDeclaration);
             }
         }
     }

@@ -44,6 +44,7 @@ int main(int argc, char** argv) {
 
     std::string fileName = argv[2];
     DDG ddg(ast_, &outputFile, fileName);
+    
     outputFile << "\nTime to build AST: " << (double)astBuildTotal / NANOSECONDS_IN_SECOND << " seconds" << std::endl;
     outputFile << "\nTime to build AST (system): " << (double)astBuildTotalSystem / NANOSECONDS_IN_SECOND << " seconds" << std::endl;
 
