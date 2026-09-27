@@ -4,11 +4,6 @@
 #include "ids.hpp"
 #include "../../parser/ast.hpp"
 
-#include "../Exprtk/exprtk.cpp"
-typedef exprtk::expression<double> ExprtkExpressionDouble;
-typedef exprtk::expression<int> ExprtkExpressionInt;
-typedef exprtk::expression<std::string> ExprtkExpressionString;
-
 #include <regex>
 
 // abstract class that represents nodes in an AST
@@ -28,23 +23,8 @@ private:
   Vertex* _vertex;
 
   void calculateValueType();
-  // get a string representing this expression with only true DFs (i.e. only using base names, iterators and main args)
-  std::string getAsTrueString();
-
-  ExprtkExpressionDouble* toExprkDouble();
-  ExprtkExpressionInt* toExprkInt();
-  ExprtkExpressionString* toExprkString();
 
 public:
-
-  // simplify an expression and return a simplified copy
-  static Expression* simplify(const Expression* currentExpression, const Vertex* currentVertex);
-
-  // mutually simplify two expressions and return a pair of simplified copies
-  static std::pair<Expression*, Expression> mimplify(const Expression* leftExpression, const Vertex* leftVertex, const Expression* rightExpression, const Vertex* rightVertex);
-  
-  // compare two expressions
-  static ExpressionEquality equals(const Expression* leftExpression, const Vertex* leftVertex, const Expression* rightExpression, const Vertex* rightVertex);
 
   // try getting a constant
   Expression calculateValue();

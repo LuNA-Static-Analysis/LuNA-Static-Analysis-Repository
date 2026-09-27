@@ -1,6 +1,6 @@
 Total vertices: 3
 
-Vertex address: 0x556be94a8df0
+Vertex address: 0x55b4b11eedf0
 Vertex line: 5
 Vertex depth: 2
 Declared outside DFs: a b
@@ -14,7 +14,7 @@ Vertex type: import
 Facts amount: 0
 Exact type: atomic CF, name: init
 
-Vertex address: 0x556be94ab100
+Vertex address: 0x55b4b11f1100
 Vertex line: 6
 Vertex depth: 2
 Declared outside DFs: a b
@@ -28,14 +28,14 @@ Vertex type: import
 Facts amount: 0
 Exact type: atomic CF, name: init
 
-Vertex address: 0x556be94a7fb0
+Vertex address: 0x55b4b11edfb0
 Vertex line: 3
 Vertex depth: 1
 Declared outside DFs:
 Declared inside DFs: a b
 Use DFs:
 Def DFs:
-Vertices inside: 0x556be94a8df0 0x556be94ab100
+Vertices inside: 0x55b4b11eedf0 0x55b4b11f1100
 Vertices before ("in"):
 Vertices after ("out"):
 Vertex type: sub
@@ -48,13 +48,13 @@ Name: a
 Declared in function call at line: 4
 Size: 0
 Uses: 
-Defs: 0x556be94a8df0 
+Defs: 0x55b4b11eedf0 
 
 Name: b
 Declared in function call at line: 4
 Size: 0
 Uses: 
-Defs: 0x556be94ab100 
+Defs: 0x55b4b11f1100 
 
 ============ Created DDG =============
 
@@ -64,16 +64,16 @@ Defs: 0x556be94ab100
 {"details": {"call_stack_entry": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tests/syn/syn8_4.fa","line": "6","name": "init"},"cf": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tests/syn/syn8_4.fa","line": "1","name": "init","type": "extern"},"expression": "b"},"error_code": "SYN1"}
 {"details": {"cf": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tests/syn/syn8_4.fa","line": "2","name": "print","type": "extern"}},"error_code": "SYN5.4"}
 
-Time to find errors: 1.7729e-05 seconds
+Time to find errors: 1.8906e-05 seconds
 
-Time to find errors (system): 1.773e-05 seconds
+Time to find errors (system): 1.89e-05 seconds
 
-Time to build DDG: 0.000337414 seconds
+Time to build DDG: 0.000251343 seconds
 
-Time to build DDG (system): 0.000337425 seconds
+Time to build DDG (system): 0.000251342 seconds
 
-Time to build AST: 2.9039e-05 seconds
+Time to build AST: 2.9302e-05 seconds
 
-Time to build AST (system): 2.8938e-05 seconds
+Time to build AST (system): 2.9196e-05 seconds
 
-Time real: 0.000716717 seconds
+Time real: 0.000663756 seconds

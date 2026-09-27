@@ -10,8 +10,16 @@ SRC_FILE_PATH="$1"
 SRC_DIR_PATH=$(dirname "$1")
 
 cd ..
+
+echo -e "\nCompiling...\n"
+
 make
+
+echo -e "\nCompilation finished! Running...\n"
+
 adapt --run degsa --no-cleanup $1
+
+echo -e "Running finished!\nSee adapt_degsa_output.txt for additional info\n"
 
 cd "$SRC_DIR_PATH"
 
