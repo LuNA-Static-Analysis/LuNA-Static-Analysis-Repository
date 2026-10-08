@@ -1,5 +1,5 @@
-import re
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any, TextIO, Final
@@ -71,14 +71,18 @@ def get_all_callstacks(
 def get_cf(cf: dict[str, Any]) -> str:
     return f'Name: {cf["name"]}, type: {cf["type"]}, file: {cf["file"]}, line: {cf["line"]}\n'
 
+
 def get_global_const(global_const: dict[str, Any]) -> str:
     return f'Name: {global_const["name"]}, file: {global_const["file"]}, line: {global_const["line"]}\n'
+
 
 def get_global_var(global_var: dict[str, Any]) -> str:
     return f'Name: {global_var["name"]}, file: {global_var["file"]}, line: {global_var["line"]}\n'
 
+
 def get_cf_without_line(cf: dict[str, Any]) -> str:
     return f'Name: {cf["name"]}, type: {cf["type"]}, file: {cf["file"]}\n'
+
 
 def get_all_cfs(cfs: list[dict[str, Any]]) -> str:
     result = ''
@@ -116,7 +120,7 @@ def get_df_ref(
     df = df_ref['df']
     name_str = f'{df_ref["true"]} as {df_ref["local"]}' if df_ref['true'] != df_ref['local'] else df_ref['local']
 
-    conditions = get_conditions(df_ref["conditions"])
+    conditions = get_conditions(df_ref.get("conditions", []))
     conditions_str = f' {conditions}' if conditions else ''
 
     result = f'DF {name_str}{conditions_str} in:\n{get_call_stack(df_ref["where"], text_info)}'
@@ -204,7 +208,7 @@ def report_error(
                 .replace("$cf",
                          get_cf(error["details"]["cf"]))
             )
-        
+
         case 'SYN2':
             output_file.write(
                 (templates_map[error_code] + "\n")
@@ -213,7 +217,7 @@ def report_error(
                 .replace("$call_stack_entry",
                          get_call_stack_entry(error["details"]["call_stack_entry"], text_info))
             )
-        
+
         case 'SYN3':
             output_file.write(
                 (templates_map[error_code] + "\n")
@@ -224,19 +228,19 @@ def report_error(
                 .replace("$cf",
                          get_cf(error["details"]["cf"]))
             )
-        
+
         case 'SYN4':
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$call_stack_entry",
                          get_call_stack_entry(error["details"]["call_stack_entry"], text_info))
             )
-        
+
         case 'SYN5.1':
             output_file.write(
                 (templates_map[error_code] + "\n")
             )
-        
+
         case 'SYN5.2':
             output_file.write(
                 (templates_map[error_code] + "\n")
@@ -278,12 +282,12 @@ def report_error(
                 .replace("$cfs",
                          get_all_cfs(error["details"]["cfs"]))
             )
-            
+
         case 'SYN7':
             output_file.write(
                 (templates_map[error_code] + "\n\n")
             )
-            
+
         case 'SYN8.1' | 'SYN8.2' | 'SYN8.3' | 'SYN8.4' | 'SYN8.5':
             output_file.write(
                 (templates_map[error_code] + "\n")
@@ -324,30 +328,28 @@ def report_error(
                 .replace("$cf",
                          get_cf(error["details"]["cf"]))
             )
-            
+
         case 'SYN13':
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$constant_name",
                          error["details"]["first"]["name"])
-                .replace("$first_def", 
+                .replace("$first_def",
                          get_global_const(error["details"]["first"]))
-                .replace("$second_def", 
+                .replace("$second_def",
                          get_global_const(error["details"]["second"]))
             )
-            
+
         case 'SYN14':
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$function_name",
                          error["details"]["first"]["name"])
-                .replace("$first_def", 
+                .replace("$first_def",
                          get_cf(error["details"]["first"]))
-                .replace("$second_def", 
+                .replace("$second_def",
                          get_cf(error["details"]["second"]))
             )
-
-
 
         case 'SEM1':
             output_file.write(
@@ -366,9 +368,10 @@ def report_error(
                 .replace("$initialized",
                          get_df_ref(error["details"]["initialized"], text_info, include_declared=True))
                 .replace("$other_initializations",
-                    REF_SEPARATOR.join(
-                        get_df_ref_or_index_range(it, text_info) for it in error["details"]["other_initializations"])
-                )
+                         REF_SEPARATOR.join(
+                             get_df_ref_or_index_range(it, text_info) for it in
+                             error["details"]["other_initializations"])
+                         )
             )
 
         case 'SEM2.2':
@@ -390,9 +393,10 @@ def report_error(
                 .replace('$used',
                          get_df_ref(error['details']['used'], text_info, include_declared=True))
                 .replace('$initialized',
-                         REF_SEPARATOR.join(get_df_ref_or_index_range(it, text_info) for it in error['details']['initialized']))
+                         REF_SEPARATOR.join(
+                             get_df_ref_or_index_range(it, text_info) for it in error['details']['initialized']))
             )
-        
+
         case 'SEM3.2':
             output_file.write(
                 (templates_map[error_code] + '\n')
@@ -406,9 +410,10 @@ def report_error(
                 .replace('$used',
                          get_index_range(error['details']['used'], text_info, include_declared=True))
                 .replace('$initialized',
-                         REF_SEPARATOR.join(get_df_ref_or_index_range(it, text_info) for it in error['details']['initialized']))
+                         REF_SEPARATOR.join(
+                             get_df_ref_or_index_range(it, text_info) for it in error['details']['initialized']))
             )
-        
+
         case 'SEM3.4':
             output_file.write(
                 (templates_map[error_code] + '\n')
@@ -466,7 +471,7 @@ def report_error(
             output_file.write(
                 (templates_map[error_code] + '\n')
             )
-        
+
         case 'SEM10':
             output_file.write(
                 (templates_map[error_code] + '\n')
@@ -476,14 +481,36 @@ def report_error(
             output_file.write(
                 (templates_map[error_code] + '\n')
             )
-            
+
         case 'SEM13':
             output_file.write(
                 (templates_map[error_code] + '\n')
-                .replace("$global_var", 
+                .replace("$global_var",
                          get_global_var(error['details']['global_var']))
             )
-        
+
+        case 'SEM_NEW1':
+            output_file.write(
+                (templates_map[error_code] + "\n")
+                .replace('$argument_name', error['details']['argument_name'])
+                .replace("$call_stack_entry",
+                         get_call_stack_entry(error["details"]["where"], text_info))
+            )
+        case 'SEM_NEW2':
+            output_file.write(
+                (templates_map[error_code] + "\n")
+                .replace('$type', error['details']['type'])
+                .replace("$call_stack_entry", get_call_stack_entry(error['details']['where'], text_info))
+            )
+        case 'SEM_NEW3':
+            output_file.write(
+                (templates_map[error_code] + "\n")
+                .replace('$df_true', error['details']['used']['true'])
+                .replace('$expected_type', error['details']['expected_type'])
+                .replace('$got_type', error['details']['got_type'])
+                .replace("$df", get_df_ref(error['details']['used'], text_info, include_declared=True))
+            )
+
         case _:
             print(f'INTERNAL ERROR: error code "{error_code}" is not supported')
 
@@ -553,11 +580,14 @@ def main(
         build_dir: Path,
         output: Path
 ) -> None:
-    with open('report_templates.json', mode='rt') as templates_file:
+    with Path(__file__).parent.joinpath('report_templates.json').open(mode='rt') as templates_file:
         templates_map = json.load(templates_file)
 
     with errors_file.open(mode='rt') as errors_json:
         error_list = json.load(errors_json)
+
+    if not build_dir.is_absolute():
+        build_dir = project_dir / build_dir
 
     with (build_dir / TEXT_INFO_FILE_NAME).open(mode='rt', encoding='utf-8') as text_info_file:
         text_info = TextInfo(project_dir, json.load(text_info_file))

@@ -43,5 +43,9 @@
   "SEM9": "error[SEM9]: Attempt to use information dependence operator on structured CF",
   "SEM10": "error[SEM10]: No \"nfparam\" value given.",
   "SEM11": "error[SEM11]: Attempt to request DF from node where it is not present.",
-  "SEM13": "error[SEM13]: C++ file have non-constant global variable:\n$global_var"
+  "SEM13": "error[SEM13]: C++ file have non-constant global variable:\n$global_var",
+
+  "SEM_NEW1": "error[SEM_NEW1]: Input argument $argument_name changed in an atomic CF.\nIn:\n$call_stack_entry",
+  "SEM_NEW2": "error[SEM_NEW2]: Serialized buffers differ for type $type.\nIn:\n$call_stack_entry",
+  "SEM_NEW3": "error[SEM_NEW3]: Expected $df_true to have user type $expected_type, but got $got_type.\n$df"
 }
