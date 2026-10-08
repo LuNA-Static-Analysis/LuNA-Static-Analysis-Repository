@@ -54,6 +54,29 @@ public:
         }
     }
 
+    std::string getIdentifierTypeAsString() const {
+        switch (m_identifierClass){
+            case IdentifierClass::baseDFNameClass:
+                return "base name";
+            case IdentifierClass::forIteratorNameClass:
+                return "for iterator";
+            case IdentifierClass::immutableArgNameClass:
+                return "immutable argument";
+            case IdentifierClass::mutableArgNameClass:
+                return "mutable argument";
+            case IdentifierClass::indexedDFNameClass:
+                return "indexed DF";
+            case IdentifierClass::letNameClass:
+                return "let variable";
+            case IdentifierClass::valueNameClass:
+                return "value name";
+            case IdentifierClass::whileIteratorNameClass:
+                return "while iterator";
+            default:
+                return "unknown";
+        }
+    }
+
     IdentifierClass getClass() const { return m_identifierClass; };
 
     //todo check how this works actuaaly; perhaps use const &; also returning and creating a lot if string reports is retarded
@@ -79,6 +102,8 @@ public:
     virtual void markAsDef(Vertex* currentVertex, int size) = 0;
 
     virtual bool isIndexable() = 0;
+
+    virtual std::set<Identifier*> getAllIdentifiers() = 0;
 
     Identifier(std::string name, Expression* reference, Vertex* vertex, IdentifierClass identifierClass, ValueType valueType)
       : m_name(name), m_reference(reference), m_vertex(vertex), m_identifierClass(identifierClass), m_valueType(valueType) {};
@@ -110,6 +135,8 @@ public:
 
     // obviously BaseDFName is always indexable
     bool isIndexable() { return true; };
+
+    std::set<Identifier*> getAllIdentifiers() { return { this }; };
 
     BaseDFName(std::string name, Vertex* vertex, int line) : Identifier(name, nullptr, vertex, baseDFNameClass, noneType), _line(line) {};
 
@@ -144,6 +171,16 @@ public:
     ones are definetely indexable*/
     bool isIndexable();
 
+    std::set<Identifier*> getAllIdentifiers()
+    {
+        std::set<Identifier*> aIdentifiers{ this };
+        for (Expression* pExpression : getExpressionsVector()) {
+            auto aNewIdentifiers = pExpression->getAllIdentifiers();
+            aIdentifiers.insert(aNewIdentifiers.begin(), aNewIdentifiers.end());
+        }
+        return aIdentifiers;
+    };
+
     //todo this is wrong, see .cpp
     IndexedDFName(std::string name, Vertex* currentVertex, Identifier* base, std::vector<Expression*> expressionsVector);
 
@@ -164,6 +201,8 @@ public:
 
     bool isIndexable() { return false; };
 
+    std::set<Identifier*> getAllIdentifiers() { return { this }; };
+
     ForIteratorName(std::string name, Vertex* currentVertex) : Identifier(name, nullptr /* todo what to do here?*/, currentVertex, forIteratorNameClass, intType) {};
 
     ~ForIteratorName() {};
@@ -182,6 +221,8 @@ public:
     void markAsDef(Vertex* currentVertex, int size);
 
     bool isIndexable() { return false; };
+
+    std::set<Identifier*> getAllIdentifiers() { return { this }; };
 
     WhileIteratorName(std::string name, Vertex* currentVertex) : Identifier(name, nullptr /* todo what to do here?*/, currentVertex, whileIteratorNameClass, intType) {};
 
@@ -210,6 +251,8 @@ public:
 
     bool isIndexable() { return m_reference->isIndexable(); };
 
+    std::set<Identifier*> getAllIdentifiers() { return (m_reference ? m_reference->getAllIdentifiers() : std::set<Identifier*>{}); };
+
     LetName(std::string name, Expression* reference, Vertex* currentVertex) : Identifier(name, reference, currentVertex, letNameClass, notCalculated) {};
 
     ~LetName() {};
@@ -237,6 +280,8 @@ public:
 
     bool isIndexable() { return true; }
 
+    std::set<Identifier*> getAllIdentifiers() { return (m_reference ? m_reference->getAllIdentifiers() : std::set<Identifier*>{}); };
+
     MutableArgName(std::string name, Expression* reference, Vertex* currentVertex, ValueType valueType) : Identifier(name, reference, currentVertex, mutableArgNameClass, valueType/*todo calculate later dynamically*/) {};
 
     ~MutableArgName() {};
@@ -251,6 +296,8 @@ public:
     void markAsDef(Vertex* currentVertex, int size);
 
     bool isIndexable() { return false; }
+
+    std::set<Identifier*> getAllIdentifiers() { return { this }; };
 
     // in case of a "main()" function argument Expression reference must be nullptr
     // this will tell us that we can not predict its value

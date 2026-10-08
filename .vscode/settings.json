@@ -77,5 +77,5 @@
   },
   "C_Cpp.default.compilerPath": "c:\\msys64\\ucrt64\\bin\\g++.exe",
   "C_Cpp_Runner.msvcBatchPath": "",
-  "cmake.sourceDirectory": "/home/pyro/WorkDir/Study/practice/gitlab/adapt/llvm-manager"
+  "cmake.sourceDirectory": "/home/conngent/gitlabluna/ast-ddg-analyzer/ast_analyzer/tests"
 }

@@ -1,0 +1,24 @@
+import printfl(real) as print;
+import c_init_int(int, name) as init;
+sub main(){
+    df a, b;
+    init(a, a);
+    print(a);
+    foo(a);
+    foo(a[0]);
+    foo(a[1 + 2][b[1]]);
+    let xx = a[6][66][666] {
+        foo(xx[6666]);
+        print(xx[b[1]]);
+    }
+    for iterator = a[7]..b[7] {
+        print(iterator);  
+    }
+    while (a[11][12] < b[9]), i = 0 .. out a {
+        print(i + 1);
+    }
+}
+sub foo(name f){
+    df fooDF;
+    init(f, fooDF);
+}

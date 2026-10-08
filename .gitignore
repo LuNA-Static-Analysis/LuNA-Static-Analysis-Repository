@@ -9,6 +9,7 @@ DeGSA/grammar.tab.hpp
 DeGSA/lex.yy.c
 DeGSA/lex.yy.cpp
 DeGSA/output.txt
+DeGSA/adapt_degsa_output.txt
 bin/ast-ddg-analyzer
 grammar.tab.cpp
 grammar.tab.hpp
@@ -28,6 +29,7 @@ settings.json
 .adapt
 .luna-build
 .prolog-analyzer
+.vscode
 a.out
 build
 bin

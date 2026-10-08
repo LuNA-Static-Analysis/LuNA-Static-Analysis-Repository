@@ -391,6 +391,26 @@ Expression Expression::getAsConstant(){
     }
 }
 
+std::set<Identifier*> Expression::getAllIdentifiers() {
+    if (_expressionType == identifierNode) {
+        if (_identifier)
+            return _identifier->getAllIdentifiers();
+        else
+            return {};
+    }
+    
+    std::set<Identifier*> aIdentifiers{};
+    if (_rightExpr) {
+        aIdentifiers = _rightExpr->getAllIdentifiers();
+    }
+    if (_leftExpr) {
+        auto aOtherIdentifiers = _leftExpr->getAllIdentifiers();
+        if (!aOtherIdentifiers.empty())
+            aIdentifiers.insert(aOtherIdentifiers.begin(), aOtherIdentifiers.end());
+    }
+    return aIdentifiers;
+}
+
 void Expression::markAsUse(Vertex* currentVertex, int size){
     std::cout << "Expression " << _ASTexpr->to_string() << " is being marked as used" << std::endl;
     switch(_expressionType){

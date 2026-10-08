@@ -45,6 +45,11 @@ public:
 
   Expression getAsConstant();
 
+  // this function returns all of the identifiers that are present in the tree of this expression
+  // it recursively resolves intermediate identifiers (like sub args and let variables)
+  // so it returns a set of only "while" and "for" iterators + DFs
+  std::set<Identifier*> getAllIdentifiers();
+
   Vertex* getVertex() { return _vertex; };
 
   void markAsUse(Vertex* currentVertex, int size);

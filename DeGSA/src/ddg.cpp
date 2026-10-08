@@ -12,10 +12,11 @@ using ns = std::chrono::nanoseconds;
 
 class DDG {
 
-    public:
+public:
 
     ast* _astobj; // input AST
     std::string _fileName;
+    std::ostream* _outputTarget;
 
     void findSubs(){
         for (auto subDef: (*(_astobj->program_->sub_defs))){
@@ -96,10 +97,8 @@ class DDG {
             } else {
                 std::cout << "INTERNAL ERROR: unknown CF of name " + subDef->to_string() 
                 + " found.\nFunction: findSubs()" << std::endl;
-            }
-                
+            }  
         }
-
     }
 
     // this function binds vertices to each other
@@ -120,7 +119,119 @@ class DDG {
         std::cout << "\nbindVertices finished\n" << std::endl;
     }
 
-    public:
+    // this function compiles all information related to DF usage by CFs
+    // for each atomic CF it tells where exactly its input DFs were initialized
+    void dumpAtomicCFDF()
+    {
+        *_outputTarget << "\n========================\nDF usage information dump\n========================\n";
+        for (Vertex* pVertex : VERTICES) {
+            if (!pVertex)
+                continue;
+
+            switch(pVertex->getVertexType()) {
+            case VertexType::importVF: {
+                ImportVertex* pImportVertex = static_cast<ImportVertex*>(pVertex);
+                *_outputTarget << "\n***\nImport " << pImportVertex->getName() << " on line " << pImportVertex->getLine() << std::endl;
+                int ind = -1;
+                for (auto& declaredArg : pImportVertex->getDeclaration()->declaredArgs) {
+                    ind++;
+                    if (declaredArg.type == ValueType::nameType) {
+                        *_outputTarget << "\nArgument " << ind << " (" << pImportVertex->getCallArgs()[ind]->getASTExpr()->to_string() << ") is initialized\n";
+                        continue;
+                    }
+
+                    std::set<Identifier*> apIdentifiers = pImportVertex->getCallArgs()[ind]->getAllIdentifiers();
+                    *_outputTarget << "\nArgument " << ind << " (" << pImportVertex->getCallArgs()[ind]->getASTExpr()->to_string() << ") is used, " << apIdentifiers.size() << " participants:\n";
+                    for (Identifier* pIdentifier : apIdentifiers) {
+                        *_outputTarget << pIdentifier->getIdentifierTypeAsString() << " " << pIdentifier->getName() << "\n";
+                        if (pIdentifier->getClass() == IdentifierClass::indexedDFNameClass) {
+                            IndexedDFName* pDFName = static_cast<IndexedDFName*>(pIdentifier);
+                            *_outputTarget << "Amount of indices: " << pDFName->getExpressionsVector().size() << ", expressions inside:";
+                            for (Expression* pExp : pDFName->getExpressionsVector()) {
+                                *_outputTarget << "\n" << pExp->getASTExpr()->to_string();
+                            }
+                            *_outputTarget << "\n\n";
+                        }
+                    }
+                }
+                *_outputTarget << "***\n";
+                break;
+            }
+
+            case VertexType::forVF: {
+                ForVertex* pForVertex = static_cast<ForVertex*>(pVertex);
+                *_outputTarget << "\n***\nFor operator on line " << pForVertex->getLine() << std::endl;
+
+                std::set<Identifier*> apIdentifiersLeft = pForVertex->getLeftBorder()->getAllIdentifiers();
+                *_outputTarget << "\nLeft border expression: " << pForVertex->getLeftBorder()->getASTExpr()->to_string() << ", participants:\n";
+                for (Identifier* pIdentifier : apIdentifiersLeft) {
+                    *_outputTarget << pIdentifier->getIdentifierTypeAsString() << " " << pIdentifier->getName() << "\n";
+                    if (pIdentifier->getClass() == IdentifierClass::indexedDFNameClass) {
+                        IndexedDFName* pDFName = static_cast<IndexedDFName*>(pIdentifier);
+                        *_outputTarget << "Amount of indices: " << pDFName->getExpressionsVector().size() << ", expressions inside:";
+                        for (Expression* pExp : pDFName->getExpressionsVector()) {
+                            *_outputTarget << "\n" << pExp->getASTExpr()->to_string();
+                        }
+                        *_outputTarget << "\n\n";
+                    }
+                }
+
+                std::set<Identifier*> apIdentifiersRight = pForVertex->getRightBorder()->getAllIdentifiers();
+                *_outputTarget << "\nRight border expression: " << pForVertex->getRightBorder()->getASTExpr()->to_string() << ", participants:\n";
+                for (Identifier* pIdentifier : apIdentifiersRight) {
+                    *_outputTarget << pIdentifier->getIdentifierTypeAsString() << " " << pIdentifier->getName() << "\n";
+                    if (pIdentifier->getClass() == IdentifierClass::indexedDFNameClass) {
+                        IndexedDFName* pDFName = static_cast<IndexedDFName*>(pIdentifier);
+                        *_outputTarget << "Amount of indices: " << pDFName->getExpressionsVector().size() << ", expressions inside:";
+                        for (Expression* pExp : pDFName->getExpressionsVector()) {
+                            *_outputTarget << "\n" << pExp->getASTExpr()->to_string();
+                        }
+                        *_outputTarget << "\n\n";
+                    }
+                }
+                break;
+            }
+
+            case VertexType::whileVF: {
+                WhileVertex* pWhileVertex = static_cast<WhileVertex*>(pVertex);
+                *_outputTarget << "\n***\nWhile operator on line " << pWhileVertex->getLine() << std::endl;
+                std::set<Identifier*> apIdentifiersCond = pWhileVertex->getConditionExpr()->getAllIdentifiers();
+                *_outputTarget << "\nCondition expression: " << pWhileVertex->getConditionExpr()->getASTExpr()->to_string() << ", participants:\n";
+                for (Identifier* pIdentifier : apIdentifiersCond) {
+                    *_outputTarget << pIdentifier->getIdentifierTypeAsString() << " " << pIdentifier->getName() << "\n";
+                    if (pIdentifier->getClass() == IdentifierClass::indexedDFNameClass) {
+                        IndexedDFName* pDFName = static_cast<IndexedDFName*>(pIdentifier);
+                        *_outputTarget << "Amount of indices: " << pDFName->getExpressionsVector().size() << ", expressions inside:";
+                        for (Expression* pExp : pDFName->getExpressionsVector()) {
+                            *_outputTarget << "\n" << pExp->getASTExpr()->to_string();
+                        }
+                        *_outputTarget << "\n\n";
+                    }
+                }
+
+                std::set<Identifier*> apIdentifiersStart = pWhileVertex->getStartExpr()->getAllIdentifiers();
+                *_outputTarget << "\nStart expression: " << pWhileVertex->getStartExpr()->getASTExpr()->to_string() << ", participants:\n";
+                for (Identifier* pIdentifier : apIdentifiersStart) {
+                    *_outputTarget << pIdentifier->getIdentifierTypeAsString() << " " << pIdentifier->getName() << "\n";
+                    if (pIdentifier->getClass() == IdentifierClass::indexedDFNameClass) {
+                        IndexedDFName* pDFName = static_cast<IndexedDFName*>(pIdentifier);
+                        *_outputTarget << "Amount of indices: " << pDFName->getExpressionsVector().size() << ", expressions inside:";
+                        for (Expression* pExp : pDFName->getExpressionsVector()) {
+                            *_outputTarget << "\n" << pExp->getASTExpr()->to_string();
+                        }
+                        *_outputTarget << "\n\n";
+                    }
+                }
+
+                break;
+            }
+            }
+        }
+        *_outputTarget << "\n========================\nDF usage information dump end\n========================\n";
+    }
+
+
+public:
 
     // SYN5.2, 3, 6, 7, 8 if both use and def sets are empty
     // SEM4 is def set is not empty, but use is empty
@@ -453,6 +564,7 @@ class DDG {
         auto graphBuildStartSystem = std::chrono::system_clock::now();
 
         _fileName = fileName;
+        _outputTarget = outputTarget;
         _astobj = astObjectIn;
 
         std::cout << "\n============ Creating DDG ============" << std::endl;
@@ -517,6 +629,8 @@ class DDG {
                 *outputTarget << std::endl;
             }
         }
+
+        dumpAtomicCFDF();
 
         *outputTarget << "\n============ Created DDG =============" << std::endl;
 

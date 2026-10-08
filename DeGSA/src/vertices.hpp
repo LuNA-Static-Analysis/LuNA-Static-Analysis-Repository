@@ -175,6 +175,7 @@ class ImportVertex: public Vertex {
         virtual bool initializeVertex();
 
         CFDeclaration* getDeclaration() const { return _cfDeclaration; };
+        const std::vector<Expression*>& getCallArgs() const { return _callArgs; };
 };
 
 class ForVertex: public Vertex {
