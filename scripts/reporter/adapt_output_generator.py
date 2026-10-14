@@ -30,14 +30,9 @@ class TextInfo:
             return ln + 1
         return -1
 
-    def code_line(self, line_number: int) -> str:
-        position = 0
-        while self.line_number(position) < line_number:
-            if self.line_number(position) == -1:
-                return 1
-            position += 1
-        path = self._project_dir / self.file_name(position)
+    def code_line(self, filename: str, line_number: int) -> str:
         line_index = line_number - 1
+        path = Path(filename)
 
         if path not in self._source_lines:
             with path.open(mode='rt') as f:
@@ -49,8 +44,9 @@ class TextInfo:
 
 def get_call_stack_entry(call: dict[str, Any], text_info: TextInfo) -> str:
     assert isinstance(call, dict), str(type(call))
+
     return f'  File "{call["file"]}", line {call["line"]}, in {call["name"]}\n' \
-           f'    {text_info.code_line(int(call["line"]))}\n'
+           f'    {text_info.code_line(filename=call["file"], line_number=int(call["line"]))}\n'
 
 
 def get_call_stack(callstack: list[dict[str, Any]], text_info: TextInfo) -> str:
@@ -508,7 +504,12 @@ def report_error(
                 .replace('$df_true', error['details']['used']['true'])
                 .replace('$expected_type', error['details']['expected_type'])
                 .replace('$got_type', error['details']['got_type'])
-                .replace("$df", get_df_ref(error['details']['used'], text_info, include_declared=True))
+                .replace('$used', get_df_ref(error['details']['used'], text_info, include_declared=True))
+                .replace(
+                    '$initialized',
+                         REF_SEPARATOR.join(
+                             get_call_stack(call_stack, text_info)
+                             for call_stack in error['details']['used']['df']['initialized']))
             )
 
         case _:
@@ -534,24 +535,29 @@ def report_errors(
         report_error(output_file, templates_map, text_info, error)
 
 
+OPTION_PROJECT_DIR: Final[str] = '--project-dir'
+
+
 @click.command()
 @click.argument(
     'errors-file',
     required=False,
     type=click.Path(
         exists=True,
+        file_okay=True,
         dir_okay=False,
         resolve_path=True,
         path_type=Path
     )
 )
 @click.option(
-    '--project-dir',
+    OPTION_PROJECT_DIR,
     required=True,
     help='LuNA project directory.',
     type=click.Path(
         exists=True,
         file_okay=False,
+        dir_okay=True,
         resolve_path=True,
         path_type=Path,
     )
@@ -559,10 +565,14 @@ def report_errors(
 @click.option(
     '--build-dir',
     required=False,
+    default=Path('build'),
     show_default=True,
-    help='LuNA project build directory.',
-    type=Path,
-    default=Path('bin')
+    help=f'LuNA project build directory. If not absolute, resolved relative to {OPTION_PROJECT_DIR}',
+    type=click.Path(
+        file_okay=False,
+        dir_okay=True,
+        path_type=Path,
+    )
 )
 @click.option(
     '-o', '--output',
@@ -580,6 +590,9 @@ def main(
         build_dir: Path,
         output: Path
 ) -> None:
+    if not build_dir.is_absolute():
+        build_dir = project_dir / build_dir
+
     with Path(__file__).parent.joinpath('report_templates.json').open(mode='rt') as templates_file:
         templates_map = json.load(templates_file)
 

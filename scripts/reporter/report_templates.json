@@ -47,5 +47,5 @@
 
   "SEM_NEW1": "error[SEM_NEW1]: Input argument $argument_name changed in an atomic CF.\nIn:\n$call_stack_entry",
   "SEM_NEW2": "error[SEM_NEW2]: Serialized buffers differ for type $type.\nIn:\n$call_stack_entry",
-  "SEM_NEW3": "error[SEM_NEW3]: Expected $df_true to have user type $expected_type, but got $got_type.\n$df"
+  "SEM_NEW3": "error[SEM_NEW3]: Expected $df_true to have user type $expected_type, but got $got_type.\nUsed:\n$used\nInitialized:\n$initialized"
 }
