@@ -1,0 +1,7 @@
+C++ sub print(int v) ${{ printf("%d\n", v); $}}
+
+sub print_range(int i1, int i2, name v) {
+    for i = i1..i2 {
+        print(v[i]);
+    }
+}

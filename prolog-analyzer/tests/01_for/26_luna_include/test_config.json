@@ -1,0 +1,32 @@
+{
+  "arrange": [],
+  "act": {
+    "command": "adapt --run prolog main.fa",
+    "can_fail": false
+  },
+  "assert": {
+    "stdout": {
+      "match_lines": [
+        "wc:Found 2 errors",
+        "wc:warning[SEM3.3]*DF x",
+        "wc:x[i] as v[i]",
+        "wc:File \"*main.fa\"*line 15*print_range",
+        "wc:print_range(1, M, x)",
+        "wc:File \"*lib.fa\"*line 4*for",
+        "wc:for i = i1..i2",
+        "wc:from 1 to M with step 1",
+        "wc:warning[SEM3.3]*DF y",
+        "wc:y[i] as v[i]",
+        "wc:File \"*main.fa\"*line 22*print_range",
+        "wc:print_range(1, M+1, y)",
+        "wc:File \"*lib.fa\"*line 4*for",
+        "wc:for i = i1..i2",
+        "wc:from 1 to*M*+*1"
+      ]
+    },
+    "stderr": {
+      "empty": true
+    },
+    "save": ["stderr", "stdout"]
+  }
+}

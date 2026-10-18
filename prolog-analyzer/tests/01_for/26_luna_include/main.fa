@@ -1,0 +1,23 @@
+C++ sub set_int(name x, int v) ${{ x = v; $}}
+
+#include "lib.fa"
+
+sub main() {
+    df x, y, N, M;
+
+    cf set_int[0]: set_int(N, 10);
+    cf set_int[0]: set_int(M, 11);
+
+    for i = 0..N {
+        set_int(x[i], i);
+    }
+
+    print_range(1, M, x);
+    print_range(1, N-1, x);
+
+    for j = M/2..N {
+        set_int(y[j], j);
+    }
+
+    print_range(1, M+1, y);
+}
