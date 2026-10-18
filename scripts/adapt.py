@@ -274,10 +274,7 @@ def main(
             args=[
                 'python3', ADAPT_HOME / 'scripts' / 'reporter' / 'adapt_output_generator.py',
                 errors_file,
-                '--project-dir', project_dir,
-                '--build-dir', build_dir
             ],
-            cwd=ADAPT_HOME / 'scripts' / 'reporter',
             capture_output=True,
             check=True
         )

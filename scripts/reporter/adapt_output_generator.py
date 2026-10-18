@@ -1,67 +1,57 @@
 import json
-import re
 import sys
 from pathlib import Path
 from typing import Any, TextIO, Final
 
 import click
 
-TEXT_INFO_FILE_NAME: Final[str] = 'preprocessed.fa.ti'
 REF_SEPARATOR: Final[str] = '\nAlso here:\n'
 
 
-class TextInfo:
-    def __init__(self, project_dir: Path, text_info_json: dict) -> None:
-        self._project_dir: Path = project_dir
-        self._text_info: dict = text_info_json
+class ProjectSourceCode:
+    def __init__(self) -> None:
         self._source_lines: dict[Path, list[str]] = {}
 
-    def file_name(self, position: int) -> str:
-        fid, _, _, _ = self._text_info['text'][position]
-        path: str = self._text_info['paths'][str(fid)]
-
-        return re.sub(r'(\./)+', './', path)
-
-    def line_number(self, position: int) -> int:
-        if position < len(self._text_info['text']):
-            _, ln, _, _ = self._text_info['text'][position]
-            if ln is None:
-                ln = 0
-            return ln + 1
-        return -1
-
-    def code_line(self, filename: str, line_number: int) -> str:
+    def get_line(self, filename: str, line_number: int) -> str:
         line_index = line_number - 1
         path = Path(filename)
 
         if path not in self._source_lines:
-            with path.open(mode='rt') as f:
-                self._source_lines[path] = f.readlines()
+            if not path.is_absolute():
+                print(f'WARNING: attempting to read source code via relative path "{path}"', file=sys.stderr)
+
+            try:
+                with path.open(mode='rt') as f:
+                    self._source_lines[path] = f.readlines()
+            except FileNotFoundError:
+                print(f'WARNING: file "{path}" not found', file=sys.stderr)
+                return '<FILE NOT FOUND>'
+
 
         line = self._source_lines[path][line_index].strip().strip('{;').strip().strip('@')
         return line
 
 
-def get_call_stack_entry(call: dict[str, Any], text_info: TextInfo) -> str:
+def get_call_stack_entry(call: dict[str, Any], source_code: ProjectSourceCode) -> str:
     assert isinstance(call, dict), str(type(call))
 
     return f'  File "{call["file"]}", line {call["line"]}, in {call["name"]}\n' \
-           f'    {text_info.code_line(filename=call["file"], line_number=int(call["line"]))}\n'
+           f'    {source_code.get_line(filename=call["file"], line_number=int(call["line"]))}\n'
 
 
-def get_call_stack(callstack: list[dict[str, Any]], text_info: TextInfo) -> str:
+def get_call_stack(callstack: list[dict[str, Any]], source_code: ProjectSourceCode) -> str:
     result = ''
     for call in callstack:
-        result += get_call_stack_entry(call, text_info)
+        result += get_call_stack_entry(call, source_code)
     return result
 
 
 def get_all_callstacks(
         callstacks: list[list[dict[str, Any]]],
-        text_info: TextInfo,
+        source_code: ProjectSourceCode,
         separator: str = '\n'
 ) -> str:
-    return separator.join(map(lambda it: get_call_stack(it, text_info), callstacks))
+    return separator.join(map(lambda it: get_call_stack(it, source_code), callstacks))
 
 
 def get_cf(cf: dict[str, Any]) -> str:
@@ -87,30 +77,30 @@ def get_all_cfs(cfs: list[dict[str, Any]]) -> str:
     return result
 
 
-def get_df(df: dict[str, Any], text_info: TextInfo, include_name: bool = True) -> str:
+def get_df(df: dict[str, Any], source_code: ProjectSourceCode, include_name: bool = True) -> str:
     result = f'Name: {df["name"]}\n' if include_name else ''
     separator = '\nAlso in:\n'
 
     if declared := df.get('declared'):
-        result += f'Declared:\n{get_all_callstacks(declared, text_info, separator=separator)}\n'
+        result += f'Declared:\n{get_all_callstacks(declared, source_code, separator=separator)}\n'
     if initialized := df.get('initialized'):
-        result += f'Initialized:\n{get_all_callstacks(initialized, text_info, separator=separator)}\n'
+        result += f'Initialized:\n{get_all_callstacks(initialized, source_code, separator=separator)}\n'
     if used := df.get('used'):
-        result += f'Used:\n{get_all_callstacks(used, text_info, separator=separator)}\n'
+        result += f'Used:\n{get_all_callstacks(used, source_code, separator=separator)}\n'
 
     return result
 
 
-def get_all_dfs(dfs: list[dict[str, Any]], text_info: TextInfo) -> str:
+def get_all_dfs(dfs: list[dict[str, Any]], source_code: ProjectSourceCode) -> str:
     result = ''
     for df in dfs:
-        result += get_df(df, text_info)
+        result += get_df(df, source_code)
     return result
 
 
 def get_df_ref(
         df_ref: dict[str, Any],
-        text_info: TextInfo,
+        source_code: ProjectSourceCode,
         include_declared: bool = False
 ) -> str:
     df = df_ref['df']
@@ -119,17 +109,17 @@ def get_df_ref(
     conditions = get_conditions(df_ref.get("conditions", []))
     conditions_str = f' {conditions}' if conditions else ''
 
-    result = f'DF {name_str}{conditions_str} in:\n{get_call_stack(df_ref["where"], text_info)}'
+    result = f'DF {name_str}{conditions_str} in:\n{get_call_stack(df_ref["where"], source_code)}'
 
     if include_declared:
-        result += f'\nNote: {df["name"]} declared in:\n{get_call_stack(df["declared"][0], text_info)}'
+        result += f'\nNote: {df["name"]} declared in:\n{get_call_stack(df["declared"][0], source_code)}'
 
     return result
 
 
 def get_index_range(
         index_range: dict[str, Any],
-        text_info: TextInfo,
+        source_code: ProjectSourceCode,
         include_declared: bool = False
 ) -> str:
     df_ref: dict[str, Any] = index_range['df']
@@ -137,36 +127,36 @@ def get_index_range(
     loop: dict[str, Any] = index_range['loop']
 
     result = (
-            f'{get_df_ref(df_ref, text_info)}\n'
+            f'{get_df_ref(df_ref, source_code)}\n'
             + f'  from {index_range["true_lower"]} to {index_range["true_upper"]} with step {index_range["step"]}'
             + f' (with {loop["var"]} from {loop["first"]} to {loop["last"]},'
             + f' step {index_range["step"]} and offset {index_range["offset"]})\n'
     )
 
     if include_declared:
-        result += f'\nNote: {df["name"]} declared in:\n{get_call_stack(df["declared"][0], text_info)}'
+        result += f'\nNote: {df["name"]} declared in:\n{get_call_stack(df["declared"][0], source_code)}'
 
     return result
 
 
 def get_df_ref_or_index_range(
         ref_or_index_range: dict[str, Any],
-        text_info: TextInfo,
+        source_code: ProjectSourceCode,
         include_declared: bool = False
 ) -> str:
     if 'loop' in ref_or_index_range:
-        return get_index_range(ref_or_index_range, text_info, include_declared)
+        return get_index_range(ref_or_index_range, source_code, include_declared)
 
     if {'df', 'true', 'local', 'where'} <= ref_or_index_range.keys():
-        return get_df_ref(ref_or_index_range, text_info, include_declared)
+        return get_df_ref(ref_or_index_range, source_code, include_declared)
 
     raise NotImplementedError(f'Not a \'df_ref\' or \'index_range\': {ref_or_index_range}')
 
 
-def get_for(for_: dict[str, Any], text_info: TextInfo) -> str:
+def get_for(for_: dict[str, Any], source_code: ProjectSourceCode) -> str:
     return (
             f'Loop for {for_["var"]} from {for_["first"]} to {for_["last"]}\n'
-            + f'in:\n{get_call_stack(for_["where"], text_info)}'
+            + f'in:\n{get_call_stack(for_["where"], source_code)}'
     )
 
 
@@ -182,15 +172,15 @@ def get_conditions(conditions: list[str]) -> str:
 
 def get_identifier(
         identifier: dict[str, Any],
-        text_info: TextInfo
+        source_code: ProjectSourceCode
 ) -> str:
-    return f'Name: {identifier["name"]}\nAt: {get_call_stack_entry(identifier["call_stack_entry"], text_info)}'
+    return f'Name: {identifier["name"]}\nAt: {get_call_stack_entry(identifier["call_stack_entry"], source_code)}'
 
 
 def report_error(
         output_file: TextIO,
         templates_map: dict[str, str],
-        text_info: TextInfo,
+        source_code: ProjectSourceCode,
         error: dict[str, Any]
 ) -> None:
     error_code: str = error["error_code"]
@@ -200,7 +190,7 @@ def report_error(
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$call_stack_entry",
-                         get_call_stack_entry(error["details"]["call_stack_entry"], text_info))
+                         get_call_stack_entry(error["details"]["call_stack_entry"], source_code))
                 .replace("$cf",
                          get_cf(error["details"]["cf"]))
             )
@@ -211,7 +201,7 @@ def report_error(
                 .replace("$cf_name",
                          error["details"]["call_stack_entry"]["name"])
                 .replace("$call_stack_entry",
-                         get_call_stack_entry(error["details"]["call_stack_entry"], text_info))
+                         get_call_stack_entry(error["details"]["call_stack_entry"], source_code))
             )
 
         case 'SYN3':
@@ -220,7 +210,7 @@ def report_error(
                 .replace("$cf_name",
                          error["details"]["cf"]["name"])
                 .replace("$call_stack_entry",
-                         get_call_stack_entry(error["details"]["call_stack_entry"], text_info))
+                         get_call_stack_entry(error["details"]["call_stack_entry"], source_code))
                 .replace("$cf",
                          get_cf(error["details"]["cf"]))
             )
@@ -229,7 +219,7 @@ def report_error(
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$call_stack_entry",
-                         get_call_stack_entry(error["details"]["call_stack_entry"], text_info))
+                         get_call_stack_entry(error["details"]["call_stack_entry"], source_code))
             )
 
         case 'SYN5.1':
@@ -241,14 +231,14 @@ def report_error(
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$identifier",
-                         get_identifier(error["details"]["identifier"], text_info))
+                         get_identifier(error["details"]["identifier"], source_code))
             )
 
         case 'SYN5.3':
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$identifier",
-                         get_identifier(error["details"]["identifier"], text_info))
+                         get_identifier(error["details"]["identifier"], source_code))
             )
 
         case 'SYN5.4' | 'SYN5.5':
@@ -262,14 +252,14 @@ def report_error(
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$identifier",
-                         get_identifier(error["details"]["identifier"], text_info))
+                         get_identifier(error["details"]["identifier"], source_code))
             )
 
         case 'SYN5.7' | 'SYN5.8':
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace("$identifier",
-                         get_identifier(error["details"]["identifier"], text_info))
+                         get_identifier(error["details"]["identifier"], source_code))
             )
 
         case 'SYN6.1' | 'SYN6.2':
@@ -290,7 +280,7 @@ def report_error(
                 .replace("$id_name",
                          error["details"]["identifier"]["name"])
                 .replace("$call_stack_entry",
-                         get_call_stack_entry(error["details"]["identifier"]["declared"], text_info))
+                         get_call_stack_entry(error["details"]["identifier"]["declared"], source_code))
             )
 
         case 'SYN9':
@@ -299,7 +289,7 @@ def report_error(
                 .replace("$id_name",
                          error["details"]["identifier"]["name"])
                 .replace("$call_stack_entry",
-                         get_call_stack_entry(error["details"]["identifier"]["declared"], text_info))
+                         get_call_stack_entry(error["details"]["identifier"]["declared"], source_code))
             )
 
         case 'SYN10':
@@ -315,7 +305,7 @@ def report_error(
                 .replace("$expr",
                          str(error["details"]["expression"]))
                 .replace("$callstack",
-                         get_call_stack(error["details"]["call_stack"], text_info))
+                         get_call_stack(error["details"]["call_stack"], source_code))
             )
 
         case 'SYN12':
@@ -353,7 +343,7 @@ def report_error(
                 .replace("$cf",
                          get_cf(error["details"]["cf"]))
                 .replace('$identifier',
-                         get_df(error["details"]["identifier"], text_info, include_name=False))
+                         get_df(error["details"]["identifier"], source_code, include_name=False))
             )
 
         case 'SEM2.1':
@@ -362,10 +352,10 @@ def report_error(
                 .replace("$df_true",
                          error["details"]["initialized"]["true"])
                 .replace("$initialized",
-                         get_df_ref(error["details"]["initialized"], text_info, include_declared=True))
+                         get_df_ref(error["details"]["initialized"], source_code, include_declared=True))
                 .replace("$other_initializations",
                          REF_SEPARATOR.join(
-                             get_df_ref_or_index_range(it, text_info) for it in
+                             get_df_ref_or_index_range(it, source_code) for it in
                              error["details"]["other_initializations"])
                          )
             )
@@ -376,9 +366,9 @@ def report_error(
                 .replace('$id_name',
                          error['details']['ranges'][0]['df']['df']['name'])
                 .replace('$initialization_loop1',
-                         get_index_range(error['details']['ranges'][0], text_info, include_declared=True))
+                         get_index_range(error['details']['ranges'][0], source_code, include_declared=True))
                 .replace('$initialization_loop2',
-                         get_index_range(error['details']['ranges'][1], text_info))
+                         get_index_range(error['details']['ranges'][1], source_code))
             )
 
         case 'SEM3.1':
@@ -387,10 +377,10 @@ def report_error(
                 .replace('$df_true',
                          error['details']['used']['true'])
                 .replace('$used',
-                         get_df_ref(error['details']['used'], text_info, include_declared=True))
+                         get_df_ref(error['details']['used'], source_code, include_declared=True))
                 .replace('$initialized',
                          REF_SEPARATOR.join(
-                             get_df_ref_or_index_range(it, text_info) for it in error['details']['initialized']))
+                             get_df_ref_or_index_range(it, source_code) for it in error['details']['initialized']))
             )
 
         case 'SEM3.2':
@@ -404,10 +394,10 @@ def report_error(
                 .replace('$id_name',
                          error['details']['used']['df']['df']['name'])
                 .replace('$used',
-                         get_index_range(error['details']['used'], text_info, include_declared=True))
+                         get_index_range(error['details']['used'], source_code, include_declared=True))
                 .replace('$initialized',
                          REF_SEPARATOR.join(
-                             get_df_ref_or_index_range(it, text_info) for it in error['details']['initialized']))
+                             get_df_ref_or_index_range(it, source_code) for it in error['details']['initialized']))
             )
 
         case 'SEM3.4':
@@ -431,7 +421,7 @@ def report_error(
                 .replace("$id_name",
                          error["details"]["identifier"]["name"])
                 .replace("$call_stack_entry",
-                         get_call_stack_entry(error["details"]["identifier"]["declared"], text_info))
+                         get_call_stack_entry(error["details"]["identifier"]["declared"], source_code))
             )
 
         case 'SEM5' | 'SEM6':
@@ -442,7 +432,7 @@ def report_error(
                 .replace("$expr",
                          str(error["details"]["condition"]))
                 .replace("$call_stack_entry",
-                         get_call_stack_entry(error["details"]["where"], text_info))
+                         get_call_stack_entry(error["details"]["where"], source_code))
             )
 
         case 'SEM7':
@@ -453,14 +443,14 @@ def report_error(
                 .replace("$expr",
                          str(error["details"]["bad_expr"]))
                 .replace("$call_stack_entry",
-                         get_call_stack_entry(error["details"]["where"], text_info))
+                         get_call_stack_entry(error["details"]["where"], source_code))
             )
 
         case 'SEM8':
             output_file.write(
                 (templates_map[error_code] + '\n')
                 .replace('$callstack',
-                         get_call_stack(error['details']['where'], text_info))
+                         get_call_stack(error['details']['where'], source_code))
             )
 
         case 'SEM9':
@@ -490,13 +480,13 @@ def report_error(
                 (templates_map[error_code] + "\n")
                 .replace('$argument_name', error['details']['argument_name'])
                 .replace("$call_stack_entry",
-                         get_call_stack_entry(error["details"]["where"], text_info))
+                         get_call_stack_entry(error["details"]["where"], source_code))
             )
         case 'SEM_NEW2':
             output_file.write(
                 (templates_map[error_code] + "\n")
                 .replace('$type', error['details']['type'])
-                .replace("$call_stack_entry", get_call_stack_entry(error['details']['where'], text_info))
+                .replace("$call_stack_entry", get_call_stack_entry(error['details']['where'], source_code))
             )
         case 'SEM_NEW3':
             output_file.write(
@@ -504,12 +494,12 @@ def report_error(
                 .replace('$df_true', error['details']['used']['true'])
                 .replace('$expected_type', error['details']['expected_type'])
                 .replace('$got_type', error['details']['got_type'])
-                .replace('$used', get_df_ref(error['details']['used'], text_info, include_declared=True))
+                .replace('$used', get_df_ref(error['details']['used'], source_code, include_declared=True))
                 .replace(
                     '$initialized',
-                         REF_SEPARATOR.join(
-                             get_call_stack(call_stack, text_info)
-                             for call_stack in error['details']['used']['df']['initialized']))
+                    REF_SEPARATOR.join(
+                        get_call_stack(call_stack, source_code)
+                        for call_stack in error['details']['used']['df']['initialized']))
             )
 
         case _:
@@ -519,7 +509,7 @@ def report_error(
 def report_errors(
         output_file: TextIO,
         templates_map: dict,
-        text_info: TextInfo,
+        source_code: ProjectSourceCode,
         error_list: list[dict[str, Any]]
 ) -> None:
     if not error_list:
@@ -532,7 +522,7 @@ def report_errors(
     for error in error_list:
         error_number += 1
         output_file.write(f'({error_number}) ')
-        report_error(output_file, templates_map, text_info, error)
+        report_error(output_file, templates_map, source_code, error)
 
 
 OPTION_PROJECT_DIR: Final[str] = '--project-dir'
@@ -551,30 +541,6 @@ OPTION_PROJECT_DIR: Final[str] = '--project-dir'
     )
 )
 @click.option(
-    OPTION_PROJECT_DIR,
-    required=True,
-    help='LuNA project directory.',
-    type=click.Path(
-        exists=True,
-        file_okay=False,
-        dir_okay=True,
-        resolve_path=True,
-        path_type=Path,
-    )
-)
-@click.option(
-    '--build-dir',
-    required=False,
-    default=Path('build'),
-    show_default=True,
-    help=f'LuNA project build directory. If not absolute, resolved relative to {OPTION_PROJECT_DIR}',
-    type=click.Path(
-        file_okay=False,
-        dir_okay=True,
-        path_type=Path,
-    )
-)
-@click.option(
     '-o', '--output',
     required=False,
     help='Output file. If not specified, write to standard output.',
@@ -586,26 +552,17 @@ OPTION_PROJECT_DIR: Final[str] = '--project-dir'
 )
 def main(
         errors_file: Path,
-        project_dir: Path,
-        build_dir: Path,
         output: Path
 ) -> None:
-    if not build_dir.is_absolute():
-        build_dir = project_dir / build_dir
-
     with Path(__file__).parent.joinpath('report_templates.json').open(mode='rt') as templates_file:
         templates_map = json.load(templates_file)
 
     with errors_file.open(mode='rt') as errors_json:
         error_list = json.load(errors_json)
 
-    if not build_dir.is_absolute():
-        build_dir = project_dir / build_dir
+    source_code = ProjectSourceCode()
 
-    with (build_dir / TEXT_INFO_FILE_NAME).open(mode='rt', encoding='utf-8') as text_info_file:
-        text_info = TextInfo(project_dir, json.load(text_info_file))
-
-    report_errors(output or sys.stdout, templates_map, text_info, error_list)
+    report_errors(output or sys.stdout, templates_map, source_code, error_list)
 
 
 if __name__ == '__main__':
