@@ -10,17 +10,6 @@ import click
 
 @click.command()
 @click.option(
-    '--project-dir',
-    required=True,
-    help='LuNA project directory.',
-    type=click.Path(
-        exists=True,
-        file_okay=False,
-        resolve_path=True,
-        path_type=Path,
-    )
-)
-@click.option(
     '--build-dir',
     required=False,
     show_default=True,
@@ -72,7 +61,7 @@ import click
 )
 @click.argument(
     'luna-src',
-    nargs=-1,
+    nargs=1,
     type=click.Path(
         dir_okay=False,
         resolve_path=True,
@@ -80,20 +69,26 @@ import click
     )
 )
 def main(
-        project_dir: Path,
         build_dir: Path,
         output_dir: Path,
         errors_file: Path | None,
         no_cleanup: bool,
         ignore: list[str],
-        luna_src: tuple[Path, ...]
+        luna_src: Path
 ) -> None:
     prolog_analyzer_home = Path(os.environ.get('PROLOG_ANALYZER_HOME', str(Path.cwd())))
 
+    build_dir = build_dir.resolve()
+
+    output_dir = output_dir.resolve()
     output_dir.mkdir(exist_ok=True, parents=True)
+
+    luna_src = luna_src.resolve()
 
     if errors_file is None:
         errors_file = output_dir / 'errors.json'
+
+    errors_file = errors_file.resolve()
     errors_file.parent.mkdir(exist_ok=True)
 
     facts_file = output_dir / 'program_facts.pro'
@@ -117,10 +112,9 @@ def main(
                     'python3',
                     prolog_analyzer_home / 'src' / 'py' / 'luna-ja-only.py',
                     '--no-cleanup',
-                    f'--build-dir={str(build_dir.absolute())}',
-                    *map(lambda it: it.resolve().name, luna_src)
+                    f'--build-dir={str(build_dir)}',
+                    luna_src
                 ],
-                cwd=project_dir,
                 check=True
             )
         except subprocess.CalledProcessError:
@@ -130,9 +124,8 @@ def main(
                     '-q',
                     '--compile-only',
                     f'--build-dir={str(build_dir)}',
-                    *map(lambda it: it.resolve().name, luna_src)
+                    luna_src
                 ],
-                cwd=project_dir,
                 capture_output=True,
                 check=True
             )

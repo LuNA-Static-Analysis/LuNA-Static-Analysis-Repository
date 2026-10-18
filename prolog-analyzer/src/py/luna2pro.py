@@ -22,9 +22,11 @@ class TextInfo:
 
     def file_name(self, position: int) -> str:
         fid, _, _, _ = self._text_info['text'][position]
-        path: str = self._text_info['paths'][str(fid)]
+        path = Path(self._text_info['paths'][str(fid)])
 
-        return re.sub(r'(\./)+', './', path)
+        path = path.resolve()
+
+        return str(path)
 
     def line_number(self, position: int) -> int:
         _, ln, _, _ = self._text_info['text'][position]

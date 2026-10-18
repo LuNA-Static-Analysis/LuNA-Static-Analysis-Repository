@@ -162,7 +162,6 @@ def main(
                 subprocess.run(
                     args=[
                         ADAPT_HOME / 'prolog-analyzer' / 'bin' / 'prolog-analyzer',
-                        '--project-dir', project_dir,
                         '--build-dir', build_dir,
                         '--errors-file', errors_file,
                         '--output-dir', prolog_analyzer_output_dir,
