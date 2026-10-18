@@ -1,10 +1,10 @@
-import re
-from pathlib import Path
-from typing import Any, Callable, Final, Iterable, NewType, TypeAlias
+import json
 from enum import Enum
 from itertools import chain, count
+from pathlib import Path
+from typing import Any, Callable, Final, Iterable, NewType, TypeAlias
+
 import click
-import json
 
 IntSequence: TypeAlias = Callable[[], int]
 
