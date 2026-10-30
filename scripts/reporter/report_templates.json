@@ -33,6 +33,7 @@
   "SEM3.1E": "error[SEM3.1E]: Consumed DF $df_true is not initialized.\nUsed:\n$used\nInitialized:\n$initialized",
   "SEM3.2": "error[SEM3.2]: Cyclic dependence.",
   "SEM3.3": "warning[SEM3.3]: Consumed index range might not have been initialized for DF $id_name.\nUsed:\n$used\nInitialized:\n$initialized",
+  "SEM3.3E": "error[SEM3.3E]: Consumed index range is not fully initialized for DF $id_name.\nUsed:\n$used\nInitialized:\n$initialized",
   "SEM3.4": "error[SEM3.4]: Attempt to request uninitialized DF.",
   "SEM3.5": "error[SEM3.5]: Attempt to use DF after exceeding requests limit.",
   "SEM3.6": "error[SEM3.6]: Attempt to use DF after deleting it using delete operator",

@@ -387,7 +387,7 @@ def report_error(
                 (templates_map[error_code] + '\n')
             )
 
-        case 'SEM3.3':
+        case 'SEM3.3' | 'SEM3.3E':
             output_file.write(
                 (templates_map[error_code] + '\n')
                 .replace('$id_name',
