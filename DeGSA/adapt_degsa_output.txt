@@ -1,6 +1,6 @@
 Total vertices: 17
 
-Vertex address: 0x5603e837b790
+Vertex address: 0x59e275d799b0
 Vertex line: 5
 Vertex depth: 2
 Declared outside DFs: a b
@@ -8,13 +8,13 @@ Declared inside DFs:
 Use DFs:
 Def DFs:
 Vertices inside:
-Vertices before ("in"): 0x5603e837b790(0x5603e8377a70) 0x5603e837b790(0x5603e8377a70)
-Vertices after ("out"): 0x5603e837b790(0x5603e8377a70) 0x5603e837d3f0(0x5603e8377a70) 0x5603e837e8d0(0x5603e8377a70)
+Vertices before ("in"): 0x59e275d799b0(0x59e275d01280) 0x59e275d799b0(0x59e275d01280)
+Vertices after ("out"): 0x59e275d799b0(0x59e275d01280) 0x59e275d7ad30(0x59e275d01280) 0x59e275d7bb00(0x59e275d01280)
 Vertex type: import
 Facts amount: 0
 Exact type: atomic CF, name: init
 
-Vertex address: 0x5603e837d3f0
+Vertex address: 0x59e275d7ad30
 Vertex line: 6
 Vertex depth: 2
 Declared outside DFs: a b
@@ -22,13 +22,13 @@ Declared inside DFs:
 Use DFs:
 Def DFs:
 Vertices inside:
-Vertices before ("in"): 0x5603e837d3f0(0x5603e8377a70) 0x5603e837d3f0(0x5603e8377a70)
+Vertices before ("in"): 0x59e275d7ad30(0x59e275d01280) 0x59e275d7ad30(0x59e275d01280)
 Vertices after ("out"):
 Vertex type: import
 Facts amount: 0
 Exact type: atomic CF, name: print
 
-Vertex address: 0x5603e837e8d0
+Vertex address: 0x59e275d7bb00
 Vertex line: 23
 Vertex depth: 3
 Declared outside DFs: f fooDF
@@ -36,27 +36,27 @@ Declared inside DFs:
 Use DFs:
 Def DFs:
 Vertices inside:
-Vertices before ("in"): 0x5603e837e8d0(0x5603e8377a70) 0x5603e837e8d0(0x5603e8377a70)
+Vertices before ("in"): 0x59e275d7bb00(0x59e275d01280) 0x59e275d7bb00(0x59e275d01280)
 Vertices after ("out"):
 Vertex type: import
 Facts amount: 0
 Exact type: atomic CF, name: init
 
-Vertex address: 0x5603e837e060
+Vertex address: 0x59e275d7b3b0
 Vertex line: 7
 Vertex depth: 2
 Declared outside DFs:
 Declared inside DFs: f fooDF
 Use DFs:
 Def DFs:
-Vertices inside: 0x5603e837e8d0
+Vertices inside: 0x59e275d7bb00
 Vertices before ("in"):
 Vertices after ("out"):
 Vertex type: sub
 Facts amount: 0
 Exact type: structured CF, name: foo
 
-Vertex address: 0x5603e83805c0
+Vertex address: 0x59e275d7cf60
 Vertex line: 23
 Vertex depth: 3
 Declared outside DFs: f fooDF
@@ -70,21 +70,21 @@ Vertex type: import
 Facts amount: 0
 Exact type: atomic CF, name: init
 
-Vertex address: 0x5603e837fcc0
+Vertex address: 0x59e275d7c9e0
 Vertex line: 8
 Vertex depth: 2
 Declared outside DFs:
 Declared inside DFs: f fooDF
 Use DFs:
 Def DFs:
-Vertices inside: 0x5603e83805c0
+Vertices inside: 0x59e275d7cf60
 Vertices before ("in"):
 Vertices after ("out"):
 Vertex type: sub
 Facts amount: 0
 Exact type: structured CF, name: foo
 
-Vertex address: 0x5603e8382530
+Vertex address: 0x59e275d7e8d0
 Vertex line: 23
 Vertex depth: 3
 Declared outside DFs: f fooDF
@@ -98,21 +98,21 @@ Vertex type: import
 Facts amount: 0
 Exact type: atomic CF, name: init
 
-Vertex address: 0x5603e8381880
+Vertex address: 0x59e275d7e0b0
 Vertex line: 9
 Vertex depth: 2
 Declared outside DFs:
 Declared inside DFs: f fooDF
 Use DFs:
 Def DFs:
-Vertices inside: 0x5603e8382530
+Vertices inside: 0x59e275d7e8d0
 Vertices before ("in"):
 Vertices after ("out"):
 Vertex type: sub
 Facts amount: 0
 Exact type: structured CF, name: foo
 
-Vertex address: 0x5603e8384500
+Vertex address: 0x59e275d80620
 Vertex line: 23
 Vertex depth: 4
 Declared outside DFs: f fooDF
@@ -126,21 +126,21 @@ Vertex type: import
 Facts amount: 0
 Exact type: atomic CF, name: init
 
-Vertex address: 0x5603e8383ba0
+Vertex address: 0x59e275d7fd20
 Vertex line: 11
 Vertex depth: 3
 Declared outside DFs:
 Declared inside DFs: f fooDF
 Use DFs:
 Def DFs:
-Vertices inside: 0x5603e8384500
+Vertices inside: 0x59e275d80620
 Vertices before ("in"):
 Vertices after ("out"):
 Vertex type: sub
 Facts amount: 0
 Exact type: structured CF, name: foo
 
-Vertex address: 0x5603e8385920
+Vertex address: 0x59e275d81740
 Vertex line: 12
 Vertex depth: 3
 Declared outside DFs: a b xx
@@ -154,21 +154,21 @@ Vertex type: import
 Facts amount: 0
 Exact type: atomic CF, name: print
 
-Vertex address: 0x5603e8378800
+Vertex address: 0x59e275d02010
 Vertex line: 10
 Vertex depth: 2
 Declared outside DFs: a b
 Declared inside DFs: xx
 Use DFs:
 Def DFs:
-Vertices inside: 0x5603e8383ba0 0x5603e8385920
+Vertices inside: 0x59e275d7fd20 0x59e275d81740
 Vertices before ("in"):
 Vertices after ("out"):
 Vertex type: let
 Facts amount: 0
 Assigned expressions and their names: 
 
-Vertex address: 0x5603e8386890
+Vertex address: 0x59e275d826b0
 Vertex line: 15
 Vertex depth: 3
 Declared outside DFs: a b iterator
@@ -182,14 +182,14 @@ Vertex type: import
 Facts amount: 2
 Exact type: atomic CF, name: print
 
-Vertex address: 0x5603e8384980
+Vertex address: 0x59e275d82020
 Vertex line: 14
 Vertex depth: 2
 Declared outside DFs: a b
 Declared inside DFs: iterator
 Use DFs:
 Def DFs:
-Vertices inside: 0x5603e8386890
+Vertices inside: 0x59e275d826b0
 Vertices before ("in"):
 Vertices after ("out"):
 Vertex type: for
@@ -198,7 +198,7 @@ Iterator: iterator
 Left border: a[7]
 Right border: b[7]
 
-Vertex address: 0x5603e8388100
+Vertex address: 0x59e275d83c40
 Vertex line: 18
 Vertex depth: 3
 Declared outside DFs: a b i
@@ -212,16 +212,16 @@ Vertex type: import
 Facts amount: 2
 Exact type: atomic CF, name: print
 
-Vertex address: 0x5603e83792f0
+Vertex address: 0x59e275d02b00
 Vertex line: 17
 Vertex depth: 2
 Declared outside DFs: a b
 Declared inside DFs: i
 Use DFs:
 Def DFs:
-Vertices inside: 0x5603e8388100
+Vertices inside: 0x59e275d83c40
 Vertices before ("in"):
-Vertices after ("out"): 0x5603e837b790(0x5603e8377a70) 0x5603e837d3f0(0x5603e8377a70) 0x5603e837e8d0(0x5603e8377a70)
+Vertices after ("out"): 0x59e275d799b0(0x59e275d01280) 0x59e275d7ad30(0x59e275d01280) 0x59e275d7bb00(0x59e275d01280)
 Vertex type: while
 Facts amount: 2
 Iterator: i
@@ -229,14 +229,14 @@ Out name: a
 Condition expression: a[11][12] < b[9]
 Start expression: 0
 
-Vertex address: 0x5603e837b130
+Vertex address: 0x59e275d04800
 Vertex line: 3
 Vertex depth: 1
 Declared outside DFs:
 Declared inside DFs: a b
 Use DFs:
 Def DFs:
-Vertices inside: 0x5603e8378800 0x5603e83792f0 0x5603e837b790 0x5603e837d3f0 0x5603e837e060 0x5603e837fcc0 0x5603e8381880 0x5603e8384980
+Vertices inside: 0x59e275d02010 0x59e275d02b00 0x59e275d799b0 0x59e275d7ad30 0x59e275d7b3b0 0x59e275d7c9e0 0x59e275d7e0b0 0x59e275d82020
 Vertices before ("in"):
 Vertices after ("out"):
 Vertex type: sub
@@ -248,47 +248,47 @@ BaseDFNames:
 Name: a
 Declared in function call at line: 4
 Size: 0
-Uses: 0x5603e837b790 0x5603e837d3f0 0x5603e837e8d0 
-Defs: 0x5603e837b790 0x5603e83792f0 
+Uses: 0x59e275d799b0 0x59e275d7ad30 0x59e275d7bb00 
+Defs: 0x59e275d799b0 0x59e275d02b00 
 Size: 1
-Uses: 0x5603e83805c0 0x5603e8384980 
+Uses: 0x59e275d7cf60 0x59e275d82020 
 Defs: 
 Size: 2
-Uses: 0x5603e8382530 0x5603e83792f0 
+Uses: 0x59e275d7e8d0 0x59e275d02b00 
 Defs: 
 Size: 4
-Uses: 0x5603e8384500 0x5603e8385920 
+Uses: 0x59e275d80620 0x59e275d81740 
 Defs: 
 
 Name: b
 Declared in function call at line: 4
 Size: 1
-Uses: 0x5603e8382530 0x5603e8385920 0x5603e8384980 0x5603e83792f0 
+Uses: 0x59e275d7e8d0 0x59e275d81740 0x59e275d82020 0x59e275d02b00 
 Defs: 
 
 Name: fooDF
 Declared in function call at line: 22
 Size: 0
 Uses: 
-Defs: 0x5603e837e8d0 
+Defs: 0x59e275d7cf60 
 
 Name: fooDF
 Declared in function call at line: 22
 Size: 0
 Uses: 
-Defs: 0x5603e83805c0 
+Defs: 0x59e275d7bb00 
 
 Name: fooDF
 Declared in function call at line: 22
 Size: 0
 Uses: 
-Defs: 0x5603e8382530 
+Defs: 0x59e275d7e8d0 
 
 Name: fooDF
 Declared in function call at line: 22
 Size: 0
 Uses: 
-Defs: 0x5603e8384500 
+Defs: 0x59e275d80620 
 
 ========================
 DF usage information dump
@@ -433,36 +433,41 @@ DF usage information dump end
 
 ======== Searching for errors ========
 
-{"details": {"call_stack_entry": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "5","name": "init"},"cf": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "a"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "5","name": "init"},"cf": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "a"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "6","name": "print"},"cf": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "1","name": "print","type": "extern"},"expression": "a"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "7","name": "foo"},"cf": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "21","name": "foo","type": "struct"},"expression": "a"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "23","name": "init"},"cf": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "f"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "23","name": "init"},"cf": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "fooDF"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "8","name": "foo"},"cf": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "21","name": "foo","type": "struct"},"expression": "a[0]"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "23","name": "init"},"cf": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "f"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "23","name": "init"},"cf": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "fooDF"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "9","name": "foo"},"cf": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "21","name": "foo","type": "struct"},"expression": "a[1 + 2][b[1]]"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "23","name": "init"},"cf": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "f"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "23","name": "init"},"cf": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "fooDF"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "11","name": "foo"},"cf": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "21","name": "foo","type": "struct"},"expression": "xx[6666]"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "23","name": "init"},"cf": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "f"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "23","name": "init"},"cf": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "fooDF"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "12","name": "print"},"cf": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "1","name": "print","type": "extern"},"expression": "xx[b[1]]"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "15","name": "print"},"cf": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "1","name": "print","type": "extern"},"expression": "iterator"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "18","name": "print"},"cf": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "1","name": "print","type": "extern"},"expression": "i + 1"},"error_code": "SYN1"}
-{"details": {"vertex1": {"file": "/home/conngent/gitlabluna/ast-ddg-analyzer/DeGSA/luna/tempDF.fa","line": "5","name": "init"}},"error_code": "SEM3.2"}
+{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "5","name": "init"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "a"},"error_code": "SYN1"}
+{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "5","name": "init"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "a"},"error_code": "SYN1"}
+{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "6","name": "print"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "1","name": "print","type": "extern"},"expression": "a"},"error_code": "SYN1"}
+{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "7","name": "foo"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "21","name": "foo","type": "struct"},"expression": "a"},"error_code": "SYN1"}
+{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "23","name": "init"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "f"},"error_code": "SYN1"}
+{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "23","name": "init"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "fooDF"},"error_code": "SYN1"}
+{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "8","name": "foo"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "21","name": "foo","type": "struct"},"expression": "a[0]"},"error_code": "SYN1"}
+{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "23","name": "init"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "f"},"error_code": "SYN1"}
+{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "23","name": "init"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "fooDF"},"error_code": "SYN1"}
+{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "9","name": "foo"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "21","name": "foo","type": "struct"},"expression": "a[1 + 2][b[1]]"},"error_code": "SYN1"}
+{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "23","name": "init"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "f"},"error_code": "SYN1"}
+{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "23","name": "init"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "fooDF"},"error_code": "SYN1"}
+{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "11","name": "foo"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "21","name": "foo","type": "struct"},"expression": "xx[6666]"},"error_code": "SYN1"}
+{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "23","name": "init"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "f"},"error_code": "SYN1"}
+{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "23","name": "init"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "fooDF"},"error_code": "SYN1"}
+{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "12","name": "print"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "1","name": "print","type": "extern"},"expression": "xx[b[1]]"},"error_code": "SYN1"}
+{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "15","name": "print"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "1","name": "print","type": "extern"},"expression": "iterator"},"error_code": "SYN1"}
+{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "18","name": "print"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "1","name": "print","type": "extern"},"expression": "i + 1"},"error_code": "SYN1"}
+{"details": {"vertex1": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "5","name": "init"}},"error_code": "SEM3.2"}
 
-Time to find errors: 5.4691e-05 seconds
+Time to find errors: 4.202e-05 seconds
 
-Time to find errors (system): 5.469e-05 seconds
+Time to find errors (system): 4.213e-05 seconds
 
-Time to build DDG: 0.00371591 seconds
+Time to build DDG: 0.0105747 seconds
 
-Time to build DDG (system): 0.00371593 seconds
+Time to build DDG (system): 0.0105747 seconds
+Z3 testing:
 
-Time to build AST: 8.5142e-05 seconds
+Satisfiable!
+x = 26
+y = 16
 
-Time to build AST (system): 8.4898e-05 seconds
+Time to build AST: 6.017e-05 seconds
 
-Time real: 0.00515626 seconds
+Time to build AST (system): 6.006e-05 seconds
+
+Time real: 0.0324507 seconds

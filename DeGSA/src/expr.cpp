@@ -10,6 +10,7 @@
 */
 //TODO stop parsing strings and use jsons or inheritance
 Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTable, Vertex* currentVertex){
+    initializeZ3();
 
     this->_ASTexpr = ASTexpr;
 
@@ -236,6 +237,13 @@ void Expression::calculateValueType(){
             _valueType = nonCalculatable;
             return;
         }
+    }
+}
+
+void Expression::initializeZ3(){
+    if (pZ3Context == nullptr || pZ3Solver == nullptr) {
+        pZ3Context = new z3::context();
+        pZ3Solver = new z3::solver(*pZ3Context);
     }
 }
 

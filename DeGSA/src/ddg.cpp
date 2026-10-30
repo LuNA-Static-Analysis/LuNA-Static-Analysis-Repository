@@ -8,6 +8,9 @@
 #include <fstream>
 #include <queue>
 
+//todo apt-get install libz3-dev for this to work
+#include <z3++.h>
+
 using ns = std::chrono::nanoseconds;
 
 class DDG {
@@ -661,6 +664,32 @@ public:
 
         *outputTarget << "\nTime to build DDG: " << (double)graphBuildTotal / 1000000000 << " seconds" << std::endl;
         *outputTarget << "\nTime to build DDG (system): " << (double)graphBuildTotalSystem / 1000000000 << " seconds" << std::endl;
+
+        //===================================
+        //z3 proto
+        z3::context ctx;
+        z3::solver s(ctx);
+
+        // Define integer variables
+        z3::expr x = ctx.int_const("x");
+        z3::expr y = ctx.int_const("y");
+
+        // Add constraints: x > 10 AND y > 10 AND x + y == 42
+        s.add(x > 10);
+        s.add(y > 10);
+        s.add(x + y == 42);
+
+        *outputTarget << "Z3 testing:\n\n";
+        // Check satisfiability
+        if (s.check() == z3::sat) {
+            z3::model m = s.get_model();
+            *outputTarget << "Satisfiable!\n";
+            *outputTarget << "x = " << m.eval(x) << "\n";
+            *outputTarget << "y = " << m.eval(y) << "\n";
+        } else {
+            *outputTarget << "Unsatisfiable.\n";
+        }
+        //===================================
 
         std::string jsonOutputPath = "./reporter/found_errors.json";
 
