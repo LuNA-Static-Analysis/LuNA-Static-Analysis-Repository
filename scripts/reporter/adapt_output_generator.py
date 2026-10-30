@@ -27,7 +27,6 @@ class ProjectSourceCode:
                 print(f'WARNING: file "{path}" not found', file=sys.stderr)
                 return '<FILE NOT FOUND>'
 
-
         line = self._source_lines[path][line_index].strip().strip('{;').strip().strip('@')
         return line
 
@@ -371,7 +370,7 @@ def report_error(
                          get_index_range(error['details']['ranges'][1], source_code))
             )
 
-        case 'SEM3.1':
+        case 'SEM3.1' | 'SEM3.1E':
             output_file.write(
                 (templates_map[error_code] + '\n')
                 .replace('$df_true',

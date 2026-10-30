@@ -30,6 +30,7 @@
   "SEM2.1": "warning[SEM2.1]: Possible repeated initialization of single DF $df_true.\nInitialized:\n$initialized\nAlso here:\n$other_initializations",
   "SEM2.2": "warning[SEM2.2]: Possible overlap of initialized index ranges for DF $id_name.\nInitialized:\n$initialization_loop1\nAlso here:\n$initialization_loop2",
   "SEM3.1": "warning[SEM3.1]: Consumed DF $df_true might not have been initialized.\nUsed:\n$used\nInitialized:\n$initialized",
+  "SEM3.1E": "error[SEM3.1E]: Consumed DF $df_true is not initialized.\nUsed:\n$used\nInitialized:\n$initialized",
   "SEM3.2": "error[SEM3.2]: Cyclic dependence.",
   "SEM3.3": "warning[SEM3.3]: Consumed index range might not have been initialized for DF $id_name.\nUsed:\n$used\nInitialized:\n$initialized",
   "SEM3.4": "error[SEM3.4]: Attempt to request uninitialized DF.",
