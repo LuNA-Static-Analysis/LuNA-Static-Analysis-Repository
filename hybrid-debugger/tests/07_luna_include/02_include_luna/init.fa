@@ -1,0 +1,7 @@
+sub init_f4_ones(name v) {
+    init_f4(v, 1, 1, 1, 1);
+}
+
+sub init_f4x4_identity(name m) {
+    init_f4(m, 1, 0, 0, 0);
+}

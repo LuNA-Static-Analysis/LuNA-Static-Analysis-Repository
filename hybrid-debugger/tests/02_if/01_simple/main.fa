@@ -1,0 +1,26 @@
+C++ sub set_int(name x, int v) ${{ x = v; $}}
+C++ sub print(int v) ${{ printf("%d\n", v); $}}
+
+sub main() {
+    df x, y, z, p, q, N, M;
+
+    set_int(N, 10);
+    set_int(M, 11);
+
+    set_int(p, 1);
+    print(p);
+    set_int(q, 0);
+    print(q);
+
+    if p {
+        set_int(x, 42);
+    }
+
+    print(x);
+
+    if p && q {
+        set_int(y[3], 33);
+    }
+
+    print(y[3]);
+}

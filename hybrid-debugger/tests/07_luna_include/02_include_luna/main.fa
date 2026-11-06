@@ -1,0 +1,17 @@
+import c_gemv_f4x4_f4(value, value, name) as gemv;
+import c_print_f4(value) as print_f4;
+import c_init_f4(name, real, real, real, real) as init_f4;
+
+#include "init.fa"
+
+C++ sub set_int(name x, int v) ${{ x = v; $}}
+
+sub main() {
+    df mat, vec, result;
+
+    init_f4_ones(vec);
+    init_f4x4_identity(mat);
+    gemv(mat, vec, result);
+
+    print_f4(result);
+}

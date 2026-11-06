@@ -1,0 +1,12 @@
+import c_axpy_f4(real, value, value, name) as axpy_f4;
+import c_print_f4(value) as print_f4;
+import c_init_f4(name, real, real, real, real) as init_f4;
+
+sub main() {
+    df x, y, z;
+
+    init_f4(x, 1, 2, 3, 4);
+    init_f4(y, 2, 4, 6, 8);
+    axpy_f4(10, x, y, z);
+    print_f4(z);
+}

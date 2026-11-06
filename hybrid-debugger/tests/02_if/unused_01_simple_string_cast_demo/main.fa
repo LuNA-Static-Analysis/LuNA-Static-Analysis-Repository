@@ -1,0 +1,18 @@
+C++ sub set_int(name x, int v) ${{ x = v; $}}
+C++ sub print(int v) ${{ printf("%d\n", v); $}}
+C++ sub print_str(string s) ${{ printf("%s\n", s); $}}
+
+sub main() {
+    df y, p, q;
+
+    set_int(p, 1);
+    set_int(q, 0);
+
+    if p && q {
+        set_int(y[3], 33);
+    }
+
+    print_str("Value of condition is " + int(p && q));
+
+    print(y[3]);
+}

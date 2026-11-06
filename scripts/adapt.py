@@ -3,7 +3,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import List
+from typing import List, Final
 
 import click
 
@@ -26,15 +26,19 @@ def collect_cpp_files(paths: List[Path]) -> List[Path]:
     return cpp_files
 
 
+# TODO make choices named constants
+RUN_CHOICES: Final[tuple[str, ...]] = ('ast', 'degsa', 'prolog', 'mc', 'bilangir', 'hybrid')
+
+
 @click.command()
 @click.option(
     '--run',
     multiple=True,
-    default=['ast', 'prolog', 'mc', 'bilangir'],
+    default=RUN_CHOICES,
     required=False,
     show_default=True,
     help='Only run specified analyzers.',
-    type=click.Choice(['ast', 'degsa', 'prolog', 'mc', 'bilangir'], case_sensitive=False)
+    type=click.Choice(RUN_CHOICES, case_sensitive=False)
 )
 @click.option(
     '--no-cleanup',
@@ -44,6 +48,14 @@ def collect_cpp_files(paths: List[Path]) -> List[Path]:
     default=False,
     help='Do not delete generated files.'
 )
+# TODO implement an option to print executed commands
+# @click.option(
+#     '-v', '--verbose',
+#     is_flag=True,
+#     required=False,
+#     show_default=True,
+#     default=False,
+# )
 @click.argument(
     'luna-src',
     type=click.Path(
@@ -61,7 +73,6 @@ def collect_cpp_files(paths: List[Path]) -> List[Path]:
         path_type=Path
     )
 )
-
 def main(
         run: list[str],
         luna_src: Path,
@@ -99,6 +110,9 @@ def main(
     
     bilangir_dir = project_dir / '.BiLangIR'
     bilangir_dir.mkdir(parents=True, exist_ok=True)
+
+    hybrid_debugger_output_dir = project_dir / '.hybrid-debugger'
+    hybrid_debugger_output_dir.mkdir(parents=True, exist_ok=True)
 
     preprocessed_file = output_dir / 'preprocessed.fa'
     preprocessed_file.unlink(missing_ok=True)
@@ -170,6 +184,30 @@ def main(
                         luna_src
                     ],
                     env=os.environ | {'PROLOG_ANALYZER_HOME': ADAPT_HOME / 'prolog-analyzer'},
+                    capture_output=True,
+                    check=True
+                )
+            except subprocess.CalledProcessError as e:
+                print(
+                    f'WARNING: {" ".join(map(str, e.cmd))} '
+                    f'failed with exit code {e.returncode}:\n'
+                    f'{e.stderr.decode("utf-8")}',
+                    file=sys.stderr
+                )
+
+        if 'hybrid' in run:
+            try:
+                print(f'\rRunning luna-hybrid-debugger         \r', end='')
+                subprocess.run(
+                    args=[
+                        ADAPT_HOME / 'hybrid-debugger' / 'luna-hybrid-debugger',
+                        '--output-dir', hybrid_debugger_output_dir,
+                        '--found-errors', errors_file,
+                        '--errors-file', errors_file,
+                        '--no-cleanup',
+                        luna_src
+                    ],
+                    env=os.environ | {'LUNA_HYBRID_DEBUGGER_HOME': ADAPT_HOME / 'hybrid-debugger'},
                     capture_output=True,
                     check=True
                 )
@@ -294,6 +332,7 @@ def main(
             shutil.rmtree(bilangir_dir)
             shutil.rmtree(output_dir)
             shutil.rmtree(prolog_analyzer_output_dir)
+            shutil.rmtree(hybrid_debugger_output_dir)
             shutil.rmtree(mc_analyzer_output_dir)
             shutil.rmtree(build_dir)
 

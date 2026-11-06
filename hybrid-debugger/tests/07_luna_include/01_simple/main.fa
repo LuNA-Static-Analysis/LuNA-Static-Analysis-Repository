@@ -1,0 +1,19 @@
+#include "imports.txt"
+
+C++ sub set_int(name x, int v) ${{ x = v; $}}
+
+sub main(int N) {
+    df mat, vec, result, M;
+
+    set_int(M, N+1);
+
+    for i = 1..N {
+        init_f4(mat[i], i*1.5, i*1.5, i*1.5, i*1.5);
+        init_f4(vec[i], i*1, i*2, i*3, i*4);
+        gemv(mat[i], vec[i], result[i]);
+    }
+
+    for k = 1..M {
+        print_f4(result[k]);
+    }
+}

@@ -1,0 +1,3 @@
+import c_gemv_f4x4_f4(value, value, name) as gemv;
+import c_print_f4(value) as print_f4;
+import c_init_f4(name, real, real, real, real) as init_f4;

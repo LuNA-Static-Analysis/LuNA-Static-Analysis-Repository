@@ -1,0 +1,8 @@
+#!/usr/bin/bash
+
+if [[ -z "${LUNA_HYBRID_DEBUGGER_HOME}" ]]; then
+  SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+  LUNA_HYBRID_DEBUGGER_HOME="$SCRIPT_DIR"
+fi
+
+PYTHONPATH=$LUNA_HOME/scripts:$PYTHONPATH python3 "$LUNA_HYBRID_DEBUGGER_HOME"/luna-hybrid-debugger.py "$@"
