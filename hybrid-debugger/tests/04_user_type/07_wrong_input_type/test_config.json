@@ -1,0 +1,20 @@
+{
+  "arrange": [],
+  "act": {
+    "command": "adapt --run hybrid main.fa",
+    "can_fail": false
+  },
+  "assert": {
+    "stdout": {
+      "match_lines": [
+        "wc:Found 1 error*",
+        "wc:error*Expected*user type matrix*got vector",
+        "wc:File*ucodes.cpp*line*22*c_gemv_f4x4_f4"
+      ]
+    },
+    "stderr": {
+      "empty": true
+    },
+    "save": ["stderr", "stdout"]
+  }
+}
