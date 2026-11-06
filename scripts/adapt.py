@@ -105,6 +105,7 @@ def main(
     mc_analyzer_output_dir = project_dir / '.mc-analyzer'
     mc_analyzer_output_dir.mkdir(parents=True, exist_ok=True)
 
+    # TODO run build once and pass the build directory to all components that might need it (prolog-analyzer, luna-hybrid-debugger)
     build_dir = project_dir / '.luna-build'
     build_dir.mkdir(parents=True, exist_ok=True)
     
