@@ -11,6 +11,8 @@
 #include <fstream>
 #include <string>
 
+#include "_adapt_assert.h"
+
 using namespace luna::ucenv;
 
 namespace {
@@ -56,8 +58,9 @@ extern "C" {
             std::cerr << ss.str();
         }
 
+        auto const filename = make_filename();
         {
-            std::ofstream error_file(make_filename());
+            std::ofstream error_file(filename);
             error_file << "--- ADAPT ERROR BEGIN ---"
                        << "\n"
                        << condition_string
@@ -65,7 +68,7 @@ extern "C" {
                        << "--- ADAPT ERROR END ---"
                        << std::endl;
         }
-        throw std::runtime_error("adapt: generated assertion failed");
+        throw AdaptAssertionError("ADAPT: generated assertion failed. See " + filename);
         // exit(EXIT_FAILURE);
     }
 }
