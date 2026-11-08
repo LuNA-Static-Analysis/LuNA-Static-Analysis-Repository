@@ -170,23 +170,34 @@ python3 llvm-manager/manager.py rebuild
 
 ### Чтобы искать ошибки в LuNA-программах
 
-```bash
-adapt [ОПЦИИ] FA_FILE [CPP_FILE_1 CPP_FILE_2 ...]
+```
+Usage: adapt.py [OPTIONS] LUNA_SRC [LUNA_ARGS]...
+
+Options:
+  --run [ast|degsa|prolog|mc|bilangir|hybrid]
+                                  Only run specified analyzers.  [default:
+                                  ast, degsa, prolog, mc, bilangir, hybrid]
+  --no-cleanup                    Do not delete generated files.
+  -v, --verbose                   Show output of analyzers.
+  --cpp-dir TEXT                  Specify source directories for *.cpp files
+                                  (same as luna).
+  --cpp-source TEXT               Specify additional *.cpp files (same as
+                                  luna).
+  --help                          Show this message and exit.
 ```
 
-Опции:
-
-- `--run [ast|degsa|prolog|mc|bilangir]`
-  - Запустить только указанные анализаторы. Если опция не указана, будут запущены все анализаторы.
-- `--no-cleanup`
-  - Не удалять сгенерированные файлы.
-- `--help`
-  - Напечатать сообщение с информацией об опциях запуска и выйти.
-
-Пример запуска:
+Примеры запуска:
 
 ```bash
-adapt src/main.fa src/main.cpp --run degsa --run prolog --no-cleanup
+adapt main.fa
+```
+
+```bash
+adapt main.fa 10 20 "string argument" 
+```
+
+```bash
+adapt --run degsa --run prolog --no-cleanup --cpp-source=src/main.cpp main.fa 10 20 "string argument" 
 ```
 
 ### Чтобы получить отчёт по LuNA-программам (в LLVM IR представлении)
@@ -205,10 +216,14 @@ llvm-manager report -- --help
 
 ## Тестирование анализаторов
 
-### Запуск тестов prolog-analyzer
-
+Запустить все тесты:
 ```bash
-python3 prolog-analyzer/tests/runner.py prolog-analyzer/tests/
+make test
+```
+
+Запустить все тесты, остановиться после первого проваленного теста:
+```bash
+make fftest
 ```
 
 ## Переменные окружения анализаторов
