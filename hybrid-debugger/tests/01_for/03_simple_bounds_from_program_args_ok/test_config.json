@@ -1,0 +1,18 @@
+{
+  "arrange": [],
+  "act": {
+    "command": "adapt --run hybrid main.fa 10 10",
+    "can_fail": false
+  },
+  "assert": {
+    "stdout": {
+      "match_lines": [
+        "wc:No errors found"
+      ]
+    },
+    "stderr": {
+      "empty": true
+    },
+    "save": ["stderr", "stdout"]
+  }
+}

@@ -1,0 +1,14 @@
+C++ sub set_int(name x, int v) ${{ x = v; $}}
+C++ sub print(int v) ${{ printf("%d\n", v); $}}
+
+sub main(int n, int m) {
+    df x;
+
+    for i = 0..n {
+        set_int(x[i], i);
+    }
+
+    for i = 1..m {
+        print(x[i]);
+    }
+}

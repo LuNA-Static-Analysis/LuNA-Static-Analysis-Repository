@@ -1,0 +1,21 @@
+{
+  "arrange": [],
+  "act": {
+    "command": "adapt --run hybrid main.fa 10 15",
+    "can_fail": false
+  },
+  "assert": {
+    "stdout": {
+      "match_lines": [
+        "wc:error[SEM3.3E]*Consumed index range is not fully initialized for DF x",
+        "wc:File*main.fa*line*11*for",
+        "wc:File*main.fa*line*12*print",
+        "wc:from*1*to*15*1*to*m"
+      ]
+    },
+    "stderr": {
+      "empty": true
+    },
+    "save": ["stderr", "stdout"]
+  }
+}
