@@ -15,7 +15,6 @@ else:
 CPP_SEPARATOR: Final[str] = ':'
 
 
-# TODO update README.MD
 def collect_cpp_files_using_luna_rules(
         luna_src: Path,
         cpp_dir: str | None,
