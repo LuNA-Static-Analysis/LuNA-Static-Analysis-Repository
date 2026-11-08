@@ -1,4 +1,5 @@
 import json
+import sys
 from pathlib import Path
 from typing import Final, Iterable, Any
 
@@ -154,7 +155,10 @@ def main(
     cf_info = load_cf_info([str(it) for it in project_path.glob('cf.*.json.list')])
     df_info = load_id_map([str(it) for it in project_path.glob('id.*.map.list')])
 
-    error_file_paths = project_path.glob('adapt_error_*.dat')
+    error_file_paths = list(project_path.glob('adapt_error_*.dat'))
+    if not error_file_paths:
+        print(f'ERROR: no error files in "{project_path}"', file=sys.stderr)
+        sys.exit(1)
 
     adapt_errors: list[dict] = []
 
