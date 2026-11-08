@@ -95,6 +95,7 @@ RUN_CHOICES: Final[tuple[str, ...]] = ('ast', 'degsa', 'prolog', 'mc', 'bilangir
     required=False,
     show_default=True,
     default=False,
+    help='Show output of analyzers.'
 )
 @click.argument(
     'luna-src',
