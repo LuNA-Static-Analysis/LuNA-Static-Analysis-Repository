@@ -3,7 +3,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Final
+from typing import Final, Literal
 
 import click
 
@@ -12,21 +12,62 @@ if adapt_home_str := os.getenv('ADAPT_HOME'):
 else:
     ADAPT_HOME = Path(__file__).parent.resolve()
 
-
-def collect_cpp_files(paths: List[Path]) -> List[Path]:
-    cpp_files = []
-    for path in paths:
-        if path.is_file():
-            if path.suffix in ['.cpp', '.cc', '.cxx', '.c++']:
-                cpp_files.append(path)
-        elif path.is_dir():
-            # Recursively find all .cpp files in directory
-            for ext in ['.cpp', '.cc', '.cxx', '.c++']:
-                cpp_files.extend(path.rglob(f'*{ext}'))
-    return cpp_files
+CPP_SEPARATOR: Final[str] = ':'
 
 
-# TODO make choices named constants
+# TODO update README.MD
+def collect_cpp_files_using_luna_rules(
+        luna_src: Path,
+        cpp_dir: str | None,
+        cpp_source: str | None,
+) -> list[Path]:
+    cpp_paths = []
+
+    luna_src = luna_src.resolve()
+
+    def find_cpp_files_in_dir(path: Path) -> list[Path]:
+        return [it for it in path.iterdir() if it.suffix == '.cpp']
+
+    if cpp_dir:
+        for dir_name in cpp_dir.split(CPP_SEPARATOR):
+            cpp_paths.extend(find_cpp_files_in_dir(Path(dir_name).resolve()))
+    else:
+        cpp_paths.extend(find_cpp_files_in_dir(luna_src.parent))
+
+    if cpp_source:
+        for source_name in cpp_source.split(CPP_SEPARATOR):
+            cpp_paths.append(Path(source_name).resolve())
+
+    return cpp_paths
+
+
+def print_running(what: str, verbose: bool) -> None:
+    if verbose:
+        print(f'Running {what}:')
+        return
+
+    print(f'\rRunning {what}' + ' ' * 40 + '\r', end='')
+
+
+def print_process_output(p: subprocess.CompletedProcess, verbose: bool) -> None:
+    if not verbose:
+        return
+
+    print(p.stdout.decode('utf-8'))
+    print(p.stderr.decode('utf-8'))
+
+
+def report_subprocess_error(e: subprocess.CalledProcessError, severity: Literal['error', 'warning']) -> None:
+    print('\r' + ' ' * 80 + '\r', end='')
+    print(
+        f'{severity.upper()}: command "{" ".join(map(str, e.cmd))}" '
+        f'failed with exit code {e.returncode}:\n'
+        f'{e.stderr.decode("utf-8")}',
+        file=sys.stderr
+    )
+
+
+# TODO make choices named constants or enum members
 RUN_CHOICES: Final[tuple[str, ...]] = ('ast', 'degsa', 'prolog', 'mc', 'bilangir', 'hybrid')
 
 
@@ -48,43 +89,53 @@ RUN_CHOICES: Final[tuple[str, ...]] = ('ast', 'degsa', 'prolog', 'mc', 'bilangir
     default=False,
     help='Do not delete generated files.'
 )
-# TODO implement an option to print executed commands
-# @click.option(
-#     '-v', '--verbose',
-#     is_flag=True,
-#     required=False,
-#     show_default=True,
-#     default=False,
-# )
+@click.option(
+    '-v', '--verbose',
+    is_flag=True,
+    required=False,
+    show_default=True,
+    default=False,
+)
 @click.argument(
     'luna-src',
     type=click.Path(
         exists=True,
         dir_okay=False,
-        path_type=Path
+        path_type=Path,
+        resolve_path=True,
     )
 )
 @click.argument(
-    'cpp-src',
+    'luna-args',
     nargs=-1,
+    type=click.UNPROCESSED
+)
+@click.option(
+    '--cpp-dir',
     required=False,
-    type=click.Path(
-        exists=True,
-        path_type=Path
-    )
+    type=str,
+    help='Specify source directories for *.cpp files (same as luna).'
+)
+@click.option(
+    '--cpp-source',
+    required=False,
+    type=str,
+    help='Specify additional *.cpp files (same as luna).'
 )
 def main(
         run: list[str],
-        luna_src: Path,
         no_cleanup: bool,
-        cpp_src: tuple[Path]
+        verbose: bool,
+        luna_src: Path,
+        luna_args: list[str],
+        cpp_dir: str | None,
+        cpp_source: str | None
 ) -> None:
     if not run:
         print('Nothing to run')
-        exit()
+        return
 
-    # Collect all cpp files from provided paths/directories
-    cpp_files = collect_cpp_files(list(cpp_src)) if cpp_src else []
+    cpp_files = collect_cpp_files_using_luna_rules(luna_src, cpp_dir, cpp_source)
 
     if 'bilangir' in run and not cpp_files:
         print('WARNING: bilangir analyzer requires C++ files, skipping', file=sys.stderr)
@@ -92,7 +143,7 @@ def main(
 
     if not run:
         print('Nothing to run after filtering analyzers that require C++ files')
-        exit()
+        return
 
     project_dir = luna_src.resolve().parent
 
@@ -108,7 +159,7 @@ def main(
     # TODO run build once and pass the build directory to all components that might need it (prolog-analyzer, luna-hybrid-debugger)
     build_dir = project_dir / '.luna-build'
     build_dir.mkdir(parents=True, exist_ok=True)
-    
+
     bilangir_dir = project_dir / '.BiLangIR'
     bilangir_dir.mkdir(parents=True, exist_ok=True)
 
@@ -125,8 +176,8 @@ def main(
 
     exit_code = 0
     try:
-        print(f'\rRunning preprocessor\r', end='')
-        subprocess.run(
+        print_running('preprocessor', verbose)
+        pp_process = subprocess.run(
             args=[
                 'python3', ADAPT_HOME / 'parser' / 'pp.py', luna_src.name,
                 '-o', preprocessed_file,
@@ -136,6 +187,7 @@ def main(
             capture_output=True,
             check=True
         )
+        print_process_output(pp_process, verbose)
 
         if 'ast' in run or 'degsa' in run or 'bilangir' in run:
             args = [
@@ -144,27 +196,26 @@ def main(
                 luna_src.resolve()
             ]
 
+            analyzers = []
             if 'ast' in run or 'bilangir' in run:
                 args += ['-ast']
+                analyzers.append('ast')
             if 'degsa' in run:
                 args += ['-degsa']
+                analyzers.append('degsa')
 
             try:
-                print(f'\rRunning {", ".join([it for it in run if it != "prolog"])}\r', end='')
-                subprocess.run(
+                print_running(', '.join(analyzers), verbose)
+                ast_ddg_analyzer_process = subprocess.run(
                     args=args,
                     cwd=output_dir,
                     capture_output=True,
                     check=True,
                 )
+                print_process_output(ast_ddg_analyzer_process, verbose)
             except subprocess.CalledProcessError as e:
-                print(
-                    f'WARNING: {" ".join(map(str, e.cmd))} '
-                    f'failed with exit code {e.returncode}:\n'
-                    f'{e.stderr.decode("utf-8")}',
-                    file=sys.stderr
-                )
-            
+                report_subprocess_error(e, severity='warning')
+
             if 'bilangir' in run:
                 try:
                     shutil.copyfile(src=output_dir / 'ast.json', dst=bilangir_dir / 'ast.json')
@@ -173,8 +224,8 @@ def main(
 
         if 'prolog' in run:
             try:
-                print(f'\rRunning prolog-analyzer         \r', end='')
-                subprocess.run(
+                print_running('prolog-analyzer', verbose)
+                prolog_analyzer_process = subprocess.run(
                     args=[
                         ADAPT_HOME / 'prolog-analyzer' / 'bin' / 'prolog-analyzer',
                         '--build-dir', build_dir,
@@ -188,63 +239,58 @@ def main(
                     capture_output=True,
                     check=True
                 )
+                print_process_output(prolog_analyzer_process, verbose)
             except subprocess.CalledProcessError as e:
-                print(
-                    f'WARNING: {" ".join(map(str, e.cmd))} '
-                    f'failed with exit code {e.returncode}:\n'
-                    f'{e.stderr.decode("utf-8")}',
-                    file=sys.stderr
-                )
+                report_subprocess_error(e, severity='warning')
 
+        # TODO pass cpp_files as --cpp-source explicitly?
         if 'hybrid' in run:
             try:
-                print(f'\rRunning luna-hybrid-debugger         \r', end='')
-                subprocess.run(
+                print_running('luna-hybrid-debugger', verbose)
+                luna_hybrid_debugger_process = subprocess.run(
                     args=[
                         ADAPT_HOME / 'hybrid-debugger' / 'luna-hybrid-debugger',
                         '--output-dir', hybrid_debugger_output_dir,
                         '--found-errors', errors_file,
                         '--errors-file', errors_file,
                         '--no-cleanup',
-                        luna_src
+                        luna_src,
+                        *luna_args
                     ],
                     env=os.environ | {'LUNA_HYBRID_DEBUGGER_HOME': ADAPT_HOME / 'hybrid-debugger'},
                     capture_output=True,
                     check=True
                 )
+                print_process_output(luna_hybrid_debugger_process, verbose)
             except subprocess.CalledProcessError as e:
-                print(
-                    f'WARNING: {" ".join(map(str, e.cmd))} '
-                    f'failed with exit code {e.returncode}:\n'
-                    f'{e.stderr.decode("utf-8")}',
-                    file=sys.stderr
-                )
-                
+                report_subprocess_error(e, severity='warning')
+
         if 'bilangir' in run:
             try:
-                print(f'\rRunning BiLangIR                 \r', end='')
+                print_running('BiLangIR', verbose)
                 ll_files = []
-                
+
                 for cpp_file in cpp_files:
                     cpp_ll_file = bilangir_dir / f'{cpp_file.stem}.ll'
-                    subprocess.run(
+                    clang_process = subprocess.run(
                         args=[
                             'clang++',
                             '-S',
                             '-emit-llvm',
                             '-g',
                             cpp_file.resolve(),
-                            '-o', 
+                            '-o',
                             cpp_ll_file
                         ],
                         capture_output=True,
                         check=True
                     )
+                    print_process_output(clang_process, verbose)
                     ll_files.append(cpp_ll_file)
-                
-                subprocess.run(
+
+                bilangir_process = subprocess.run(
                     args=[
-                        ADAPT_HOME / 'llvm-manager' / 'build' / 'bin' /'BiLangIR',
+                        ADAPT_HOME / 'llvm-manager' / 'build' / 'bin' / 'BiLangIR',
                         '-o', errors_file,
                         '-p', project_dir,
                         bilangir_dir / 'ast.json',
@@ -253,10 +299,11 @@ def main(
                     capture_output=True,
                     check=True
                 )
-                
-                subprocess.run(
+                print_process_output(bilangir_process, verbose)
+
+                phasar_advisor_process = subprocess.run(
                     args=[
-                        ADAPT_HOME / 'llvm-manager' / 'build' / 'bin' /'PhASAR-advisor',
+                        ADAPT_HOME / 'llvm-manager' / 'build' / 'bin' / 'PhASAR-advisor',
                         '--error-checking',
                         bilangir_dir / 'definitions.txt',
                         bilangir_dir / 'output.ll',
@@ -265,22 +312,17 @@ def main(
                     capture_output=True,
                     check=True
                 )
-                    
+                print_process_output(phasar_advisor_process, verbose)
             except subprocess.CalledProcessError as e:
-                print(
-                    f'WARNING: {" ".join(map(str, e.cmd))} '
-                    f'failed with exit code {e.returncode}:\n'
-                    f'{e.stderr.decode("utf-8")}',
-                    file=sys.stderr
-                )
-            
+                report_subprocess_error(e, severity='warning')
+
         if 'mc' in run:
             try:
-                print(f'\rRunning mc-analyzer                 \r', end='')
-                subprocess.run(
+                print_running('mc-analyzer', verbose)
+                mc_analyzer_process = subprocess.run(
                     args=[
-                        'npx', 
-                        '--prefix', ADAPT_HOME / 'mc-analyzer', 
+                        'npx',
+                        '--prefix', ADAPT_HOME / 'mc-analyzer',
                         'ts-node', ADAPT_HOME / 'mc-analyzer' / 'src' / 'app' / 'main.ts',
                         '--project-dir', project_dir,
                         '--build-dir', build_dir,
@@ -294,20 +336,14 @@ def main(
                     capture_output=True,
                     check=True
                 )
+                print_process_output(mc_analyzer_process, verbose)
             except subprocess.CalledProcessError as e:
-                print(
-                    f'WARNING: {" ".join(map(str, e.cmd))} '
-                    f'failed with exit code {e.returncode}:\n'
-                    f'{e.stderr.decode("utf-8")}',
-                    file=sys.stderr
-                )
-        # exit_code = 1
+                report_subprocess_error(e, severity='warning')
 
         if not errors_file.exists():
             errors_file.write_text('[]\n')
 
-        print('\rGenerating output\r', end='')
-        print('\r                                \r', end='')
+        print_running('output generator', verbose)
         output_generator_process = subprocess.run(
             args=[
                 'python3', ADAPT_HOME / 'scripts' / 'reporter' / 'adapt_output_generator.py',
@@ -316,14 +352,10 @@ def main(
             capture_output=True,
             check=True
         )
+        print('\r' + ' ' * 80 + '\r', end='')
         print(output_generator_process.stdout.decode('utf-8'))
     except subprocess.CalledProcessError as e:
-        print(
-            f'ERROR: {" ".join(map(str, e.cmd))} '
-            f'failed with exit code {e.returncode}:\n'
-            f'{e.stderr.decode("utf-8")}',
-            file=sys.stderr
-        )
+        report_subprocess_error(e, severity='error')
         exit_code = 1
     except FileNotFoundError as e:
         print(f'ERROR: file "{e.filename}" does not exist')
@@ -337,8 +369,8 @@ def main(
             shutil.rmtree(mc_analyzer_output_dir)
             shutil.rmtree(build_dir)
 
-    exit(exit_code)
+    sys.exit(exit_code)
 
 
 if __name__ == '__main__':
-    exit(main())
+    main()
