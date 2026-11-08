@@ -106,7 +106,7 @@ def main(
         instrument_only: bool,
         no_cleanup: bool,
         errors_file: Path | None,
-) -> int:
+) -> None:
     luna_after_ja_path = resolve_relative_to(Path('luna_after_ja', 'luna'), HYBRID_DEBUGGER_HOME).resolve()
 
     project_path = fa_path.parent
@@ -116,7 +116,7 @@ def main(
 
     if project_path.resolve() == output_dir.resolve():
         print(f'ERROR: Output directory "{output_dir}" is the same as project directory.')
-        return 1
+        sys.exit(1)
 
     if output_dir.exists():
         shutil.rmtree(output_dir, ignore_errors=False)
@@ -180,23 +180,22 @@ def main(
         f'&& {luna_after_ja_path} -g --build-dir={str(build_dir.resolve())} --no-cleanup',
         str(instrumented_fa_path.resolve()),
         *fa_args,
-        f'; cd $OLDPWD',
-        f'&& python3 {FORMAT_ERRORS_PATH} --errors-file {str(errors_file.resolve())} {str(output_dir.resolve())}',
+        f'|| python3 {FORMAT_ERRORS_PATH} --errors-file {str(errors_file.resolve())} {str(output_dir.resolve())}'
+        f'; format_errors_exit_code=$?',
         f'&& rm -rf {output_dir.resolve()}' if not no_cleanup else '',
-        ')'
+        f'&& exit $format_errors_exit_code)'
     ])
 
     if instrument_only:
         print('Run modified program with:')
         print(run_command)
-        return 0
+        return
 
     try:
         print('Running modified program:')
 
         p = subprocess.run(
             args=run_command,
-            # cwd=project_path,
             capture_output=True,
             check=True,
             shell=True,
@@ -207,10 +206,8 @@ def main(
         print(f'See "{errors_file}"')
     except subprocess.CalledProcessError as e:
         print(e.stderr.decode(), file=sys.stderr)
-        return 1
-
-    return 0
+        sys.exit(1)
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    main()
