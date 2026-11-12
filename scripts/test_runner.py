@@ -4,6 +4,7 @@ import json
 import platform
 import re
 import subprocess
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from subprocess import CompletedProcess, TimeoutExpired, CalledProcessError
@@ -302,7 +303,7 @@ def main(
             continue
 
         if first_fail:
-            exit(1)
+            sys.exit(1)
 
 
 if __name__ == '__main__':
