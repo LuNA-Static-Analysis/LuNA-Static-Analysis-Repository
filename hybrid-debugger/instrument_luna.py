@@ -530,6 +530,7 @@ def generate_loop_assertions(
     return assertions_count, ja
 
 
+# TODO take found_errors into account when generating condition checks (SEM3.1)
 def generate_init_condition_assertions(ja: dict, ti: TextInfo) -> tuple[int, dict]:
     assertions_count = 0
 
