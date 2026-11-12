@@ -122,6 +122,21 @@ def fold_duplicate_errors(errors: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return unique_errors
 
 
+def merge_formatted_errors(
+        existing_errors: list[dict[str, Any]],
+        new_errors: list[dict[str, Any]],
+        overwrite_index_mapping: dict[int, int],
+) -> list[dict[str, Any]]:
+    result = []
+    for existing_error_index, existing_error in enumerate(existing_errors):
+        if existing_error_index in overwrite_index_mapping.values():
+            continue
+
+        result.append(existing_error)
+
+    return result + new_errors
+
+
 @click.command()
 @click.argument(
     'project-path',
@@ -160,7 +175,8 @@ def main(
         print(f'ERROR: no error files in "{project_path}"', file=sys.stderr)
         sys.exit(1)
 
-    adapt_errors: list[dict] = []
+    formatted_errors: list[dict] = []
+    overwrite_index_mapping: dict[int, int] = {}
 
     for path in error_file_paths:
         error = try_load_error_file(path)
@@ -169,6 +185,10 @@ def main(
             continue
 
         error_code = error['error_code']
+
+        if (overwrite_error_index_str := error.get('overwrite_error_index')) is not None:
+            formatted_error_index = len(formatted_errors)
+            overwrite_index_mapping[formatted_error_index] = int(overwrite_error_index_str)
 
         match error_code:
             case error_codes.ERROR_LUNA_LOOP_BOUNDS_MISMATCH:
@@ -260,7 +280,7 @@ def main(
                     'offset': 0,
                 }
 
-                adapt_errors.append({
+                formatted_errors.append({
                     'error_code': error_code,
                     'details': {
                         'initialized': [init_index_range],
@@ -289,7 +309,7 @@ def main(
                 }
 
                 # TODO local == true is an assumption that is not guaranteed to hold, same for initialized/used
-                adapt_errors.append({
+                formatted_errors.append({
                     'error_code': error_code,
                     'details': {
                         'initialized': [{
@@ -327,7 +347,7 @@ def main(
                 cpp_where = error['cpp_where']
                 cpp_file, cpp_line, cpp_function_name = parse_call_stack_item(cpp_where)
 
-                adapt_errors.append({
+                formatted_errors.append({
                     'error_code': error_code,
                     'details': {
                         'where': {
@@ -375,7 +395,7 @@ def main(
                     'where': where_used,
                 }
 
-                adapt_errors.append({
+                formatted_errors.append({
                     'error_code': error_code,
                     'details': {
                         'expected_type': expected_user_type,
@@ -389,7 +409,7 @@ def main(
 
                 cpp_type = error['cpp_type']
 
-                adapt_errors.append({
+                formatted_errors.append({
                     'error_code': error_code,
                     'details': {
                         'where': {
@@ -403,17 +423,22 @@ def main(
             case _:
                 raise NotImplementedError(f'Unknown error code: {error_code}')
 
-    adapt_errors = fold_duplicate_errors(adapt_errors)
+    formatted_errors = fold_duplicate_errors(formatted_errors)
 
     if errors_file is not None and errors_file.exists():
         existing_adapt_errors = json.loads(errors_file.read_text(encoding='utf-8'))
-        adapt_errors = existing_adapt_errors + adapt_errors
+
+        formatted_errors = merge_formatted_errors(
+            existing_errors=existing_adapt_errors,
+            new_errors=formatted_errors,
+            overwrite_index_mapping=overwrite_index_mapping,
+        )
 
     if errors_file is None:
         errors_file = project_path / 'errors.json'
     errors_file.parent.mkdir(exist_ok=True)
 
-    errors_file.write_text(json.dumps(adapt_errors, indent=2))
+    errors_file.write_text(json.dumps(formatted_errors, indent=2))
 
 
 if __name__ == '__main__':
