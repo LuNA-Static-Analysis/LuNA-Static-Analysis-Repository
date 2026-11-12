@@ -1,0 +1,25 @@
+{
+  "arrange": [],
+  "act": {
+    "command": "adapt --run hybrid --run prolog --verbose main.fa",
+    "can_fail": false
+  },
+  "assert": {
+    "stdout": {
+      "match_lines": [
+        "wc:Found 2 error",
+        "wc:error[SEM3.3E]*DF x",
+        "wc:from*1*to*10*1*to*N",
+        "wc:from*1*to*11*1*to*M",
+        "wc:warning[SEM3.3]*DF y",
+        "wc:from*1*to*N",
+        "wc:from*1*to*M*-*1",
+        "wc:2 loop bounds assertions"
+      ]
+    },
+    "stderr": {
+      "empty": true
+    },
+    "save": ["stderr", "stdout"]
+  }
+}

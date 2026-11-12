@@ -1,0 +1,22 @@
+{
+  "arrange": [],
+  "act": {
+    "command": "adapt --run hybrid --verbose main.fa",
+    "can_fail": false
+  },
+  "assert": {
+    "stdout": {
+      "match_lines": [
+        "wc:Found 1 error",
+        "wc:error[SEM3.3E]*DF x",
+        "wc:from*1*to*10*1*to*N",
+        "wc:from*1*to*11*1*to*M",
+        "wc:3 loop bounds assertions"
+      ]
+    },
+    "stderr": {
+      "empty": true
+    },
+    "save": ["stderr", "stdout"]
+  }
+}

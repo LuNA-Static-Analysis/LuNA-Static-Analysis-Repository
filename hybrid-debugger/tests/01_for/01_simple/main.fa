@@ -1,34 +1,40 @@
 C++ sub set_int(name x, int v) ${{ x = v; $}}
 C++ sub print(int v) ${{ printf("%d\n", v); $}}
 
+// Without info from static analyzers luna-hybrid-debugger should
+// 1. Generate 3 loop bound checks
+// 2. Find 1 loop bound mismatch at runtime (DF x)
+
 sub main() {
     df x, y, z, N, M;
 
-    cf set_int[0]: set_int(N, 10);
-    cf set_int[0]: set_int(M, 11);
+    set_int(N, 10);
+    set_int(M, 11);
 
-    for i = 0..N {
+    for i = 1..N {
         set_int(x[i], i);
     }
 
+    // Error: M > N
     for i = 1..M {
         print(x[i]);
     }
 
-    for i = 1..N-1 {
-        print(x[i]);
-    }
-
-    for j = M/2..N {
+    for j = 1..N {
         set_int(y[j], j);
     }
 
-    for k = 1..M+1 {
-        print(y[k]);
+    // Ok: M-1 <= N (only known at runtime)
+    for j = 1..M-1 {
+        print(y[j]);
     }
 
-    for i = 0..10 {
-        set_int(z[i], i);
-        print(z[i]);
+    for k = 1..N {
+        set_int(z[k], k);
+    }
+
+    // Ok: N-1 <= N (known at compile time)
+    for k = 1..N-1 {
+        print(z[k]);
     }
 }
