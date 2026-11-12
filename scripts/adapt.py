@@ -2,8 +2,9 @@ import os
 import shutil
 import subprocess
 import sys
+from enum import auto, StrEnum
 from pathlib import Path
-from typing import Final, Literal
+from typing import Final, Literal, Iterable
 
 import click
 
@@ -66,19 +67,24 @@ def report_subprocess_error(e: subprocess.CalledProcessError, severity: Literal[
     )
 
 
-# TODO make choices named constants or enum members
-RUN_CHOICES: Final[tuple[str, ...]] = ('ast', 'degsa', 'prolog', 'mc', 'bilangir', 'hybrid')
+class RunChoice(StrEnum):
+    AST_ANALYZER = 'ast'
+    DEGSA = 'degsa'
+    PROLOG_ANALYZER = 'prolog'
+    MC_ANALYZER = 'mc'
+    BILANGIR = 'bilangir'
+    HYBRID_DEBUGGER = 'hybrid'
 
 
 @click.command()
 @click.option(
     '--run',
     multiple=True,
-    default=RUN_CHOICES,
+    default=list(RunChoice),
     required=False,
     show_default=True,
     help='Only run specified analyzers.',
-    type=click.Choice(RUN_CHOICES, case_sensitive=False)
+    type=click.Choice(RunChoice, case_sensitive=False)
 )
 @click.option(
     '--no-cleanup',
@@ -123,7 +129,7 @@ RUN_CHOICES: Final[tuple[str, ...]] = ('ast', 'degsa', 'prolog', 'mc', 'bilangir
     help='Specify additional *.cpp files (same as luna).'
 )
 def main(
-        run: list[str],
+        run: Iterable[RunChoice],
         no_cleanup: bool,
         verbose: bool,
         luna_src: Path,
@@ -137,9 +143,9 @@ def main(
 
     cpp_files = collect_cpp_files_using_luna_rules(luna_src, cpp_dir, cpp_source)
 
-    if 'bilangir' in run and not cpp_files:
+    if RunChoice.BILANGIR in run and not cpp_files:
         print('WARNING: bilangir analyzer requires C++ files, skipping', file=sys.stderr)
-        run = [r for r in run if r != 'bilangir']
+        run = set(run) - {RunChoice.BILANGIR}
 
     if not run:
         print('Nothing to run after filtering analyzers that require C++ files')
@@ -189,7 +195,7 @@ def main(
         )
         print_process_output(pp_process, verbose)
 
-        if 'ast' in run or 'degsa' in run or 'bilangir' in run:
+        if RunChoice.AST_ANALYZER in run or RunChoice.DEGSA in run or RunChoice.BILANGIR in run:
             args = [
                 ADAPT_HOME / 'bin' / 'ast-ddg-analyzer',
                 preprocessed_file.resolve(),
@@ -197,12 +203,12 @@ def main(
             ]
 
             analyzers = []
-            if 'ast' in run or 'bilangir' in run:
+            if RunChoice.AST_ANALYZER in run or RunChoice.BILANGIR in run:
                 args += ['-ast']
-                analyzers.append('ast')
-            if 'degsa' in run:
+                analyzers.append('ast-analyzer')
+            if RunChoice.DEGSA in run:
                 args += ['-degsa']
-                analyzers.append('degsa')
+                analyzers.append('DeGSA')
 
             try:
                 print_running(', '.join(analyzers), verbose)
@@ -216,13 +222,13 @@ def main(
             except subprocess.CalledProcessError as e:
                 report_subprocess_error(e, severity='warning')
 
-            if 'bilangir' in run:
+            if RunChoice.BILANGIR in run:
                 try:
                     shutil.copyfile(src=output_dir / 'ast.json', dst=bilangir_dir / 'ast.json')
                 except:
                     print(f'WARNING: the ast was not copied to BiLangIR')
 
-        if 'prolog' in run:
+        if RunChoice.PROLOG_ANALYZER in run:
             try:
                 print_running('prolog-analyzer', verbose)
                 prolog_analyzer_process = subprocess.run(
@@ -244,7 +250,7 @@ def main(
                 report_subprocess_error(e, severity='warning')
 
         # TODO pass cpp_files as --cpp-source explicitly?
-        if 'hybrid' in run:
+        if RunChoice.HYBRID_DEBUGGER in run:
             try:
                 print_running('luna-hybrid-debugger', verbose)
                 luna_hybrid_debugger_process = subprocess.run(
@@ -265,7 +271,7 @@ def main(
             except subprocess.CalledProcessError as e:
                 report_subprocess_error(e, severity='warning')
 
-        if 'bilangir' in run:
+        if RunChoice.BILANGIR in run:
             try:
                 print_running('BiLangIR', verbose)
                 ll_files = []
@@ -316,7 +322,7 @@ def main(
             except subprocess.CalledProcessError as e:
                 report_subprocess_error(e, severity='warning')
 
-        if 'mc' in run:
+        if RunChoice.MC_ANALYZER in run:
             try:
                 print_running('mc-analyzer', verbose)
                 mc_analyzer_process = subprocess.run(
