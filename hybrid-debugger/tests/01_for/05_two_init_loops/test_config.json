@@ -1,0 +1,19 @@
+{
+  "arrange": [],
+  "act": {
+    "command": "adapt --run hybrid --verbose main.fa",
+    "can_fail": false
+  },
+  "assert": {
+    "stdout": {
+      "match_lines": [
+        "wc:No errors found",
+        "wc:WARNING*multiple init loops*not implemented"
+      ]
+    },
+    "stderr": {
+      "empty": true
+    },
+    "save": ["stderr", "stdout"]
+  }
+}
