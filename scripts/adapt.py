@@ -2,7 +2,7 @@ import os
 import shutil
 import subprocess
 import sys
-from enum import auto, StrEnum
+from enum import StrEnum
 from pathlib import Path
 from typing import Final, Literal, Iterable
 
@@ -62,7 +62,12 @@ def report_subprocess_error(e: subprocess.CalledProcessError, severity: Literal[
     print(
         f'{severity.upper()}: command "{" ".join(map(str, e.cmd))}" '
         f'failed with exit code {e.returncode}:\n'
-        f'{e.stderr.decode("utf-8")}',
+        f'---- BEGIN PROCESS STDOUT ----\n'
+        f'{e.stdout.decode("utf-8")}\n'
+        f'----  END PROCESS STDOUT  ----\n'
+        f'---- BEGIN PROCESS STDERR ----\n'
+        f'{e.stderr.decode("utf-8")}'
+        f'----  END PROCESS STDERR  ----\n',
         file=sys.stderr
     )
 
