@@ -271,6 +271,7 @@ def find_matching_program_loop(
         return body, loop, init_or_use_statement
 
 
+# TODO use generate_ja_ prefix instead of generate_luna_?
 def generate_luna_string_literal(value: str) -> dict:
     return {
         'is_expr': True,
@@ -304,6 +305,130 @@ def generate_luna_plus(*args: dict) -> dict:
             raise NotImplementedError()
 
 
+def generate_luna_extern_assert() -> dict:
+    return {
+        'args': [
+            {
+                'type': 'int'
+            },
+            {
+                'type': 'string'
+            }
+        ],
+        'code': ASSERT_NAME_C,
+        'code_type': 'default',
+        'rules': [],
+        'type': 'extern'
+    }
+
+
+def generate_simple_loop_bounds_check(
+        ti: TextInfo,
+        main: dict,
+        base_name: str,
+        init_loop: dict,
+        init_statement: dict,
+        use_loop: dict,
+        use_statement: dict,
+        overwrite_error_index: int | None = None
+) -> dict:
+    main_position = main['begin']
+    main_file = ti.file_name(main_position)
+    main_line = ti.line_number(main_position)
+
+    init_loop_position = init_loop['begin']
+    init_statement_position = init_statement['begin']
+    init_statement_code = init_statement['code']
+
+    init_first = init_loop['first']
+    init_last = init_loop['last']
+
+    init_where = format_call_stack([
+        (main_file, main_line, 'main'),
+        (ti.file_name(init_loop_position), ti.line_number(init_loop_position), 'for'),
+        (ti.file_name(init_statement_position), ti.line_number(init_statement_position), init_statement_code),
+    ])
+
+    use_loop_position = use_loop['begin']
+    use_statement_position = use_statement['begin']
+    use_statement_code = use_statement['code']
+
+    use_where = format_call_stack([
+        (main_file, main_line, 'main'),
+        (ti.file_name(use_loop_position), ti.line_number(use_loop_position), 'for'),
+        (ti.file_name(use_statement_position), ti.line_number(use_statement_position), use_statement_code),
+    ])
+
+    use_first = use_loop['first']
+    use_last = use_loop['last']
+
+    # TODO might not be the case?
+    declared = format_call_stack_item(main_file, main_line, 'main')
+
+    init_loop_var = init_loop['var']
+    init_name = f'{base_name}[{init_loop_var}]'
+    use_loop_var = use_loop['var']
+    use_name = f'{base_name}[{use_loop_var}]'
+
+    error_message = '\n'.join([
+        f'error_code={error_codes.ERROR_LUNA_LOOP_BOUNDS_MISMATCH}',
+        f'init_name={init_name}',
+        f'use_name={use_name}',
+        f'declared={declared}',
+        f'init_where={init_where}',
+        f'use_where={use_where}',
+        f'init_loop_var={init_loop_var}',
+        f'init_first={ja_expression_to_str(init_first)}',
+        f'init_last={ja_expression_to_str(init_last)}',
+        f'use_loop_var={use_loop_var}',
+        f'use_first={ja_expression_to_str(use_first)}',
+        f'use_last={ja_expression_to_str(use_last)}',
+    ])
+
+    bounds_check_ja = {
+        'is_expr': True,
+        'type': '&&',
+        'operands': [
+            {
+                'is_expr': True,
+                'type': '<=',
+                'operands': [init_first, use_first],
+                'op_pos': 0
+            },
+            {
+                'is_expr': True,
+                'type': '<=',
+                'operands': [use_last, init_last],
+                'op_pos': 0
+            },
+        ],
+        'op_pos': 0
+    }
+
+    error_message_ja = generate_luna_plus(
+        generate_luna_string_literal(error_message),
+        generate_luna_string_literal('\ninit_first_value='), generate_luna_icast(init_first),
+        generate_luna_string_literal('\ninit_last_value='), generate_luna_icast(init_last),
+        generate_luna_string_literal('\nuse_first_value='), generate_luna_icast(use_first),
+        generate_luna_string_literal('\nuse_last_value='), generate_luna_icast(use_last),
+    )
+
+    if overwrite_error_index is not None:
+        error_message_ja = generate_luna_plus(
+            error_message_ja,
+            generate_luna_string_literal(f'\noverwrite_error_index={overwrite_error_index}'),
+        )
+
+    return {
+        'type': 'exec',
+        'code': ASSERT_NAME_LUNA,
+        'id': ['_l0'],
+        'args': [bounds_check_ja, error_message_ja],
+        'rules': [],
+        'begin': 0
+    }
+
+
 # TODO handle init/use loops in subs - pass loop bounds as parameters if needed
 # TODO handle single uses
 # TODO handle init/use conditions
@@ -315,43 +440,28 @@ def generate_loop_assertions(
 ) -> tuple[int, dict]:
     assertions_count = 0
 
-    main_position = ja['main']['begin']
-    main_file = ti.file_name(main_position)
-    main_line = ti.line_number(main_position)
+    ja[ASSERT_NAME_LUNA] = generate_luna_extern_assert()
 
-    ja_with_assertions = ja
-    ja_with_assertions[ASSERT_NAME_LUNA] = {
-        'args': [
-            {
-                'type': 'int'
-            },
-            {
-                'type': 'string'
-            }
-        ],
-        'code': ASSERT_NAME_C,
-        'code_type': 'default',
-        'rules': [],
-        'type': 'extern'
-    }
-
-    init_loops: dict[str, list[tuple[list, dict, dict]]] = find_simple_init_loops(ja['main'], ja)
-    use_loops: dict[str, list[tuple[list, dict, dict]]] = find_simple_use_loops(ja['main'], ja)
+    simple_init_loops: dict[str, list[tuple[list, dict, dict]]] = find_simple_init_loops(ja['main'], ja)
+    simple_use_loops: dict[str, list[tuple[list, dict, dict]]] = find_simple_use_loops(ja['main'], ja)
 
     # Filter use loops to only include those mentioned in SEM3.3 errors
     if found_errors is not None:
-        sem3_3_errors = [error for error in found_errors if error['error_code'].lower() == 'sem3.3']
-        use_loops2 = {}
-        init_loops2 = {}
         # TODO conditions are ignored
         # TODO multiple/non-loop initializations are ignored
         # TODO report ignored errors?
-        for sem3_3_error in sem3_3_errors:
+        for found_error_index, found_error in enumerate(found_errors):
+            if found_error['error_code'].lower() != 'sem3.3':
+                continue
+
+            sem3_3_error = found_error
+            del found_error
+
             initialized = sem3_3_error['details']['initialized']
             used = sem3_3_error['details']['used']
-            name = used['df']['df']['name']
+            base_name = used['df']['df']['name']
 
-            if name not in init_loops or name not in use_loops:
+            if base_name not in simple_init_loops or base_name not in simple_use_loops:
                 continue
 
             if len(initialized) != 1 or 'loop' not in initialized[0]:
@@ -361,121 +471,63 @@ def generate_loop_assertions(
             if not is_error_loop_in_main(error_init_loop):
                 continue
 
-            if (program_init_loop := find_matching_program_loop(error_init_loop, name, init_loops, ti)) is not None:
-                init_loops2[name] = init_loops2.get(name, []) + [program_init_loop]
+            if not (program_init_loop := find_matching_program_loop(error_init_loop, base_name, simple_init_loops, ti)):
+                continue
 
             error_use_loop = used['loop']
             if not is_error_loop_in_main(error_use_loop):
                 continue
 
-            if (program_use_loop := find_matching_program_loop(error_use_loop, name, use_loops, ti)) is not None:
-                use_loops2[name] = use_loops2.get(name, []) + [program_use_loop]
+            if not (program_use_loop := find_matching_program_loop(error_use_loop, base_name, simple_use_loops, ti)):
+                continue
 
-        use_loops = use_loops2
-        del use_loops2
-        init_loops = init_loops2
-        del init_loops2
+            body, use_loop, use_statement = program_use_loop
+            _, init_loop, init_statement = program_init_loop
 
-    for base_name, name_use_loops in use_loops.items():
-        assert len(name_use_loops) > 0
-        assert len(init_loops[base_name]) > 0
-        assert len(init_loops[base_name]) == 1, f'{base_name} has {len(init_loops[base_name])} init loops'
-        _, init_loop, init_statement = init_loops[base_name][0]
+            body.append(generate_simple_loop_bounds_check(
+                ti,
+                ja['main'],
+                base_name,
+                init_loop,
+                init_statement,
+                use_loop,
+                use_statement,
+                overwrite_error_index=found_error_index,
+            ))
+            assertions_count += 1
 
-        init_loop_position = init_loop['begin']
-        init_statement_position = init_statement['begin']
-        init_statement_code = init_statement['code']
+        return assertions_count, ja
 
-        init_first = init_loop['first']
-        init_last = init_loop['last']
+    for base_name, name_use_loops in simple_use_loops.items():
+        assert name_use_loops
 
-        init_where = format_call_stack([
-            (main_file, main_line, 'main'),
-            (ti.file_name(init_loop_position), ti.line_number(init_loop_position), 'for'),
-            (ti.file_name(init_statement_position), ti.line_number(init_statement_position), init_statement_code),
-        ])
+        # TODO explain in a message that other analyzers should report such errors?
+        if base_name not in simple_init_loops:
+            continue
+
+        if len(simple_init_loops[base_name]) > 1:
+            print(
+                f'WARNING: runtime assert generation for LuNA programs '
+                f'with multiple init loops (name {base_name}) is not implemented yet.',
+                file=sys.stderr
+            )
+            continue
+
+        _, init_loop, init_statement = simple_init_loops[base_name][0]
 
         for body, use_loop, use_statement in name_use_loops:
-            use_loop_position = use_loop['begin']
-            use_statement_position = use_statement['begin']
-            use_statement_code = use_statement['code']
+            body.append(generate_simple_loop_bounds_check(
+                ti,
+                ja['main'],
+                base_name,
+                init_loop,
+                init_statement,
+                use_loop,
+                use_statement,
+            ))
+            assertions_count += 1
 
-            use_where = format_call_stack([
-                (main_file, main_line, 'main'),
-                (ti.file_name(use_loop_position), ti.line_number(use_loop_position), 'for'),
-                (ti.file_name(use_statement_position), ti.line_number(use_statement_position), use_statement_code),
-            ])
-
-            use_first = use_loop['first']
-            use_last = use_loop['last']
-
-            # TODO might not be the case?
-            declared = format_call_stack_item(main_file, main_line, 'main')
-
-            init_loop_var = init_loop['var']
-            init_name = f'{base_name}[{init_loop_var}]'
-            use_loop_var = use_loop['var']
-            use_name = f'{base_name}[{use_loop_var}]'
-
-            error_message = '\n'.join([
-                f'error_code={error_codes.ERROR_LUNA_LOOP_BOUNDS_MISMATCH}',
-                f'init_name={init_name}',
-                f'use_name={use_name}',
-                f'declared={declared}',
-                f'init_where={init_where}',
-                f'use_where={use_where}',
-                f'init_loop_var={init_loop_var}',
-                f'init_first={ja_expression_to_str(init_first)}',
-                f'init_last={ja_expression_to_str(init_last)}',
-                f'use_loop_var={use_loop_var}',
-                f'use_first={ja_expression_to_str(use_first)}',
-                f'use_last={ja_expression_to_str(use_last)}',
-            ])
-
-            bounds_check_ja = {
-                'is_expr': True,
-                'type': '&&',
-                'operands': [
-                    {
-                        'is_expr': True,
-                        'type': '<=',
-                        'operands': [init_first, use_first],
-                        'op_pos': 0
-                    },
-                    {
-                        'is_expr': True,
-                        'type': '<=',
-                        'operands': [use_last, init_last],
-                        'op_pos': 0
-                    },
-                ],
-                'op_pos': 0
-            }
-
-            asserts_ja = [
-                {
-                    'type': 'exec',
-                    'code': ASSERT_NAME_LUNA,
-                    'id': ['_l0'],
-                    'args': [
-                        bounds_check_ja,
-                        generate_luna_plus(
-                            generate_luna_string_literal(error_message),
-                            generate_luna_string_literal('\ninit_first_value='), generate_luna_icast(init_first),
-                            generate_luna_string_literal('\ninit_last_value='), generate_luna_icast(init_last),
-                            generate_luna_string_literal('\nuse_first_value='), generate_luna_icast(use_first),
-                            generate_luna_string_literal('\nuse_last_value='), generate_luna_icast(use_last),
-                        )
-                    ],
-                    'rules': [],
-                    'begin': 0
-                },
-            ]
-            for assert_ja in asserts_ja:
-                body.append(assert_ja)
-                assertions_count += 1
-
-    return assertions_count, ja_with_assertions
+    return assertions_count, ja
 
 
 def generate_init_condition_assertions(ja: dict, ti: TextInfo) -> tuple[int, dict]:
@@ -485,21 +537,7 @@ def generate_init_condition_assertions(ja: dict, ti: TextInfo) -> tuple[int, dic
     main_file = ti.file_name(main_position)
     main_line = ti.line_number(main_position)
 
-    ja_with_assertions = ja
-    ja_with_assertions[ASSERT_NAME_LUNA] = {
-        'args': [
-            {
-                'type': 'int'
-            },
-            {
-                'type': 'string'
-            }
-        ],
-        'code': ASSERT_NAME_C,
-        'code_type': 'default',
-        'rules': [],
-        'type': 'extern'
-    }
+    ja[ASSERT_NAME_LUNA] = generate_luna_extern_assert()
 
     conditional_single_inits = find_conditional_single_inits(ja['main'], ja)
     single_uses = find_single_uses(ja['main'], ja)
@@ -566,7 +604,7 @@ def generate_init_condition_assertions(ja: dict, ti: TextInfo) -> tuple[int, dic
                 body.append(assert_ja)
                 assertions_count += 1
 
-    return assertions_count, ja_with_assertions
+    return assertions_count, ja
 
 
 def instrument_luna(
