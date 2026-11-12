@@ -105,7 +105,7 @@ class RunChoice(StrEnum):
     required=False,
     show_default=True,
     default=False,
-    help='Show output of analyzers.'
+    help='Show output of analyzers. For each analyzer executed print captured stdout and stderr to stdout.'
 )
 @click.argument(
     'luna-src',
