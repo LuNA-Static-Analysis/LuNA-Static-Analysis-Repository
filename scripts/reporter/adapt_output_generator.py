@@ -370,7 +370,7 @@ def report_error(
                          get_index_range(error['details']['ranges'][1], source_code))
             )
 
-        case 'SEM3.1' | 'SEM3.1E':
+        case 'SEM3.1' | 'SEM3.1W' | 'SEM3.1E':
             output_file.write(
                 (templates_map[error_code] + '\n')
                 .replace('$df_true',
@@ -387,7 +387,7 @@ def report_error(
                 (templates_map[error_code] + '\n')
             )
 
-        case 'SEM3.3' | 'SEM3.3E':
+        case 'SEM3.3' | 'SEM3.3W' | 'SEM3.3E':
             output_file.write(
                 (templates_map[error_code] + '\n')
                 .replace('$id_name',
