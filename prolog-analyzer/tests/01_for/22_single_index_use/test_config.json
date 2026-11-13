@@ -8,11 +8,11 @@
     "stdout": {
       "match_lines": [
         "wc:Found 5 error*",
-        "wc:warning[SEM3.1]*x[-1]",
-        "wc:warning[SEM3.1]*x[11]",
-        "wc:warning[SEM3.1]*x[N]",
-        "wc:warning[SEM3.1]*y[1]",
-        "wc:warning[SEM3.1]*y[N]",
+        "wc:warning[SEM3.1W]*x[-1]",
+        "wc:warning[SEM3.1W]*x[11]",
+        "wc:warning[SEM3.1W]*x[N]",
+        "wc:warning[SEM3.1W]*y[1]",
+        "wc:warning[SEM3.1W]*y[N]",
         "wc:when *x*>*0*"
       ]
     },

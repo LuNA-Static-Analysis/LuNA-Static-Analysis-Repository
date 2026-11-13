@@ -1,31 +1,31 @@
 {
   "arrange": [],
   "act": {
-    "command": "PROLOG_ANALYZER_OPTIONS=\"--ignore SEM3.1\" adapt --run prolog main.fa",
+    "command": "PROLOG_ANALYZER_OPTIONS=\"--ignore SEM3.1W\" adapt --run prolog main.fa",
     "can_fail": false
   },
   "assert": {
     "stdout": {
       "match_lines": [
         "wc:Found 6 error*",
-        "wc:warning[SEM3.3]*DF x",
+        "wc:warning[SEM3.3W]*DF x",
         "wc: x ",
         "wc:x*when*N*>*7",
         "wc:x*when*N*>*0",
-        "wc:warning[SEM3.3]*DF z",
+        "wc:warning[SEM3.3W]*DF z",
         "wc: z ",
         "wc:z*when*x*&&*y",
         "wc:z*when*y*&&*x*||*N*>*0",
-        "wc:warning[SEM3.3]*DF t",
+        "wc:warning[SEM3.3W]*DF t",
         "wc: t ",
         "t.* when .*(?=.*\\(N \\> 0\\))(?=.*\\(\\(x\\[0\\] \\+ y\\[0\\]\\) \\> z\\[0\\]\\))",
         "wc:t*when*z[0]*<*x[*7*-*7*]*+*y[*N*0*]",
-        "wc:warning[SEM3.3]*DF k",
+        "wc:warning[SEM3.3W]*DF k",
         "wc: k ",
         "k.* when .*(?=.*\\(x && y\\))(?=.*\\(z\\[0\\] < 10\\))",
         "wc:k*when*x*&&*10*>*z",
         "wc:k*when*z[0]*<*10*&&*t[42]*&&*x",
-        "wc:warning[SEM3.3]*DF a",
+        "wc:warning[SEM3.3W]*DF a",
         "wc: a ",
         "wc:a*when*N*>*0",
         "wc:a*when*N*<=*0"

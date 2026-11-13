@@ -50,11 +50,11 @@ write_errors_json(OutputFileName, IngnoredErrorCodes) :-
     ->  Errors4 = []
     ;   findall(Error, index_overlap_error_json(Error), Errors4)
     ),
-    (   member('SEM3.3', IngnoredErrorCodes)
+    (   member('SEM3.3W', IngnoredErrorCodes)
     ->  Errors5 = []
     ;   findall(Error, index_range_not_initialized_error_json(Error), Errors5)
     ),
-    (   member('SEM3.1', IngnoredErrorCodes)
+    (   member('SEM3.1W', IngnoredErrorCodes)
     ->  Errors6 = []
     ;   findall(Error, index_not_initialized_error_json(Error), Errors6)
     ),

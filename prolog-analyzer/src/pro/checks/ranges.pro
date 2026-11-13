@@ -64,7 +64,7 @@ format_range_or_single(Range, FormattedRange) :-
 index_range_not_initialized_error_json(ErrorJson) :-
     execution_sequence:main_root_ctx(RootCtx),
     index_range_not_initialized(RootCtx, error{
-        'error_code': "SEM3.3",
+        'error_code': "SEM3.3W",
         'details': details{
             'used': UseRange,
             'initialized': InitRanges
@@ -73,7 +73,7 @@ index_range_not_initialized_error_json(ErrorJson) :-
     reporting:format_index_range(UseRange, UseRangeDict),
     maplist(format_range_or_single, InitRanges, InitRangesFormatted),
     ErrorJson = error{
-        'error_code': "SEM3.3",
+        'error_code': "SEM3.3W",
         'details': details{
             'used': UseRangeDict,
             'initialized': InitRangesFormatted
@@ -83,7 +83,7 @@ index_range_not_initialized_error_json(ErrorJson) :-
 index_not_initialized_error_json(ErrorJson) :-
     execution_sequence:main_root_ctx(RootCtx),
     index_not_initialized(RootCtx, error{
-        'error_code': "SEM3.1",
+        'error_code': "SEM3.1W",
         'details': details{
             'used': UseRange,
             'initialized': InitRanges
@@ -94,7 +94,7 @@ index_not_initialized_error_json(ErrorJson) :-
     maplist(format_range_or_single, InitRanges, InitRangesFormatted),
 
     ErrorJson = error{
-        'error_code': "SEM3.1",
+        'error_code': "SEM3.1W",
         'details': details{
             'used': UseFormatted,
             'initialized': InitRangesFormatted
@@ -499,7 +499,7 @@ index_range_not_initialized(RootCtx, Error) :-
     include(index_range_implies(UseRange), InitRanges, ImpliedInits),
     \+ index_range_is_covered(UseRange, ImpliedInits),
     Error = error{
-        'error_code': "SEM3.3",
+        'error_code': "SEM3.3W",
         'details': details{
             'used': UseRange,
             'initialized': InitRanges
@@ -516,7 +516,7 @@ index_not_initialized(RootCtx, Error) :-
     include(index_range_implies(UseRange), InitRanges, ImpliedInits),
     \+ index_range_is_covered(UseRange, ImpliedInits),
     Error = error{
-        'error_code': "SEM3.1",
+        'error_code': "SEM3.1W",
         'details': details{
             'used': UseRange,
             'initialized': InitRanges

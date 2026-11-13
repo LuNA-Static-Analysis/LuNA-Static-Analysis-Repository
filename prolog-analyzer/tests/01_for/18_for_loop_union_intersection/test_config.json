@@ -13,7 +13,7 @@
         "wc:warning[SEM2.2]*overlap*DF z",
         "wc:warning[SEM2.2]*overlap*DF t",
         "wc:warning[SEM2.2]*overlap*DF k",
-        "wc:warning[SEM3.3]*not*initialized*DF t"
+        "wc:warning[SEM3.3W]*not*initialized*DF t"
       ]
     },
     "stderr": {
