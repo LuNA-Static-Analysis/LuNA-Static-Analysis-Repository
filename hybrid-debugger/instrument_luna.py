@@ -451,7 +451,7 @@ def generate_loop_assertions(
         # TODO multiple/non-loop initializations are ignored
         # TODO report ignored errors?
         for found_error_index, found_error in enumerate(found_errors):
-            if found_error['error_code'].lower() != 'sem3.3':
+            if found_error['error_code'].lower() != 'sem3.3w':
                 continue
 
             sem3_3_error = found_error
@@ -530,7 +530,7 @@ def generate_loop_assertions(
     return assertions_count, ja
 
 
-# TODO take found_errors into account when generating condition checks (SEM3.1)
+# TODO take found_errors into account when generating condition checks (SEM3.1W)
 def generate_init_condition_assertions(ja: dict, ti: TextInfo) -> tuple[int, dict]:
     assertions_count = 0
 
