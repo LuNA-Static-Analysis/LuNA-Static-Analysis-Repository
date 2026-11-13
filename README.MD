@@ -186,6 +186,9 @@ Options:
   --help                          Show this message and exit.
 ```
 
+Для использования `luna-hybrid-debugger` (опция `--run hybrid`, по умолчанию включена) необходимо 
+использовать [версию LuNA со специальной поддержкой дополнительной отладочной информации в отладочном режиме](https://gitlab.ssd.sscc.ru/luna-projects/luna/-/tree/luna-trace-luna6-assert-generator?ref_type=heads). 
+
 Примеры запуска:
 
 ```bash
