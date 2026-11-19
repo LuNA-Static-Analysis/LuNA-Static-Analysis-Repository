@@ -1,0 +1,185 @@
+import update_subgrid_no_edges(value `prev, name `next_no_bounds, name `delta) as update_subgrid_no_edges;
+import init_subgrid(int `n_x, int `n_y, int `subgrids_count_x, int `subgrids_count_y, int `i, int `j, name subgrid) as init_subgrid;
+import init_edge_subgrid(int `n_x, int `n_y, int `subgrids_count_x, int `subgrids_count_y, int `i, int `j, name subgrid) as init_edge_subgrid;
+import check_subgrid(value `subgrid, name `error) as check_subgrid;
+import copy_edge(value `edge, name `copy) as copy_edge;
+import extract_own_edges(value `subgrid_no_edges, name `west_out, name `east_out, name `north_out, name `south_out) as extract_own_edges;
+import set_neighbor_edges(
+    value `subgrid_no_edges,
+    value `west_in, value `east_in, value `north_in, value `south_in,
+    name `subgrid
+) as set_neighbor_edges;
+import print_edges(value `west_out, value `east_out, value `north_out, value `south_out) as print_edges;
+import print_subgrid(value `subgrid) as print_subgrid;
+import set_empty(name) as set_empty;
+
+C++ sub set_real(name x, real v) ${{
+    x = v;
+$}}
+
+C++ sub set_int(name x, int v) ${{
+    x = v;
+$}}
+
+C++ sub print_real(string tag, real v) ${{
+    printf("%s: %.9lf\n", tag, v);
+$}}
+
+C++ sub print_iteration_delta(int iteration, real v) ${{
+    printf("iteration %d: %.9lf\n", iteration, v);
+$}}
+
+C++ sub print_int(string tag, int v) ${{
+    printf("%s: %d\n", tag, v);
+$}}
+
+C++ sub empty() ${{ $}}
+
+#define LOC2(i, j, n_i, n_j, np) (($i*$n_j+$j)*$np/($n_i*$n_j))
+
+sub max_real(int count, name values, name result)
+{
+    df current_result;
+
+    set_real(current_result[0], values[0]);
+
+    for i = 1..count-1 {
+        if values[i] > current_result[i-1] {
+            set_real(current_result[i], values[i]);
+        }
+        
+        if current_result[i-1] >= values[i] {
+            set_real(current_result[i], current_result[i-1]);
+        }
+    }
+
+   set_real(result, current_result[count - 1]);
+}
+
+sub set_edges(
+    int subgrids_count_x, int subgrids_count_y,
+    name west_in, name east_in, name north_in, name south_in,
+    name west_out, name east_out, name north_out, name south_out
+)
+{
+    for i = 0..subgrids_count_x-1 for j = 0..subgrids_count_y-1 {
+        copy_edge(east_out[i-1][j], west_in[i][j]) @ {
+            delete east_out[i-1][j];
+        }; 
+        copy_edge(west_out[i+1][j], east_in[i][j]) @ {
+            delete west_out[i+1][j];
+        };
+        copy_edge(south_out[i][j-1], north_in[i][j]) @ {
+            delete south_out[i][j-1];
+        };
+        copy_edge(north_out[i][j+1], south_in[i][j]) @ {
+            delete north_out[i][j+1];
+        };
+    }
+}
+
+sub exchange_edges(int subgrids_count_x, int subgrids_count_y, name subgrid_no_edges, name subgrid)
+{
+    df west_in, east_in, north_in, south_in,
+         west_out, east_out, north_out, south_out;
+
+    for i = 0..subgrids_count_x-1 for j = -1..-1 {
+        set_empty(north_out[i][j]);
+        set_empty(south_out[i][j]);
+    }
+
+    for i = 0..subgrids_count_x-1 for j = subgrids_count_y..subgrids_count_y {
+        set_empty(north_out[i][j]);
+        set_empty(south_out[i][j]);
+    }
+
+    for i = -1..-1 for j = 0..subgrids_count_y-1 {
+        set_empty(east_out[i][j]);
+        set_empty(west_out[i][j]);
+    }
+
+    for i = subgrids_count_x..subgrids_count_x for j = 0..subgrids_count_y-1 {
+        set_empty(east_out[i][j]);
+        set_empty(west_out[i][j]);
+    }
+
+    for i = 0..subgrids_count_x-1 for j = 0..subgrids_count_y-1 {
+        extract_own_edges(subgrid_no_edges[i][j], west_out[i][j], east_out[i][j], north_out[i][j], south_out[i][j]);
+        set_neighbor_edges(
+            subgrid_no_edges[i][j],
+            west_in[i][j], east_in[i][j], north_in[i][j], south_in[i][j],
+            subgrid[i][j]
+        ) @ {
+            delete subgrid_no_edges[i][j];
+            delete west_in[i][j];
+            delete east_in[i][j];
+            delete north_in[i][j];
+            delete south_in[i][j];
+        };
+    }
+
+    set_edges(
+        subgrids_count_x, subgrids_count_y,
+        west_in, east_in, north_in, south_in,
+        west_out, east_out, north_out, south_out
+    );
+}
+
+sub jacobi(int subgrids_count_x, int subgrids_count_y, real eps, name subgrid, name iterations)
+{
+    df delta, iterations_plus_one; 
+
+    set_int(iterations, iterations_plus_one-1);
+
+    set_real(delta[0], 999);
+
+    // Jacobi iteration
+    while delta[iteration-1] > eps, iteration = 1..out iterations_plus_one {
+        df subgrid_delta, subgrid_no_edges;
+
+        for i = 0..subgrids_count_x-1 for j = 0..subgrids_count_y-1 {
+            update_subgrid_no_edges(subgrid[iteration-1][i][j], subgrid_no_edges[i][j], subgrid_delta[j * subgrids_count_x + i]) @ {
+                locator_cyclic: $LOC2(i, j, subgrids_count_x, subgrids_count_y, subgrids_count_x*subgrids_count_y);
+                delete subgrid[iteration-1][i][j];
+            };
+        }
+
+        exchange_edges(subgrids_count_x, subgrids_count_y, subgrid_no_edges, subgrid[iteration]);
+
+        max_real(
+            subgrids_count_x * subgrids_count_y,
+            subgrid_delta,
+            delta[iteration]
+        );
+
+        if (iteration % 100 == 0)
+        {
+            print_iteration_delta(iteration, delta[iteration]);
+        }
+    }
+}
+
+sub main(int n_x, int n_y, int subgrids_count_x, int subgrids_count_y)
+{
+    df subgrid, iterations, errors, error, eps;
+
+    set_real(eps, 1.0 / 100000000);
+
+    print_real("eps", eps);
+
+    // Init subgrids
+    for i = 0..subgrids_count_x-1 for j = 0..subgrids_count_y-1 {
+        init_subgrid(n_x, n_y, subgrids_count_x, subgrids_count_y, i, j, subgrid[0][i][j]);
+    }
+
+    jacobi(subgrids_count_x, subgrids_count_y, eps, subgrid, iterations);
+
+    print_int("iterations", iterations);
+
+    for i = 0..subgrids_count_x-1 for j = 0..subgrids_count_y-1 {
+        check_subgrid(subgrid[iterations][i][j], errors[j * subgrids_count_x + i]);
+    }
+    
+    max_real(subgrids_count_x * subgrids_count_y, errors, error);
+    print_real("error", error);
+}
