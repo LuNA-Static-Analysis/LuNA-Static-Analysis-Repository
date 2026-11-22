@@ -2,7 +2,7 @@ import c_init_int(int, name) as init;
 import printint(int) as print;
 sub main(){
     df a;
-    df b;
+    df b;//actually ast parser do not save information about this so DeGSA can't find it
     init(1, a);
     init(1, b);
     print(a);

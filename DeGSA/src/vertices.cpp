@@ -134,8 +134,9 @@ bool SubVertex::initializeVertex() {
     while (callerVertex != nullptr) {
         callerType = callerVertex->getVertexType();
         if (callerType == subVF && callerVertex->getName() == m_name) {
-            //if (!conditional)
-            //    REPORTS.push_back(JsonReporter::createSEM8(callerVertex, this));
+            if (!conditional) {
+                JsonReporter::createSEM8(this);
+            }
             return false; // to avoid infinite recursion in DeGSA itself
         }
         if (callerType == ifVF || callerType == forVF || callerType == whileVF) {
@@ -177,16 +178,30 @@ bool SubVertex::initializeVertex() {
             m_declaredInsideIdsMap.insert( { identifierDeclaredName, argName } );
         } else {
             std::cout << "INTERNAL ERROR: created nullptr sub/main arg name because of name duplication" << std::endl;
-
-            /*REPORTS.push_back(JsonReporter::createSYN8_5(
-                identifierDeclaredName,
-                this
-            ));*/
         }
     }
 
     enterBlock();
     return true;
+}
+
+static bool checkCallArgument(Expression* argument, int position, Vertex* call, CFDeclaration* declaration) {
+    const ValueType expected = declaration->declaredArgs[position].type;
+    bool compatible = true;
+    if (expected == nameType) {
+        compatible = argument->isIndexable();
+    } else {
+        const ValueType actual = argument->getValueType();
+        // Only concrete scalar types can establish a compile-time mismatch.
+        if (expected != valueType && (actual == intType || actual == realType || actual == stringType)) {
+            const bool bothNumeric = actual != stringType && (expected == intType || expected == realType);
+            compatible = actual == expected || bothNumeric;
+        }
+    }
+    if (!compatible) {
+        JsonReporter::createSYN1(argument->getASTExpr()->to_string(), call, declaration);
+    }
+    return compatible;
 }
 
 bool ImportVertex::initializeVertex() {
@@ -200,6 +215,9 @@ bool ImportVertex::initializeVertex() {
     std::cout << "Import entered" << std::endl;
     for (int i = 0; i < _callArgs.size(); i++){
         Expression* expression = _callArgs[i];
+        if (!checkCallArgument(expression, i, this, _cfDeclaration) && _declaredArgs[i].type == nameType) {
+            continue;
+        }
         switch(_declaredArgs[i].type){
             case nameType:
                 if (expression != nullptr) {
@@ -232,11 +250,6 @@ bool ForVertex::initializeVertex() {
     // check for duplicate name
     std::string forIteratorString = innerStatementForVF->name_->to_string();
     if (m_declaredOutsideIdsMap.find(forIteratorString) != m_declaredOutsideIdsMap.end()){
-        
-        /*REPORTS.push_back(JsonReporter::createSYN8_2(
-            forIteratorString,
-            this
-        ));*/
 
         std::cout << "INTERNAL ERROR: aborted initializing \"for\" vertex" << std::endl;
         return false;
@@ -279,11 +292,6 @@ bool WhileVertex::initializeVertex() {
     std::string whileIteratorString = innerStatementWhileVF->left_->to_string();
     if (m_declaredOutsideIdsMap.find(whileIteratorString) != m_declaredOutsideIdsMap.end()){
 
-        /*REPORTS.push_back(JsonReporter::createSYN8_3(
-            whileIteratorString,
-            this
-        ));*/
-
         std::cout << "INTERNAL ERROR: aborted initializing \"while\" vertex" << std::endl;
         return false;
     }
@@ -301,7 +309,7 @@ bool WhileVertex::initializeVertex() {
 
     // "while" out name is an IndexedDF that must be marked as "def"
     // everything inside condition and iterator start must be marked as used
-    _conditionExpr = new Expression(innerStatementWhileVF->expr_, m_declaredOutsideIdsMap, this);
+    _conditionExpr = new Expression(innerStatementWhileVF->expr_, m_declaredBothIdsMap, this);
 
     _startExpr = new Expression(innerStatementWhileVF->right_, m_declaredOutsideIdsMap, this);
 
@@ -361,11 +369,6 @@ bool LetVertex::initializeVertex() {
         std::string letString = *(assignment->name_->get_value());
         if (m_declaredOutsideIdsMap.find(letString) != m_declaredOutsideIdsMap.end()){
 
-            /*REPORTS.push_back(JsonReporter::createSYN8_4(
-                letString,
-                this
-            ));*/
-
             std::cout << "INTERNAL ERROR: aborted initializing \"let\" vertex" << std::endl;
             return false;
         }
@@ -410,13 +413,7 @@ void Vertex::scanForDFDecls() {
                 m_declaredBothIdsMap.insert( { nextDFName, newBaseDFName } );
                 BASENAMES.insert(newBaseDFName);
             } else {
-
-                /*REPORTS.push_back(JsonReporter::createSYN8_1(
-                    nextDFName,
-                    this
-                ));*/
-
-                //this error is actually tolerable
+                JsonReporter::reportNameAt("SYN8.1", nextDFName, getFileName(), nextLunaDFName->line_, getName());
             }
         }
 
@@ -522,12 +519,15 @@ void Vertex::handleSub(cf_statement* cfStatement) {
         JsonReporter::createSYN3(nextVertex, cfDeclaration);
         std::cout << "INTERNAL ERROR: call of CF " << calledSubName << " has wrong amount of args" << std::endl;
         return;
-    } else {
-        for (int i = 0; i < cfDeclaration->declaredArgs.size(); i++) {
-            if (callArgs[i]->getValueType() != cfDeclaration->declaredArgs[i].type) {
-                JsonReporter::createSYN1(callArgs[i]->getASTExpr()->to_string(), nextVertex, cfDeclaration);
-            }
+    }
+    bool validOutputs = true;
+    for (int i = 0; i < callArgs.size(); ++i) {
+        if (!checkCallArgument(callArgs[i], i, nextVertex, cfDeclaration) && cfDeclaration->declaredArgs[i].type == nameType) {
+            validOutputs = false;
         }
+    }
+    if (!validOutputs) {
+        return;
     }
     
     if (nextVertex->initializeVertex()) {
@@ -567,12 +567,6 @@ void Vertex::handleImport(cf_statement* cfStatement) {
         JsonReporter::createSYN3(nextVertex, cfDeclaration);
         std::cout << "INTERNAL ERROR: call of CF " << calledImportName << " has wrong amount of args" << std::endl;
         return;
-    } else {
-        for (int i = 0; i < cfDeclaration->declaredArgs.size(); i++) {
-            if (callArgs[i]->getValueType() != cfDeclaration->declaredArgs[i].type) {
-                JsonReporter::createSYN1(callArgs[i]->getASTExpr()->to_string(), nextVertex, cfDeclaration);
-            }
-        }
     }
     
     if (nextVertex->initializeVertex()) {

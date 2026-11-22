@@ -216,7 +216,9 @@ IndexedDFName* parseIndexedDFExpression(expr* expression, std::map<std::string, 
     }
     auto base = nameTable.find(baseName);
     if (base != nameTable.end()){
-
+        if (auto alias = dynamic_cast<LetName*>(base->second)) {
+            alias->markReferenced();
+        }
         if (base->second->isIndexable()){
             IndexedDFName* temp = new IndexedDFName(baseName, currentVertex, base->second, expressionsVector);
             std::cout << "Created new IndexedDFName object with base name " << baseName << " and expressionsVector: ";
@@ -234,11 +236,8 @@ IndexedDFName* parseIndexedDFExpression(expr* expression, std::map<std::string, 
             return nullptr;
         }
     } else {
-        std::cout << "INTERNAL ERROR: aborted creating new IndexedDFName object -- no base name found visible: " << baseName << std::endl;
-        //std::string report = "ERROR: no name \"" + baseName + "\" found at line " + std::to_string(line) + "\n";
-        /*REPORTS.push_back(JsonReporter::createSYN9(//todo
-            base->second
-        ));*/
+        JsonReporter::reportNameAt("SYN9", baseName, currentVertex->getFileName(),
+                                   complexDF->line_, currentVertex->getName());
         return nullptr;
     }
 }

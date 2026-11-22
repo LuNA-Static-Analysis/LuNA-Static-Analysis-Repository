@@ -5,7 +5,7 @@ sub main(){
     init(1, a);
     init(2, b);
     let a = b {
-        printint(a);
-        printint(b);
+        print(a);
+        print(b);
     }
 }

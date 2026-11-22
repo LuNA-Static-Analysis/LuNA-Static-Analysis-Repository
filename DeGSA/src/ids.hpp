@@ -129,6 +129,8 @@ private:
 
         BaseDFNameData(){};
 
+        bool empty() const { return _data.empty(); }
+
         std::vector<int> getAllSizes()
         {
             std::vector<int> result{};
@@ -193,7 +195,7 @@ private:
             } else {
                 if (getUseVectorByIndicesSize(iIndicesSize)) {
                     // pair is present, create new defVector
-                    _data[iIndicesSize].first = new std::vector<std::pair<Vertex*, int>>{ {ipVertex, iArgPosition} };
+                    _data[iIndicesSize].second = new std::vector<std::pair<Vertex*, int>>{ {ipVertex, iArgPosition} };
                 } else {
                     // pair is not present, create new pair with new defVector and null useVector
                     std::vector<std::pair<Vertex*, int>>* pT = new std::vector<std::pair<Vertex*, int>>{ {ipVertex, iArgPosition} };
@@ -343,8 +345,12 @@ public:
 
 
 class LetName: public Identifier {
+    bool m_referenced = false;
 
 public:
+    void markReferenced() { m_referenced = true; }
+    bool isReferenced() const { return m_referenced; }
+
 
     void markAsUse(Vertex* currentVertex, int position, int size);
 

@@ -1,4 +1,4 @@
-#define M(X) $X
+#define M(X) $X // DeGSA can not find it
 import printint(int) as print;
 sub main() {
     print(1);

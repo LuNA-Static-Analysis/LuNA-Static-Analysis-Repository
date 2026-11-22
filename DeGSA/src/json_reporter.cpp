@@ -330,7 +330,7 @@ static std::string createIndexCallstackFromVertex(
 }
 
 static std::string createCallstackFromVertex(
-    Vertex* const ipVertex
+    Vertex* const ipVertex, int firstLine = -1
 ){
     if (ipVertex == nullptr)
         return "[]";
@@ -340,7 +340,7 @@ static std::string createCallstackFromVertex(
     while(vertex != nullptr){
         callstackEntries.push_back(JsonReporter::createCallStackEntry(
             vertex->getFileName(),
-            std::to_string(vertex->getLine()),
+            std::to_string(vertex == ipVertex && firstLine >= 0 ? firstLine : vertex->getLine()),
             vertex->getName()
         ));
         vertex = vertex->getParent();
@@ -387,7 +387,7 @@ static std::string createDFRef(
     map.insert( { "df", df } );
     map.insert( { "local", localExpression } );
     map.insert( { "true", trueExpression } );
-    map.insert( { "where", createCallStack({createCallStackEntry("todo", "0", "todo")}) } );//todo callstack is wrong
+    map.insert( { "where", callStack } );
     map.insert( { "conditions", createArray({}) } );//todo
     return createJson(map);
 }
@@ -444,16 +444,6 @@ static std::string createIdentifier(
     std::map<std::string, std::string> map = {};
     map.insert( { "name", identifier->getName() } );
     auto vertex = identifier->getVertex();
-    map.insert( { "call_stack_entry", createCallStackEntry(vertex->getFileName(), std::to_string(vertex->getLine()), vertex->getName()) } );
-    return createJson(map);
-}
-
-static std::string createIdentifierLazy(
-    std::string identifierName,
-    Vertex* vertex
-){
-    std::map<std::string, std::string> map = {};
-    map.insert( { "name", identifierName } );
     map.insert( { "call_stack_entry", createCallStackEntry(vertex->getFileName(), std::to_string(vertex->getLine()), vertex->getName()) } );
     return createJson(map);
 }
@@ -537,34 +527,11 @@ static void createSYN5_5(
     createReport("SYN5.5", createJson(map));
 }
 
-static void createSYN5_6(
-    Identifier* const identifier
-){
-    if (identifier->getClass() != mutableArgNameClass && identifier->getClass() != immutableArgNameClass)
-        std::cout << "INTERNAL ERROR: SYN5.6 got wrong type" << std::endl;
-    std::map<std::string, std::string> map = {};
-    map.insert( { "identifier", createIdentifier(identifier) } );
-    createReport("SYN5.6", createJson(map));
-}
-
-static void createSYN5_7(
-    Identifier* const identifier
-){
-    if (identifier->getClass() != forIteratorNameClass)
-        std::cout << "INTERNAL ERROR: SYN5.7 got wrong type" << std::endl;
-    std::map<std::string, std::string> map = {};
-    map.insert( { "identifier", createIdentifier(identifier) } );
-    createReport("SYN5.7", createJson(map));
-}
-
-static void createSYN5_8(
-    Identifier* const identifier
-){
-    if (identifier->getClass() != whileIteratorNameClass)
-        std::cout << "INTERNAL ERROR: SYN5.8 got wrong type" << std::endl;
-    std::map<std::string, std::string> map = {};
-    map.insert( { "identifier", createIdentifier(identifier) } );
-    createReport("SYN5.8", createJson(map));
+static void reportUnusedDeclaration(const std::string& code, const std::string& name,
+                                    const std::string& file, int line, const std::string& sub) {
+    auto declaration = createCallStackEntry(file, std::to_string(line), sub);
+    auto identifier = createJson({{"name", name}, {"call_stack_entry", declaration}});
+    createReport(code, createJson({{"identifier", identifier}}));
 }
 
 static void createSYN6_1(
@@ -594,57 +561,11 @@ static void createSYN7(){
     createReport("SYN7", createJson(map));
 }
 
-static void createSYN8_1(
-    std::string identifierName,
-    Vertex* vertex
-){
-    std::map<std::string, std::string> map = {};
-    map.insert( { "identifier", createIdentifierLazy(identifierName, vertex) } );
-    createReport("SYN8.1", createJson(map));
-}
-
-static void createSYN8_2(
-    std::string identifierName,
-    Vertex* vertex
-){
-    std::map<std::string, std::string> map = {};
-    map.insert( { "identifier", createIdentifierLazy(identifierName, vertex) } );
-    createReport("SYN8.2", createJson(map));
-}
-
-static void createSYN8_3(
-    std::string identifierName,
-    Vertex* vertex
-){
-    std::map<std::string, std::string> map = {};
-    map.insert( { "identifier", createIdentifierLazy(identifierName, vertex) } );
-    createReport("SYN8.3", createJson(map));
-}
-
-static void createSYN8_4(
-    std::string identifierName,
-    Vertex* vertex
-){
-    std::map<std::string, std::string> map = {};
-    map.insert( { "identifier", createIdentifierLazy(identifierName, vertex) } );
-    createReport("SYN8.4", createJson(map));
-}
-
-static void createSYN8_5(
-    std::string identifierName,
-    Vertex* vertex
-){
-    std::map<std::string, std::string> map = {};
-    map.insert( { "identifier", createIdentifierLazy(identifierName, vertex) } );
-    createReport("SYN8.5", createJson(map));
-}
-
-static void createSYN9(
-    Identifier* const identifier
-){
-    std::map<std::string, std::string> map = {};
-    map.insert( { "identifier", createIdentifier(identifier) } );
-    createReport("SYN9", createJson(map));
+static void reportNameAt(const std::string& code, const std::string& name,
+                                const std::string& file, int line, const std::string& scope) {
+    auto declared = createCallStackEntry(file, std::to_string(line), scope);
+    auto identifier = createJson({{"name", name}, {"declared", declared}});
+    createReport(code, createJson({{"identifier", identifier}}));
 }
 
 static void createSYN11(
@@ -660,22 +581,33 @@ static void createSYN11(
 
 // ***************************************** SEMANTIC **************************************************
 
-static void createSEM2_1(
-    Identifier* const identifier
-){
-    std::map<std::string, std::string> map = {};
-    map.insert( { "initialized", createDFRef("todo", "todo", "todo", "todo") } );//todo
-    map.insert( { "other_initializations", createArray( { } )});//todo
-    createReport("SEM2.1", createJson(map));
+static std::string scalarDFDeclaration(BaseDFName* baseName) {
+    const auto declaration = createCallstackFromVertex(baseName->getVertex(), baseName->getLine());
+    return createJson({{"name", baseName->getName()}, {"declared", createArray({declaration})}});
 }
 
-// attempt to use uninitialized DF (outside of a loop TODO this is weird, but we'll see)
-static void createSEM3_1(
-    Identifier* const identifier
-){
-    std::map<std::string, std::string> map = {};
-    map.insert( { "df", createDF(identifier) } );
-    createReport("SEM3.1", createJson(map));
+static void createSEM2_1(BaseDFName* baseName, const std::vector<std::pair<Vertex*, int>>& definitions) {
+    const auto df = scalarDFDeclaration(baseName);
+    const auto name = baseName->getName();
+    std::vector<std::string> sites;
+    for (const auto& [vertex, position] : definitions) {
+        auto local = name;
+        if (auto call = dynamic_cast<ImportVertex*>(vertex)) {
+            local = call->getCallArgs().at(position)->getASTExpr()->to_string();
+        } else if (auto loop = dynamic_cast<WhileVertex*>(vertex)) {
+            local = loop->getOutName()->getName();
+        }
+        sites.push_back(createDFRef(df, local, name, createCallstackFromVertex(vertex)));
+    }
+    createReport("SEM2.1", createJson({{"initialized", sites.front()},
+                                       {"other_initializations", createArray({sites.begin() + 1, sites.end()})}}));
+}
+
+static void createSEM3_1(BaseDFName* baseName, Vertex* use){
+    const auto df = scalarDFDeclaration(baseName);
+    const auto name = baseName->getName();
+    const auto used = createDFRef(df, name, name, createCallstackFromVertex(use));
+    createReport("SEM3.1", createJson({{"used", used}, {"initialized", createArray({})}}));
 }
 
 static void createSEM3_2(
@@ -688,12 +620,11 @@ static void createSEM3_2(
     createReport("SEM3.2", createJson(map));
 }
 
-static void createSEM4(
-    Identifier* const identifier
-){
-    std::map<std::string, std::string> map = {};
-    map.insert( { "df", createDF(identifier) } );
-    createReport("SEM4", createJson(map));
+static void createSEM4(BaseDFName* baseName, int indexCount) {
+    auto name = baseName->getName();
+    for (int i = 0; i < indexCount; ++i) name += "[*]";
+    auto scope = baseName->getVertex();
+    reportNameAt("SEM4", name, scope->getFileName(), baseName->getLine(), scope->getName());
 }
 
 static void createSEM5(
@@ -713,15 +644,8 @@ static void createSEM5(
     createReport("SEM5", createJson(map));
 }
 
-static void createSEM8(
-    Vertex* const firstCaller,
-    Vertex* const secondCaller
-){
-    //NOT SYNCHRONIZED TODO
-    std::map<std::string, std::string> map = {};
-    map.insert( { "first", createCallStackEntry(firstCaller->getFileName(), std::to_string(firstCaller->getLine()), firstCaller->getName()) } );
-    map.insert( { "second", createCallStackEntry(secondCaller->getFileName(), std::to_string(secondCaller->getLine()), secondCaller->getName()) } );
-    createReport("SEM8", createJson(map));
+static void createSEM8(Vertex* recursiveCall) {
+    createReport("SEM8", createJson({{"where", createCallstackFromVertex(recursiveCall)}}));
 }
 
 static inline std::vector<std::string> REPORTS {};

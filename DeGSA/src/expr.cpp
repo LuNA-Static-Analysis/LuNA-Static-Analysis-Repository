@@ -27,14 +27,13 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
     if (lunaString != NULL){
 
         std::string s = *(lunaString->get_value());
-        if (std::regex_match(s, std::regex("[0-9]+"))){ // int
-            this->_expressionType = intNode;
-        }
-        if (std::regex_match(s, std::regex("[0-9]+[.][0-9]+"))){ // real
-            this->_expressionType = realNode;
-        }
-        if (std::regex_match(s, std::regex("\"[^\"]*\""))){ // string
-            this->_expressionType = stringNode;
+        if (std::regex_match(s, std::regex("[0-9]+"))) {
+            _expressionType = intNode;
+        } else if (std::regex_match(s, std::regex("[0-9]+[.][0-9]+"))) {
+            _expressionType = realNode;
+        } else {
+            // The lexer removes quotation marks from string literals.
+            _expressionType = stringNode;
         }
 
         this->_constant = s;
@@ -127,10 +126,13 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
                     case baseDFNameClass: // simple DF (no indices)
                         _identifier = new IndexedDFName(simpleDFName, currentVertex, identifierName->second, {});
                         break;
+                    case letNameClass:
+                        static_cast<LetName*>(identifierName->second)->markReferenced();
+                        _identifier = identifierName->second;
+                        break;
                     case forIteratorNameClass:
                     case whileIteratorNameClass:
                     case valueNameClass:
-                    case letNameClass:
                     case mutableArgNameClass:
                     case immutableArgNameClass:
                         _identifier = identifierName->second;
@@ -140,14 +142,8 @@ Expression::Expression(expr* ASTexpr, std::map<std::string, Identifier*> nameTab
                         break;
                 }
             } else {
-                //todo fake Id to use it in report
-                //todo what is this even
-                Identifier* nonExistingIdentifier = new ForIteratorName(simpleDFName, _vertex);
-                //nonExistingIdentifier->markAsUse(currentVertex, 0);
-                //todo
-                /*REPORTS.push_back(JsonReporter::createSYN9(
-                    nonExistingIdentifier
-                ));*/
+                JsonReporter::reportNameAt("SYN9", simpleDFName, currentVertex->getFileName(),
+                                           simpleDF->line_, currentVertex->getName());
             }
 
             return;
@@ -180,18 +176,20 @@ void Expression::calculateValueType(){
         case multiplyNode:
         case divideNode:
         case modulusNode: {
-            ExpressionType leftValueType = _leftExpr->getExpressionType();
-            ExpressionType rightValueType = _rightExpr->getExpressionType();
-            if (leftValueType == realNode && rightValueType == realNode ||
-                leftValueType == intNode && rightValueType == realNode || 
-                leftValueType == realNode && rightValueType == intNode){ // result is real
+            ValueType leftValueType = _leftExpr->getValueType();
+            ValueType rightValueType = _rightExpr->getValueType();
+            if (leftValueType == realType && rightValueType == realType ||
+                leftValueType == intType && rightValueType == realType ||
+                leftValueType == realType && rightValueType == intType){ // result is real
                 if (_expressionType == modulusNode)
                     _valueType = nonCalculatable; // modulus can not be used with real
                 else
                     _valueType = realType;
-            } else if (leftValueType == intNode && rightValueType == intNode){ // result is int
+            } else if (leftValueType == intType && rightValueType == intType){ // result is int
                 _valueType = intType;
-            } else { // erroreous operation
+            } else if (_expressionType == addNode && leftValueType == stringType && rightValueType == stringType) {
+                _valueType = stringType;
+            } else {
                 _valueType = nonCalculatable;
             }
             return;
@@ -524,7 +522,7 @@ void Expression::markAsDef(Vertex* currentVertex, int position, int size){
         switch(_identifier->getClass()){
             case mutableArgNameClass: { //ok
                 MutableArgName* mutableArgName = dynamic_cast<MutableArgName*>(_identifier);
-                mutableArgName->getReference()->markAsDef(currentVertex, position, size);
+                mutableArgName->markAsDef(currentVertex, position, size);
                 return;
             }
             case baseDFNameClass: {//ok
@@ -590,7 +588,7 @@ void Expression::markAsDef(Vertex* currentVertex, int position, int size){
 bool Expression::isIndexable(){
     // only identifiers are indexable
     if (_expressionType == identifierNode){
-        return _identifier->isIndexable();
+        return _identifier && _identifier->isIndexable();
     } else {
         return false;
     }

@@ -2,6 +2,7 @@
 #include "vertices.cpp"
 #include "ids.cpp"
 #include "expr.cpp"
+#include "parameter_usage.hpp"
 #include "json_reporter.cpp"
 
 #include <chrono>
@@ -21,12 +22,50 @@ public:
     std::string _fileName;
     std::ostream* _outputTarget;
 
+    void declareName(std::set<std::string>& visible, const std::string& name,
+                     const char* duplicateCode, int line, const std::string& subName) {
+        if (!visible.insert(name).second) {
+            JsonReporter::reportNameAt(duplicateCode, name, _fileName, line, subName);
+        }
+    }
+
+    void checkBlockDeclarations(const block& body, const std::string& subName, std::set<std::string> visible) {
+        if (auto dfs = body.opt_dfdecls_->dfdecls_) {
+            for (auto name : *dfs->name_seq_->names_) visible.insert(name->to_string());
+        }
+        for (auto stmt : *body.statement_seq_->statements_) {
+            // Only compound statements own a nested block.
+            if (!stmt || dynamic_cast<cf_statement*>(stmt)) continue;
+            auto nested = visible;
+            if (auto loop = dynamic_cast<for_statement*>(stmt)) {
+                const auto& name = *loop->name_->value_;
+                declareName(nested, name, "SYN8.2", loop->line_, subName);
+                if (!NameUsage(name).referencedIn(*loop)) {
+                    JsonReporter::reportUnusedDeclaration("SYN5.7", name, _fileName, loop->line_, subName);
+                }
+            } else if (auto loop = dynamic_cast<while_statement*>(stmt)) {
+                const auto& name = *loop->left_->value_;
+                declareName(nested, name, "SYN8.3", loop->line_, subName);
+                if (!NameUsage(name).referencedIn(*loop)) {
+                    JsonReporter::reportUnusedDeclaration("SYN5.8", name, _fileName, loop->line_, subName);
+                }
+            } else if (auto let = dynamic_cast<let_statement*>(stmt)) {
+                for (auto assignment : *let->assign_seq_->assign_seq_) {
+                    declareName(nested, assignment->name_->to_string(), "SYN8.4", let->line_, subName);
+                }
+            }
+            checkBlockDeclarations(*stmt->block_, subName, std::move(nested));
+        }
+    }
+
     void findSubs(){
         for (auto subDef: (*(_astobj->program_->sub_defs))){
             if (luna_sub_def* subDecl = dynamic_cast<luna_sub_def*>(subDef); subDecl != NULL) { // found a structured CF
                 std::cout << "Non-import (structured sub) found: ";
                 std::string subName = *(subDecl->code_id_->get_value());
                 std::cout << subName << std::endl;
+
+                std::set<std::string> parameters;
 
                 // save args of this CF to use it in initializeVertex
                 std::vector<DeclaredArg> declaredArgs = {};
@@ -47,9 +86,16 @@ public:
                         } else {
                             type = noneType;
                         }
-                        declaredArgs.push_back( { *(arg->name_->value_), type } );
+                        const auto& parameterName = *arg->name_->value_;
+                        declareName(parameters, parameterName, "SYN8.5", arg->line_, subName);
+                        declaredArgs.push_back({parameterName, type});
+                        if (!NameUsage(parameterName).referencedIn(*subDecl)) {
+                            JsonReporter::reportUnusedDeclaration("SYN5.6", parameterName, _fileName, arg->line_, subName);
+                        }
                     }
                 }
+
+                checkBlockDeclarations(*subDecl->block_, subName, std::move(parameters));
 
                 auto subCFDecl = CFDECLARATIONS.find(subName);
                 CFDeclaration* newDeclaration = new CFDeclaration(subName, subCF, declaredArgs, subDecl->block_, subDecl->line_, _fileName);
@@ -255,44 +301,22 @@ public:
 
 public:
 
-    // SYN5.2, 3, 6, 7, 8 if both use and def sets are empty
-    // SEM4 is def set is not empty, but use is empty
+    // Check identifiers declared inside graph vertices.
     void checkUnusedIdentifiers(){
         for (auto vertex: VERTICES){
             for (auto nameIdPair: vertex->getDeclaredInsideIdsMap()){
                 Identifier* identifier = nameIdPair.second;
-                DataIdentifier* dataIdentifier = dynamic_cast<DataIdentifier*>(identifier);
-                if (dataIdentifier->getUseVector().size() == 0) {
-                    if (dataIdentifier->getDefVector().size() == 0) { // SYN5
-                        switch (identifier->getClass()) {
-                            case letNameClass: {
-                                JsonReporter::createSYN5_2(identifier);
-                                break;
-                            }
-                            case baseDFNameClass: {
-                                JsonReporter::createSYN5_3(identifier);
-                                break;
-                            }
-                            case mutableArgNameClass:
-                            case immutableArgNameClass:
-                            {
-                                JsonReporter::createSYN5_6(identifier);
-                                break;
-                            }
-                            case forIteratorNameClass: {
-                                JsonReporter::createSYN5_7(identifier);
-                                break;
-                            }
-                            case whileIteratorNameClass: {
-                                JsonReporter::createSYN5_8(identifier);
-                                break;
-                            }
-                        }
-                    } else { // SEM4 todo
-                        /*REPORTS.push_back(JsonReporter::createSEM4(
-                            identifier
-                        ));*/
+                if (auto baseName = dynamic_cast<BaseDFName*>(identifier)) {
+                    if (baseName->getData()->empty()) {
+                        JsonReporter::createSYN5_3(baseName);
                     }
+                    continue;
+                }
+                if (auto alias = dynamic_cast<LetName*>(identifier)) {
+                    if (!alias->isReferenced()) {
+                        JsonReporter::createSYN5_2(alias);
+                    }
+                    continue;
                 }
             }
         }
@@ -413,66 +437,21 @@ public:
                 std::vector<std::pair<Vertex*, int>>* pUses = baseNameData->getUseVectorByIndicesSize(baseNameSize);
                 std::vector<std::pair<Vertex*, int>>* pDefs = baseNameData->getDefVectorByIndicesSize(baseNameSize);
 
-                // multiple initialization of a DF
-                if (baseNameSize == 0){ // simple DFs
-                    if (pDefs && pDefs->size() > 1){
-                        /*std::string report = "ERROR: multiple initialization of a DF " + bn->getName() + " in lines:\n";
-                        for (auto def: defs){
-                            report += (std::to_string(def->getLine()) + " ");
-                        }
-                        report += "\n";
-                        errorReports.push_back(report);*/
-                        // error code: 03
-                        // details: df
-                        //todo callstacks
-                        /*REPORTS.push_back(JsonReporter::createSEM2_1(
-                            bn
-                        ));*/
-                    }
-                } else { // indexed DFs
-                    //TODO add warnings?
-                    // proper implementation requires expressions parsing
+                if (baseNameSize == 0 && pDefs && pDefs->size() > 1) {
+                    JsonReporter::createSEM2_1(bn, *pDefs);
                 }
 
-                // unused DF 1
-                if (!pUses || pUses->size() == 0){
-                    /*std::string report = "ERROR: unused DF " + bn->getName() + " with " + std::to_string(size) + " indices\n";
-                    errorReports.push_back(report);*/
-                    // error code: 10
-                    // details: df
-                    //todo callstacks
-                    /*REPORTS.push_back(JsonReporter::createSEM4(
-                        bn
-                    ));*/
-                } else {
-                    // using uninitialized DFs
-                    if (!pDefs || pDefs->size() == 0){
-                        /*std::string report = "ERROR: using uninitialized DF " + bn->getName() + " with " + std::to_string(size) +
-                        " indices at lines:\n";
-                        for (auto use: uses){
-                            report += (std::to_string(use->getLine()) + " ");
-                        }
-                        report += "\n";
-                        errorReports.push_back(report);*/
-                        // error code: 05
-                        // details: df
-                        //todo callstacks
-                        /*REPORTS.push_back(JsonReporter::createSEM3_1(
-                            bn
-                        ));*/
+                if (!pUses || pUses->empty()) {
+                    if (pDefs && !pDefs->empty()) {
+                        JsonReporter::createSEM4(bn, baseNameSize);
+                    }
+                } else if (baseNameSize == 0 && (!pDefs || pDefs->empty())) {
+                    for (const auto& use : *pUses) {
+                        JsonReporter::createSEM3_1(bn, use.first);
                     }
                 }
 
             }
-            // unused DF 2
-            /*if (bnMap.size() == 0){
-                // error code: 10
-                // details: df
-                //todo callstacks
-                REPORTS.push_back(JsonReporter::createSEM4(
-                    bn
-                ));
-            }*/
         }
     }
 
@@ -580,6 +559,34 @@ public:
     }
 
 
+    void writeReports() {
+        const auto& reports = JsonReporter::REPORTS;
+        if (reports.empty()) {
+            *_outputTarget << "\nNo errors found\n" << std::endl;
+        }
+        for (const auto& report : reports) {
+            *_outputTarget << report << std::endl;
+        }
+
+        const char* path = "./reporter/found_errors.json";
+        std::ifstream input(path);
+        if (input && reports.empty()) return;
+        std::string existing((std::istreambuf_iterator<char>(input)), {});
+        input.close();
+
+        // Other ADAPT analyzers may already have written a JSON array.
+        const auto last = existing.find_last_not_of(" \t\n\r");
+        std::string output = JsonReporter::createArray(reports);
+        if (last != std::string::npos && existing[last] == ']') {
+            existing.resize(last);
+            const auto previous = existing.find_last_not_of(" \t\n\r");
+            if (previous != std::string::npos && existing[previous] != '[') {
+                output = existing + "," + output.substr(1);
+            }
+        }
+        std::ofstream(path) << output;
+    }
+
     DDG(ast* astObjectIn, std::ostream* outputTarget, std::string fileName){
         auto graphBuildStart = std::chrono::steady_clock::now();
         auto graphBuildStartSystem = std::chrono::system_clock::now();
@@ -595,8 +602,8 @@ public:
 
         // 2. create all the vertices
         auto mainDeclaration = CFDECLARATIONS.find("main");
-        if (mainDeclaration != CFDECLARATIONS.end()) {
-            CFDECLARATIONS.find("main")->second->isUsed = true;
+        if (mainDeclaration != CFDECLARATIONS.end() && mainDeclaration->second->type == subCF) {
+            mainDeclaration->second->isUsed = true;
             SubVertex* mainVertex = new SubVertex("main", nullptr, subVF, 1, mainDeclaration->second->line, fileName, mainDeclaration->second->cfBlock, nullptr, mainDeclaration->second, {}, {}, {}, mainDeclaration->second->declaredArgs);
             std::cout << "Created a [MAIN] vertex: " << mainVertex << std::endl;
             std::cout << "Initializing [MAIN] vertex" << std::endl;
@@ -607,10 +614,8 @@ public:
             }
         } else {
             JsonReporter::createSYN7();
-            std::cout << "INTERNAL ERROR: No main found" << std::endl;
-            for (auto r: JsonReporter::REPORTS){
-                *outputTarget << r << std::endl;//todo does not work as a part of the ADAPT
-            }
+            dumpAtomicCFDF();
+            writeReports();
             return;
         }
 
@@ -675,13 +680,7 @@ public:
         auto errorsFindTotal = std::chrono::duration_cast<ns>(errorsFindEnd - errorsFindStart).count();
         auto errorsFindTotalSystem = std::chrono::duration_cast<ns>(errorsFindEndSystem - errorsFindStartSystem).count();
 
-        if (JsonReporter::REPORTS.size() == 0){
-            *outputTarget << "\nNo errors found\n" << std::endl;
-        } else {
-            for (auto r: JsonReporter::REPORTS){
-                *outputTarget << r << std::endl;
-            }
-        }
+        writeReports();
 
         *outputTarget << "\nTime to find errors: " << (double)errorsFindTotal / 1000000000 << " seconds" << std::endl;
         *outputTarget << "\nTime to find errors (system): " << (double)errorsFindTotalSystem / 1000000000 << " seconds" << std::endl;
@@ -715,37 +714,6 @@ public:
         }
         //===================================
 
-        std::string jsonOutputPath = "./reporter/found_errors.json";
-
-        std::ifstream inFile(jsonOutputPath);
-
-        if (inFile.good()){ // file already exists
-
-            if (JsonReporter::REPORTS.size() != 0){ // DeGSA found some errors
-                std::ifstream t(jsonOutputPath);
-                std::string existingReports(//todo this looks old and stupid
-                    (std::istreambuf_iterator<char>(t)),
-                    std::istreambuf_iterator<char>()
-                );
-
-                std::ofstream outFile(jsonOutputPath);
-                std::string newReports = JsonReporter::createArray(JsonReporter::REPORTS);
-                if (existingReports.size() < 10){ // no objects present; todo change this
-                    outFile << newReports;
-                } else {
-                    existingReports.pop_back();
-                    newReports[0] = ',';
-                    outFile << existingReports << newReports;
-                }
-                outFile.close();
-            } // else we don't change existing file
-            
-        } else { // file does not exist
-            inFile.close();
-            std::ofstream outFile(jsonOutputPath);
-            outFile << JsonReporter::createArray(JsonReporter::REPORTS);
-            outFile.close();
-        }
 
     }
 };

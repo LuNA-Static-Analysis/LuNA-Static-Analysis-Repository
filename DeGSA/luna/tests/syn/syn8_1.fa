@@ -1,4 +1,3 @@
-import c_init_int(int, name) as init;
 import printint(int) as print;
 sub main(){
         df i, i;
