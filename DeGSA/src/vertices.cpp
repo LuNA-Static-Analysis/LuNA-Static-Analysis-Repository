@@ -320,7 +320,7 @@ bool WhileVertex::initializeVertex() {
         _startExpr->markAsUse(this, 2, 0);// zero size, because size is an accumulator for previous indices of the name, which there are none at the start
 
     if (_outName != nullptr)
-        _outName->markAsDef(this, 2, 0);// zero size, because size is an accumulator for previous indices of the name, which there are none at the start
+        _outName->markAsDef(this, 3, 0);// zero size, because size is an accumulator for previous indices of the name, which there are none at the start
     else 
         JsonReporter::createSYN1(whileOutNameExpr->getASTExpr()->to_string(), this, nullptr);//todo nullptr
 

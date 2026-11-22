@@ -88,6 +88,15 @@ static std::string DFDcreateDFDump(std::vector<Vertex*> apVertices)//todo differ
 
                 std::vector<std::string> argEntries = {};
 
+                std::vector<std::string> conditionParticipants = {};
+                for (auto pConditionIdentifier : pWhileVertex->getConditionExpr()->getAllIdentifiers())
+                    conditionParticipants.push_back(DFDcreateParticipant(pConditionIdentifier));
+                argEntries.push_back(DFDcreateArgEntry(
+                    pWhileVertex->getConditionExpr()->getASTExpr()->to_string(),
+                    conditionParticipants,
+                    "df"
+                ));
+
                 std::vector<std::string> iteratorParticipants = {};
                 iteratorParticipants.push_back(DFDcreateParticipant(pWhileVertex->getIterator()));
                 argEntries.push_back(DFDcreateArgEntry(
@@ -105,22 +114,14 @@ static std::string DFDcreateDFDump(std::vector<Vertex*> apVertices)//todo differ
                     "df"
                 ));
 
-                std::vector<std::string> conditionParticipants = {};
-                for (auto pConditionIdentifier : pWhileVertex->getConditionExpr()->getAllIdentifiers())
-                    conditionParticipants.push_back(DFDcreateParticipant(pConditionIdentifier));
-                argEntries.push_back(DFDcreateArgEntry(
-                    pWhileVertex->getConditionExpr()->getASTExpr()->to_string(),
-                    conditionParticipants,
-                    "df"
-                ));
-
-                std::vector<std::string> outParticipants = {};
-                outParticipants.push_back(DFDcreateParticipant(pWhileVertex->getOutName()));
-                argEntries.push_back(DFDcreateArgEntry(
-                    pWhileVertex->getOutName()->getName(),
-                    outParticipants,
-                    "df"
-                ));
+                if (auto out = pWhileVertex->getOutName()) {
+                    std::vector<std::string> outParticipants;
+                    for (auto identifier : out->getAllIdentifiers())
+                        outParticipants.push_back(DFDcreateParticipant(identifier));
+                    argEntries.push_back(DFDcreateArgEntry(out->getName(), outParticipants, "df"));
+                } else {
+                    argEntries.push_back(DFDcreateArgEntry("", {}, "df"));
+                }
 
                 functionEntries.push_back(DFDcreateFunctionEntry(pVertex, argEntries));
 
@@ -209,39 +210,48 @@ static std::string DFDcreateParticipant(
         }
     }
 
-    std::vector<std::string> initialized = {};
-    if (auto pDataIdentifier = dynamic_cast<DataIdentifier*>(pIdentifier)) {
-        for (auto pair : pDataIdentifier->getDefVector()) {
-            std::map<std::string, std::string> initParams = {};
-            initParams["callstack"] = createCallstackFromVertex(pair.first);
-            initParams["index"] = pair.second;
-            initialized.push_back(createJson(initParams));
+    std::vector<std::string> initialized;
+    std::vector<std::string> used;
+    auto appendAccesses = [](auto& entries, const auto& accesses) {
+        for (const auto& [vertex, position] : accesses) {
+            entries.push_back(DFDcreateIndexCallstack(vertex, position));
         }
+    };
+
+    // The graph groups DF accesses by base declaration and index depth.
+    int indexCount = 0;
+    if (auto base = DFDresolveBase(pIdentifier, indexCount)) {
+        const auto data = base->getData();
+        if (auto defs = data->getDefVectorByIndicesSize(indexCount)) {
+            appendAccesses(initialized, *defs);
+        }
+        if (auto uses = data->getUseVectorByIndicesSize(indexCount)) {
+            appendAccesses(used, *uses);
+        }
+    } else if (auto data = dynamic_cast<DataIdentifier*>(pIdentifier)) {
+        appendAccesses(initialized, data->getDefVector());
+        appendAccesses(used, data->getUseVector());
     }
+
     params["initialized"] = createArray(initialized);
-
-    std::vector<std::string> used = {};
-    if (auto pDataIdentifier = dynamic_cast<DataIdentifier*>(pIdentifier)) {
-        for (auto pair : pDataIdentifier->getUseVector()) {
-            std::map<std::string, std::string> useParams = {};
-            useParams["callstack"] = createCallstackFromVertex(pair.first);
-            useParams["index"] = pair.second;
-            used.push_back(createJson(useParams));
-        }
-    }
     params["used"] = createArray(used);
-
     return createJson(params);
 }
 
-static std::string DFDcreateIndexCallstack(
-    Vertex* const ipVertex,
-    int iIndex
-){
-    std::map<std::string, std::string> params = {};
-    params["callstack"] = createCallstackFromVertex(ipVertex);
-    params["index"] = iIndex;
-    return createJson(params);
+static BaseDFName* DFDresolveBase(Identifier* identifier, int& indexCount) {
+    if (auto indexed = dynamic_cast<IndexedDFName*>(identifier)) {
+        indexCount += indexed->getExpressionsVector().size();
+        return DFDresolveBase(indexed->getBase(), indexCount);
+    }
+    if (identifier && identifier->getReference()) {
+        return DFDresolveBase(identifier->getReference()->getAsIdentifier(), indexCount);
+    }
+    return dynamic_cast<BaseDFName*>(identifier);
+}
+
+static std::string DFDcreateIndexCallstack(Vertex* vertex, int position) {
+    return "{\"callstack\": " + createCallstackFromVertex(vertex)
+         + ", \"index\": " + std::to_string(position) + "}";
 }
 
 //=====================
