@@ -1,9 +1,19 @@
 import printfl(real) as print;
 import c_init_int(int, name) as init;
 sub main(){
-    df a;
+    df a, b, c;
     init(1, a);
-    init(2, a[0]);
-    init(3, a[1]);
     print(a);
+
+    for fit = a..b {
+        print(fit);  
+    }
+
+    while (a < b), wit = a..out c {
+        print(wit);
+    }
+
+    if (a < b) {
+        print(c);
+    }
 }

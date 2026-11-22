@@ -111,11 +111,24 @@ public:
         // go through all basenames and bind imports depending on what info BASENAMES has
         for (BaseDFName* baseName: BASENAMES){
             std::cout << "checking \"" + baseName->getName() << "\":" << std::endl;
-            std::map<int, std::pair<std::vector<Vertex*>*, std::vector<Vertex*>*>> map = baseName->getMap();
-            for (auto entry: map){
-                for (auto useVertex: *(entry.second.first)){
-                    for (auto defVertex: *(entry.second.second))
-                        defVertex->bindTo(useVertex, baseName);
+
+            // this map has information about what indexed/simple DFs there is and with how many indices
+            // they are used and defined in what vertices
+            // basically: map(int size, pair<vector use, vector def>);
+            //std::map<int, std::pair<std::vector<Vertex*>*, std::vector<Vertex*>*>> _sizeToUseDefVectors = {};
+            auto pData = baseName->getData();
+            std::vector<int> aSizes = pData->getAllSizes();
+            for (auto size : aSizes) {
+                auto pUseVector = pData->getUseVectorByIndicesSize(size);
+                auto pDefVector = pData->getDefVectorByIndicesSize(size);
+                if (!pUseVector || !pDefVector)
+                    continue;
+                for (auto useVertexPair : *pUseVector) {
+                    for (auto defVertexPair : *pDefVector) {
+                        int pointerToIndex = useVertexPair.second;
+                        int pointerFromIndex = defVertexPair.second;
+                        defVertexPair.first->bindTo(useVertexPair.first, pointerToIndex, pointerFromIndex, baseName);//todo check if this works correctly
+                    }
                 }
             }
         }
@@ -127,6 +140,11 @@ public:
     void dumpAtomicCFDF()
     {
         *_outputTarget << "\n========================\nDF usage information dump\n========================\n";
+
+        std::ofstream dfDump("DFDump.json");
+        dfDump << JsonReporter::DFDcreateDFDump(VERTICES) << std::endl;
+
+        /*std::vector<std::string> functionEntries = {};
         for (Vertex* pVertex : VERTICES) {
             if (!pVertex)
                 continue;
@@ -229,7 +247,8 @@ public:
                 break;
             }
             }
-        }
+        }*/
+
         *_outputTarget << "\n========================\nDF usage information dump end\n========================\n";
     }
 
@@ -242,8 +261,9 @@ public:
         for (auto vertex: VERTICES){
             for (auto nameIdPair: vertex->getDeclaredInsideIdsMap()){
                 Identifier* identifier = nameIdPair.second;
-                if (identifier->getUseSet().size() == 0) {
-                    if (identifier->getDefSet().size() == 0) { // SYN5
+                DataIdentifier* dataIdentifier = dynamic_cast<DataIdentifier*>(identifier);
+                if (dataIdentifier->getUseVector().size() == 0) {
+                    if (dataIdentifier->getDefVector().size() == 0) { // SYN5
                         switch (identifier->getClass()) {
                             case letNameClass: {
                                 JsonReporter::createSYN5_2(identifier);
@@ -387,16 +407,15 @@ public:
     void checkBaseNameSet(){
 
         for (BaseDFName* bn: BASENAMES){
-            auto bnMap = bn->getMap();
-            for (auto sizeAndUseDefs: bnMap){
+            auto baseNameData = bn->getData();
+            for (auto baseNameSize : baseNameData->getAllSizes()){
 
-                int size = sizeAndUseDefs.first;
-                std::vector<Vertex*> uses = *(sizeAndUseDefs.second.first);
-                std::vector<Vertex*> defs = *(sizeAndUseDefs.second.second);
+                std::vector<std::pair<Vertex*, int>>* pUses = baseNameData->getUseVectorByIndicesSize(baseNameSize);
+                std::vector<std::pair<Vertex*, int>>* pDefs = baseNameData->getDefVectorByIndicesSize(baseNameSize);
 
                 // multiple initialization of a DF
-                if (size == 0){ // simple DFs
-                    if (defs.size() > 1){
+                if (baseNameSize == 0){ // simple DFs
+                    if (pDefs && pDefs->size() > 1){
                         /*std::string report = "ERROR: multiple initialization of a DF " + bn->getName() + " in lines:\n";
                         for (auto def: defs){
                             report += (std::to_string(def->getLine()) + " ");
@@ -416,7 +435,7 @@ public:
                 }
 
                 // unused DF 1
-                if (uses.size() == 0){
+                if (!pUses || pUses->size() == 0){
                     /*std::string report = "ERROR: unused DF " + bn->getName() + " with " + std::to_string(size) + " indices\n";
                     errorReports.push_back(report);*/
                     // error code: 10
@@ -427,7 +446,7 @@ public:
                     ));*/
                 } else {
                     // using uninitialized DFs
-                    if (defs.size() == 0){
+                    if (!pDefs || pDefs->size() == 0){
                         /*std::string report = "ERROR: using uninitialized DF " + bn->getName() + " with " + std::to_string(size) +
                         " indices at lines:\n";
                         for (auto use: uses){
@@ -446,16 +465,15 @@ public:
 
             }
             // unused DF 2
-            if (bnMap.size() == 0){
+            /*if (bnMap.size() == 0){
                 // error code: 10
                 // details: df
                 //todo callstacks
-                /*REPORTS.push_back(JsonReporter::createSEM4(
+                REPORTS.push_back(JsonReporter::createSEM4(
                     bn
-                ));*/
-            }
+                ));
+            }*/
         }
-
     }
 
 
@@ -616,19 +634,25 @@ public:
             *outputTarget << std::endl;
             *outputTarget << "Name: " << bn->getName() << std::endl;
             *outputTarget << "Declared in function call at line: " << bn->getLine() << std::endl;
-            auto map = bn->getMap(); // 1 = use, 2 = def
-            for (auto m: map){
-                *outputTarget << "Size: " << m.first << std::endl;
-                std::pair<std::vector<Vertex*>*, std::vector<Vertex*>*> pair = m.second;
+            auto baseNameData = bn->getData();
+            for (auto baseNameSize : baseNameData->getAllSizes()){
+
+                *outputTarget << "Size: " << baseNameSize << std::endl;
+
+                std::vector<std::pair<Vertex*, int>>* pUses = baseNameData->getUseVectorByIndicesSize(baseNameSize);
                 *outputTarget << "Uses: ";
-                for (auto u: *(pair.first)){
-                    *outputTarget << u << " ";
-                }
+                if (pUses)
+                    for (auto u: *pUses){
+                        *outputTarget << u.first << " at pos " << u.second << " ";
+                    }
                 *outputTarget << std::endl;
+
+                std::vector<std::pair<Vertex*, int>>* pDefs = baseNameData->getDefVectorByIndicesSize(baseNameSize);
                 *outputTarget << "Defs: ";
-                for (auto d: *(pair.second)){
-                    *outputTarget << d << " ";
-                }
+                if (pDefs)
+                    for (auto d: *pDefs){
+                        *outputTarget << d.first << " at pos " << d.second << " ";
+                    }
                 *outputTarget << std::endl;
             }
         }

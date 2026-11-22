@@ -12,8 +12,8 @@ bool Vertex::Binding::operator<(const Binding b) const {//todo check that it wor
     }
 }
 
-void Vertex::bindTo(Vertex* pointerTo, Identifier* identifier) {
-    auto binding = new Binding(pointerTo, this, identifier);
+void Vertex::bindTo(Vertex* pointerTo, int pointerToIndex, int pointerFromIndex, Identifier* identifier) {
+    auto binding = new Binding(pointerTo, pointerToIndex, this, pointerFromIndex, identifier);
     m_outSet.insert(binding);
     pointerTo->m_inSet.insert(binding);
 }
@@ -203,7 +203,7 @@ bool ImportVertex::initializeVertex() {
         switch(_declaredArgs[i].type){
             case nameType:
                 if (expression != nullptr) {
-                    expression->markAsDef(this, 0);//todo why zero??
+                    expression->markAsDef(this, i, 0); // zero size, because size is an accumulator for previous indices of the name, which there are none at the start
                     break;
                 }
             case intType:
@@ -211,7 +211,7 @@ bool ImportVertex::initializeVertex() {
             case stringType:
             case valueType:
                 if (expression != nullptr) {
-                    expression->markAsUse(this, 0);
+                    expression->markAsUse(this, i, 0);
                     break;
                 }
             default:
@@ -255,9 +255,9 @@ bool ForVertex::initializeVertex() {
     _rightBorder = new Expression(innerStatementForVF->expr_2_, m_declaredOutsideIdsMap, this);
 
     if (_leftBorder != nullptr)
-        _leftBorder->markAsUse(this, 0);//todo why 0
+        _leftBorder->markAsUse(this, 1, 0);// zero size, because size is an accumulator for previous indices of the name, which there are none at the start
     if (_rightBorder != nullptr)
-        _rightBorder->markAsUse(this, 0);//todo why 0
+        _rightBorder->markAsUse(this, 2, 0);// zero size, because size is an accumulator for previous indices of the name, which there are none at the start
 
     Expression* iteratorExpression = new Expression(_iterator, intNode, this);
     m_facts.insert(new GLeNFact(greaterOrEqualNode, iteratorExpression, _leftBorder));
@@ -306,13 +306,13 @@ bool WhileVertex::initializeVertex() {
     _startExpr = new Expression(innerStatementWhileVF->right_, m_declaredOutsideIdsMap, this);
 
     if (_conditionExpr != nullptr)
-        _conditionExpr->markAsUse(this, 0);//todo why 0
+        _conditionExpr->markAsUse(this, 0, 0);// zero size, because size is an accumulator for previous indices of the name, which there are none at the start
 
     if (_startExpr != nullptr)
-        _startExpr->markAsUse(this, 0);//todo why 0
+        _startExpr->markAsUse(this, 2, 0);// zero size, because size is an accumulator for previous indices of the name, which there are none at the start
 
     if (_outName != nullptr)
-        _outName->markAsDef(this, 0); //todo why 0
+        _outName->markAsDef(this, 2, 0);// zero size, because size is an accumulator for previous indices of the name, which there are none at the start
     else 
         JsonReporter::createSYN1(whileOutNameExpr->getASTExpr()->to_string(), this, nullptr);//todo nullptr
 
@@ -336,7 +336,7 @@ bool IfVertex::initializeVertex() {
 
     // all identifiers inside "if" expression must be marked as "used"
     if (_conditionExpr != nullptr)
-        _conditionExpr->markAsUse(this, 0);
+        _conditionExpr->markAsUse(this, 0, 0);// zero size, because size is an accumulator for previous indices of the name, which there are none at the start
 
     m_facts.insert(new GLeNFact(nonEqualNode, _conditionExpr, new Expression("0", intNode, this)));
 

@@ -22,17 +22,40 @@ class Vertex {
 
         Identifier* _identifier;
         Vertex* _pointerTo;
+        int _pointerToIndex;
         Vertex* _pointerFrom;
+        int _pointerFromIndex;
 
     public:
 
-        Binding(Vertex* pointerTo, Vertex* pointerFrom, Identifier* identifier) : _pointerTo(pointerTo), _pointerFrom(pointerFrom), _identifier(identifier) {};
+        Binding(Vertex* pointerTo, int pointerToIndex, Vertex* pointerFrom, int pointerFromIndex, Identifier* identifier) 
+            : _pointerTo(pointerTo), _pointerFrom(pointerFrom), _identifier(identifier), _pointerToIndex(pointerToIndex), _pointerFromIndex(pointerFromIndex) {};
 
         Identifier* getId() { return _identifier; };
 
         Vertex* getPointerTo() { return _pointerTo; };
 
         Vertex* getPointerFrom() { return _pointerFrom; };
+
+        /*
+        this is the index (position) where the identifier is used in the function;
+        example:
+        import init(int, name); // argument undex index 0 is used
+        init(b, a); // here "b" is used in index 0, therefore
+        pointerToIndex(b) -> 0 : on every Vertex that defines "b" getting corresponding Binding's method will return value 0
+        pointerFromIndex(b) -> ... : should be called from initializing Vertex
+        */
+        int getPointerToIndex() { return _pointerToIndex; };
+
+        /*
+        this is the index (position) where the identifier is defined in the function;
+        example:
+        import init(int, name); // argument undex index 1 is defined
+        init(b, a); // here "a" is defined in index 1, therefore
+        pointerFromIndex(a) -> 1 : on every Vertex that uses "a" getting corresponding Binding's method will return value 1
+        pointerToIndex(a) -> ... : should be called from using Vertex
+        */
+        int getPointerFromIndex() { return _pointerFromIndex; };
 
         bool operator<(const Binding b) const;//todo redo this
     };
@@ -105,12 +128,7 @@ class Vertex {
 
         const std::map<std::string, Identifier*>& getDeclaredBothIdsMap() { return m_declaredBothIdsMap; };
 
-        void bindTo(Vertex* pointerTo, Identifier* identifier);
-
-        //todo maybe just use bindings?
-        //void addUse(Identifier* identifier) { m_useSet.insert(identifier); };
-
-        //void addDef(Identifier* identifier) { m_defSet.insert(identifier); };
+        void bindTo(Vertex* pointerTo, int pointerToIndex, int pointerFromIndex, Identifier* identifier);
 
         virtual void printInfo(std::ostream* outputTarget) = 0;
 

@@ -18,8 +18,6 @@ protected:
     Vertex* m_vertex; // vertex where name was declared
     IdentifierClass m_identifierClass;
     ValueType m_valueType;
-    std::set<Vertex*> m_useSet = {};
-    std::set<Vertex*> m_defSet = {};
 
     void calculateValueType();
 
@@ -79,27 +77,14 @@ public:
 
     IdentifierClass getClass() const { return m_identifierClass; };
 
-    //todo check how this works actuaaly; perhaps use const &; also returning and creating a lot if string reports is retarded
-    std::set<Vertex*> getUseSet() const { return m_useSet; };
-
-    std::set<Vertex*> getDefSet() const { return m_defSet; };
-
     //todo wth is this
     virtual int getLine() const;
 
-    //void setVertex(Vertex* currentVertex) { m_vertex = currentVertex; };
+    // recursively gets to the base name and marks it as used with the calculated size (indices count) and on the specified position in vertex
+    virtual void markAsUse(Vertex* currentVertex, int position, int size) = 0;
 
-    /* 
-       recursively marks every referenced identifiers as used
-       initializes global reports array
-    */
-    virtual void markAsUse(Vertex* currentVertex, int size) = 0;
-
-    /* 
-       recursively marks every referenced identifiers as defined, if it is allowed
-       initializes global reports array
-    */
-    virtual void markAsDef(Vertex* currentVertex, int size) = 0;
+    // recursively gets to the base name and marks it as defined with the calculated size (indices count) and on the specified position in vertex
+    virtual void markAsDef(Vertex* currentVertex, int position, int size) = 0;
 
     virtual bool isIndexable() = 0;
 
@@ -111,32 +96,131 @@ public:
     virtual ~Identifier() {};
 };
 
+class DataIdentifier {//TODO this should be used for main args too
+public:
+    std::vector<std::pair<Vertex*, int>> getUseVector() { return _aUseVector; }
+    std::vector<std::pair<Vertex*, int>> getDefVector() { return _aDefVector; }
+protected:
+    std::vector<std::pair<Vertex*, int>> _aUseVector; // vertex and position
+    std::vector<std::pair<Vertex*, int>> _aDefVector; // vertex and position
+};
+
 // this class' objects are created at DF declaration line (not as args of a sub!)
 // objects save information about every indexed and simple DF, i.e. their sizes and use/defs
-class BaseDFName: public Identifier {
+class BaseDFName: public Identifier, public DataIdentifier {
 
 private:
 
     // this map has information about what indexed/simple DFs there is and with how many indices
     // they are used and defined in what vertices
     // basically: map(int size, pair<vector use, vector def>);
-    std::map<int, std::pair<std::vector<Vertex*>*, std::vector<Vertex*>*>> _sizeToUseDefVectors = {};
+    //std::map<int, std::pair<std::vector<Vertex*>*, std::vector<Vertex*>*>> _sizeToUseDefVectors = {};//todo remove, use struct
+    
+    struct BaseDFNameData {
+        private:
+            // meaning: map, where by giving a size of resulting indexed DF (if int = 0 then DF is non-indexed) we get full data about uses and defs of this indexed DF
+            // value is a pair, where first is a vector of Vertices which show where (on what index = second) DF was used, and
+            // second is a vector of Vertices which show where (on what index = second) DF was defined, and
+            std::map<int, std::pair<
+                std::vector<std::pair<Vertex*, int>>*,
+                std::vector<std::pair<Vertex*, int>>*
+            >> _data;
+        public:
+
+        BaseDFNameData(){};
+
+        std::vector<int> getAllSizes()
+        {
+            std::vector<int> result{};
+            for (auto entry : _data) {
+                result.push_back(entry.first);
+            }
+            return result;
+        }
+
+        std::vector<std::pair<Vertex*, int>>* getUseVectorByIndicesSize(int iIndicesSize)
+        {
+            if (_data.find(iIndicesSize) != _data.end())
+                return _data[iIndicesSize].first;
+            else
+                return nullptr;
+        }
+
+        std::vector<std::pair<Vertex*, int>>* getDefVectorByIndicesSize(int iIndicesSize)
+        {
+            if (_data.find(iIndicesSize) != _data.end())
+                return _data[iIndicesSize].second;
+            else
+                return nullptr;
+        }
+
+        // ipVertex = where IDF with iIndicesSize indices was used at iArgPosition
+        void addUse(Vertex* ipVertex, int iIndicesSize, int iArgPosition)//todo rules for ifs, fors and whiles!
+        {
+            std::vector<std::pair<Vertex*, int>>* apUseVector = getUseVectorByIndicesSize(iIndicesSize);
+            if (apUseVector) {
+                for (auto t : *apUseVector) {
+                    if (t.first == ipVertex && t.second == iArgPosition) {
+                        std::cout << "INTERNAL ERROR: baseName->addUse tried to add duplicate entry!" << std::endl;
+                        return;
+                    }
+                }
+                apUseVector->push_back({ipVertex, iArgPosition});
+            } else {
+                if (getDefVectorByIndicesSize(iIndicesSize)) {
+                    // pair is present, create new useVector
+                    _data[iIndicesSize].first = new std::vector<std::pair<Vertex*, int>>{ {ipVertex, iArgPosition} };
+                } else {
+                    // pair is not present, create new pair with new useVector and null defVector
+                    std::vector<std::pair<Vertex*, int>>* pT = new std::vector<std::pair<Vertex*, int>>{ {ipVertex, iArgPosition} };
+                    _data[iIndicesSize] = std::make_pair(pT, nullptr);
+                }
+            }
+        }
+
+        // ipVertex = where IDF with iIndicesSize indices was defined at iArgPosition
+        void addDef(Vertex* ipVertex, int iIndicesSize, int iArgPosition)
+        {
+            std::vector<std::pair<Vertex*, int>>* apDefVector = getDefVectorByIndicesSize(iIndicesSize);
+            if (apDefVector) {
+                for (auto t : *apDefVector) {
+                    if (t.first == ipVertex && t.second == iArgPosition) {
+                        std::cout << "INTERNAL ERROR: baseName->addDef tried to add duplicate entry!" << std::endl;
+                        return;
+                    }
+                }
+                apDefVector->push_back({ipVertex, iArgPosition});
+            } else {
+                if (getUseVectorByIndicesSize(iIndicesSize)) {
+                    // pair is present, create new defVector
+                    _data[iIndicesSize].first = new std::vector<std::pair<Vertex*, int>>{ {ipVertex, iArgPosition} };
+                } else {
+                    // pair is not present, create new pair with new defVector and null useVector
+                    std::vector<std::pair<Vertex*, int>>* pT = new std::vector<std::pair<Vertex*, int>>{ {ipVertex, iArgPosition} };
+                    _data[iIndicesSize] = std::make_pair(nullptr, pT);
+                }
+            }
+        }
+    };
+
+    BaseDFNameData _data{};
+
     int _line;
 
 public:
 
-    std::map<int, std::pair<std::vector<Vertex*>*, std::vector<Vertex*>*>> getMap() { return _sizeToUseDefVectors; };
-
     int getLine() { return _line; }
 
-    void markAsUse(Vertex* currentVertex, int size);
+    void markAsUse(Vertex* currentVertex, int position, int size);
 
-    void markAsDef(Vertex* currentVertex, int size);
+    void markAsDef(Vertex* currentVertex, int position, int size);
 
     // obviously BaseDFName is always indexable
     bool isIndexable() { return true; };
 
     std::set<Identifier*> getAllIdentifiers() { return { this }; };
+
+    BaseDFName::BaseDFNameData* getData() { return &_data; };
 
     BaseDFName(std::string name, Vertex* vertex, int line) : Identifier(name, nullptr, vertex, baseDFNameClass, noneType), _line(line) {};
 
@@ -163,9 +247,9 @@ public:
 
     std::vector<Expression*> getExpressionsVector() { return _expressionsVector; };
 
-    void markAsUse(Vertex* currentVertex, int size);
+    void markAsUse(Vertex* currentVertex, int position, int size);
 
-    void markAsDef(Vertex* currentVertex, int size);
+    void markAsDef(Vertex* currentVertex, int position, int size);
 
     /* all indexed DFs are checked at construction, so already constucted
     ones are definetely indexable*/
@@ -187,7 +271,7 @@ public:
     ~IndexedDFName() {};
 };
 
-class ForIteratorName: public Identifier {
+class ForIteratorName: public Identifier, public DataIdentifier {
 
 public:
 
@@ -195,20 +279,28 @@ public:
 
     Expression* getRightBorder();
 
-    void markAsUse(Vertex* currentVertex, int size);
+    void markAsUse(Vertex* currentVertex, int position, int size);
 
-    void markAsDef(Vertex* currentVertex, int size);
+    void markAsDef(Vertex* currentVertex, int position, int size);
 
     bool isIndexable() { return false; };
 
     std::set<Identifier*> getAllIdentifiers() { return { this }; };
 
-    ForIteratorName(std::string name, Vertex* currentVertex) : Identifier(name, nullptr /* todo what to do here?*/, currentVertex, forIteratorNameClass, intType) {};
+    ForIteratorName(std::string name, Vertex* currentVertex) : Identifier(name, nullptr /* todo what to do here?*/, currentVertex, forIteratorNameClass, intType) {
+        /*
+        for i=1..2 {};
+        arg 0: iterator
+        arg 1: left border
+        arg 2: right border
+        */
+        _aDefVector.push_back(std::make_pair(currentVertex, 0));
+    };
 
     ~ForIteratorName() {};
 };
 
-class WhileIteratorName: public Identifier {
+class WhileIteratorName: public Identifier, public DataIdentifier {
 
 public:
 
@@ -216,15 +308,24 @@ public:
 
     Expression* getStartExpr();
 
-    void markAsUse(Vertex* currentVertex, int size);
+    void markAsUse(Vertex* currentVertex, int position, int size);
 
-    void markAsDef(Vertex* currentVertex, int size);
+    void markAsDef(Vertex* currentVertex, int position, int size);
 
     bool isIndexable() { return false; };
 
     std::set<Identifier*> getAllIdentifiers() { return { this }; };
 
-    WhileIteratorName(std::string name, Vertex* currentVertex) : Identifier(name, nullptr /* todo what to do here?*/, currentVertex, whileIteratorNameClass, intType) {};
+    WhileIteratorName(std::string name, Vertex* currentVertex) : Identifier(name, nullptr /* todo what to do here?*/, currentVertex, whileIteratorNameClass, intType) {
+        /*
+        while (0 < 0), 1 = 2..out 3
+        arg 0: condition
+        arg 1: iterator
+        arg 2: left border
+        arg 3: out name
+        */
+        _aDefVector.push_back(std::make_pair(currentVertex, 1));
+    };
 
     ~WhileIteratorName() {};
 };
@@ -245,9 +346,9 @@ class LetName: public Identifier {
 
 public:
 
-    void markAsUse(Vertex* currentVertex, int size);
+    void markAsUse(Vertex* currentVertex, int position, int size);
 
-    void markAsDef(Vertex* currentVertex, int size);
+    void markAsDef(Vertex* currentVertex, int position, int size);
 
     bool isIndexable() { return m_reference->isIndexable(); };
 
@@ -274,9 +375,9 @@ class MutableArgName: public Identifier {
 
 public:
 
-    void markAsUse(Vertex* currentVertex, int size);
+    void markAsUse(Vertex* currentVertex, int position, int size);
 
-    void markAsDef(Vertex* currentVertex, int size);
+    void markAsDef(Vertex* currentVertex, int position, int size);
 
     bool isIndexable() { return true; }
 
@@ -291,9 +392,9 @@ class ImmutableArgName: public Identifier {
 
 public:
 
-    void markAsUse(Vertex* currentVertex, int size);
+    void markAsUse(Vertex* currentVertex, int position, int size);
 
-    void markAsDef(Vertex* currentVertex, int size);
+    void markAsDef(Vertex* currentVertex, int position, int size);
 
     bool isIndexable() { return false; }
 

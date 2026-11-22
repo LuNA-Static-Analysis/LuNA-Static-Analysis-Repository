@@ -29,5 +29,6 @@ rm -rf ".mc-analyzer"
 rm -rf ".prolog-analyzer"
 
 mv ".adapt/adapt_degsa_output.txt" "$INITIAL_DIR"
+mv ".adapt/DFDump.json" "$INITIAL_DIR"
 
 rm -rf ".adapt"

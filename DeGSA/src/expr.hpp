@@ -58,9 +58,9 @@ public:
 
   Vertex* getVertex() { return _vertex; };
 
-  void markAsUse(Vertex* currentVertex, int size);
+  void markAsUse(Vertex* currentVertex, int position, int size);
 
-  void markAsDef(Vertex* currentVertex, int size);
+  void markAsDef(Vertex* currentVertex, int position, int size);
 
   bool isIndexable();
 

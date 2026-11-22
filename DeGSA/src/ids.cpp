@@ -17,78 +17,47 @@ void Identifier::calculateValueType(){
         m_valueType = nonCalculatable;
 }
 
-void BaseDFName::markAsUse(Vertex* vertex, int size){
-    m_useSet.insert(vertex);
-
+void BaseDFName::markAsUse(Vertex* vertex, int position, int size){
     std::cout << "Base DF name " << m_name << " is being marked as used" << std::endl;
-
-    auto maybePair = _sizeToUseDefVectors.find(size);
-    if (maybePair != _sizeToUseDefVectors.end()){ // found this IDF being used or defined already
-        auto maybeUseVector = maybePair->second.first;
-        if (maybeUseVector == nullptr) // check if it was defined and create new vector if not
-            maybeUseVector = new std::vector<Vertex*>;
-        // then add this vertex as use
-        maybeUseVector->push_back(vertex);
-    } else { // create new pair and a new vector
-        _sizeToUseDefVectors.insert( { size, { new std::vector<Vertex*>(), new std::vector<Vertex*>() } } );
-        _sizeToUseDefVectors.find(size)->second.first->push_back(vertex);
-    }
+    _data.addUse(vertex, size, position);
 }
 
-void BaseDFName::markAsDef(Vertex* vertex, int size){
-    m_defSet.insert(vertex);
-
+void BaseDFName::markAsDef(Vertex* vertex, int position, int size){
     std::cout << "Base DF name " << m_name << " is being marked as defined" << std::endl;
-
-    auto maybePair = _sizeToUseDefVectors.find(size);
-    if (maybePair != _sizeToUseDefVectors.end()){ // found this IDF being used or defined already
-        auto maybeDefVector = maybePair->second.second;
-        if (maybeDefVector == nullptr) // check if it was defined and create new vector if not
-            maybeDefVector = new std::vector<Vertex*>;
-        // then add this vertex as def
-        maybeDefVector->push_back(vertex);
-    } else { // create new pair and a new vector
-        _sizeToUseDefVectors.insert( { size, { new std::vector<Vertex*>(), new std::vector<Vertex*>() } } );
-        _sizeToUseDefVectors.find(size)->second.second->push_back(vertex);
-    }
+    _data.addDef(vertex, size, position);
 }
 
-void IndexedDFName::markAsUse(Vertex* currentVertex, int size){
-    m_useSet.insert(currentVertex);
-
+void IndexedDFName::markAsUse(Vertex* currentVertex, int position, int size){
     std::cout << "Indexed DF name " << m_name << " of size " << _expressionsVector.size() << " is being marked as used" << std::endl;
     for (auto exp: _expressionsVector){
         if (exp == nullptr){
             std::cout << "INTERNAL ERROR: encountered nullptr Expression at IndexedDFName.markAsUse()" << std::endl;
         } else {
-            exp->markAsUse(currentVertex, 0);
+            exp->markAsUse(currentVertex, position, 0); // zero because these are expressions inside indices, they do not stack indices count from the parent
         }
     }
     if (_base != nullptr)
-        _base->markAsUse(currentVertex, size + _expressionsVector.size());
+        _base->markAsUse(currentVertex, position, size + _expressionsVector.size());
     else
         std::cout << "INTERNAL ERROR: markAsDef encountered nullptr base of an IndexedDF" << std::endl;
 }
 
-void IndexedDFName::markAsDef(Vertex* currentVertex, int size){
-    m_defSet.insert(currentVertex);
-
+void IndexedDFName::markAsDef(Vertex* currentVertex, int position, int size){
     std::cout << "Indexed DF name " << m_name << " of size " << _expressionsVector.size() << " is being marked as defined" << std::endl;
     for (auto exp: _expressionsVector){
         if (exp == nullptr){
             std::cout << "INTERNAL ERROR: encountered nullptr Expression at IndexedDFName.markAsDef()" << std::endl;
         } else {
-            exp->markAsUse(currentVertex, 0);
+            exp->markAsUse(currentVertex, position, 0); // zero because these are expressions inside indices, they do not stack indices count from the parent
         }
     }
     if (_base != nullptr)
-        _base->markAsDef(currentVertex, size + _expressionsVector.size());
+        _base->markAsDef(currentVertex, position, size + _expressionsVector.size());
     else
         std::cout << "INTERNAL ERROR: markAsDef encountered nullptr base of an IndexedDF" << std::endl;
 }
 
 bool IndexedDFName::isIndexable() {
-    //todo
     return true;
 }
 
@@ -126,14 +95,19 @@ Expression* ForIteratorName::getRightBorder(){
     }
 }
 
-void ForIteratorName::markAsUse(Vertex* currentVertex, int size){
-    m_useSet.insert(currentVertex);
-
+void ForIteratorName::markAsUse(Vertex* currentVertex, int position, int size){
     std::cout << "For iterator " << m_name << " is being marked as used" << std::endl;
-    m_useSet.insert(currentVertex);
+    // size is of no importance as iterator can not be indexed
+    for (auto entry : _aUseVector) {
+        if (entry.first == currentVertex && entry.second == position) {
+            std::cout << "INTERNAL ERROR: for iterator " << m_name << " is being marked as used by the same vertex and position as before" << std::endl;
+            return;
+        }
+    }
+    _aUseVector.push_back(std::make_pair(currentVertex, position));
 }
 
-void ForIteratorName::markAsDef(Vertex* currentVertex, int size){
+void ForIteratorName::markAsDef(Vertex* currentVertex, int position, int size){
     std::cout << "INTERNAL ERROR: for iterator " << m_name << " is being marked as defined" << std::endl;
     // error (iterator should be marked as defined at the time of a ForVertex creation)
     JsonReporter::createSYN1(m_name, currentVertex, nullptr);
@@ -155,64 +129,59 @@ Expression* WhileIteratorName::getStartExpr(){
     }
 }
 
-void WhileIteratorName::markAsUse(Vertex* currentVertex, int size){
-    m_useSet.insert(currentVertex);
+void WhileIteratorName::markAsUse(Vertex* currentVertex, int position, int size){
     std::cout << "While iterator " << m_name << " is being marked as used" << std::endl;
+    // size is of no importance as iterator can not be indexed
+    for (auto entry : _aUseVector) {
+        if (entry.first == currentVertex && entry.second == position) {
+            std::cout << "INTERNAL ERROR: while iterator " << m_name << " is being marked as used by the same vertex and position as before" << std::endl;
+            return;
+        }
+    }
+    _aUseVector.push_back(std::make_pair(currentVertex, position));
 }
 
-void WhileIteratorName::markAsDef(Vertex* currentVertex, int size){
+void WhileIteratorName::markAsDef(Vertex* currentVertex, int position, int size){
     std::cout << "INTERNAL ERROR: while iterator " << m_name << " is being marked as defined" << std::endl;
     // error (iterator should be marked as defined at the time of a WhileVertex creation)
     JsonReporter::createSYN1(m_name, currentVertex, nullptr);
 }
 
-void LetName::markAsUse(Vertex* currentVertex, int size){
-    m_useSet.insert(currentVertex);
-
+void LetName::markAsUse(Vertex* currentVertex, int position, int size){
     std::cout << "Let name " << m_name << " is being marked as used" << std::endl;
-    m_reference->markAsUse(currentVertex, size);
+    m_reference->markAsUse(currentVertex, position, size);
 }
 
-void LetName::markAsDef(Vertex* currentVertex, int size){
-    m_defSet.insert(currentVertex);
-
+void LetName::markAsDef(Vertex* currentVertex, int position, int size){
     std::cout << "Let name " << m_name << " is being marked as defined" << std::endl;
-    m_reference->markAsDef(currentVertex, size);
+    m_reference->markAsDef(currentVertex, position, size);
 }
 
-void MutableArgName::markAsUse(Vertex* currentVertex, int size){
-    m_useSet.insert(currentVertex);
-
+void MutableArgName::markAsUse(Vertex* currentVertex, int position, int size){
     std::cout << "Mutable arg name name " << m_name << " is being marked as used" << std::endl;
     if (m_reference != nullptr)
-        m_reference->markAsUse(currentVertex, size);
+        m_reference->markAsUse(currentVertex, position, size);
     else
         std::cout << "INTERNAL ERROR: nullptr at m_reference marking as used in a mutable arg name" << std::endl;
 }
 
-void MutableArgName::markAsDef(Vertex* currentVertex, int size){
-    m_defSet.insert(currentVertex);
-
+void MutableArgName::markAsDef(Vertex* currentVertex, int position, int size){
     std::cout << "Mutable arg name name " << m_name << " is being marked as defined" << std::endl;
     if (m_reference != nullptr)
-        m_reference->markAsDef(currentVertex, size);
+        m_reference->markAsDef(currentVertex, position, size);
     else
         std::cout << "INTERNAL ERROR: nullptr at m_reference marking as defined in a mutable arg name" << std::endl;
 }
 
-void ImmutableArgName::markAsUse(Vertex* currentVertex, int size){
-    m_useSet.insert(currentVertex);
-
+void ImmutableArgName::markAsUse(Vertex* currentVertex, int position, int size){
     std::cout << "Immutable arg name " << m_name << " is being marked as used" << std::endl;
     if (m_reference != nullptr)
-        m_reference->markAsUse(currentVertex, size);
+        m_reference->markAsUse(currentVertex, position, size);
     else
         std::cout << "INTERNAL ERROR: nullptr at m_reference marking as used in an immutable arg name" << std::endl;
 }
 
-void ImmutableArgName::markAsDef(Vertex* currentVertex, int size){
-    m_defSet.insert(currentVertex);
-
+void ImmutableArgName::markAsDef(Vertex* currentVertex, int position, int size){
     std::cout << "Immutable arg name " << m_name << " is being marked as defined" << std::endl;
     //todo
     JsonReporter::createSYN1(m_name, currentVertex, nullptr);

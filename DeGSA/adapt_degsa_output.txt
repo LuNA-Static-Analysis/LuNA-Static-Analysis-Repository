@@ -1,177 +1,37 @@
-Total vertices: 17
+Total vertices: 9
 
-Vertex address: 0x59e275d799b0
+Vertex address: 0x627d14a455e0
 Vertex line: 5
 Vertex depth: 2
-Declared outside DFs: a b
+Declared outside DFs: a b c
 Declared inside DFs:
 Use DFs:
 Def DFs:
 Vertices inside:
-Vertices before ("in"): 0x59e275d799b0(0x59e275d01280) 0x59e275d799b0(0x59e275d01280)
-Vertices after ("out"): 0x59e275d799b0(0x59e275d01280) 0x59e275d7ad30(0x59e275d01280) 0x59e275d7bb00(0x59e275d01280)
+Vertices before ("in"):
+Vertices after ("out"): 0x627d14a46580(0x627d149cbfc0) 0x627d14a47020(0x627d149cbfc0) 0x627d149cdca0(0x627d149cbfc0) 0x627d149cdca0(0x627d149cbfc0) 0x627d14a49090(0x627d149cbfc0)
 Vertex type: import
 Facts amount: 0
 Exact type: atomic CF, name: init
 
-Vertex address: 0x59e275d7ad30
+Vertex address: 0x627d14a46580
 Vertex line: 6
 Vertex depth: 2
-Declared outside DFs: a b
+Declared outside DFs: a b c
 Declared inside DFs:
 Use DFs:
 Def DFs:
 Vertices inside:
-Vertices before ("in"): 0x59e275d7ad30(0x59e275d01280) 0x59e275d7ad30(0x59e275d01280)
+Vertices before ("in"): 0x627d14a46580(0x627d149cbfc0)
 Vertices after ("out"):
 Vertex type: import
 Facts amount: 0
 Exact type: atomic CF, name: print
 
-Vertex address: 0x59e275d7bb00
-Vertex line: 23
-Vertex depth: 3
-Declared outside DFs: f fooDF
-Declared inside DFs:
-Use DFs:
-Def DFs:
-Vertices inside:
-Vertices before ("in"): 0x59e275d7bb00(0x59e275d01280) 0x59e275d7bb00(0x59e275d01280)
-Vertices after ("out"):
-Vertex type: import
-Facts amount: 0
-Exact type: atomic CF, name: init
-
-Vertex address: 0x59e275d7b3b0
-Vertex line: 7
-Vertex depth: 2
-Declared outside DFs:
-Declared inside DFs: f fooDF
-Use DFs:
-Def DFs:
-Vertices inside: 0x59e275d7bb00
-Vertices before ("in"):
-Vertices after ("out"):
-Vertex type: sub
-Facts amount: 0
-Exact type: structured CF, name: foo
-
-Vertex address: 0x59e275d7cf60
-Vertex line: 23
-Vertex depth: 3
-Declared outside DFs: f fooDF
-Declared inside DFs:
-Use DFs:
-Def DFs:
-Vertices inside:
-Vertices before ("in"):
-Vertices after ("out"):
-Vertex type: import
-Facts amount: 0
-Exact type: atomic CF, name: init
-
-Vertex address: 0x59e275d7c9e0
-Vertex line: 8
-Vertex depth: 2
-Declared outside DFs:
-Declared inside DFs: f fooDF
-Use DFs:
-Def DFs:
-Vertices inside: 0x59e275d7cf60
-Vertices before ("in"):
-Vertices after ("out"):
-Vertex type: sub
-Facts amount: 0
-Exact type: structured CF, name: foo
-
-Vertex address: 0x59e275d7e8d0
-Vertex line: 23
-Vertex depth: 3
-Declared outside DFs: f fooDF
-Declared inside DFs:
-Use DFs:
-Def DFs:
-Vertices inside:
-Vertices before ("in"):
-Vertices after ("out"):
-Vertex type: import
-Facts amount: 0
-Exact type: atomic CF, name: init
-
-Vertex address: 0x59e275d7e0b0
+Vertex address: 0x627d14a47550
 Vertex line: 9
-Vertex depth: 2
-Declared outside DFs:
-Declared inside DFs: f fooDF
-Use DFs:
-Def DFs:
-Vertices inside: 0x59e275d7e8d0
-Vertices before ("in"):
-Vertices after ("out"):
-Vertex type: sub
-Facts amount: 0
-Exact type: structured CF, name: foo
-
-Vertex address: 0x59e275d80620
-Vertex line: 23
-Vertex depth: 4
-Declared outside DFs: f fooDF
-Declared inside DFs:
-Use DFs:
-Def DFs:
-Vertices inside:
-Vertices before ("in"):
-Vertices after ("out"):
-Vertex type: import
-Facts amount: 0
-Exact type: atomic CF, name: init
-
-Vertex address: 0x59e275d7fd20
-Vertex line: 11
 Vertex depth: 3
-Declared outside DFs:
-Declared inside DFs: f fooDF
-Use DFs:
-Def DFs:
-Vertices inside: 0x59e275d80620
-Vertices before ("in"):
-Vertices after ("out"):
-Vertex type: sub
-Facts amount: 0
-Exact type: structured CF, name: foo
-
-Vertex address: 0x59e275d81740
-Vertex line: 12
-Vertex depth: 3
-Declared outside DFs: a b xx
-Declared inside DFs:
-Use DFs:
-Def DFs:
-Vertices inside:
-Vertices before ("in"):
-Vertices after ("out"):
-Vertex type: import
-Facts amount: 0
-Exact type: atomic CF, name: print
-
-Vertex address: 0x59e275d02010
-Vertex line: 10
-Vertex depth: 2
-Declared outside DFs: a b
-Declared inside DFs: xx
-Use DFs:
-Def DFs:
-Vertices inside: 0x59e275d7fd20 0x59e275d81740
-Vertices before ("in"):
-Vertices after ("out"):
-Vertex type: let
-Facts amount: 0
-Assigned expressions and their names: 
-
-Vertex address: 0x59e275d826b0
-Vertex line: 15
-Vertex depth: 3
-Declared outside DFs: a b iterator
+Declared outside DFs: a b c fit
 Declared inside DFs:
 Use DFs:
 Def DFs:
@@ -182,26 +42,26 @@ Vertex type: import
 Facts amount: 2
 Exact type: atomic CF, name: print
 
-Vertex address: 0x59e275d82020
-Vertex line: 14
+Vertex address: 0x627d14a47020
+Vertex line: 8
 Vertex depth: 2
-Declared outside DFs: a b
-Declared inside DFs: iterator
+Declared outside DFs: a b c
+Declared inside DFs: fit
 Use DFs:
 Def DFs:
-Vertices inside: 0x59e275d826b0
-Vertices before ("in"):
+Vertices inside: 0x627d14a47550
+Vertices before ("in"): 0x627d14a47020(0x627d149cbfc0)
 Vertices after ("out"):
 Vertex type: for
 Facts amount: 2
-Iterator: iterator
-Left border: a[7]
-Right border: b[7]
+Iterator: fit
+Left border: a
+Right border: b
 
-Vertex address: 0x59e275d83c40
-Vertex line: 18
+Vertex address: 0x627d14a48580
+Vertex line: 13
 Vertex depth: 3
-Declared outside DFs: a b i
+Declared outside DFs: a b c wit
 Declared inside DFs:
 Use DFs:
 Def DFs:
@@ -212,31 +72,59 @@ Vertex type: import
 Facts amount: 2
 Exact type: atomic CF, name: print
 
-Vertex address: 0x59e275d02b00
-Vertex line: 17
+Vertex address: 0x627d149cdca0
+Vertex line: 12
 Vertex depth: 2
-Declared outside DFs: a b
-Declared inside DFs: i
+Declared outside DFs: a b c
+Declared inside DFs: wit
 Use DFs:
 Def DFs:
-Vertices inside: 0x59e275d83c40
-Vertices before ("in"):
-Vertices after ("out"): 0x59e275d799b0(0x59e275d01280) 0x59e275d7ad30(0x59e275d01280) 0x59e275d7bb00(0x59e275d01280)
+Vertices inside: 0x627d14a48580
+Vertices before ("in"): 0x627d149cdca0(0x627d149cbfc0) 0x627d149cdca0(0x627d149cbfc0)
+Vertices after ("out"): 0x627d14a49570(0x627d149ce3f0)
 Vertex type: while
 Facts amount: 2
-Iterator: i
-Out name: a
-Condition expression: a[11][12] < b[9]
-Start expression: 0
+Iterator: wit
+Out name: c
+Condition expression: a < b
+Start expression: a
 
-Vertex address: 0x59e275d04800
+Vertex address: 0x627d14a49570
+Vertex line: 17
+Vertex depth: 3
+Declared outside DFs: a b c
+Declared inside DFs:
+Use DFs:
+Def DFs:
+Vertices inside:
+Vertices before ("in"): 0x627d14a49570(0x627d149ce3f0)
+Vertices after ("out"):
+Vertex type: import
+Facts amount: 1
+Exact type: atomic CF, name: print
+
+Vertex address: 0x627d14a49090
+Vertex line: 16
+Vertex depth: 2
+Declared outside DFs: a b c
+Declared inside DFs:
+Use DFs:
+Def DFs:
+Vertices inside: 0x627d14a49570
+Vertices before ("in"): 0x627d14a49090(0x627d149cbfc0)
+Vertices after ("out"):
+Vertex type: if
+Facts amount: 1
+Condition expression: a < b
+
+Vertex address: 0x627d149cabd0
 Vertex line: 3
 Vertex depth: 1
 Declared outside DFs:
-Declared inside DFs: a b
+Declared inside DFs: a b c
 Use DFs:
 Def DFs:
-Vertices inside: 0x59e275d02010 0x59e275d02b00 0x59e275d799b0 0x59e275d7ad30 0x59e275d7b3b0 0x59e275d7c9e0 0x59e275d7e0b0 0x59e275d82020
+Vertices inside: 0x627d149cdca0 0x627d14a455e0 0x627d14a46580 0x627d14a47020 0x627d14a49090
 Vertices before ("in"):
 Vertices after ("out"):
 Vertex type: sub
@@ -248,182 +136,24 @@ BaseDFNames:
 Name: a
 Declared in function call at line: 4
 Size: 0
-Uses: 0x59e275d799b0 0x59e275d7ad30 0x59e275d7bb00 
-Defs: 0x59e275d799b0 0x59e275d02b00 
-Size: 1
-Uses: 0x59e275d7cf60 0x59e275d82020 
-Defs: 
-Size: 2
-Uses: 0x59e275d7e8d0 0x59e275d02b00 
-Defs: 
-Size: 4
-Uses: 0x59e275d80620 0x59e275d81740 
-Defs: 
+Uses: 0x627d14a46580 at pos 0 0x627d14a47020 at pos 1 0x627d149cdca0 at pos 0 0x627d149cdca0 at pos 2 0x627d14a49090 at pos 0 
+Defs: 0x627d14a455e0 at pos 1 
 
 Name: b
 Declared in function call at line: 4
-Size: 1
-Uses: 0x59e275d7e8d0 0x59e275d81740 0x59e275d82020 0x59e275d02b00 
+Size: 0
+Uses: 0x627d14a47020 at pos 2 0x627d149cdca0 at pos 0 0x627d14a49090 at pos 0 
 Defs: 
 
-Name: fooDF
-Declared in function call at line: 22
+Name: c
+Declared in function call at line: 4
 Size: 0
-Uses: 
-Defs: 0x59e275d7cf60 
-
-Name: fooDF
-Declared in function call at line: 22
-Size: 0
-Uses: 
-Defs: 0x59e275d7bb00 
-
-Name: fooDF
-Declared in function call at line: 22
-Size: 0
-Uses: 
-Defs: 0x59e275d7e8d0 
-
-Name: fooDF
-Declared in function call at line: 22
-Size: 0
-Uses: 
-Defs: 0x59e275d80620 
+Uses: 0x627d14a49570 at pos 0 
+Defs: 0x627d149cdca0 at pos 2 
 
 ========================
 DF usage information dump
 ========================
-
-***
-Import init on line 5
-
-Argument 0 (a) is used, 1 participants:
-indexed DF a
-Amount of indices: 0, expressions inside:
-
-
-Argument 1 (a) is initialized
-***
-
-***
-Import print on line 6
-
-Argument 0 (a) is used, 1 participants:
-indexed DF a
-Amount of indices: 0, expressions inside:
-
-***
-
-***
-Import init on line 23
-
-Argument 0 (f) is used, 1 participants:
-indexed DF a
-Amount of indices: 0, expressions inside:
-
-
-Argument 1 (fooDF) is initialized
-***
-
-***
-Import init on line 23
-
-Argument 0 (f) is used, 1 participants:
-indexed DF a
-Amount of indices: 1, expressions inside:
-0
-
-
-Argument 1 (fooDF) is initialized
-***
-
-***
-Import init on line 23
-
-Argument 0 (f) is used, 2 participants:
-indexed DF b
-Amount of indices: 1, expressions inside:
-1
-
-indexed DF a
-Amount of indices: 2, expressions inside:
-1 + 2
-b[1]
-
-
-Argument 1 (fooDF) is initialized
-***
-
-***
-Import init on line 23
-
-Argument 0 (f) is used, 1 participants:
-indexed DF xx
-Amount of indices: 1, expressions inside:
-6666
-
-
-Argument 1 (fooDF) is initialized
-***
-
-***
-Import print on line 12
-
-Argument 0 (xx[b[1]]) is used, 2 participants:
-indexed DF b
-Amount of indices: 1, expressions inside:
-1
-
-indexed DF xx
-Amount of indices: 1, expressions inside:
-b[1]
-
-***
-
-***
-Import print on line 15
-
-Argument 0 (iterator) is used, 1 participants:
-for iterator iterator
-***
-
-***
-For operator on line 14
-
-Left border expression: a[7], participants:
-indexed DF a
-Amount of indices: 1, expressions inside:
-7
-
-
-Right border expression: b[7], participants:
-indexed DF b
-Amount of indices: 1, expressions inside:
-7
-
-
-***
-Import print on line 18
-
-Argument 0 (i + 1) is used, 1 participants:
-while iterator i
-***
-
-***
-While operator on line 17
-
-Condition expression: a[11][12] < b[9], participants:
-indexed DF a
-Amount of indices: 2, expressions inside:
-11
-12
-
-indexed DF b
-Amount of indices: 1, expressions inside:
-9
-
-
-Start expression: 0, participants:
 
 ========================
 DF usage information dump end
@@ -433,41 +163,30 @@ DF usage information dump end
 
 ======== Searching for errors ========
 
-{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "5","name": "init"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "a"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "5","name": "init"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "a"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "6","name": "print"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "1","name": "print","type": "extern"},"expression": "a"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "7","name": "foo"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "21","name": "foo","type": "struct"},"expression": "a"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "23","name": "init"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "f"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "23","name": "init"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "fooDF"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "8","name": "foo"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "21","name": "foo","type": "struct"},"expression": "a[0]"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "23","name": "init"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "f"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "23","name": "init"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "fooDF"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "9","name": "foo"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "21","name": "foo","type": "struct"},"expression": "a[1 + 2][b[1]]"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "23","name": "init"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "f"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "23","name": "init"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "fooDF"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "11","name": "foo"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "21","name": "foo","type": "struct"},"expression": "xx[6666]"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "23","name": "init"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "f"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "23","name": "init"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "2","name": "init","type": "extern"},"expression": "fooDF"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "12","name": "print"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "1","name": "print","type": "extern"},"expression": "xx[b[1]]"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "15","name": "print"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "1","name": "print","type": "extern"},"expression": "iterator"},"error_code": "SYN1"}
-{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "18","name": "print"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "1","name": "print","type": "extern"},"expression": "i + 1"},"error_code": "SYN1"}
-{"details": {"vertex1": {"file": "/home/inthr/adapt/DeGSA/luna/tempDF.fa","line": "5","name": "init"}},"error_code": "SEM3.2"}
+{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/temp.fa","line": "5","name": "init"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/temp.fa","line": "2","name": "init","type": "extern"},"expression": "a"},"error_code": "SYN1"}
+{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/temp.fa","line": "6","name": "print"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/temp.fa","line": "1","name": "print","type": "extern"},"expression": "a"},"error_code": "SYN1"}
+{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/temp.fa","line": "9","name": "print"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/temp.fa","line": "1","name": "print","type": "extern"},"expression": "fit"},"error_code": "SYN1"}
+{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/temp.fa","line": "13","name": "print"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/temp.fa","line": "1","name": "print","type": "extern"},"expression": "wit"},"error_code": "SYN1"}
+{"details": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/temp.fa","line": "17","name": "print"},"cf": {"file": "/home/inthr/adapt/DeGSA/luna/temp.fa","line": "1","name": "print","type": "extern"},"expression": "c"},"error_code": "SYN1"}
+{"details": {"identifier": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/temp.fa","line": "3","name": "main"},"name": "a"}},"error_code": "SYN5.3"}
+{"details": {"identifier": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/temp.fa","line": "3","name": "main"},"name": "b"}},"error_code": "SYN5.3"}
+{"details": {"identifier": {"call_stack_entry": {"file": "/home/inthr/adapt/DeGSA/luna/temp.fa","line": "3","name": "main"},"name": "c"}},"error_code": "SYN5.3"}
 
-Time to find errors: 4.202e-05 seconds
+Time to find errors: 4.2605e-05 seconds
 
-Time to find errors (system): 4.213e-05 seconds
+Time to find errors (system): 4.2605e-05 seconds
 
-Time to build DDG: 0.0105747 seconds
+Time to build DDG: 0.00755208 seconds
 
-Time to build DDG (system): 0.0105747 seconds
+Time to build DDG (system): 0.00755208 seconds
 Z3 testing:
 
 Satisfiable!
 x = 26
 y = 16
 
-Time to build AST: 6.017e-05 seconds
+Time to build AST: 5.4707e-05 seconds
 
-Time to build AST (system): 6.006e-05 seconds
+Time to build AST (system): 5.4507e-05 seconds
 
-Time real: 0.0324507 seconds
+Time real: 0.0313186 seconds

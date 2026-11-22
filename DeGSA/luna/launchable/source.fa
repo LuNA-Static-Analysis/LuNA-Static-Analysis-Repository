@@ -1,11 +1,19 @@
+import printfl(real) as print;
 import c_init_int(int, name) as init;
 sub main(){
-        df a;
-        init(1, a);
-        let b = a {
-                foo(b);
-        }
-}
-sub foo(name f){
-        init(2, f);
+    df a, b, c;
+    init(1, a);
+    print(a);
+
+    for fit = a..b {
+        print(fit);  
+    }
+
+    while (a < b), wit = a..out c {
+        print(wit);
+    }
+
+    if (a < b) {
+        print(c);
+    }
 }

@@ -419,7 +419,22 @@ std::set<Identifier*> Expression::getAllIdentifiers() {
     return aIdentifiers;
 }
 
-void Expression::markAsUse(Vertex* currentVertex, int size){
+/*
+    for i=1..2 {};
+    arg 0: iterator
+    arg 1: left border
+    arg 2: right border
+
+    while (0 < 0), 1 = 2..out 3
+    arg 0: condition
+    arg 1: iterator
+    arg 2: left border
+    arg 3: out name
+
+    if (0 < 0)
+    arg 0: condition
+*/
+void Expression::markAsUse(Vertex* currentVertex, int position, int size){
     std::cout << "Expression " << _ASTexpr->to_string() << " is being marked as used" << std::endl;
     switch(_expressionType){
 
@@ -437,14 +452,14 @@ void Expression::markAsUse(Vertex* currentVertex, int size){
         case andNode:
         case orNode:
             if (_leftExpr != nullptr)
-                _leftExpr->markAsUse(currentVertex, size);
+                _leftExpr->markAsUse(currentVertex, position, size);
             if (_rightExpr != nullptr)
-                _rightExpr->markAsUse(currentVertex, size);
+                _rightExpr->markAsUse(currentVertex, position, size);
             return;
         
         case identifierNode:
             if (_identifier != nullptr)
-                _identifier->markAsUse(currentVertex, size);
+                _identifier->markAsUse(currentVertex, position, size);
             return;
         
         case stringNode:
@@ -456,7 +471,7 @@ void Expression::markAsUse(Vertex* currentVertex, int size){
         case intCastNode:
         case stringCastNode:
             if (_leftExpr != nullptr)
-                _leftExpr->markAsUse(currentVertex, size);
+                _leftExpr->markAsUse(currentVertex, position, size);
             return;
         
         // only noneNode must be left
@@ -467,7 +482,22 @@ void Expression::markAsUse(Vertex* currentVertex, int size){
     return;
 }
 
-void Expression::markAsDef(Vertex* currentVertex, int size){
+/*
+    for i=1..2 {};
+    arg 0: iterator
+    arg 1: left border
+    arg 2: right border
+
+    while (0 < 0), 1 = 2..out 3
+    arg 0: condition
+    arg 1: iterator
+    arg 2: left border
+    arg 3: out name
+
+    if (0 < 0)
+    arg 0: condition
+*/
+void Expression::markAsDef(Vertex* currentVertex, int position, int size){
     std::cout << "Expression " << _ASTexpr->to_string() << " is being marked as defined" << std::endl;
 
     switch(_expressionType){
@@ -494,17 +524,17 @@ void Expression::markAsDef(Vertex* currentVertex, int size){
         switch(_identifier->getClass()){
             case mutableArgNameClass: { //ok
                 MutableArgName* mutableArgName = dynamic_cast<MutableArgName*>(_identifier);
-                mutableArgName->getReference()->markAsDef(currentVertex, size);
+                mutableArgName->getReference()->markAsDef(currentVertex, position, size);
                 return;
             }
             case baseDFNameClass: {//ok
                 BaseDFName* baseDFName = dynamic_cast<BaseDFName*>(_identifier);
-                baseDFName->markAsDef(currentVertex, size);
+                baseDFName->markAsDef(currentVertex, position, size);
                 return;
             }
             case indexedDFNameClass: {//ok
                 IndexedDFName* indexedDFName = dynamic_cast<IndexedDFName*>(_identifier);
-                indexedDFName->markAsDef(currentVertex, size);
+                indexedDFName->markAsDef(currentVertex, position, size);
                 return;
             }
 
@@ -523,7 +553,7 @@ void Expression::markAsDef(Vertex* currentVertex, int size){
             
             case letNameClass: {//ok
                 LetName* letName = dynamic_cast<LetName*>(_identifier);
-                letName->getReference()->markAsDef(currentVertex, size);
+                letName->getReference()->markAsDef(currentVertex, position, size);
                 return;
             }
 
